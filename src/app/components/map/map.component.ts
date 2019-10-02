@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from "leaflet";
+import  "../../../../node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js"
 import {ParameterStoreService, ParameterHook} from "../../services/parameter-store.service"
 
 @Component({
@@ -44,6 +45,8 @@ export class MapComponent implements OnInit {
   onMapReady(map: L.Map) {
     this.map = map;
     this.drawnItems.addTo(map);
+    //console.log(aa);
+    console.log(L.ScalarField);
   }
 
   ngOnInit() {

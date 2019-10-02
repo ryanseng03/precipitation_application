@@ -31,7 +31,9 @@
               "./node_modules/leaflet/dist/leaflet.css",
               "./node_modules/leaflet-draw/dist/leaflet.draw.css"
             ],
-            "scripts": [],
+            "scripts": [
+              "./node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js"
+            ],
             "es5BrowserSupport": true
           },
           "configurations": {
