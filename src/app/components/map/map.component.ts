@@ -77,9 +77,31 @@ export class MapComponent implements OnInit {
       return value != -3.3999999521443642e+38;
     };
 
+    let colorScale = chroma.scale(['red','yellow','green','blue','purple','indigo']).domain([0, 750]);
+    //let colorScale = chroma.scale(['white', 'black']).domain([0, 750]);
+    let freeze = false;
+    let testColorCache: any = {};
     let colorFunct = (value: number) => {
-      return chroma.scale(['red','yellow','green','blue','purple','indigo']).domain([0, 750])(value).toString();
+      
+      // if(!freeze) {
+      //   console.log(Object.keys(testColorCache).length);
+      //   freeze = true;
+      //   setTimeout(() => {
+      //     freeze = false;
+      //   }, 10);
+      // }
+      
+      // let color = testColorCache[value];
+      // if(color == undefined) {
+        
+      //   color = colorScale(value).toString();
+      //   testColorCache[value] = color;
+      // }
+
+      return colorScale(value).toString();
     }
+
+    console.log("?");
 
     this.http.get("/assets/test.tif", {
       responseType: "arraybuffer"
@@ -92,12 +114,16 @@ export class MapComponent implements OnInit {
           //interpolation does not run a check on filterNodata
           //when drawing on the canvas (L.CanvasLayer.ScalarField.js) _prepareImageIn runs either interpolatedValueAt or valueAt in Field.js
           //interpolatedValueAt does not check filterNodata, could modify but uses minified source, look into this later
-          interpolate: true,
+          interpolate: false,
           color: colorFunct
         }).addTo(map);
         map.fitBounds(mlayer.getBounds());
 
         L.control.layers(this.baseLayers, {Raster: mlayer}).addTo(map);
+// console.log(mlayer.onDrawLayer);
+// setTimeout(() => {
+//   mlayer.onDrawLayer = null;
+// }, 1000);
 
         //console.log(s.grid);
 
