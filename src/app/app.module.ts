@@ -8,6 +8,8 @@ import { MapComponent } from "./components/map/map.component"
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 
+import { HttpClientModule } from '@angular/common/http';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -17,7 +19,8 @@ import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
     BrowserModule,
     AppRoutingModule,
     LeafletModule.forRoot(),
-    LeafletDrawModule.forRoot()
+    LeafletDrawModule.forRoot(),
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
