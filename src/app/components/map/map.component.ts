@@ -5,6 +5,7 @@ import {ParameterStoreService, ParameterHook} from "../../services/parameter-sto
 import * as chroma from "chroma-js"
 import { HttpClient } from '@angular/common/http';
 import {saveAs} from "file-saver";
+import * as geotiff from "geotiff";
 
 
 let R: any = L;
@@ -102,24 +103,47 @@ export class MapComponent implements OnInit {
     }
 
     console.log("?");
+    R.GridLayer.DebugCoords = L.GridLayer.extend({
+      createTile: function (coords) {
+        var tile = document.createElement('canvas');
+
+        let ctx = tile.getContext("2d");
+        ctx.getImageData
+
+        tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
+        tile.style.outline = '1px solid red';
+        return tile;
+      }
+    });
+    
+    R.gridLayer.debugCoords = function(opts) {
+      return new R.GridLayer.DebugCoords(opts);
+    };
+    
+    map.addLayer( R.gridLayer.debugCoords() );
 
     this.http.get("/assets/test.tif", {
       responseType: "arraybuffer"
     }).toPromise().then((data: any) => {
+      this.fromGeoTIFF(data);
+    });
       
-        console.log(data);
-        let s = R.ScalarField.fromGeoTIFF(data);
-        let mlayer = R.canvasLayer.scalarField(s, {
-          inFilter: filterNodata,
-          //interpolation does not run a check on filterNodata
-          //when drawing on the canvas (L.CanvasLayer.ScalarField.js) _prepareImageIn runs either interpolatedValueAt or valueAt in Field.js
-          //interpolatedValueAt does not check filterNodata, could modify but uses minified source, look into this later
-          interpolate: false,
-          color: colorFunct
-        }).addTo(map);
-        map.fitBounds(mlayer.getBounds());
+    //     console.log(data);
+    //     let s = R.ScalarField.fromGeoTIFF(data);
+    //     let mlayer = R.canvasLayer.scalarField(s, {
+    //       inFilter: filterNodata,
+    //       //interpolation does not run a check on filterNodata
+    //       //when drawing on the canvas (L.CanvasLayer.ScalarField.js) _prepareImageIn runs either interpolatedValueAt or valueAt in Field.js
+    //       //interpolatedValueAt does not check filterNodata, could modify but uses minified source, look into this later
+    //       interpolate: false,
+    //       color: colorFunct
+    //     }).addTo(map);
+    //     map.fitBounds(mlayer.getBounds());
 
-        L.control.layers(this.baseLayers, {Raster: mlayer}).addTo(map);
+    //     L.control.layers(this.baseLayers, {Raster: mlayer}).addTo(map);
+
+
+
 // console.log(mlayer.onDrawLayer);
 // setTimeout(() => {
 //   mlayer.onDrawLayer = null;
@@ -149,9 +173,75 @@ export class MapComponent implements OnInit {
 
         // }, 1000);
       
-    });
+    // });
    
   }
+
+fromGeoTIFF(data, bandIndex = 0) {
+  console.log(this.multipleFromGeoTIFF(data, [bandIndex])[0]);
+}
+
+
+multipleFromGeoTIFF(data, bandIndexes) {
+    //console.time('ScalarField from GeoTIFF');
+console.log(geotiff);
+    geotiff.fromArrayBuffer(data).then((tiff: geotiff.GeoTIFF) => {
+      console.log(tiff);
+      let image = tiff.getImage().then((image: geotiff.GeoTIFFImage) => {
+        console.log(image);
+        let rasters = image.readRasters();
+        let tiepoint = image.getTiePoints()[0];
+        let fileDirectory = image.getFileDirectory();
+        Promise.all([rasters, tiepoint, fileDirectory]).then((details: any[]) => {
+          console.log(details);
+          let rasters = details[0];
+          let tiepoint = details[1];
+          let fileDirectory = details[2];
+
+
+          let [xScale, yScale] = fileDirectory.ModelPixelScale;
+
+          if (typeof bandIndexes === 'undefined' || bandIndexes.length === 0) {
+              // bandIndexes = [...Array(rasters.length).keys()];
+              bandIndexes = [rasters.keys()];
+          }
+    
+          let scalarFields = [];
+          scalarFields = bandIndexes.map(function(bandIndex) {
+              let zs = rasters[bandIndex]; // left-right and top-down order
+    
+              if (fileDirectory.GDAL_NODATA) {
+                  let noData = parseFloat(fileDirectory.GDAL_NODATA);
+                  // console.log(noData);
+                  let simpleZS = Array.from(zs); // to simple array, so null is allowed | TODO efficiency??
+                  zs = simpleZS.map(function(z) {
+                      return z === noData ? null : z;
+                  });
+              }
+    
+              let p = {
+                  nCols: image.getWidth(),
+                  nRows: image.getHeight(),
+                  xllCorner: tiepoint.x,
+                  yllCorner: tiepoint.y - image.getHeight() * yScale,
+                  cellXSize: xScale,
+                  cellYSize: yScale,
+                  zs: zs
+              };
+              console.log(p);
+              return p;
+          });
+          
+        });
+      });
+      console.log(image);
+     
+    }); // geotiff.js
+  
+
+    //console.timeEnd('ScalarField from GeoTIFF');
+    return [null];
+}
 
   ngOnInit() {
 

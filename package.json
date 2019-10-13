@@ -1,4 +1,9 @@
 {
+  "browser": {
+    "fs": false,
+    "http": false,
+    "https": false
+  },
   "name": "rainfall",
   "version": "0.0.0",
   "scripts": {
