@@ -9,18 +9,31 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 
 import { HttpClientModule } from '@angular/common/http';
+import { TimeRangeSliderComponent } from './components/controls/time-range-slider/time-range-slider.component';
+import { OpacitySliderComponent } from './components/controls/opacity-slider/opacity-slider.component';
+import { PlayButtonComponent } from './components/controls/generics/play-button/play-button.component';
+
+import {MatIconModule} from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import { SliderComponent } from './components/controls/generics/slider/slider.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    MapComponent
+    MapComponent,
+    TimeRangeSliderComponent,
+    OpacitySliderComponent,
+    PlayButtonComponent,
+    SliderComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     LeafletModule.forRoot(),
     LeafletDrawModule.forRoot(),
-    HttpClientModule
+    HttpClientModule,
+    MatIconModule,
+    MatButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]

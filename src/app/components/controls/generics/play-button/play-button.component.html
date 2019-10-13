@@ -1,0 +1,16 @@
+
+<button class="button" (click)="toggle()">
+    <div *ngIf="!playing; else pause">
+        <mat-icon class="icon">play_arrow</mat-icon>
+      </div>
+      
+      <ng-template #pause>
+          <mat-icon class="icon">pause</mat-icon>
+      </ng-template>
+  
+</button>
+
+<!-- <button mat-icon-button color="warn" aria-label="Example icon-button with a heart icon">
+  <mat-icon>favorite</mat-icon>
+</button>
+<button mat-fab color="primary">Primary</button> -->

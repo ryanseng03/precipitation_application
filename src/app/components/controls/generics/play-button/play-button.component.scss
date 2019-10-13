@@ -1,0 +1,17 @@
+.icon {
+    color: white;
+}
+
+.button {
+    background-color: blue;
+    border-radius: 20px;
+}
+
+.button:hover {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  .button:focus {
+      outline: none !important;
+  }
