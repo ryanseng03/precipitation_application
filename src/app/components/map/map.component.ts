@@ -18,6 +18,7 @@ let R: any = L;
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit {
+  
   //private R: any = L;
 
   private options: L.MapOptions
@@ -27,7 +28,7 @@ export class MapComponent implements OnInit {
   private baseLayers: any;
 
   constructor(private http: HttpClient, private paramService: ParameterStoreService) {
-
+    console.log(2 || 4);
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
         maxZoom: 20,
