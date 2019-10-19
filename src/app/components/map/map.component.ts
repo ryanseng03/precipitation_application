@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from "leaflet";
-import  "../../../../node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js"
-import {ParameterStoreService, ParameterHook} from "../../services/parameter-store.service"
-import * as chroma from "chroma-js"
+import  "../../../../node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js";
+import {ParameterStoreService, ParameterHook} from "../../services/parameter-store.service";
+import * as chroma from "chroma-js";
 import { HttpClient } from '@angular/common/http';
 import {saveAs} from "file-saver";
 import * as geotiff from "geotiff";
@@ -28,7 +28,7 @@ export class MapComponent implements OnInit {
   private baseLayers: any;
 
   constructor(private http: HttpClient, private paramService: ParameterStoreService) {
-    console.log(2 || 4);
+    console.log(navigator.hardwareConcurrency || 4);
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
         maxZoom: 20,
