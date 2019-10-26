@@ -1,15 +1,24 @@
 import { Injectable } from '@angular/core';
 import * as geotiff from "geotiff";
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GeotiffDataLoaderService {
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
+
+  getDataFromGeotiff(url: string, customNoData?, bands?): Promise<RasterData> {
+    return this.http.get(url, {
+      responseType: "arraybuffer"
+    }).toPromise().then((data: ArrayBuffer) => {
+      return this.getDataFromArrayBuffer(data, customNoData, bands);
+    });
+  }
 
   //need custom no data for now since geotiffs appear to have rounding error
-  getDataFromGeotiff(data, customNoData?, bands?) {
+  getDataFromArrayBuffer(data: ArrayBuffer, customNoData?, bands?): Promise<RasterData> {
     return geotiff.fromArrayBuffer(data).then((tiff: geotiff.GeoTIFF) => {
       //console.log(tiff);
       return tiff.getImage().then((image: geotiff.GeoTIFFImage) => {

@@ -43,11 +43,11 @@ export class WorkerManagerService {
 
 //load balance worker managers
 class WorkerCoordinator {
-  Subject<WorkerUtilInfo>
+  //Subject<WorkerUtilInfo>
 }
 
 interface WorkerUtilInfo {
-  handler: WorkerHandler;
+  //handler: WorkerHandler;
 }
 
 //handles swapping between
