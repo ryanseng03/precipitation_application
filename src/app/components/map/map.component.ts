@@ -30,7 +30,7 @@ export class MapComponent implements OnInit {
   private baseLayers: any;
 
   constructor(private paramService: ParameterStoreService, private colors: ColorGeneratorService, private geotiffLoader: GeotiffDataLoaderService) {
-    console.log(navigator.hardwareConcurrency || 4);
+    //console.log(navigator.hardwareConcurrency || 4);
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
         maxZoom: 20,
@@ -114,7 +114,7 @@ export class MapComponent implements OnInit {
  
     
 
-    this.geotiffLoader.getDataFromGeotiff("/assets/test.tif").then((geotiffData: GeoTIFFData) => {     
+    this.geotiffLoader.getDataFromGeotiff("/assets/test.tif", -3.3999999521443642e+38).then((geotiffData: GeoTIFFData) => {     
 
       console.log(geotiffData);
 
@@ -311,7 +311,7 @@ export class MapComponent implements OnInit {
       });
       
       R.gridLayer.GeotiffLayer = function(opts) {
-        return new R.GridLayer.DebugCoords(opts);
+        return new R.GridLayer.GeotiffLayer(opts);
       };
       
       map.addLayer( R.gridLayer.GeotiffLayer() );
@@ -466,4 +466,3 @@ interface GeoTIFFData {
   cellYSize: number,
   values: {[band: number]: {[index: number]: number}}
 }
-

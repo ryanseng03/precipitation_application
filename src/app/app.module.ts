@@ -16,6 +16,7 @@ import { PlayButtonComponent } from './components/controls/generics/play-button/
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import { SliderComponent } from './components/controls/generics/slider/slider.component';
+import { RangeSliderComponent } from './components/controls/generics/range-slider/range-slider.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { SliderComponent } from './components/controls/generics/slider/slider.co
     TimeRangeSliderComponent,
     OpacitySliderComponent,
     PlayButtonComponent,
-    SliderComponent
+    SliderComponent,
+    RangeSliderComponent
   ],
   imports: [
     BrowserModule,

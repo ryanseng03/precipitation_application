@@ -2,13 +2,14 @@ import { Component, OnInit, ViewChild, Output } from '@angular/core';
 import { Subject } from "rxjs";
 
 @Component({
-  selector: 'app-slider',
-  templateUrl: './slider.component.html',
-  styleUrls: ['./slider.component.scss']
+  selector: 'app-range-slider',
+  templateUrl: './range-slider.component.html',
+  styleUrls: ['./range-slider.component.scss']
 })
-export class SliderComponent implements OnInit {
+export class RangeSliderComponent implements OnInit {
 
-  @ViewChild("slider") slider;
+  @ViewChild("sliderR") sliderR;
+  @ViewChild("sliderL") sliderL;
   @ViewChild("track") track;
   @Output() values: Subject<number>[] = [];
 
@@ -104,13 +105,4 @@ export class SliderComponent implements OnInit {
     }
     return roundingFunct(abs / interval) * interval * sign;
   }
-
-}
-
-export interface SliderOptions {
-  style: "left" | "right" | "center";
-}
-
-export interface FenceOptions {
-  color: string;
 }
