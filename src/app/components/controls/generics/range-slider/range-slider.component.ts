@@ -28,10 +28,10 @@ export class RangeSliderComponent implements OnInit {
     if(this.intervals > 0) {
       this.intervalsWidth = this.trackWidth / this.intervals;
     }
-    this.leftRange = [this.slider.nativeElement.offsetLeft, this.slider.nativeElement.offsetLeft + this.trackWidth];
+    this.leftRange = [this.sliderR.nativeElement.offsetLeft, this.sliderR.nativeElement.offsetLeft + this.trackWidth];
 
     let getMovFunct = (mouseInit: MouseEvent) => {
-      let initPos = this.slider.nativeElement.offsetLeft;
+      let initPos = this.sliderR.nativeElement.offsetLeft;
       return (e: MouseEvent) => {
         //console.log(e);
         e.stopPropagation();
@@ -50,29 +50,29 @@ export class RangeSliderComponent implements OnInit {
           newSliderPos = this.leftRange[1];
         }
         //console.log(newSliderPos);
-        this.slider.nativeElement.style.left = newSliderPos + "px";
+        this.sliderR.nativeElement.style.left = newSliderPos + "px";
       }
     }
     
     
-    this.slider.nativeElement.addEventListener("mousedown", (e: MouseEvent) => {
+    this.sliderR.nativeElement.addEventListener("mousedown", (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      this.slider.nativeElement.style.width = this.slider.nativeElement.offsetWidth + this.expandPX + "px";
-      this.slider.nativeElement.style.height = this.slider.nativeElement.offsetHeight + this.expandPX + "px";
-      this.slider.nativeElement.style.top = this.slider.nativeElement.offsetTop - this.expandPX / 2 + "px";
-      let transDefault = this.slider.nativeElement.style.transform;
-      this.slider.nativeElement.style.transform = "translateX(-" + this.expandPX / 2 + "px)";
+      this.sliderR.nativeElement.style.width = this.sliderR.nativeElement.offsetWidth + this.expandPX + "px";
+      this.sliderR.nativeElement.style.height = this.sliderR.nativeElement.offsetHeight + this.expandPX + "px";
+      this.sliderR.nativeElement.style.top = this.sliderR.nativeElement.offsetTop - this.expandPX / 2 + "px";
+      let transDefault = this.sliderR.nativeElement.style.transform;
+      this.sliderR.nativeElement.style.transform = "translateX(-" + this.expandPX / 2 + "px)";
       let cursorDefault = document.body.style.cursor;
       document.body.style.cursor = "grabbing";
       let movFunct = getMovFunct(e);
       window.addEventListener("mousemove", movFunct);
 
       let mupFunct = () => {
-        this.slider.nativeElement.style.width = this.slider.nativeElement.offsetWidth - this.expandPX + "px";
-        this.slider.nativeElement.style.height = this.slider.nativeElement.offsetHeight - this.expandPX + "px";
-        this.slider.nativeElement.style.top = this.slider.nativeElement.offsetTop + this.expandPX / 2 + "px";
-        this.slider.nativeElement.style.transform = transDefault;
+        this.sliderR.nativeElement.style.width = this.sliderR.nativeElement.offsetWidth - this.expandPX + "px";
+        this.sliderR.nativeElement.style.height = this.sliderR.nativeElement.offsetHeight - this.expandPX + "px";
+        this.sliderR.nativeElement.style.top = this.sliderR.nativeElement.offsetTop + this.expandPX / 2 + "px";
+        this.sliderR.nativeElement.style.transform = transDefault;
         document.body.style.cursor = cursorDefault;
         window.removeEventListener("mousemove", movFunct);
         window.removeEventListener("mouseup", mupFunct);

@@ -118,9 +118,9 @@ export class MapComponent implements OnInit {
 
       console.log(geotiffData);
 
-      let timer = Date.now();
+      //let timer = Date.now();
       //let colors = this.getGeotiffColors(geotiffData, getColor);
-      console.log(`Color retrieval took ${Date.now() - timer}ms`);
+      //console.log(`Color retrieval took ${Date.now() - timer}ms`);
 
       //rendered tiles should be limited so should remain relatively small, no reason to add overhead on tiles that contain no data
       let noValueCache: Set<string> = new Set<string>();
@@ -140,7 +140,6 @@ export class MapComponent implements OnInit {
       
           if(!noValueCache.has(coordString)) {
           
-
             let ctx = tile.getContext("2d");
             let tileSize = this.getTileSize();
             //console.log(tileSize);
@@ -234,7 +233,10 @@ export class MapComponent implements OnInit {
               return index;
             }
 
-            
+            let geoPosToGridValue = (pos: L.LatLng): number => {
+              let index = geoPosToGridIndex(pos)
+              return geotiffData.values[0][index];
+            }
 
 
             //get the coordinates of the tile corner, tile coords times scale
