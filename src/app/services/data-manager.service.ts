@@ -9,7 +9,11 @@ export class DataManagerService {
   //use manager to mitigate issues with changing data structure
   data: DataModel;
 
-  constructor() { }
+  constructor() {
+    this.data = {
+      rasterData: null
+    };
+  }
 
   setRasterData(data: RasterData) {
     this.data.rasterData = data;

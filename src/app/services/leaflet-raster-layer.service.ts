@@ -20,19 +20,20 @@ export class LeafletRasterLayerService {
 
     R.GridLayer.RasterLayer = L.GridLayer.extend({
       initialize: function(options: RasterOptions) {
+        if(options.cacheEmpty == undefined) {
+          options.cacheEmpty = false;
+        }
         L.Util.setOptions(this, options);
+      },
+
+      clearEmptyTileCache: () => {
+        this.emptyTileCache.clear();
       },
 
       createTile: function(coords) {
 
         let coordString = JSON.stringify(coords);
 
-        //console.log(coords);
-        
-        
-        //console.log(getColor(700)._rgb[1]);
-
-        //console.log(this);
         let tile: HTMLCanvasElement = <HTMLCanvasElement>L.DomUtil.create('canvas', 'leaflet-tile');
     
         if(!this.options.cacheEmpty || !__this.emptyTileCache.has(coordString)) {
@@ -45,22 +46,6 @@ export class LeafletRasterLayerService {
           tile.height = tileSize.y;
           //console.log(tile);
           let imgData = ctx.getImageData(0, 0, tileSize.x, tileSize.y);
-          //console.log(imgData.data.length);
-          // console.log(coords);
-          // console.log(this._map);
-          
-          let tileXYToFlat = (x: number, y: number) => {
-            return y * tileSize.x + x;
-          }
-          
-        
-          // let geoRange = {
-          //   x: {
-          //     min: geotiffData.xllCorner,
-          //     max: geotiffData.y
-          //   }
-          // }
-
          
 
 
@@ -70,24 +55,9 @@ export class LeafletRasterLayerService {
           let xMax = xMin + tileSize.x;
           let yMax = yMin + tileSize.y;
 
-          // let xOff: number;
-          // let yOff: number;
-
           let x = xMin;
           let y = yMin;
           let colorOff = 0;
-          //let yColorOff = 0;
-          // let xGeo = geotiffData.xllCorner;
-          // let yGeo = geotiffData.yllCorner;
-
-          //let latlng = this._map.unproject([x, y], coords.z);
-          //console.log(latlng);
-          //let gridIndex = geoPosToGridIndex(latlng);
-          //console.log(gridIndex);
-          // if(gridIndex != null) {
-          //   tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
-          //   tile.style.outline = '1px solid red';
-          // }
 
           
           //can these be decoupled and mapped? (get single lat and long for each point along tile and combine)
@@ -95,43 +65,27 @@ export class LeafletRasterLayerService {
           //see if nested unprojects work sufficiently
           let hasValue = false;
           for(y = yMin; y < yMax; y++) {
-            //x = xMin;
-            //xGeo = geotiffData.xllCorner;
             
-            for(x = xMin; x < xMax; x++) {
-              
+            for(x = xMin; x < xMax; x++) { 
               
               let latlng = this._map.unproject([x, y], coords.z);
-              //let tileIndex = tileXYToFlat(xOff, yOff);
-              // let gridIndex = geoPosToGridIndex(latlng);
-              // let value = geotiffData.values[0][gridIndex];
-              let color = __this.dataRetreiver.geoPosToColor(this.options.colorScale, latlng)
-              //let color = colorScale.getColor(value);
+              let color = __this.dataRetreiver.geoPosToColor(latlng, this.options.colorScale)
               if(color != undefined) {
                 hasValue = true;
-                //console.log(color);
                 imgData.data[colorOff] = color.r;
                 imgData.data[colorOff + 1] = color.g;
                 imgData.data[colorOff + 2] = color.b;
                 imgData.data[colorOff + 3] = color.a;
               }
-              //let color = getColor(700);
-
-              //x++;
-              //xGeo += geotiffData.cellXSize;
               colorOff += 4;
             }
-
-            //yGeo += geotiffData.cellYSize;
             
           }
 
-          if(!hasValue) {
-            //console.log();
-            noValueCache.add(coordString);
+          //if caching empty tiles and tile had no values in it, add to empty tile cache
+          if(this.options.cacheEmpty && !hasValue) {
+            __this.emptyTileCache.add(coordString);
           }
-          // console.log(xOff, yOff);
-          // console.log(this._map.unproject([coords.x, coords.y], coords.z));
           ctx.putImageData(imgData, 0, 0);
         }
         return tile;
@@ -142,15 +96,13 @@ export class LeafletRasterLayerService {
       return new R.GridLayer.RasterLayer(options);
     };
 
-    R.gridLayer.RasterLayer.clearNoDataCache = () => {
-      this.noValueCache.clear();
-    }
-  }
+    
 
-  getExtende
+    console.log(R);
+  }
 }
 
 export interface RasterOptions {
-  cacheEmpty: boolean = false;
+  cacheEmpty?: boolean;
   colorScale: ColorScale;
 }

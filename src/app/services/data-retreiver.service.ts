@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { UtilityService } from "./utility.service";
-import {LatLng} from "leaflet";
+import {LatLng, latLng} from "leaflet";
 import {DataManagerService} from "./data-manager.service"
 import { ColorScale, Color } from '../classes/color-scale';
 
@@ -34,8 +34,7 @@ export class DataRetreiverService {
     return new LatLng(pos.lat - data.yllCorner, pos.lng - data.xllCorner);
   }
 
-  //console.log(geotiffData.yllCorner, geotiffData.xllCorner);
-
+  
   //need to ensure in grid range, 
   geoPosToGridCoords = (pos: LatLng): DecoupledCoords => {
     let data = this.dataManager.getRasterData();
@@ -59,6 +58,11 @@ export class DataRetreiverService {
     return coords;
   }
 
+  // geoPosToCellLL(pos: LatLng): LatLng {
+  //   if(pos.)
+  // }
+
+
   geoPosToGridIndex(pos: LatLng): number | null {
     let index = null;
     let coords = this.geoPosToGridCoords(pos);
@@ -76,6 +80,43 @@ export class DataRetreiverService {
 
   geoPosToColor(pos: LatLng, colorScale: ColorScale): Color {
     return colorScale.getColor(this.geoPosToGridValue(pos));
+  }
+
+  
+  getCellBoundsFromGeoPos(pos: LatLng): LatLng[] {
+    let gridCell = this.geoPosToGridCoords(pos);
+    //let cellLL = ;
+    let data = this.dataManager.getRasterData();
+    let xOff = data.cellXSize;
+    let yOff = data.cellYSize;
+    //long -> x, lat -> y
+    //ensure counterclockwise order, start lower left
+    //latlng is latitude first
+    let ll = new LatLng(pos.lat - yOff, pos.lng - xOff);
+    let lr = new LatLng(pos.lat - yOff, pos.lng + xOff);
+    let ur = new LatLng(pos.lat + yOff, pos.lng + xOff);
+    let ul = new LatLng(pos.lat + yOff, pos.lng - xOff);
+
+    return [ll, lr, ur, ul];
+  }
+  
+  //geojson uses long, lat
+  //geojson counterclockwise
+  getGeoJSONCellFromGeoPos(pos: LatLng): any {
+    let bounds = this.getCellBoundsFromGeoPos(pos);
+    let geojson = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[]]
+      }
+    }
+    let i: number;
+    for(i = 0; i < bounds.length; i++) {
+      geojson.geometry.coordinates[0].push([bounds[i].lng, bounds[i].lat]);
+    }
+
+    return geojson;
   }
 }
 
