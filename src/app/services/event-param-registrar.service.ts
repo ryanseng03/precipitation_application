@@ -26,6 +26,23 @@ export class EventParamRegistrarService {
     return label;
   }
 
+
+  registerMapHover(map: L.Map) {
+    let label = "maphover_" + this.tagGen.getTag();
+    let sub = this.paramService.registerParameter<L.LatLng>(label);
+    let moveHandler = (e: L.LeafletMouseEvent) => {
+      sub.next(e.latlng);
+    };
+    map.on("mouseover", () => {
+      map.on("mousemove", moveHandler)
+    });
+    map.on("mouseout", () => {
+      map.off("mousemove", moveHandler);
+    });
+
+    return label;
+  }
+
   
 }
 

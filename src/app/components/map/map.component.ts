@@ -70,6 +70,8 @@ export class MapComponent implements OnInit {
 
 
   onMapReady(map: L.Map) {
+    L.DomUtil.addClass(map.getContainer(), 'pointer-cursor');
+    console.log(map.getContainer());
     this.map = map;
     this.drawnItems.addTo(map);
 
@@ -86,10 +88,16 @@ export class MapComponent implements OnInit {
       this.dataManager.setRasterData(geotiffData);
 
       let clickTag = this.eventRegistrar.registerGeoMapClick(map);
+      let geojsonLayer: L.GeoJSON;
       this.paramService.createParameterHook(clickTag, (position: L.LatLng) => {
         console.log(this.dataRetreiver.geoPosToGridValue(position));
-        let geoJSON = this.dataRetreiver.getGeoJSONCellFromGeoPos(position);
-        let geojsonLayer = new L.GeoJSON(geoJSON);
+        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(position);
+        console.log(geojson);
+        if(geojsonLayer != undefined) {
+          map.removeLayer(geojsonLayer);
+        }
+        
+        geojsonLayer = new L.GeoJSON(geojson);
         map.addLayer(geojsonLayer);
       }, true);
 
@@ -103,9 +111,50 @@ export class MapComponent implements OnInit {
 
     });
 
+    this.addPopupOnHover(1000);
+  }
+
+
+  addPopupOnHover(timeout: number) {
+    let popupData: PopupData = {
+      popupTimer: null,
+      highlightedCell: null
+    };
     
+    let hoverTag = this.eventRegistrar.registerMapHover(this.map);
+    this.paramService.createParameterHook(hoverTag, (position: L.LatLng) => {
+      if(popupData.highlightedCell != null) {
+        this.map.removeLayer(popupData.highlightedCell);
+        popupData.highlightedCell = null;
+      }
+
+      this.map.closePopup();
+      clearTimeout(popupData.popupTimer);
+      popupData.popupTimer = setTimeout(() => {
+        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(position);
+        //check if data exists at hovered point
+        if(geojson != undefined) {
+          popupData.highlightedCell = L.geoJSON(geojson)
+          .setStyle({
+            fillColor: "orange",
+            weight: 3,
+            opacity: 1,
+            color: "orange",
+            fillOpacity: 0.2
+          })
+          .addTo(this.map)
   
-   
+          let value = this.dataRetreiver.geoPosToGridValue(position);
+  
+          //popup cell value
+          let popup = L.popup({ autoPan: false })
+          .setLatLng(position);
+          popup.setContent("Value: " + value);
+          popup.openOn(this.map);
+        }
+      }, timeout);
+
+    });
   }
 
   ngOnInit() {
@@ -113,4 +162,9 @@ export class MapComponent implements OnInit {
   }
 
   
+}
+
+interface PopupData {
+  popupTimer: any,
+  highlightedCell: L.Layer
 }
