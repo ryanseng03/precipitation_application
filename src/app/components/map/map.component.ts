@@ -103,9 +103,17 @@ export class MapComponent implements OnInit {
 
     });
 
-    
+    this.setDrawingHandlers();
   
    
+  }
+
+  setDrawingHandlers() {
+    this.map.on(L.Draw.Event.CREATED, (e: any) => {
+      let geojson = e.layer.toGeoJSON();
+      console.log(geojson);
+      console.log(this.dataRetreiver.getGeoJSONBoundingBox(geojson));
+    });
   }
 
   ngOnInit() {

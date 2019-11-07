@@ -3,6 +3,7 @@ import { UtilityService } from "./utility.service";
 import {LatLng, latLng} from "leaflet";
 import {DataManagerService} from "./data-manager.service"
 import { ColorScale, Color } from '../classes/color-scale';
+import { GeoJSON, Feature } from "geojson";
 
 @Injectable({
   providedIn: 'root'
@@ -118,6 +119,55 @@ export class DataRetreiverService {
 
     return geojson;
   }
+
+  getGeoJSONBBox(geojson: Feature) {
+    console.log(geojson.geometry);
+    //get outer ring(s) and perform basic coordinate depth validation
+    //if multiple polygons/features, get bounding box of all shapes and subshapes
+    //evaluate if in outer bounding box, if is evaluate if in any inner bounding boxes, parse indices in inner bounding boxes that intersected
+  }
+
+  getBBoxFromCoordinates(coords: number[][]) {
+
+  }
+
+  geoBBoxToGridBBox(bbox: BBox): GridBBox {
+    let keys = Object.keys(bbox);
+    let i: number;
+    for(i = 0; i < keys.length; i++) {
+      
+    }
+  }
+
+  getInternalCellsFromGeoJSON() {
+
+  }
+
+  getInternalValuesFromGeoJSON() {
+
+  }
+
+  getInternalCellAreaFromGeoJSON() {
+
+  }
+
+  getAverageRainfallFromGeoJSON() {
+
+  }
+}
+
+export interface BBox {
+  ll: LatLng,
+  lr: LatLng,
+  ur: LatLng,
+  ul: LatLng
+}
+
+export interface GridBBox {
+  ll: DecoupledCoords,
+  lr: DecoupledCoords,
+  ur: DecoupledCoords,
+  ul: DecoupledCoords
 }
 
 export interface DecoupledCoords {
