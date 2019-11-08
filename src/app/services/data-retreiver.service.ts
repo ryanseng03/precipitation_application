@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { UtilityService } from "./utility.service";
-import {LatLng, latLng} from "leaflet";
+import {LatLng, latLng, bounds} from "leaflet";
 import {DataManagerService} from "./data-manager.service"
 import { ColorScale, Color } from '../classes/color-scale';
 import { GeoJSON, Feature } from "geojson";
@@ -83,38 +83,57 @@ export class DataRetreiverService {
     return colorScale.getColor(this.geoPosToGridValue(pos));
   }
 
-  
-  getCellBoundsFromGeoPos(pos: LatLng): LatLng[] {
-    let gridCell = this.geoPosToGridCoords(pos);
-    //let cellLL = ;
+  //if !getNoValue just return null if the cell is background
+  getCellBoundsFromGeoPos(pos: LatLng, getNoValue: boolean = false): LatLng[] {
     let data = this.dataManager.getRasterData();
-    let xOff = data.cellXSize;
-    let yOff = data.cellYSize;
-    //long -> x, lat -> y
-    //ensure counterclockwise order, start lower left
-    //latlng is latitude first
-    let ll = new LatLng(pos.lat - yOff, pos.lng - xOff);
-    let lr = new LatLng(pos.lat - yOff, pos.lng + xOff);
-    let ur = new LatLng(pos.lat + yOff, pos.lng + xOff);
-    let ul = new LatLng(pos.lat + yOff, pos.lng - xOff);
-
-    return [ll, lr, ur, ul];
+    let bounds = null;
+    //just start from here instead of using geoPosToGridValue to prevent need to recompute location
+    let coords = this.geoPosToGridCoords(pos);
+    //check if bounds in grid
+    if(coords != null) {
+      //check if value at location if !getNoValue
+      let valid = true;
+      if(!getNoValue) {
+        let index = this.flattenGridCoords(coords);
+        if(data.values[0][index] == undefined) {
+          valid = false;
+        }
+      }
+      if(valid) {
+        let xll = data.xllCorner + data.cellXSize * coords.x;
+        let yll = data.yllCorner + data.cellYSize * (data.nRows - coords.y);
+        //counterclockwise
+        let ll = new LatLng(yll, xll);
+        let lr = new LatLng(yll, xll + data.cellXSize);
+        let ur = new LatLng(yll + data.cellYSize, xll + data.cellXSize);
+        let ul = new LatLng(yll + data.cellYSize, xll);
+        bounds = [ll, lr, ur, ul];
+      }
+      
+    }
+    return bounds;
   }
   
+  //if no value at cell or out of bounds returns null
   //geojson uses long, lat
   //geojson counterclockwise
-  getGeoJSONCellFromGeoPos(pos: LatLng): any {
-    let bounds = this.getCellBoundsFromGeoPos(pos);
-    let geojson = {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [[]]
+  getGeoJSONCellFromGeoPos(pos: LatLng, getNoValue: boolean = false): any {
+    let geojson = null;
+    let bounds = this.getCellBoundsFromGeoPos(pos, getNoValue);
+
+    if(bounds != null) {
+      geojson = {
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [[]]
+        }
+      };
+      let i: number;
+      for(i = 0; i < bounds.length; i++) {
+        geojson.geometry.coordinates[0].push([bounds[i].lng, bounds[i].lat]);
       }
-    }
-    let i: number;
-    for(i = 0; i < bounds.length; i++) {
-      geojson.geometry.coordinates[0].push([bounds[i].lng, bounds[i].lat]);
+      geojson.geometry.coordinates[0].push([bounds[0].lng, bounds[0].lat]);
     }
 
     return geojson;
@@ -125,19 +144,20 @@ export class DataRetreiverService {
     //get outer ring(s) and perform basic coordinate depth validation
     //if multiple polygons/features, get bounding box of all shapes and subshapes
     //evaluate if in outer bounding box, if is evaluate if in any inner bounding boxes, parse indices in inner bounding boxes that intersected
+    
   }
 
   getBBoxFromCoordinates(coords: number[][]) {
 
   }
 
-  geoBBoxToGridBBox(bbox: BBox): GridBBox {
-    let keys = Object.keys(bbox);
-    let i: number;
-    for(i = 0; i < keys.length; i++) {
-      
-    }
-  }
+  // geoBBoxToGridBBox(bbox: BBox): GridBBox {
+  //   let keys = Object.keys(bbox);
+  //   let i: number;
+  //   for(i = 0; i < keys.length; i++) {
+
+  //   }
+  // }
 
   getInternalCellsFromGeoJSON() {
 
@@ -154,6 +174,13 @@ export class DataRetreiverService {
   getAverageRainfallFromGeoJSON() {
 
   }
+
+  //do we want this?
+  getVolumetricRainfallFromGeoJSON() {
+
+  }
+
+
 }
 
 export interface BBox {
