@@ -12,7 +12,7 @@ import { DataRetreiverService } from "../../services/data-retreiver.service";
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/leaflet-raster-layer.service";
 import { DataManagerService } from "../../services/data-manager.service";
 import { EventParamRegistrarService } from "../../services/event-param-registrar.service"
-
+import { DataLoaderService } from 'src/app/services/data-loader.service';
 
 
 @Component({
@@ -30,7 +30,7 @@ export class MapComponent implements OnInit {
   private map: L.Map;
   private baseLayers: any;
 
-  constructor(private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private geotiffLoader: GeotiffDataLoaderService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
+  constructor(private loader: DataLoaderService, private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private geotiffLoader: GeotiffDataLoaderService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
         maxZoom: 20,

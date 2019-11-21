@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as geotiff from "geotiff";
 import { HttpClient } from '@angular/common/http';
+import {RasterData, RasterHeader, BandData, IndexedValues, UpdateFlags, UpdateStatus} from "../models/RasterData";
 
 @Injectable({
   providedIn: 'root'
@@ -42,33 +43,39 @@ export class GeotiffDataLoaderService {
     
           let noData = Number.parseFloat(fileDirectory.GDAL_NODATA);
 
-          let geotiffData: RasterData = {
+          let header: RasterHeader = {
             nCols: image.getWidth(),
             nRows: image.getHeight(),
             xllCorner: tiepoint.x,
             yllCorner: tiepoint.y - image.getHeight() * yScale,
             cellXSize: xScale,
             cellYSize: yScale,
-            values: {}
-          };
+          }
+          let geotiffData: RasterData = new RasterData(header);
 
           //package data
           let i: number;
           //console.log(bands);
           for(i = 0; i < bands.length; i++) {
             let band = bands[i];
-            let raster = rasters[band]; // left-right and top-down order
-            let values: {[index: number]: number} = {};
+            let raster = rasters[band];
+            if(raster == undefined) {
+              throw new Error("Could not find band: " + band);
+            }
+            let values: IndexedValues = new Map<number, number>();
             
             let j: number;
             for(j = 0; j < raster.length; j++) {
               let value = raster[j];
               if(value != noData && value != customNoData) {
-                values[j] = value;
+                values.set(j, value);
               }
             }
 
-            geotiffData.values[band] = values;
+            let rasterStat = geotiffData.addBand(band, values);
+            if(rasterStat.code != UpdateFlags.OK) {
+              throw new Error("Error adding band to raster: " + band);
+            }
             
           }
           return geotiffData;
@@ -79,12 +86,4 @@ export class GeotiffDataLoaderService {
   }
 }
 
-export interface RasterData {
-  nCols: number,
-  nRows: number,
-  xllCorner: number,
-  yllCorner: number,
-  cellXSize: number,
-  cellYSize: number,
-  values: {[band: number]: {[index: number]: number}}
-}
+

@@ -10,7 +10,15 @@ import { GeoJSON, Feature } from "geojson";
 })
 export class DataRetreiverService {
 
-  constructor(private util: UtilityService, private dataManager: DataManagerService) {}
+  //NEED TO SWITCH THIS TO CHANGE DATA LOCATION, ADD SOME SORT OF EMITTER IN DATAMANAGER AND LISTEN ON THIS FOR CURRENT DATA SET
+  //SHOULD EMIT CHANGES WHEN DATA CHANGED OR ACTIVE DATA (BAND) SWITCHED
+
+  //MOVE THIS TO A CLASS IN MODELS, ATTACH TO BANDS, THEN RETREIVE THROUGH DATAMANAGER
+  //THE LAYER GENERATOR SHOULD LISTEN TO THE CURRENT DATA STATE AND USE THAT TO REQUEST THE PROPER DATA (OR HAVE A WRAPPER THAT TRACKS THE CURRENT DATA AND HANDS RETREIVER)
+
+  constructor(private util: UtilityService, private dataManager: DataManagerService) {
+    dataManager
+  }
 
   tileXYToFlat(x: number, y: number, tileSize: L.Point): number {
     return y * tileSize.x + x;
