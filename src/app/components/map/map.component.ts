@@ -7,13 +7,19 @@ import {saveAs} from "file-saver";
 import * as geotiff from "geotiff";
 import { Color, ColorScale } from "../../classes/color-scale";
 import { ColorGeneratorService } from "../../services/color-generator.service";
-import { GeotiffDataLoaderService, RasterData } from "../../services/geotiff-data-loader.service";
+import { GeotiffDataLoaderService } from "../../services/geotiff-data-loader.service";
 import { DataRetreiverService } from "../../services/data-retreiver.service";
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/leaflet-raster-layer.service";
-import { DataManagerService } from "../../services/data-manager.service";
+import { DataManagerService, FocusedData } from "../../services/data-manager.service";
 import { EventParamRegistrarService } from "../../services/event-param-registrar.service"
 import { DataLoaderService } from 'src/app/services/data-loader.service';
+import "leaflet-groupedlayercontrol";
+import { BandData, IndexedValues } from 'src/app/models/RasterData.js';
+import { SiteMetadata } from 'src/app/models/SiteMetadata.js';
+import "leaflet.markercluster";
 
+//type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
+let C: any = L.control;
 
 @Component({
   selector: 'app-map',
@@ -32,21 +38,23 @@ export class MapComponent implements OnInit {
 
   constructor(private loader: DataLoaderService, private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private geotiffLoader: GeotiffDataLoaderService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
     this.baseLayers = {
-      Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
-        maxZoom: 20,
-        minZoom: 6
-      }),
-      Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        minZoom: 6
-      })
+      Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
+      Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
     };
 
     this.options = {
       layers: [this.baseLayers.Satellite],
-      zoom: 6,
+      zoom: 7,
       center: L.latLng(20.5, -157.917480),
-      attributionControl: false
+      attributionControl: false,
+      // zoomSnap: 0.01,
+      // wheelPxPerZoomLevel: 200,
+      minZoom: 6,
+      maxZoom: 20,
+      maxBounds: [
+        [18.302381, -160.762939],
+        [22.603869, -153.973389]
+      ]
     };
 
     this.drawnItems = new L.FeatureGroup;
@@ -64,14 +72,29 @@ export class MapComponent implements OnInit {
       }
     };
 
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: "assets/marker-icon-2x.png",
+      iconUrl: "assets/marker-icon.png",
+      shadowUrl: "assets/marker-shadow.png"
+    });
+
+    //don't want popup to be force closed when another one appears
+    L.Map.prototype.openPopup = function(popup) {
+      this._popup = popup;
+
+      return this.addLayer(popup).fire('popupopen', {
+        popup: this._popup
+      });
+    }
+
     
   }
 
 
 
   onMapReady(map: L.Map) {
-    L.DomUtil.addClass(map.getContainer(), 'pointer-cursor');
-    console.log(map.getContainer());
+    
+    L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
     this.map = map;
     this.drawnItems.addTo(map);
 
@@ -84,54 +107,114 @@ export class MapComponent implements OnInit {
  
     
 
-    this.geotiffLoader.getDataFromGeotiff("/assets/test.tif", -3.3999999521443642e+38).then((geotiffData: RasterData) => {
-      this.dataManager.setRasterData(geotiffData);
+    this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
 
-      let clickTag = this.eventRegistrar.registerGeoMapClick(map);
-      let geojsonLayer: L.GeoJSON;
-      this.paramService.createParameterHook(clickTag, (position: L.LatLng) => {
-        console.log(this.dataRetreiver.geoPosToGridValue(position));
-        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(position);
-        console.log(geojson);
-        if(geojsonLayer != undefined) {
-          map.removeLayer(geojsonLayer);
-        }
-        
-        geojsonLayer = new L.GeoJSON(geojson);
-        map.addLayer(geojsonLayer);
-      }, true);
-
-      let options: RasterOptions = {
-        cacheEmpty: true,
-        colorScale: colorScale
-      };
+      let layerGroups = {
+        Types: {}
+      }
       
-      let rasterLayer = R.gridLayer.RasterLayer(options);
-      map.addLayer(rasterLayer);
+      let bands: BandData = this.dataManager.getRasterData(data.date, DataManagerService.DATA_TYPES);
+      for(let band in bands) {
+        
+        let rasterOptions: RasterOptions = {
+          cacheEmpty: true,
+          colorScale: colorScale,
+          data: {
+            header: data.header,
+            values: bands[band]
+          }
+        };
+        let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
+        layerGroups.Types[band] = rasterLayer;
+      }
 
+      map.addLayer(layerGroups.Types[data.type]);
+
+      //test redraw
+      // setTimeout(() => {
+      //   let test: IndexedValues = new Map<number, number>();
+      //   data.data.forEach((index: number, key: number) => {
+      //     test.set(key, 1);
+      //   });
+      //   console.log(test);
+
+      //   layerGroups.Types[data.type].setData(data.header, test)
+      // }, 1000);
+    
+
+      
+
+      var layerGroupControlOptions = {
+        // Make the "Landmarks" group exclusive (use radio inputs)
+        exclusiveGroups: ["Types"],
+        // Show a checkbox next to non-exclusive group labels for toggling all
+        groupCheckboxes: true
+      };
+
+      // L.control.layers(baseLayers).addTo(map);
+      // L.control.layers(this.baseLayers).addTo(map);
+      C.groupedLayers(this.baseLayers, layerGroups, layerGroupControlOptions).addTo(map);
+      //console.log(C.groupedLayers);
+
+      // let clickTag = this.eventRegistrar.registerGeoMapClick(map);
+      // let geojsonLayer: L.GeoJSON;
+      // this.paramService.createParameterHook(clickTag, (position: L.LatLng) => {
+      //   console.log(this.dataRetreiver.geoPosToGridValue(data.header, data.data, position));
+      //   let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(data.header, data.data, position);
+      //   console.log(geojson);
+      //   if(geojsonLayer != undefined) {
+      //     map.removeLayer(geojsonLayer);
+      //   }
+        
+      //   geojsonLayer = new L.GeoJSON(geojson);
+      //   map.addLayer(geojsonLayer);
+      // }, true);
+
+      this.addPopupOnHover(data, 1000);
+
+      let sites = this.dataManager.getSiteMetadata(data.date);
+      let siteMarkers = R.markerClusterGroup();
+      sites.forEach((site: SiteMetadata) => {
+        let value = this.dataRetreiver.geoPosToGridValue(data.header, data.data, site.location);
+        let siteDetails: string = "Name: " + site.name
+        + "<br> Network: " + site.network
+        + "<br> Lat: " + site.location.lat + ", Lng: " + site.location.lng
+        //cheating here for now, should get actual site value
+        + "<br> Value: " + value;
+        let marker = L.marker(site.location).bindPopup(siteDetails);
+        siteMarkers.addLayer(marker);
+      });
+      map.addLayer(siteMarkers);
+      console.log(sites);
     });
 
-    this.addPopupOnHover(1000);
+   
   }
 
 
-  addPopupOnHover(timeout: number) {
+  addPopupOnHover(data: FocusedData, timeout: number) {
     let popupData: PopupData = {
       popupTimer: null,
       highlightedCell: null
     };
     
     let hoverTag = this.eventRegistrar.registerMapHover(this.map);
+    let popup: L.Popup;
     this.paramService.createParameterHook(hoverTag, (position: L.LatLng) => {
+      
       if(popupData.highlightedCell != null) {
         this.map.removeLayer(popupData.highlightedCell);
         popupData.highlightedCell = null;
       }
-
-      this.map.closePopup();
+      //close current hover popup if exesits
+      this.map.closePopup(popup);
       clearTimeout(popupData.popupTimer);
       popupData.popupTimer = setTimeout(() => {
-        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(position);
+        //if position is null mouse moved out of map
+        if(position == null) {
+          return;
+        }
+        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(data.header, data.data, position);
         //check if data exists at hovered point
         if(geojson != undefined) {
           popupData.highlightedCell = L.geoJSON(geojson)
@@ -144,10 +227,10 @@ export class MapComponent implements OnInit {
           })
           .addTo(this.map)
   
-          let value = this.dataRetreiver.geoPosToGridValue(position);
+          let value = this.dataRetreiver.geoPosToGridValue(data.header, data.data, position);
   
           //popup cell value
-          let popup = L.popup({ autoPan: false })
+          popup = L.popup({ autoPan: false })
           .setLatLng(position);
           popup.setContent("Value: " + value);
           popup.openOn(this.map);

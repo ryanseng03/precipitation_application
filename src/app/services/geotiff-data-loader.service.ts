@@ -51,6 +51,7 @@ export class GeotiffDataLoaderService {
             cellXSize: xScale,
             cellYSize: yScale,
           }
+          console.log(header);
           let geotiffData: RasterData = new RasterData(header);
 
           //package data

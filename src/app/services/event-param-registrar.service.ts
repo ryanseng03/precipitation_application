@@ -37,6 +37,8 @@ export class EventParamRegistrarService {
       map.on("mousemove", moveHandler)
     });
     map.on("mouseout", () => {
+      //indicate exited map with a null
+      sub.next(null);
       map.off("mousemove", moveHandler);
     });
 

@@ -1,15 +1,18 @@
 import { Injectable } from '@angular/core';
-import { RasterData, IndexedValues, BandData, RasterHeader } from "../models/RasterData";
-import {Subject} from "rxjs";
+import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus } from "../models/RasterData";
+import {Subject, Observable} from "rxjs";
 import {SiteMetadata} from "../models/SiteMetadata";
+import {DataLoaderService, InitData} from "../services/data-loader.service";
+import { forEach } from '@angular/router/src/utils/collection';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataManagerService {
-
+  //this will be replaced with some result from initialization that indicates newest data date
   public static readonly BASE_DATE = "Jan_1_1970";
+  public static readonly DEFAULT_TYPE = "rainfall";
   public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
 
   private stateEmitter: Subject<FocusedData>;
@@ -22,20 +25,52 @@ export class DataManagerService {
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor() {
+  constructor(private dataLoader: DataLoaderService) {
     this.data = {
       primary: null,
       focusedData: null
     };
+    this.stateEmitter = new Subject<FocusedData>();
     this.initialized = false;
+    this.initialize();
   }
 
-  setFocusedData(date: string, type: DataType): IndexedValues | null {
+  initialize() {
+    this.dataLoader.getInitData().then((data: InitData) => {
+      this.initialized = true;
+      let date = DataManagerService.BASE_DATE;
+      let rasterData: RasterData = new RasterData(data.rasterData.header);
+      for(let band in data.rasterData.data) {
+        let added: UpdateStatus<null> = rasterData.addBand(band, data.rasterData.data[band]);
+        if(added.code != 0) {
+          throw new Error("Unexpected initialization error");
+        }
+      }
+      console.log(data);
+      let pack: DataPack = {
+        raster: rasterData,
+        sites: data.siteMeta,
+        metrics: null
+      };
+      this.data.primary = {};
+      this.data.primary[date] = pack;
+      this.setFocusedData(date, DataManagerService.DEFAULT_TYPE);
+    });
+    
+  }
+
+  //might just want to switch this so methods return promises, some of them will probably need to pull data eventually anyway
+  // getInitialized(): Promise<void> {
+
+  // }
+
+  setFocusedData(date: string, type: DataType): FocusedData | null {
     this.initCheck();
     let focus: FocusedData = {
       date: date,
       type: type,
-      data: null
+      data: null,
+      header: null
     };
     let dataPack: DataPack = this.data.primary[date];
     //if undefined then the date doesn't exist, do nothign and return null
@@ -46,12 +81,21 @@ export class DataManagerService {
         throw new Error("Internal state error: Data band " + type + " for date does not exist");
       }
       focus.data = data;
+      focus.header = dataPack.raster.getHeader();
       //freeze focused object, don't want anything external messing with the state
       Object.freeze(focus);
       this.data.focusedData = focus;
       this.stateEmitter.next(focus);
     }
-    return focus.data;
+    return focus;
+  }
+
+  getFocusedData(): FocusedData {
+    return this.data.focusedData;
+  }
+
+  getFocusedDataListener(): Observable<FocusedData> {
+    return this.stateEmitter.asObservable();
   }
 
   getRasterData(date: Date, types?: DataType[]): BandData | null {
@@ -125,11 +169,7 @@ export class DataManagerService {
   //APPROPRIATE BECAUSE GARENTEED TO BE SPATIALLY COINCIDENT DATA 
 
   //reconstruct asserts that band names should be consistent and raster does not need to be reconstructed, verifies and returns false if incorrect
-  initialize(reconstruct: boolean = true): boolean {
-    //reconstruct data to ensure band naming
-
-    this.initialized = true;
-  }
+  
 
   //data has to be added in sets of 4 to maintain consistency
   addData(date: string, data: DataBands) {
@@ -150,7 +190,7 @@ export class DataManagerService {
 
   initCheck() {
     if(!this.initialized) {
-      throw new Error("State used before initialized. Please initialize the data set with the initialize function.");
+      throw new Error("State used before initialized. Please wait until initialization has been completed.");
     }
   }
 }
@@ -163,7 +203,7 @@ interface DataModel {
 }
 
 interface DateReferencedDataPack {
-  [date: Date]: DataPack
+  [date: string]: DataPack
 }
 
 interface DataPack {
@@ -178,6 +218,7 @@ interface DataPack {
 export type Date = string;
 
 export interface FocusedData {
+  header: RasterHeader,
   data: IndexedValues,
   type: DataType,
   date: Date

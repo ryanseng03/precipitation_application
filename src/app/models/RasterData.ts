@@ -6,8 +6,11 @@ export class RasterData {
     };
 
     constructor(header: RasterHeader) {
-        this.data.header = header;
-        this.data.data = {};
+
+        this.data = {
+            header: header,
+            data: {}
+        }
     }
 
     combine(raster: RasterData, renameFunction?: (bandName: string) => string | undefined): UpdateStatus<FailedBands> {
@@ -194,8 +197,6 @@ export class RasterData {
 
 
   }
-
-
 
 
   export interface FailedIndices {

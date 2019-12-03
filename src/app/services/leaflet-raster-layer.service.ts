@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import * as L from "leaflet";
-import { RasterData } from "./geotiff-data-loader.service"
 import { DataRetreiverService, DecoupledCoords } from "./data-retreiver.service";
 import { ColorScale } from '../classes/color-scale';
+import { RasterHeader, IndexedValues } from '../models/RasterData';
 
 export let R: any = L;
+//export type RasterLayer = R.GridLayer.RasterLayer;
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,8 @@ export let R: any = L;
 export class LeafletRasterLayerService {
   //if rendered tiles should be limited to a relatively small set, no reason to add overhead on tiles that contain no data
   private emptyTileCache: Set<string> = new Set<string>();
+  // private data: IndexedValues;
+  // private header: RasterHeader;
 
   constructor(private dataRetreiver: DataRetreiverService) {
     let __this = this;
@@ -28,6 +31,14 @@ export class LeafletRasterLayerService {
 
       clearEmptyTileCache: () => {
         this.emptyTileCache.clear();
+      },
+
+      setData: function(header: RasterHeader, values: IndexedValues) {
+        this.options.data = {
+          values: values,
+          header: header
+        };
+        this.redraw();
       },
 
       createTile: function(coords) {
@@ -55,21 +66,18 @@ export class LeafletRasterLayerService {
           let xMax = xMin + tileSize.x;
           let yMax = yMin + tileSize.y;
 
-          let x = xMin;
-          let y = yMin;
+          let x = 0;
+          let y = 0;
           let colorOff = 0;
-
           
-          //can these be decoupled and mapped? (get single lat and long for each point along tile and combine)
-          //might not work properly due to curvature (straights might have changing "parallel" as map curves), though this is how it's done in covjson datalayer package
-          //see if nested unprojects work sufficiently
           let hasValue = false;
+
           for(y = yMin; y < yMax; y++) {
-            
             for(x = xMin; x < xMax; x++) { 
-              
-              let latlng = this._map.unproject([x, y], coords.z);
-              let color = __this.dataRetreiver.geoPosToColor(latlng, this.options.colorScale)
+              //unproject fast enough that unnecessary to decouple
+              let latlng: L.LatLng = this._map.unproject([x, y], coords.z);
+
+              let color = __this.dataRetreiver.geoPosToColor(this.options.data.header, this.options.data.values, latlng, this.options.colorScale);
               if(color != undefined) {
                 hasValue = true;
                 imgData.data[colorOff] = color.r;
@@ -95,14 +103,14 @@ export class LeafletRasterLayerService {
     R.gridLayer.RasterLayer = function(options: RasterOptions) {
       return new R.GridLayer.RasterLayer(options);
     };
-
-    
-
-    console.log(R);
   }
 }
 
 export interface RasterOptions {
-  cacheEmpty?: boolean;
-  colorScale: ColorScale;
+  cacheEmpty?: boolean,
+  colorScale: ColorScale,
+  data: {
+    header: RasterHeader,
+    values: IndexedValues
+  }
 }
