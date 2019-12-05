@@ -14,7 +14,7 @@ export class DataLoaderService {
   public getInitData(): Promise<InitData> {
     let dataPromises = [this.getSiteMeta(), this.getInitRasterDataFromFile()];
     return Promise.all(dataPromises).then((data: any[]) => {
-      console.log(data);
+      //console.log(data);
       return {
         rasterData: data[1],
         siteMeta: data[0]
@@ -34,7 +34,7 @@ export class DataLoaderService {
       this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_d.tif", -3.3999999521443642e+38)
     ];
     return Promise.all(promises).then((geotiffData: RasterData[]) => {
-      console.log(geotiffData);
+      //console.log(geotiffData);
       return {
         header: geotiffData[0].getHeader(),
         data: {

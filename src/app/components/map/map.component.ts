@@ -10,13 +10,14 @@ import { ColorGeneratorService } from "../../services/color-generator.service";
 import { GeotiffDataLoaderService } from "../../services/geotiff-data-loader.service";
 import { DataRetreiverService } from "../../services/data-retreiver.service";
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/leaflet-raster-layer.service";
-import { DataManagerService, FocusedData } from "../../services/data-manager.service";
+import { DataManagerService, FocusedData, DataType } from "../../services/data-manager.service";
 import { EventParamRegistrarService } from "../../services/event-param-registrar.service"
 import { DataLoaderService } from 'src/app/services/data-loader.service';
 import "leaflet-groupedlayercontrol";
 import { BandData, IndexedValues } from 'src/app/models/RasterData.js';
 import { SiteMetadata } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
+import {first} from "rxjs/operators";
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
@@ -35,6 +36,7 @@ export class MapComponent implements OnInit {
   private drawOptions: any;
   private map: L.Map;
   private baseLayers: any;
+  private focused: FocusedData;
 
   constructor(private loader: DataLoaderService, private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private geotiffLoader: GeotiffDataLoaderService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
     this.baseLayers = {
@@ -103,12 +105,11 @@ export class MapComponent implements OnInit {
     //have to use "function()" syntax if new context
 
 
-    let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
- 
-    
+    let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
+    //let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
 
-    this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
-
+    this.dataManager.getFocusedDataListener().pipe(first()).toPromise().then((data: FocusedData) => {
+      this.focused = data;
       let layerGroups = {
         Types: {}
       }
@@ -145,9 +146,7 @@ export class MapComponent implements OnInit {
       
 
       var layerGroupControlOptions = {
-        // Make the "Landmarks" group exclusive (use radio inputs)
         exclusiveGroups: ["Types"],
-        // Show a checkbox next to non-exclusive group labels for toggling all
         groupCheckboxes: true
       };
 
@@ -170,7 +169,7 @@ export class MapComponent implements OnInit {
       //   map.addLayer(geojsonLayer);
       // }, true);
 
-      this.addPopupOnHover(data, 1000);
+      this.addPopupOnHover(1000);
 
       let sites = this.dataManager.getSiteMetadata(data.date);
       let siteMarkers = R.markerClusterGroup();
@@ -185,14 +184,27 @@ export class MapComponent implements OnInit {
         siteMarkers.addLayer(marker);
       });
       map.addLayer(siteMarkers);
-      console.log(sites);
+      //console.log(sites);
     });
 
-   
+    this.setBaseLayerHandlers();
+
+    //after first go only set data
+    this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
+      this.focused = data;
+    });
+  }
+
+  setBaseLayerHandlers() {
+    this.map.on('overlayadd', (e: L.LayersControlEvent) => {
+      //console.log(e);
+      let type: DataType = <DataType>e.name;
+      this.dataManager.setFocusedData(this.focused.date, type);
+    });
   }
 
 
-  addPopupOnHover(data: FocusedData, timeout: number) {
+  addPopupOnHover(timeout: number) {
     let popupData: PopupData = {
       popupTimer: null,
       highlightedCell: null
@@ -214,7 +226,7 @@ export class MapComponent implements OnInit {
         if(position == null) {
           return;
         }
-        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(data.header, data.data, position);
+        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(this.focused.header, this.focused.data, position);
         //check if data exists at hovered point
         if(geojson != undefined) {
           popupData.highlightedCell = L.geoJSON(geojson)
@@ -227,7 +239,7 @@ export class MapComponent implements OnInit {
           })
           .addTo(this.map)
   
-          let value = this.dataRetreiver.geoPosToGridValue(data.header, data.data, position);
+          let value = this.dataRetreiver.geoPosToGridValue(this.focused.header, this.focused.data, position);
   
           //popup cell value
           popup = L.popup({ autoPan: false })

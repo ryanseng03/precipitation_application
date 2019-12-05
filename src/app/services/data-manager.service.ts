@@ -46,7 +46,7 @@ export class DataManagerService {
           throw new Error("Unexpected initialization error");
         }
       }
-      console.log(data);
+      //console.log(data);
       let pack: DataPack = {
         raster: rasterData,
         sites: data.siteMeta,
@@ -95,6 +95,7 @@ export class DataManagerService {
   }
 
   getFocusedDataListener(): Observable<FocusedData> {
+    console.log("?");
     return this.stateEmitter.asObservable();
   }
 

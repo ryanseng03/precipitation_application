@@ -31,7 +31,7 @@ export class DbConService {
     }
 
     return this.initPromise.then(() => {
-      console.log(this.oAuthAccessToken);
+      //console.log(this.oAuthAccessToken);
       let query = "{'name':{'$in':['RainfallStation']}}";
       let url = "https://ikeauth.its.hawaii.edu/meta/v2/data?q=" + encodeURI(query) + "&limit=" + DbConService.MAX_POINTS + "&offset=0";
   
@@ -49,7 +49,7 @@ export class DbConService {
           return Observable.throw(new Error(e.message));
         })
       ).toPromise().then((response: ResponseResults) => {
-        console.log(response);
+        //console.log(response);
         let metadata: SiteMetadata[] = [];
         response.result.forEach((result) => {
           let metadatum: SiteMetadata = {
