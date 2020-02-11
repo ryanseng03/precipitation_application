@@ -3,13 +3,14 @@ import {RasterData, RasterHeader, BandData} from "../models/RasterData";
 import {GeotiffDataLoaderService} from "./geotiff-data-loader.service";
 import {DbConService} from "./db-con.service";
 import {DataBands} from "./data-manager.service";
+import {MetadataStoreService, SKNRefMeta} from "./siteManagement/metadata-store.service"
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataLoaderService {
 
-  constructor(private geotiffLoader: GeotiffDataLoaderService, private dbcon: DbConService) { }
+  constructor(private geotiffLoader: GeotiffDataLoaderService, private siteMeta: MetadataStoreService) { }
 
   public getInitData(): Promise<InitData> {
     let dataPromises = [this.getSiteMeta(), this.getInitRasterDataFromFile()];
@@ -23,7 +24,10 @@ export class DataLoaderService {
   }
 
   private getSiteMeta(): Promise<any> {
-    return this.dbcon.getSiteMeta();
+    let metaPromise = this.siteMeta.getMetaBySKNs(null);
+    return metaPromise.then((meta: SKNRefMeta) => {
+      return Object.values(meta);
+    });
   }
 
   private getInitRasterDataFromFile(): Promise<RasterBreakdown> {

@@ -105,8 +105,8 @@ export class MapComponent implements OnInit {
     //have to use "function()" syntax if new context
 
 
-    let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
-    //let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
+    //let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
+    let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
 
     this.dataManager.getFocusedDataListener().pipe(first()).toPromise().then((data: FocusedData) => {
       this.focused = data;
@@ -171,8 +171,13 @@ export class MapComponent implements OnInit {
 
       this.addPopupOnHover(1000);
 
+      let clusterOptions = {
+        //chunkedLoading: true
+      };
+
       let sites = this.dataManager.getSiteMetadata(data.date);
-      let siteMarkers = R.markerClusterGroup();
+      let siteMarkers = R.markerClusterGroup(clusterOptions);
+      let markers = [];
       sites.forEach((site: SiteMetadata) => {
         let value = this.dataRetreiver.geoPosToGridValue(data.header, data.data, site.location);
         let siteDetails: string = "Name: " + site.name
@@ -181,8 +186,9 @@ export class MapComponent implements OnInit {
         //cheating here for now, should get actual site value
         + "<br> Value: " + value;
         let marker = L.marker(site.location).bindPopup(siteDetails);
-        siteMarkers.addLayer(marker);
+        markers.push(marker);
       });
+      siteMarkers.addLayers(markers);
       map.addLayer(siteMarkers);
       //console.log(sites);
     });

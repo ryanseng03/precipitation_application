@@ -237,5 +237,5 @@ export type DataType = keyof DataBands;
 
 //define metrics structure
 export interface Metrics {
-
+  
 }
