@@ -13,18 +13,31 @@ export class MetadataStoreService {
 
   constructor(private dbcon: DbConService) {
     let query = "{'name':{'$in':['RainfallStation']}}";
-    let resultHandler: (result: any) => SKNRefMeta = (result: any) => {
+    query = "{'name':'meta_test'}";
+    let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
       let metadata: SKNRefMeta = {};
-      result.forEach((result) => {
+      console.log(results);
+      results.forEach((result) => {
+        //temp check for test data
+        if(result.value.skn != undefined) {
           let metadatum: SiteMetadata = {
             name: result.value.name,
-            location: new LatLng(result.value.latitude, result.value.longitude),
+            location: new LatLng(result.value.lat, result.value.lon),
             network: result.value.network,
             value: null
           };
+          if(metadata[result.value.skn]) {
+            console.log("dupe");
+          }
+          if(Number(result.value.lat) > 100) {
+            console.log(result);
+          }
           metadata[result.value.skn] = metadatum;
-        });
-        return metadata;
+        }
+          
+      });
+      console.log(Object.keys(metadata).length);
+      return metadata;
     }
 
     this.siteMeta = dbcon.query<SKNRefMeta>(query, resultHandler);

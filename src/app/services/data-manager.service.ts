@@ -52,6 +52,7 @@ export class DataManagerService {
         sites: data.siteMeta,
         metrics: null
       };
+      console.log(pack.sites);
       this.data.primary = {};
       this.data.primary[date] = pack;
       this.setFocusedData(date, DataManagerService.DEFAULT_TYPE);

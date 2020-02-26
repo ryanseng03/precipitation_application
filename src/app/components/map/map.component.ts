@@ -176,9 +176,17 @@ export class MapComponent implements OnInit {
       };
 
       let sites = this.dataManager.getSiteMetadata(data.date);
+      console.log(sites);
       let siteMarkers = R.markerClusterGroup(clusterOptions);
       let markers = [];
       sites.forEach((site: SiteMetadata) => {
+
+        //troubleshooting markers not appearing
+        if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
+        || site.location.lng < this.options.maxBounds[0][1] || site.location.lng > this.options.maxBounds[1][1]) {
+          console.log("OOB!", site.location.lat, site.location.lng);
+        }
+
         let value = this.dataRetreiver.geoPosToGridValue(data.header, data.data, site.location);
         let siteDetails: string = "Name: " + site.name
         + "<br> Network: " + site.network
@@ -186,9 +194,12 @@ export class MapComponent implements OnInit {
         //cheating here for now, should get actual site value
         + "<br> Value: " + value;
         let marker = L.marker(site.location).bindPopup(siteDetails);
+        //console.log(siteDetails);
         markers.push(marker);
       });
+      //console.log(markers);
       siteMarkers.addLayers(markers);
+      //console.log(siteMarkers);
       map.addLayer(siteMarkers);
       //console.log(sites);
     });

@@ -8,7 +8,8 @@ import { map, retry, catchError, mergeMap } from 'rxjs/operators';
 })
 export class DbConService {
 
-  static readonly TOKEN_FILE = "/assets/APIToken.txt"
+  //static readonly TOKEN_FILE = "/assets/APIToken.txt";
+  static readonly TOKEN_FILE = "/assets/TestToken.txt";
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
@@ -28,7 +29,7 @@ export class DbConService {
     }
 
     return this.initPromise.then(() => {
-      let url = `https://ikeauth.its.hawaii.edu/meta/v2/data?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
+      let url = `https://agaveauth.its.hawaii.edu/search/v2/data?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
 
       if(url.length > DbConService.MAX_URI) {
         throw new Error("Query too long.");

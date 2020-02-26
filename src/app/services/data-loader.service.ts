@@ -3,14 +3,15 @@ import {RasterData, RasterHeader, BandData} from "../models/RasterData";
 import {GeotiffDataLoaderService} from "./geotiff-data-loader.service";
 import {DbConService} from "./db-con.service";
 import {DataBands} from "./data-manager.service";
-import {MetadataStoreService, SKNRefMeta} from "./siteManagement/metadata-store.service"
+import {MetadataStoreService, SKNRefMeta} from "./siteManagement/metadata-store.service";
+import {SiteValueFetcherService} from "./siteManagement/site-value-fetcher.service"
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataLoaderService {
 
-  constructor(private geotiffLoader: GeotiffDataLoaderService, private siteMeta: MetadataStoreService) { }
+  constructor(private geotiffLoader: GeotiffDataLoaderService, private siteMeta: MetadataStoreService, private fetcher: SiteValueFetcherService) { }
 
   public getInitData(): Promise<InitData> {
     let dataPromises = [this.getSiteMeta(), this.getInitRasterDataFromFile()];
@@ -26,6 +27,7 @@ export class DataLoaderService {
   private getSiteMeta(): Promise<any> {
     let metaPromise = this.siteMeta.getMetaBySKNs(null);
     return metaPromise.then((meta: SKNRefMeta) => {
+      console.log(Object.values(meta));
       return Object.values(meta);
     });
   }
