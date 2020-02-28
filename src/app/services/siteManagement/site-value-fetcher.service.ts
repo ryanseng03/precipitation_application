@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import {MetadataStoreService, SKNRefMeta} from "./metadata-store.service";
 import { DbConService } from "../db-con.service";
+import * as moment from "moment";
+
+const LIVE = false;
 
 @Injectable({
   providedIn: 'root'
@@ -24,14 +27,21 @@ export class SiteValueFetcherService {
 
   //test date querying
   getValuesTest() {
+    
+    let date = LIVE ? new Date().toISOString() : new Date("2019-09-18").toISOString();
+    //cant do any sorting or just get nearest date, so just subtract the expected data time step from the live (or test) date and use the 
+
+    console.log(moment().subtract(1, "months").toISOString());
+
     //let dateRange = [2017/01/01];
-//{$gt:2017-01-01T00:00:00.196-06:00}
     //!!working!!
-    //time zones are dumb, apparently the time changes between 10 and 0 depending on what date string format is used, standardize this (should just explicitly convert everything to ISO standard to avoid confusion)
-    //ISO standard: YYYY-MM-DD:HH:MM:SS:T.TTTZ
+    //one of these (top one with dots) adds 10 hours, must be a weird time zone thing, make sure to standardize (change parser to use second time format, can use a string replace to replace dots with dashes)
+    //Z indicates time zone always zero
+    //ISO standard: YYYY-MM-DD:HH:MM:SS.SSSZ
     console.log(new Date("2019.09.18").toISOString());
     console.log(new Date("2019-09-18").toISOString());
-    let query = `{'$and':[{'name':'value_test'},{'value.date':{$gt:{'$date':'${new Date("1990-05-04").toISOString()}'}}}]}`;
+    console.log(new Date().toISOString());
+    let query = `{'$and':[{'name':'value_test'},{'value.date':{$lt:{'$date':'${new Date("1990-05-04").toISOString()}'},{'value.date':{$gt:{'$date':'${new Date("1990-05-04").toISOString()}'}}}]}`;
     //query = "{'name':'value_test'}";
 
 
