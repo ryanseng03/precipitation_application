@@ -16,7 +16,7 @@ export class SiteValueFetcherService {
   }
 
   //keep date static for lifetime (from initialization), can make dynamic if you think it's necessary later
-  readonly date: Day.Dayjs = LIVE ? Day(null, null, "utc") : Day("1990-05-10:00:00:00.000Z");
+  readonly date: Day.Dayjs = LIVE ? Day(null, null, "utc") : Day("1990-05-10T00:00:00.000Z");
   
 
   constructor(private siteMeta: MetadataStoreService, private dbcon: DbConService) {
@@ -24,7 +24,7 @@ export class SiteValueFetcherService {
     this.getValuesTest();
   }
 
-  getValues(start: string, end?: string) {
+  getValues(start: Day.Dayjs, end?: Day.Dayjs) {
     //query
     let skns = new Set();
     //insert skns from query results to skns set
@@ -37,7 +37,7 @@ export class SiteValueFetcherService {
   //test date querying
   getValuesTest() {
     //just use iso standard time format for everything and explicitly specify utc to ensure consistency
-    console.log(Day(undefined, {utc: true}).toISOString(), Day("1990-05-10:00:00:00.000Z", {utc: true}).toISOString());
+    console.log(Day(undefined, {utc: true}).toISOString(), Day("1990-05-10T00:00:00.000Z", {utc: true}).toISOString());
     //cant do any sorting or just get nearest date, so just subtract the expected data time step from the live (or test) date and use the first result; resubmit query with next timestep if no results
 
     // this.getAllValues().then((result) => {
@@ -73,12 +73,40 @@ export class SiteValueFetcherService {
      
   }
 
-  getValueRange() {
+  //get values on range [min, max]
+  getValueRange(min: Day.Dayjs, max: Day.Dayjs): Promise<DateRefValues> {
+    return new Promise<DateRefValues>((resolve, reject) => {
+      let query = `{'$and':[{'name':'value_test'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
 
+      // let resultHandler: (results: any) => any = (results: any) => {
+      //   return this.sortByDate(results);
+      // }
+  
+      this.dbcon.query<DateRefValues>(query, this.sortByDate).then((vals) => {
+        console.log(vals);
+        resolve(vals);
+      });
+    });
+  }
+
+  sortByDate(values: any[]): DateRefValues {
+    let sorted: DateRefValues = {};
+    values.forEach((doc) => {
+      let date = doc.value.date.$date;
+      if(sorted[date] == undefined) {
+        sorted[date] = [];
+      }
+      sorted[date].push({
+        skn: doc.value.skn,
+        value: doc.value.value,
+        type: doc.value.type
+      });
+    });
+    return sorted;
   }
 
   //resolves if recent value was found, otherwise rejects with lower bound date used
-  getRecentValues(date: Day.Dayjs, step: TimeStep) {
+  getRecentValues(date: Day.Dayjs, step: TimeStep): Promise<DateRefValues> {
     return new Promise((resolve, reject) => {
       console.log(date);
       let lastDataMin = Day(date).subtract(step.size, step.scale);
@@ -91,20 +119,18 @@ export class SiteValueFetcherService {
       //!!working!!
       //one of these (top one with dots) adds 10 hours, must be a weird time zone thing, make sure to standardize (change parser to use second time format, can use a string replace to replace dots with dashes)
       //Z indicates time zone always zero
-      //ISO standard: YYYY-MM-DD:HH:MM:SS.SSSZ
+      //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
   
       let query = `{'$and':[{'name':'value_test'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
       //query = "{'name':'value_test'}";
   
   
-      let resultHandler: (results: any) => any = (results: any) => {
-        return this.extractLastValues(results);
-        console.log(results);
-        return results;
-      }
+      // let resultHandler: (results: any) => any = (results: any) => {
+      //   return this.extractLastValues(results);
+      // }
   
       //need to add in some error handling
-      this.dbcon.query<SKNRefValue>(query, this.extractLastValues).then((vals) => {
+      this.dbcon.query<DateRefValues>(query, this.extractLastValues).then((vals) => {
         if(Object.keys(vals).length == 0) {
           console.log(lastDataMin);
           reject(lastDataMin);
@@ -121,7 +147,7 @@ export class SiteValueFetcherService {
 
   //need to create a better definition for the value docs, using any for now
   //at the moment only need value, so just map SKNs to values, might need more later, e.g. step type, leave value as an object to make easier to expand
-  extractLastValues(recent: any[]): SKNRefValue {
+  extractLastValues(recent: any[]): DateRefValues {
     //if empty just return an empty object
     if(recent.length == 0) {
       return {};
@@ -130,10 +156,12 @@ export class SiteValueFetcherService {
     //initialize max date and value doc object to first item
     let doc = recent[0];
     let maxDate = Day(doc.value.date.$date);
-    let valueDocs: SKNRefValue = {};
-    valueDocs[doc.value.skn] = {
-      value: doc.value.value
-    };
+    let valueDocs: DateRefValues = {};
+    valueDocs[doc.value.date.$date] = [{
+      skn: doc.value.skn,
+      value: doc.value.value,
+      type: doc.value.type
+    }];
     for(let i = 1; i < recent.length; i++) {
       doc = recent[i]
       let date = Day(doc.value.date.$date);
@@ -141,15 +169,19 @@ export class SiteValueFetcherService {
       if(date.isAfter(maxDate)) {
         maxDate = date;
         valueDocs = {};
-        valueDocs[doc.value.skn] = {
-          value: doc.value.value
-        };
+        valueDocs[doc.value.date.$date] = [{
+          skn: doc.value.skn,
+          value: doc.value.value,
+          type: doc.value.type
+        }];
       }
       //if in the same data set as the current max then add the value to the doc list
       else if(date.isSame(maxDate)) {
-        valueDocs[doc.value.skn] = {
-          value: doc.value.value
-        };
+        valueDocs[doc.value.date.$date].push({
+          skn: doc.value.skn,
+          value: doc.value.value,
+          type: doc.value.type
+        });
       }
       
     }
@@ -199,9 +231,20 @@ export interface TimeStep {
   scale: Day.OpUnitType
 }
 
-
-export interface SKNRefValue {
-  [skn: string]: {
-    value: number
-  }
+//remember that any date strings should always be iso standard at time 0
+//ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
+export interface DateRefValues {
+  [date: string]: {
+    skn: string,
+    value: number,
+    type: string
+  }[]
 }
+
+//need the skn, but shouldn't need to reference values by skn (only used to ref metadata), so key by date instead
+// export interface SKNRefValue {
+//   [skn: string]: {
+//     value: number
+//     type: string
+//   }
+// }

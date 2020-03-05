@@ -1,0 +1,2 @@
+sort these services by function
+siteManagement services should be sub to database retreival folder (also should modularize)
