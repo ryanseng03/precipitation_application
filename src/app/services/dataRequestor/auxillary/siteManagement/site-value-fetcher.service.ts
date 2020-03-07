@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {MetadataStoreService, SKNRefMeta} from "./metadata-store.service";
-import { DbConService } from "../db-con.service";
+import { DbConService } from "../dbCon/db-con.service";
 import * as Day from "dayjs";
 
 const LIVE: boolean = false;
@@ -15,27 +15,33 @@ export class SiteValueFetcherService {
     scale: "day"
   }
 
+  //should add set filter to query, match against data set name
+  //use these for easy updating
+  //note once go live the set name should be static (same set just appending data)
+  readonly docName = "value_test";
+  readonly setName = "?";
+
   //keep date static for lifetime (from initialization), can make dynamic if you think it's necessary later
   readonly date: Day.Dayjs = LIVE ? Day(null, null, "utc") : Day("1990-05-10T00:00:00.000Z");
   
 
   constructor(private siteMeta: MetadataStoreService, private dbcon: DbConService) {
-    console.log("Running");
-    this.getValuesTest();
+    // console.log("Running");
+    // this.getValuesTest();
   }
 
-  getValues(start: Day.Dayjs, end?: Day.Dayjs) {
-    //query
-    let skns = new Set();
-    //insert skns from query results to skns set
-    let sknArr = Array.from(skns);
-    let meta = this.siteMeta.getMetaBySKNs(sknArr);
-    //where are these stored, how are they handled?
-    //probably have this just retreive them then have the storage etc handled elsewhere
-  }
+  // getValues(start: Day.Dayjs, end?: Day.Dayjs) {
+  //   //query
+  //   let skns = new Set();
+  //   //insert skns from query results to skns set
+  //   let sknArr = Array.from(skns);
+  //   let meta = this.siteMeta.getMetaBySKNs(sknArr);
+  //   //where are these stored, how are they handled?
+  //   //probably have this just retreive them then have the storage etc handled elsewhere
+  // }
 
   //test date querying
-  getValuesTest() {
+  private getValuesTest() {
     //just use iso standard time format for everything and explicitly specify utc to ensure consistency
     console.log(Day(undefined, {utc: true}).toISOString(), Day("1990-05-10T00:00:00.000Z", {utc: true}).toISOString());
     //cant do any sorting or just get nearest date, so just subtract the expected data time step from the live (or test) date and use the first result; resubmit query with next timestep if no results
@@ -52,14 +58,18 @@ export class SiteValueFetcherService {
       console.log("Failed to get recent values. Too many iterations.");
       //should have some sort of fallback? maybe define a fallback date with known data to use if recent pullback fails (last data available at application push)
     });
-    
-    
 
   }
 
-  getAllValues() {
+  //might want to add options param that allows changing the number of iterations
+  getRecentValues(): Promise<DateRefValues> {
+    return this.getRecentValuesRecursive(this.date, SiteValueFetcherService.STEP, 5);
+  }
+
+  //testing only, probably shouldn't call this once all the data is there
+  private getAllValues() {
     return new Promise((resolve, reject) => {
-      let query = "{'name':'value_test'}";
+      let query = `{'name':'${this.docName}'}`;
   
   
       let resultHandler: (results: any) => any = (results: any) => {
@@ -76,7 +86,7 @@ export class SiteValueFetcherService {
   //get values on range [min, max]
   getValueRange(min: Day.Dayjs, max: Day.Dayjs): Promise<DateRefValues> {
     return new Promise<DateRefValues>((resolve, reject) => {
-      let query = `{'$and':[{'name':'value_test'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
+      let query = `{'$and':[{'name':'${this.docName}'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
 
       // let resultHandler: (results: any) => any = (results: any) => {
       //   return this.sortByDate(results);
@@ -89,7 +99,7 @@ export class SiteValueFetcherService {
     });
   }
 
-  sortByDate(values: any[]): DateRefValues {
+  private sortByDate(values: any[]): DateRefValues {
     let sorted: DateRefValues = {};
     values.forEach((doc) => {
       let date = doc.value.date.$date;
@@ -106,7 +116,7 @@ export class SiteValueFetcherService {
   }
 
   //resolves if recent value was found, otherwise rejects with lower bound date used
-  getRecentValues(date: Day.Dayjs, step: TimeStep): Promise<DateRefValues> {
+  private getRecentValuesMain(date: Day.Dayjs, step: TimeStep): Promise<DateRefValues> {
     return new Promise((resolve, reject) => {
       console.log(date);
       let lastDataMin = Day(date).subtract(step.size, step.scale);
@@ -121,8 +131,8 @@ export class SiteValueFetcherService {
       //Z indicates time zone always zero
       //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
   
-      let query = `{'$and':[{'name':'value_test'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
-      //query = "{'name':'value_test'}";
+      let query = `{'$and':[{'name':'${this.docName}'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
+      //query = `{'name':'${this.docName}'}`;
   
   
       // let resultHandler: (results: any) => any = (results: any) => {
@@ -147,7 +157,7 @@ export class SiteValueFetcherService {
 
   //need to create a better definition for the value docs, using any for now
   //at the moment only need value, so just map SKNs to values, might need more later, e.g. step type, leave value as an object to make easier to expand
-  extractLastValues(recent: any[]): DateRefValues {
+  private extractLastValues(recent: any[]): DateRefValues {
     //if empty just return an empty object
     if(recent.length == 0) {
       return {};
@@ -189,17 +199,16 @@ export class SiteValueFetcherService {
     return valueDocs;
   }
 
-  //should add a limit on how many recursions
-  getRecentValuesRecursive(date: Day.Dayjs, step: TimeStep, max: number, i: number = 0): Promise<any> {
+  
+  private getRecentValuesRecursive(date: Day.Dayjs, step: TimeStep, max: number, i: number = 0): Promise<DateRefValues> {
     return new Promise((resolve, reject) => {
       if(i >= max) {
-        reject();
+        reject("Too many iterations.");
       }
-      this.getRecentValues(this.date, SiteValueFetcherService.STEP).then((value) => {
+      this.getRecentValuesMain(this.date, SiteValueFetcherService.STEP).then((value) => {
         console.log(value);
         resolve(value);
       }, (min) => {
-        console.log("failed");
         return this.getRecentValuesRecursive(min, SiteValueFetcherService.STEP, max, i + 1);
       });
     });

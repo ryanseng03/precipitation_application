@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import {RasterData, RasterHeader, BandData} from "../models/RasterData";
+import {RasterData, RasterHeader, BandData} from "../../models/RasterData";
 import {GeotiffDataLoaderService} from "./geotiff-data-loader.service";
-import {DbConService} from "./db-con.service";
-import {DataBands} from "./data-manager.service";
+import {DataBands} from "../data-manager.service";
 import {MetadataStoreService, SKNRefMeta} from "./siteManagement/metadata-store.service";
 import {SiteValueFetcherService} from "./siteManagement/site-value-fetcher.service"
 

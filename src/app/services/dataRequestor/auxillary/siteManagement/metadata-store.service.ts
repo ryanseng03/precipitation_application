@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { DbConService } from "../db-con.service";
-import { SiteMetadata } from "../../models/SiteMetadata"
+import { DbConService } from "../dbCon/db-con.service";
+import { SiteMetadata } from "../../../../models/SiteMetadata"
 import { LatLng } from "leaflet";
 
 @Injectable({
@@ -8,12 +8,19 @@ import { LatLng } from "leaflet";
 })
 export class MetadataStoreService {
 
+  //should add set filter to query, match against data set name
+  //use these for easy updating
+  //note once go live the set name should be static (same set just appending data)
+  readonly docName = "meta_test";
+  //maybe make this global or add all of these defs to a separate file since the set name should be shared
+  readonly setName = "?";
+
   //using skn as site id
   private siteMeta: Promise<SKNRefMeta>;
 
   constructor(private dbcon: DbConService) {
     let query = "{'name':{'$in':['RainfallStation']}}";
-    query = "{'name':'meta_test'}";
+    query = `{'name':'${this.docName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
       let metadata: SKNRefMeta = {};
       console.log(results);
