@@ -1,56 +1,40 @@
 import { Injectable } from '@angular/core';
 import { DbConService } from "../dbCon/db-con.service";
-import { SiteMetadata } from "../../../../models/SiteMetadata"
+import { SiteMetadata } from "../../../../models/SiteMetadata";
+import {DataProcessorService} from "../../../dataProcessor/data-processor.service"
 import { LatLng } from "leaflet";
+import dsconfig from "./DataSetConfig.json";
 
 @Injectable({
   providedIn: 'root'
 })
 export class MetadataStoreService {
 
-  //should add set filter to query, match against data set name
-  //use these for easy updating
-  //note once go live the set name should be static (same set just appending data)
-  readonly docName = "meta_test";
-  //maybe make this global or add all of these defs to a separate file since the set name should be shared
-  readonly setName = "?";
-
   //using skn as site id
   private siteMeta: Promise<SKNRefMeta>;
 
   constructor(private dbcon: DbConService) {
     let query = "{'name':{'$in':['RainfallStation']}}";
-    query = `{'name':'${this.docName}'}`;
+    query = `{'name':'${dsconfig.metaDocName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
       let metadata: SKNRefMeta = {};
       console.log(results);
       results.forEach((result) => {
         //temp check for test data
         if(result.value.skn != undefined) {
-          let metadatum: SiteMetadata = {
-            name: result.value.name,
-            location: new LatLng(result.value.lat, result.value.lon),
-            network: result.value.network,
-            value: null
-          };
-          if(metadata[result.value.skn]) {
-            console.log("dupe");
-          }
-          if(Number(result.value.lat) > 100) {
-            console.log(result);
-          }
-          metadata[result.value.skn] = metadatum;
+          metadata[result.value.skn] = result.value;
         }
-          
+        else {
+          console.error("Metadata object received with no skn tag.");
+        }
       });
-      console.log(Object.keys(metadata).length);
       return metadata;
     }
 
     this.siteMeta = dbcon.query<SKNRefMeta>(query, resultHandler);
   }
 
-  getMetaBySKN(skn: string): Promise<SiteMetadata> {
+  getMetaBySKN(skn: string): Promise<RawSiteMeta> {
     return this.siteMeta.then((meta: SKNRefMeta) => {
       return meta[skn];
     });
@@ -77,5 +61,23 @@ export class MetadataStoreService {
 }
 
 export interface SKNRefMeta {
-  [skn: string]: SiteMetadata
+  [skn: string]: RawSiteMeta
 }
+
+
+//instead of this the raw data from the database should go through the data processor, all the data handler functions should come from the data processor
+
+//allow arbitrary properties to allow for changes, this will be normalized in data processor
+//enforce skn since this must be available to reference values
+export interface RawSiteMeta {
+  skn: string,
+  [properties: string]: any
+}
+
+
+// new SiteMetadata({
+//   skn: result.value.skn,
+//   name: result.value.name,
+//   location: new LatLng(result.value.lat, result.value.lon),
+//   network: result.value.network
+// }

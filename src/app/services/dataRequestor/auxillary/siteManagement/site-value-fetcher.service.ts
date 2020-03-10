@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import {MetadataStoreService, SKNRefMeta} from "./metadata-store.service";
 import { DbConService } from "../dbCon/db-con.service";
-import * as Day from "dayjs";
+import Day from "dayjs";
+import dsconfig from "./DataSetConfig.json";
 
 const LIVE: boolean = false;
 
@@ -15,12 +16,6 @@ export class SiteValueFetcherService {
     scale: "day"
   }
 
-  //should add set filter to query, match against data set name
-  //use these for easy updating
-  //note once go live the set name should be static (same set just appending data)
-  readonly docName = "value_test";
-  readonly setName = "?";
-
   //keep date static for lifetime (from initialization), can make dynamic if you think it's necessary later
   readonly date: Day.Dayjs = LIVE ? Day(null, null, "utc") : Day("1990-05-10T00:00:00.000Z");
   
@@ -30,15 +25,6 @@ export class SiteValueFetcherService {
     // this.getValuesTest();
   }
 
-  // getValues(start: Day.Dayjs, end?: Day.Dayjs) {
-  //   //query
-  //   let skns = new Set();
-  //   //insert skns from query results to skns set
-  //   let sknArr = Array.from(skns);
-  //   let meta = this.siteMeta.getMetaBySKNs(sknArr);
-  //   //where are these stored, how are they handled?
-  //   //probably have this just retreive them then have the storage etc handled elsewhere
-  // }
 
   //test date querying
   private getValuesTest() {
@@ -69,7 +55,7 @@ export class SiteValueFetcherService {
   //testing only, probably shouldn't call this once all the data is there
   private getAllValues() {
     return new Promise((resolve, reject) => {
-      let query = `{'name':'${this.docName}'}`;
+      let query = `{'name':'${dsconfig.valueDocName}'}`;
   
   
       let resultHandler: (results: any) => any = (results: any) => {
@@ -86,7 +72,7 @@ export class SiteValueFetcherService {
   //get values on range [min, max]
   getValueRange(min: Day.Dayjs, max: Day.Dayjs): Promise<DateRefValues> {
     return new Promise<DateRefValues>((resolve, reject) => {
-      let query = `{'$and':[{'name':'${this.docName}'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
+      let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
 
       // let resultHandler: (results: any) => any = (results: any) => {
       //   return this.sortByDate(results);
@@ -102,15 +88,13 @@ export class SiteValueFetcherService {
   private sortByDate(values: any[]): DateRefValues {
     let sorted: DateRefValues = {};
     values.forEach((doc) => {
-      let date = doc.value.date.$date;
+      //remove type tag from date
+      doc.value.date = doc.value.date.$date;
+      let date = doc.value.date;
       if(sorted[date] == undefined) {
         sorted[date] = [];
       }
-      sorted[date].push({
-        skn: doc.value.skn,
-        value: doc.value.value,
-        type: doc.value.type
-      });
+      sorted[date].push(doc.value);
     });
     return sorted;
   }
@@ -131,7 +115,7 @@ export class SiteValueFetcherService {
       //Z indicates time zone always zero
       //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
   
-      let query = `{'$and':[{'name':'${this.docName}'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
+      let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
       //query = `{'name':'${this.docName}'}`;
   
   
@@ -167,31 +151,23 @@ export class SiteValueFetcherService {
     let doc = recent[0];
     let maxDate = Day(doc.value.date.$date);
     let valueDocs: DateRefValues = {};
-    valueDocs[doc.value.date.$date] = [{
-      skn: doc.value.skn,
-      value: doc.value.value,
-      type: doc.value.type
-    }];
+    //remove type tag from date
+    doc.value.date = doc.value.date.$date;
+    valueDocs[doc.value.date] = [doc.value];
     for(let i = 1; i < recent.length; i++) {
       doc = recent[i]
-      let date = Day(doc.value.date.$date);
+      //remove type tag from date
+      doc.value.date = doc.value.date.$date;
+      let date = Day(doc.value.date);
       //the date of this doc falls after the others found, set max date and overwrite list of value docs with docs under current date
       if(date.isAfter(maxDate)) {
         maxDate = date;
         valueDocs = {};
-        valueDocs[doc.value.date.$date] = [{
-          skn: doc.value.skn,
-          value: doc.value.value,
-          type: doc.value.type
-        }];
+        valueDocs[doc.value.date] = [doc.value];
       }
       //if in the same data set as the current max then add the value to the doc list
       else if(date.isSame(maxDate)) {
-        valueDocs[doc.value.date.$date].push({
-          skn: doc.value.skn,
-          value: doc.value.value,
-          type: doc.value.type
-        });
+        valueDocs[doc.value.date].push(doc.value);
       }
       
     }
@@ -216,25 +192,6 @@ export class SiteValueFetcherService {
 
 }
 
-
-
-// class RecursivePromise<T, V> {
-//   constructor(f: () => Promise<T>, cb: (T | V) => ) {
-//     f().then((result: T) => {
-//       if(condition(result)) {
-        
-//       }
-//       else {
-
-//       }
-//     }, (result: V) => {
-
-//     })
-
-//     if(condition)
-//   }
-// }
-
 export interface TimeStep {
   size: number,
   scale: Day.OpUnitType
@@ -243,11 +200,16 @@ export interface TimeStep {
 //remember that any date strings should always be iso standard at time 0
 //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
 export interface DateRefValues {
-  [date: string]: {
-    skn: string,
-    value: number,
-    type: string
-  }[]
+  [date: string]: RawSiteValues[]
+}
+
+//requires date (how did it get here without it), skn (need to ref the metadata doc it belongs with), value (the whole point)
+//for date just remove the mongo type tag and store date directly, no reason to deal with that
+export interface RawSiteValues {
+  skn: string,
+  value: number,
+  date: string,
+  [properties: string]: any
 }
 
 //need the skn, but shouldn't need to reference values by skn (only used to ref metadata), so key by date instead
