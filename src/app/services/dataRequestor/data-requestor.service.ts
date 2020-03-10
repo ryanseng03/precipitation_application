@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import {SiteValueFetcherService, DateRefValues} from "./auxillary/siteManagement/site-value-fetcher.service";
-import {MetadataStoreService} from "./auxillary/siteManagement/metadata-store.service";
+import {MetadataStoreService, SKNRefMeta} from "./auxillary/siteManagement/metadata-store.service";
+import { SiteValue, SiteMetadata, SiteInfo } from '../../models/SiteMetadata';
+import Day from "dayjs";
+import { RasterData } from '../../models/RasterData';
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
 //eventually also routes requests for remote raster data fetching
@@ -16,23 +19,35 @@ export class DataRequestorService {
   //need to be careful how you set up separation between site and raster data, need to keep date consistent
   //
 
-  //need to change any to the full site obejct def type
-  getInitSiteData(): Promise<any> {
-    //might want to make the recursive method internal, add a wrapper and error fallback
-    this.siteRetreiver.getRecentValues().then((values: DateRefValues) => {
-      //get skns and retreive metadata
-      //strip value docs from date tag and map to skn array (should only be one date)
-      let skns = Object.values(values)[0].map((value) => {
-        return value.skn;
-      });
-      this.metaRetreiver.getMetaBySKNs(skns).then((meta) => {
-        //need to define the cross object then combine
+  //just return values, wait to combine with metadata references until needed to avoid excess storage
+  getInitSiteVals(): Promise<DateRefValues> {
+    return this.siteRetreiver.getRecentValues();
+  }
 
-      });
-    }, () => {
-      console.log("Failed to get recent values. Too many iterations.");
-      //should have some sort of fallback? maybe define a fallback date with known data to use if recent pullback fails (last data available at application push)
-    });
+  getSiteVals(start: string, end: string) {
+    return this.siteRetreiver.getValueRange(Day(start), Day(end));
+  }
+
+  getInitRaster(): Promise<RasterData> {
+    throw new Error("Unimplemented");
+  }
+
+  //all non-init raster data is just passed as a number array, maybe wrap this in a special class to make more obvious
+  getRasters(start: string, end: string): Promise<number[]> {
+    throw new Error("Unimplemented");
+  }
+
+  //use this to combine value docs and metadata docs
+  combineWithMeta(values: SiteValue[]): Promise<SiteInfo[]> {
+    let resPromises: Promise<SiteInfo>[] = [];
+    for(let i = 0; i < values.length; i++) {
+      let value: SiteValue = values[i];
+      let skn: string = value.skn;
+      resPromises.push(this.metaRetreiver.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
+        return new SiteInfo(metadata, value);
+      }));
+    }
+    return Promise.all(resPromises);
   }
 
   //getInitData()

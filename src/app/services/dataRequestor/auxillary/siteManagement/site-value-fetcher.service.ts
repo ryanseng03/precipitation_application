@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import {MetadataStoreService, SKNRefMeta} from "./metadata-store.service";
 import { DbConService } from "../dbCon/db-con.service";
 import Day from "dayjs";
 import dsconfig from "./DataSetConfig.json";
+import { SiteValue } from '../../../../models/SiteMetadata';
+import {DataProcessorService} from "../../../dataProcessor/data-processor.service";
 
 const LIVE: boolean = false;
 
@@ -20,11 +21,15 @@ export class SiteValueFetcherService {
   readonly date: Day.Dayjs = LIVE ? Day(null, null, "utc") : Day("1990-05-10T00:00:00.000Z");
   
 
-  constructor(private siteMeta: MetadataStoreService, private dbcon: DbConService) {
-    // console.log("Running");
-    // this.getValuesTest();
+  constructor(private dbcon: DbConService, private processor: DataProcessorService) {
+
   }
 
+
+  getInitValues() {
+    //just in case the initial data location is isolated or something and you still need the recent value function
+    return this.getRecentValues();
+  }
 
   //test date querying
   private getValuesTest() {
@@ -88,13 +93,19 @@ export class SiteValueFetcherService {
   private sortByDate(values: any[]): DateRefValues {
     let sorted: DateRefValues = {};
     values.forEach((doc) => {
-      //remove type tag from date
-      doc.value.date = doc.value.date.$date;
-      let date = doc.value.date;
-      if(sorted[date] == undefined) {
-        sorted[date] = [];
+      let value = this.processor.processValueDocs(doc.value);
+      if(value != null) {
+        let date = value.date;
+        if(sorted[date] == undefined) {
+          sorted[date] = [];
+        }
+        sorted[date].push(value);
       }
-      sorted[date].push(doc.value);
+      else {
+        console.error("Unrecognized value document format received.");
+      }
+
+      
     });
     return sorted;
   }
@@ -102,10 +113,8 @@ export class SiteValueFetcherService {
   //resolves if recent value was found, otherwise rejects with lower bound date used
   private getRecentValuesMain(date: Day.Dayjs, step: TimeStep): Promise<DateRefValues> {
     return new Promise((resolve, reject) => {
-      console.log(date);
       let lastDataMin = Day(date).subtract(step.size, step.scale);
 
-      //inclusove
       let lastDataRange = [lastDataMin.toISOString(), date.toISOString()];
       console.log(lastDataRange);
   
@@ -116,12 +125,7 @@ export class SiteValueFetcherService {
       //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
   
       let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
-      //query = `{'name':'${this.docName}'}`;
-  
-  
-      // let resultHandler: (results: any) => any = (results: any) => {
-      //   return this.extractLastValues(results);
-      // }
+
   
       //need to add in some error handling
       this.dbcon.query<DateRefValues>(query, this.extractLastValues).then((vals) => {
@@ -147,29 +151,28 @@ export class SiteValueFetcherService {
       return {};
     }
 
-    //initialize max date and value doc object to first item
-    let doc = recent[0];
-    let maxDate = Day(doc.value.date.$date);
-    let valueDocs: DateRefValues = {};
-    //remove type tag from date
-    doc.value.date = doc.value.date.$date;
-    valueDocs[doc.value.date] = [doc.value];
-    for(let i = 1; i < recent.length; i++) {
-      doc = recent[i]
-      //remove type tag from date
-      doc.value.date = doc.value.date.$date;
-      let date = Day(doc.value.date);
-      //the date of this doc falls after the others found, set max date and overwrite list of value docs with docs under current date
-      if(date.isAfter(maxDate)) {
-        maxDate = date;
-        valueDocs = {};
-        valueDocs[doc.value.date] = [doc.value];
+    let maxDate = null;
+    let valueDocs = null;
+    for(let i = 0; i < recent.length; i++) {
+      let doc = recent[i]
+      let value = this.processor.processValueDocs(doc.value);
+      //if value is null then value doc from database is in an unexpected format
+      if(value != null) {
+        let date = Day(value.date);
+        //the date of this doc falls after the others found or this is the first valid value doc, set max date and overwrite list of value docs with docs under current date
+        if(maxDate == null || date.isAfter(maxDate)) {
+          maxDate = date;
+          valueDocs = {};
+          valueDocs[value.date] = [value];
+        }
+        //if in the same data set as the current max then add the value to the doc list
+        else if(date.isSame(maxDate)) {
+          valueDocs[value.date].push(value);
+        }
       }
-      //if in the same data set as the current max then add the value to the doc list
-      else if(date.isSame(maxDate)) {
-        valueDocs[doc.value.date].push(doc.value);
+      else {
+        console.error("Unrecognized value document format received.");
       }
-      
     }
 
     return valueDocs;
@@ -200,17 +203,10 @@ export interface TimeStep {
 //remember that any date strings should always be iso standard at time 0
 //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
 export interface DateRefValues {
-  [date: string]: RawSiteValues[]
+  [date: string]: SiteValue[]
 }
 
-//requires date (how did it get here without it), skn (need to ref the metadata doc it belongs with), value (the whole point)
-//for date just remove the mongo type tag and store date directly, no reason to deal with that
-export interface RawSiteValues {
-  skn: string,
-  value: number,
-  date: string,
-  [properties: string]: any
-}
+
 
 //need the skn, but shouldn't need to reference values by skn (only used to ref metadata), so key by date instead
 // export interface SKNRefValue {

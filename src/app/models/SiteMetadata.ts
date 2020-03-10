@@ -1,4 +1,4 @@
-import {LatLng} from "leaflet";
+import {LatLng, latLng} from "leaflet";
 
 export class SiteValue {
     private val: {
@@ -41,10 +41,10 @@ export class SiteMetadata {
         network: string
     }
     
-    constructor(metadata: {skn: string, name: string, location: LatLng, network: string}) {
+    constructor(metadata: {skn: string, name: string, lat: number, lng: number, network: string}) {
         this.meta.skn = metadata.skn;
         this.meta.name = metadata.name;
-        this.meta.location = metadata.location;
+        this.meta.location = new LatLng(metadata.lat, metadata.lng);
         this.meta.network = metadata.network;
     }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DbConService } from "../dbCon/db-con.service";
 import { SiteMetadata } from "../../../../models/SiteMetadata";
-import {DataProcessorService} from "../../../dataProcessor/data-processor.service"
+import {DataProcessorService} from "../../../dataProcessor/data-processor.service";
 import { LatLng } from "leaflet";
 import dsconfig from "./DataSetConfig.json";
 
@@ -13,19 +13,21 @@ export class MetadataStoreService {
   //using skn as site id
   private siteMeta: Promise<SKNRefMeta>;
 
-  constructor(private dbcon: DbConService) {
+  constructor(private dbcon: DbConService, private processor: DataProcessorService) {
     let query = "{'name':{'$in':['RainfallStation']}}";
     query = `{'name':'${dsconfig.metaDocName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
       let metadata: SKNRefMeta = {};
-      console.log(results);
       results.forEach((result) => {
-        //temp check for test data
-        if(result.value.skn != undefined) {
-          metadata[result.value.skn] = result.value;
+        //process data from database into internal metadata object
+        let metadatum = processor.processMetadataDoc(result.value);
+        //if returns null then the format was unexpected
+        if(metadatum != null) {
+          //index by skn
+          metadata[metadatum.skn] = metadatum;
         }
         else {
-          console.error("Metadata object received with no skn tag.");
+          console.error("Unrecognized metadata document format received.");
         }
       });
       return metadata;
@@ -34,7 +36,7 @@ export class MetadataStoreService {
     this.siteMeta = dbcon.query<SKNRefMeta>(query, resultHandler);
   }
 
-  getMetaBySKN(skn: string): Promise<RawSiteMeta> {
+  getMetaBySKN(skn: string): Promise<SiteMetadata> {
     return this.siteMeta.then((meta: SKNRefMeta) => {
       return meta[skn];
     });
@@ -61,17 +63,7 @@ export class MetadataStoreService {
 }
 
 export interface SKNRefMeta {
-  [skn: string]: RawSiteMeta
-}
-
-
-//instead of this the raw data from the database should go through the data processor, all the data handler functions should come from the data processor
-
-//allow arbitrary properties to allow for changes, this will be normalized in data processor
-//enforce skn since this must be available to reference values
-export interface RawSiteMeta {
-  skn: string,
-  [properties: string]: any
+  [skn: string]: SiteMetadata
 }
 
 
