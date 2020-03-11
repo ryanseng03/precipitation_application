@@ -1,3 +1,5 @@
+
+
 export class RasterData {
     
     private data: {
@@ -128,6 +130,10 @@ export class RasterData {
         return stat;
     }
 
+    getBandNames(): string[] {
+        return Object.keys(this.data.data);
+    }
+
     getBands(bands?: string[]): BandData {
         if(bands == undefined) {
             bands = Object.keys(this.data.data);
@@ -195,40 +201,39 @@ export class RasterData {
         return status;
     }
 
+}
 
-  }
 
+export interface FailedIndices {
+    indices: number[]
+}
 
-  export interface FailedIndices {
-      indices: number[]
-  }
+export interface FailedBands {
+    bands: string[]
+}
 
-  export interface FailedBands {
-      bands: string[]
-  }
+export type IndexedValues = Map<number, number>;
 
-  export type IndexedValues = Map<number, number>;
-
-  export interface BandData {
+export interface BandData {
     [bandName: string]: IndexedValues
-  }
+}
 
-  export interface RasterHeader {
+export interface RasterHeader {
     nCols: number,
     nRows: number,
     xllCorner: number,
     yllCorner: number,
     cellXSize: number,
     cellYSize: number,
-  }
+}
 
-  export interface UpdateStatus<T> {
+export interface UpdateStatus<T> {
     code: UpdateFlags,
     details: T
-  }
+}
 
 
-  export enum UpdateFlags {
+export enum UpdateFlags {
     OK = 0,
     WARNING_INVALID_INDEX_OOR = 1,
     WARNING_INVALID_INDEX_UNDEFINED = 1 << 1,
@@ -236,6 +241,6 @@ export class RasterData {
     ERROR_NAME_TAKEN = 1 << 3,
     WARNING_NAME_TAKEN = 1 << 4,
     ERROR_HEADER_MISMATCH = 1 << 5
-  }
+}
 
   

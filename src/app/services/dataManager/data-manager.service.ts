@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus } from "../../models/RasterData";
 import {Subject, Observable} from "rxjs";
-import {SiteMetadata, SiteValue} from "../../models/SiteMetadata";
+import {SiteMetadata, SiteValue, SiteInfo} from "../../models/SiteMetadata";
 import {DataLoaderService} from "../localDataLoader/data-loader.service";
 import {DataRequestorService} from "../dataRequestor/data-requestor.service";
+import {MetadataStoreService} from "../dataRequestor/auxillary/siteManagement/metadata-store.service";
 
 
 
@@ -12,69 +13,76 @@ import {DataRequestorService} from "../dataRequestor/data-requestor.service";
 })
 export class DataManagerService {
   //this will be replaced with some result from initialization that indicates newest data date
-  public static readonly BASE_DATE = "Jan_1_1970";
+  //public static readonly BASE_DATE = "Jan_1_1970";
   public static readonly DEFAULT_TYPE = "rainfall";
   public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
 
-  //emit currently focused set, map will use this to poulate
+  //emit currently focused set, map will use this to populate
   private stateEmitter: Subject<FocusedData>;
 
   //use manager to mitigate issues with changing data structure
-  data: DataModel;
+  private data: DataModel;
+
+  //provides initial data and verifies that initialization is complete
+  public initPromise: Promise<void>;
 
   //track and emit currently active data set
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService) {
+  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private metaRetreiver: MetadataStoreService) {
     this.data = {
-      primary: null,
+      header: null,
+      primary: {},
       focusedData: null
     };
     this.stateEmitter = new Subject<FocusedData>();
-    this.initialize();
+    this.initPromise = this.initialize();
   }
 
-  initialize() {
-    this.dataLoader.getInitRaster().then((data: InitData) => {
+  //store single raster data object and swap out bands
 
-      let date = DataManagerService.BASE_DATE;
-      let rasterData: RasterData = new RasterData(data.rasterData.header);
-      for(let band in data.rasterData.data) {
-        let added: UpdateStatus<null> = rasterData.addBand(band, data.rasterData.data[band]);
-        if(added.code != 0) {
-          throw new Error("Unexpected initialization error");
-        }
-      }
-      //console.log(data);
-      let pack: DataPack = {
-        raster: rasterData,
-        sites: data.siteMeta,
-        metrics: null
-      };
-      console.log(pack.sites);
-      this.data.primary = {};
-      this.data.primary[date] = pack;
-      this.setFocusedData(date, DataManagerService.DEFAULT_TYPE);
+  //NOT DONE
+  initialize(): Promise<void> {
+    //want to retreive both things in parallel, so how to deal with date? Can just do the same for both, then add validation to ensure date is the same
+    //need to add some additional information to returned like date
+    let rasterLoader = this.dataLoader.getInitRaster().then((raster: RasterData) => {
+      this.data.header = raster.getHeader();
     });
 
-    this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
-      //makes sure there aren't no values, should never happen, promise should reject if couldn't get data
+    let siteLoader: Promise<SiteInfo[]> = this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
+      //print error if there's no values, should never happen, promise should reject if couldn't get data
       if(values.length == 0) {
-        console.error("No values returne");
+        console.error("No values returned");
+        return [];
+      }
+      else {
+        return this.combineMetaWithValues(values);
       }
     }, (e) => {
-      //
-      console.error(`Could not get site values: ${e}`)
+      console.error(`Could not get site values: ${e}`);
+      return [];
     });
     
+    this.initPromise = Promise.all([rasterLoader, siteLoader]).then(() => {});
+    return this.initPromise;
   }
 
-  setFocusedData(date: string, type: DataType): FocusedData {
-    this.initCheck();
+  private combineMetaWithValues(values: SiteValue[]): Promise<SiteInfo[]> {
+    let resPromises: Promise<SiteInfo>[] = [];
+    for(let i = 0; i < values.length; i++) {
+      let value: SiteValue = values[i];
+      let skn: string = value.skn;
+      resPromises.push(this.metaRetreiver.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
+        return new SiteInfo(metadata, value);
+      }));
+    }
+    return Promise.all(resPromises);
+  }
+
+  setFocusedData(date: string): FocusedData {
     let focus: FocusedData = {
       date: date,
-      type: type,
       data: null,
       header: null
     };
@@ -101,12 +109,10 @@ export class DataManagerService {
   }
 
   getFocusedDataListener(): Observable<FocusedData> {
-    console.log("?");
     return this.stateEmitter.asObservable();
   }
 
   getRasterData(date: Date, types?: DataType[]): BandData | null {
-    this.initCheck();
     let data = null
     let dataPack: DataPack = this.data.primary[date];
     //if no types defined assume all types
@@ -133,7 +139,6 @@ export class DataManagerService {
   }
 
   getRasterHeader(date: Date): RasterHeader | null {
-    this.initCheck();
     let header: RasterHeader = null;
     let data: DataPack = this.data.primary[date];
     if(data != undefined) {
@@ -143,7 +148,6 @@ export class DataManagerService {
   }
 
   getMetrics(date: Date): Metrics | null {
-    this.initCheck();
     let metrics: Metrics = null;
     let data: DataPack = this.data.primary[date];
     if(data != undefined) {
@@ -153,7 +157,6 @@ export class DataManagerService {
   }
 
   getSiteMetadata(date: Date): SiteMetadata[] | null {
-    this.initCheck();
     let metadata: SiteMetadata[] = null;
     let data: DataPack = this.data.primary[date];
     if(data != undefined) {
@@ -180,11 +183,11 @@ export class DataManagerService {
 
   //data has to be added in sets of 4 to maintain consistency
   addData(date: string, data: DataBands) {
-    this.initCheck();
+
   }
 
   purgeData(date: Date): boolean {
-    this.initCheck();
+
     let success: boolean = false;
     //cannot delete focused data
     if(date != this.data.focusedData.date) {
@@ -194,29 +197,33 @@ export class DataManagerService {
     return success
     
   }
-
-  initCheck() {
-    if(!this.initialized) {
-      throw new Error("State used before initialized. Please wait until initialization has been completed.");
-    }
-  }
 }
 
 //update as needed
 interface DataModel {
-  primary: DateReferencedDataPack;
+  //decouple header for internal storage to save memory (only need once)
+  header: RasterHeader,
+  primary: DateReferencedInternalDataPack,
   //reference to a set of values in data (primary)
-  focusedData: FocusedData;
+  focusedData: FocusedData,
 }
 
-interface DateReferencedDataPack {
-  [date: string]: DataPack
+interface DateReferencedInternalDataPack {
+  [date: string]: InternalDataPack
 }
 
-interface DataPack {
+interface InternalDataPack {
+  bands: BandData,
+  //might change to something a bit more robust
+  sites: SiteValue[],
+  //need to define this, refer to empty interface for now
+  metrics: Metrics
+}
+
+export interface DataPack {
   raster: RasterData,
   //might change to something a bit more robust
-  sites: SiteMetadata[],
+  sites: SiteInfo[],
   //need to define this, refer to empty interface for now
   metrics: Metrics
 }
@@ -225,9 +232,7 @@ interface DataPack {
 export type Date = string;
 
 export interface FocusedData {
-  header: RasterHeader,
-  data: IndexedValues,
-  type: DataType,
+  data: DataPack,
   date: Date
 }
 
