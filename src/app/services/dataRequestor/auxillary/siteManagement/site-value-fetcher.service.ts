@@ -53,7 +53,7 @@ export class SiteValueFetcherService {
   }
 
   //might want to add options param that allows changing the number of iterations
-  getRecentValues(): Promise<DateRefValues> {
+  getRecentValues(): Promise<SiteValue[]> {
     return this.getRecentValuesRecursive(this.date, SiteValueFetcherService.STEP, 5);
   }
 
@@ -111,12 +111,11 @@ export class SiteValueFetcherService {
   }
 
   //resolves if recent value was found, otherwise rejects with lower bound date used
-  private getRecentValuesMain(date: Day.Dayjs, step: TimeStep): Promise<DateRefValues> {
+  private getRecentValuesMain(date: Day.Dayjs, step: TimeStep): Promise<SiteValue[]> {
     return new Promise((resolve, reject) => {
       let lastDataMin = Day(date).subtract(step.size, step.scale);
 
       let lastDataRange = [lastDataMin.toISOString(), date.toISOString()];
-      console.log(lastDataRange);
   
       //let dateRange = [2017/01/01];
       //!!working!!
@@ -128,13 +127,11 @@ export class SiteValueFetcherService {
 
   
       //need to add in some error handling
-      this.dbcon.query<DateRefValues>(query, this.extractLastValues).then((vals) => {
+      this.dbcon.query<SiteValue[]>(query, this.extractLastValues).then((vals) => {
         if(Object.keys(vals).length == 0) {
-          console.log(lastDataMin);
           reject(lastDataMin);
         }
         else {
-          console.log(vals);
           resolve(vals);
         }
         
@@ -145,14 +142,10 @@ export class SiteValueFetcherService {
 
   //need to create a better definition for the value docs, using any for now
   //at the moment only need value, so just map SKNs to values, might need more later, e.g. step type, leave value as an object to make easier to expand
-  private extractLastValues(recent: any[]): DateRefValues {
-    //if empty just return an empty object
-    if(recent.length == 0) {
-      return {};
-    }
+  private extractLastValues(recent: any[]): SiteValue[] {
 
     let maxDate = null;
-    let valueDocs = null;
+    let valueDocs = [];
     for(let i = 0; i < recent.length; i++) {
       let doc = recent[i]
       let value = this.processor.processValueDocs(doc.value);
@@ -162,12 +155,11 @@ export class SiteValueFetcherService {
         //the date of this doc falls after the others found or this is the first valid value doc, set max date and overwrite list of value docs with docs under current date
         if(maxDate == null || date.isAfter(maxDate)) {
           maxDate = date;
-          valueDocs = {};
-          valueDocs[value.date] = [value];
+          valueDocs = [value];
         }
         //if in the same data set as the current max then add the value to the doc list
         else if(date.isSame(maxDate)) {
-          valueDocs[value.date].push(value);
+          valueDocs.push(value);
         }
       }
       else {
@@ -179,16 +171,16 @@ export class SiteValueFetcherService {
   }
 
   
-  private getRecentValuesRecursive(date: Day.Dayjs, step: TimeStep, max: number, i: number = 0): Promise<DateRefValues> {
+  private getRecentValuesRecursive(date: Day.Dayjs, step: TimeStep, max: number, i: number = 0): Promise<SiteValue[]> {
     return new Promise((resolve, reject) => {
       if(i >= max) {
         reject("Too many iterations.");
       }
-      this.getRecentValuesMain(this.date, SiteValueFetcherService.STEP).then((value) => {
+      this.getRecentValuesMain(date, step).then((value) => {
         console.log(value);
         resolve(value);
       }, (min) => {
-        return this.getRecentValuesRecursive(min, SiteValueFetcherService.STEP, max, i + 1);
+        return this.getRecentValuesRecursive(min, step, max, i + 1);
       });
     });
   }
@@ -205,13 +197,3 @@ export interface TimeStep {
 export interface DateRefValues {
   [date: string]: SiteValue[]
 }
-
-
-
-//need the skn, but shouldn't need to reference values by skn (only used to ref metadata), so key by date instead
-// export interface SKNRefValue {
-//   [skn: string]: {
-//     value: number
-//     type: string
-//   }
-// }

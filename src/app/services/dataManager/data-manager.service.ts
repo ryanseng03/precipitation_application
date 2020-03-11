@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus } from "../models/RasterData";
+import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus } from "../../models/RasterData";
 import {Subject, Observable} from "rxjs";
-import {SiteMetadata} from "../models/SiteMetadata";
-import {DataLoaderService, InitData} from "../services/data-loader.service";
-import { forEach } from '@angular/router/src/utils/collection';
+import {SiteMetadata, SiteValue} from "../../models/SiteMetadata";
+import {DataLoaderService} from "../localDataLoader/data-loader.service";
+import {DataRequestorService} from "../dataRequestor/data-requestor.service";
+
 
 
 @Injectable({
@@ -15,29 +16,28 @@ export class DataManagerService {
   public static readonly DEFAULT_TYPE = "rainfall";
   public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
 
+  //emit currently focused set, map will use this to poulate
   private stateEmitter: Subject<FocusedData>;
 
   //use manager to mitigate issues with changing data structure
   data: DataModel;
-  initialized: boolean;
 
   //track and emit currently active data set
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataLoader: DataLoaderService) {
+  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService) {
     this.data = {
       primary: null,
       focusedData: null
     };
     this.stateEmitter = new Subject<FocusedData>();
-    this.initialized = false;
     this.initialize();
   }
 
   initialize() {
-    this.dataLoader.getInitData().then((data: InitData) => {
-      this.initialized = true;
+    this.dataLoader.getInitRaster().then((data: InitData) => {
+
       let date = DataManagerService.BASE_DATE;
       let rasterData: RasterData = new RasterData(data.rasterData.header);
       for(let band in data.rasterData.data) {
@@ -57,15 +57,20 @@ export class DataManagerService {
       this.data.primary[date] = pack;
       this.setFocusedData(date, DataManagerService.DEFAULT_TYPE);
     });
+
+    this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
+      //makes sure there aren't no values, should never happen, promise should reject if couldn't get data
+      if(values.length == 0) {
+        console.error("No values returne");
+      }
+    }, (e) => {
+      //
+      console.error(`Could not get site values: ${e}`)
+    });
     
   }
 
-  //might just want to switch this so methods return promises, some of them will probably need to pull data eventually anyway
-  // getInitialized(): Promise<void> {
-
-  // }
-
-  setFocusedData(date: string, type: DataType): FocusedData | null {
+  setFocusedData(date: string, type: DataType): FocusedData {
     this.initCheck();
     let focus: FocusedData = {
       date: date,
