@@ -24,7 +24,7 @@ export class DataManagerService {
   private data: DataModel;
 
   //provides initial data and verifies that initialization is complete
-  public initPromise: Promise<void>;
+  private initPromise: Promise<void>;
 
   //track and emit currently active data set
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
@@ -80,13 +80,14 @@ export class DataManagerService {
     return Promise.all(resPromises);
   }
 
-  setFocusedData(date: string): FocusedData {
+  setFocusedData(date: string): Promise<FocusedData> {
     let focus: FocusedData = {
       date: date,
       data: null,
-      header: null
     };
-    let dataPack: DataPack = this.data.primary[date];
+    let dataPack: InternalDataPack = this.data.primary[date];
+    this.combineMetaWithValues(dataPack.sites).then(());
+
     //if undefined then the date doesn't exist, do nothign and return null
     if(dataPack != undefined) {
       let data = dataPack.raster.getBands([type])[type];
@@ -103,6 +104,7 @@ export class DataManagerService {
     }
     return focus;
   }
+
 
   getFocusedData(): FocusedData {
     return this.data.focusedData;
