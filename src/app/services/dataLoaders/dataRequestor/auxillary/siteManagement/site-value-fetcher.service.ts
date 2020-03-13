@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { DbConService } from "../dbCon/db-con.service";
 import Day from "dayjs";
 import dsconfig from "./DataSetConfig.json";
-import { SiteValue } from '../../../../models/SiteMetadata';
-import {DataProcessorService} from "../../../dataProcessor/data-processor.service";
+import { SiteValue } from '../../../../../models/SiteMetadata';
+import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 
 const LIVE: boolean = false;
 
@@ -79,11 +79,12 @@ export class SiteValueFetcherService {
     return new Promise<DateRefValues>((resolve, reject) => {
       let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
 
-      // let resultHandler: (results: any) => any = (results: any) => {
-      //   return this.sortByDate(results);
-      // }
+      //wrap data handler to lexically bind to this
+      let wrappedResultHandler = (results: any[]) => {
+        return this.sortByDate(results);
+      }
   
-      this.dbcon.query<DateRefValues>(query, this.sortByDate).then((vals) => {
+      this.dbcon.query<DateRefValues>(query, wrappedResultHandler).then((vals) => {
         console.log(vals);
         resolve(vals);
       });
@@ -125,9 +126,13 @@ export class SiteValueFetcherService {
   
       let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
 
+      //wrap data handler to lexically bind to this
+      let wrappedResultHandler = (recent: any[]) => {
+        return this.extractLastValues(recent)
+      }
   
       //need to add in some error handling
-      this.dbcon.query<SiteValue[]>(query, this.extractLastValues).then((vals) => {
+      this.dbcon.query<SiteValue[]>(query, wrappedResultHandler).then((vals) => {
         if(Object.keys(vals).length == 0) {
           reject(lastDataMin);
         }
@@ -147,7 +152,7 @@ export class SiteValueFetcherService {
     let maxDate = null;
     let valueDocs = [];
     for(let i = 0; i < recent.length; i++) {
-      let doc = recent[i]
+      let doc = recent[i];
       let value = this.processor.processValueDocs(doc.value);
       //if value is null then value doc from database is in an unexpected format
       if(value != null) {
@@ -176,12 +181,14 @@ export class SiteValueFetcherService {
       if(i >= max) {
         reject("Too many iterations.");
       }
-      this.getRecentValuesMain(date, step).then((value) => {
-        console.log(value);
-        resolve(value);
-      }, (min) => {
-        return this.getRecentValuesRecursive(min, step, max, i + 1);
-      });
+      else {
+        this.getRecentValuesMain(date, step).then((value) => {
+          console.log(value);
+          resolve(value);
+        }, (min) => {
+          return this.getRecentValuesRecursive(min, step, max, i + 1);
+        });
+      }
     });
   }
 

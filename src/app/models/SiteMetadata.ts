@@ -9,10 +9,12 @@ export class SiteValue {
     };
 
     constructor(value: {skn: string, type: string, value: number, date: string}) {
-        this.val.type = value.type;
-        this.val.value = value.value;
-        this.val.date = value.date;
-        this.val.skn = value.skn;
+        this.val = {
+            type: value.type,
+            value: value.value,
+            date: value.date,
+            skn: value.skn
+        }
     }
     
     get type(): string {
@@ -42,10 +44,12 @@ export class SiteMetadata {
     }
     
     constructor(metadata: {skn: string, name: string, lat: number, lng: number, network: string}) {
-        this.meta.skn = metadata.skn;
-        this.meta.name = metadata.name;
-        this.meta.location = new LatLng(metadata.lat, metadata.lng);
-        this.meta.network = metadata.network;
+        this.meta = {
+            skn: metadata.skn,
+            name: metadata.name,
+            location: new LatLng(metadata.lat, metadata.lng),
+            network: metadata.network
+        }
     }
 
     get skn(): string {
@@ -86,13 +90,15 @@ export class SiteInfo {
     }
 
     constructor(metadata: SiteMetadata, value: SiteValue) {
-        this.info.skn = metadata.skn;
-        this.info.name = metadata.name;
-        this.info.location = metadata.location;
-        this.info.network = metadata.network;
-        this.info.value = value.value;
-        this.info.type = value.type;
-        this.info.date = value.date;
+        this.info = {
+            skn: metadata.skn,
+            name: metadata.name,
+            location: metadata.location,
+            network: metadata.network,
+            value: value.value,
+            type: value.type,
+            date: value.date,
+        }
     }
 
     get skn(): string {

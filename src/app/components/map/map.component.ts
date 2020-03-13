@@ -1,21 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from "leaflet";
 import  "../../../../node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js";
-import {ParameterStoreService, ParameterHook} from "../../services/parameter-store.service";
+import {ParameterStoreService, ParameterHook} from "../../services/inputManager/parameter-store.service";
 import * as chroma from "chroma-js";
 import {saveAs} from "file-saver";
 import * as geotiff from "geotiff";
-import { Color, ColorScale } from "../../classes/color-scale";
-import { ColorGeneratorService } from "../../services/color-generator.service";
-import { GeotiffDataLoaderService } from "../../services/geotiff-data-loader.service";
-import { DataRetreiverService } from "../../services/data-retreiver.service";
-import { R, RasterOptions, LeafletRasterLayerService } from "../../services/leaflet-raster-layer.service";
-import { DataManagerService, FocusedData, DataType } from "../../services/data-manager.service";
-import { EventParamRegistrarService } from "../../services/event-param-registrar.service"
-import { DataLoaderService } from 'src/app/services/data-loader.service';
+import { Color, ColorScale } from "../../models/colorScale";
+import { ColorGeneratorService } from "../../services/rasterLayerGeneration/color-generator.service";
+import { DataRetreiverService } from "../../services/utility/data-retreiver.service";
+import { R, RasterOptions, LeafletRasterLayerService } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
+import { DataManagerService, FocusedData, DataType } from "../../services/dataManager/data-manager.service";
+import { EventParamRegistrarService } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";
-import { BandData, IndexedValues } from 'src/app/models/RasterData.js';
-import { SiteMetadata } from 'src/app/models/SiteMetadata.js';
+import { BandData, IndexedValues, RasterHeader, RasterData } from 'src/app/models/RasterData.js';
+import { SiteMetadata, SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
 import {first} from "rxjs/operators";
 
@@ -36,9 +34,12 @@ export class MapComponent implements OnInit {
   private drawOptions: any;
   private map: L.Map;
   private baseLayers: any;
-  private focused: FocusedData;
+  private active: {
+    focused: FocusedData,
+    band: string
+  };
 
-  constructor(private loader: DataLoaderService, private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private geotiffLoader: GeotiffDataLoaderService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
+  constructor(private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
       Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
@@ -109,19 +110,18 @@ export class MapComponent implements OnInit {
     let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
 
     this.dataManager.getFocusedDataListener().pipe(first()).toPromise().then((data: FocusedData) => {
-      this.focused = data;
+      
       let layerGroups = {
         Types: {}
       }
-      
-      let bands: BandData = this.dataManager.getRasterData(data.date, DataManagerService.DATA_TYPES);
+      let bands = data.data.raster.getBands();
+      let header = data.data.raster.getHeader();
       for(let band in bands) {
-        
         let rasterOptions: RasterOptions = {
           cacheEmpty: true,
           colorScale: colorScale,
           data: {
-            header: data.header,
+            header: header,
             values: bands[band]
           }
         };
@@ -129,19 +129,14 @@ export class MapComponent implements OnInit {
         layerGroups.Types[band] = rasterLayer;
       }
 
-      map.addLayer(layerGroups.Types[data.type]);
+      map.addLayer(layerGroups.Types["rainfall"]);
 
-      //test redraw
-      // setTimeout(() => {
-      //   let test: IndexedValues = new Map<number, number>();
-      //   data.data.forEach((index: number, key: number) => {
-      //     test.set(key, 1);
-      //   });
-      //   console.log(test);
-
-      //   layerGroups.Types[data.type].setData(data.header, test)
-      // }, 1000);
+      
     
+      this.active = {
+        focused: data,
+        band: "rainfall"
+      };
 
       
 
@@ -150,24 +145,7 @@ export class MapComponent implements OnInit {
         groupCheckboxes: true
       };
 
-      // L.control.layers(baseLayers).addTo(map);
-      // L.control.layers(this.baseLayers).addTo(map);
       C.groupedLayers(this.baseLayers, layerGroups, layerGroupControlOptions).addTo(map);
-      //console.log(C.groupedLayers);
-
-      // let clickTag = this.eventRegistrar.registerGeoMapClick(map);
-      // let geojsonLayer: L.GeoJSON;
-      // this.paramService.createParameterHook(clickTag, (position: L.LatLng) => {
-      //   console.log(this.dataRetreiver.geoPosToGridValue(data.header, data.data, position));
-      //   let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(data.header, data.data, position);
-      //   console.log(geojson);
-      //   if(geojsonLayer != undefined) {
-      //     map.removeLayer(geojsonLayer);
-      //   }
-        
-      //   geojsonLayer = new L.GeoJSON(geojson);
-      //   map.addLayer(geojsonLayer);
-      // }, true);
 
       this.addPopupOnHover(1000);
 
@@ -175,24 +153,23 @@ export class MapComponent implements OnInit {
         //chunkedLoading: true
       };
 
-      let sites = this.dataManager.getSiteMetadata(data.date);
-      console.log(sites);
+      let sites = data.data.sites;
+
       let siteMarkers = R.markerClusterGroup(clusterOptions);
       let markers = [];
-      sites.forEach((site: SiteMetadata) => {
+      sites.forEach((site: SiteInfo) => {
 
-        //troubleshooting markers not appearing
-        if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
-        || site.location.lng < this.options.maxBounds[0][1] || site.location.lng > this.options.maxBounds[1][1]) {
-          console.log("OOB!", site.location.lat, site.location.lng);
-        }
+        // //troubleshooting markers not appearing
+        // if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
+        // || site.location.lng < this.options.maxBounds[0][1] || site.location.lng > this.options.maxBounds[1][1]) {
+        //   console.log("OOB!", site.location.lat, site.location.lng);
+        // }
 
-        let value = this.dataRetreiver.geoPosToGridValue(data.header, data.data, site.location);
         let siteDetails: string = "Name: " + site.name
         + "<br> Network: " + site.network
         + "<br> Lat: " + site.location.lat + ", Lng: " + site.location.lng
         //cheating here for now, should get actual site value
-        + "<br> Value: " + value;
+        + "<br> Value: " + site.value;
         let marker = L.marker(site.location).bindPopup(siteDetails);
         //console.log(siteDetails);
         markers.push(marker);
@@ -208,7 +185,10 @@ export class MapComponent implements OnInit {
 
     //after first go only set data
     this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
-      this.focused = data;
+      this.active = {
+        focused: data,
+        band: "rainfall"
+      };
     });
   }
 
@@ -216,7 +196,7 @@ export class MapComponent implements OnInit {
     this.map.on('overlayadd', (e: L.LayersControlEvent) => {
       //console.log(e);
       let type: DataType = <DataType>e.name;
-      this.dataManager.setFocusedData(this.focused.date, type);
+      //this.dataManager.setFocusedData(this.focused.date, type);
     });
   }
 
@@ -243,7 +223,11 @@ export class MapComponent implements OnInit {
         if(position == null) {
           return;
         }
-        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(this.focused.header, this.focused.data, position);
+        let raster: RasterData = this.active.focused.data.raster;
+        let band = this.active.band;
+        let header = raster.getHeader();
+        let data: Map<number, number> = raster.getBands([band])[band];
+        let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
         if(geojson != undefined) {
           popupData.highlightedCell = L.geoJSON(geojson)
@@ -256,7 +240,7 @@ export class MapComponent implements OnInit {
           })
           .addTo(this.map)
   
-          let value = this.dataRetreiver.geoPosToGridValue(this.focused.header, this.focused.data, position);
+          let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
   
           //popup cell value
           popup = L.popup({ autoPan: false })

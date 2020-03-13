@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import {RasterData, RasterHeader, BandData, UpdateFlags, UpdateStatus} from "../../models/RasterData";
+import {RasterData, RasterHeader, BandData, UpdateFlags, UpdateStatus} from "../../../models/RasterData";
 import {GeotiffDataLoaderService} from "./auxillary/geotiff-data-loader.service";
-import {DataBands} from "../dataManager/data-manager.service";
 
 @Injectable({
   providedIn: 'root'
@@ -52,6 +51,7 @@ export class DataLoaderService {
               console.error("Bad index, too many rasters.");
             }
           }
+          console.log(bandName);
           return bandName;
         }
       }

@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, Output } from '@angular/core';
 import { Subject } from "rxjs";
-import { UtilityService } from "../../../../services/utility.service";
+import { UtilityService } from "../../../../services/utility/utility.service";
 
 @Component({
   selector: 'app-range-slider',

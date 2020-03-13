@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as L from "leaflet";
-import { DataRetreiverService, DecoupledCoords } from "./data-retreiver.service";
-import { ColorScale } from '../classes/color-scale';
-import { RasterHeader, IndexedValues } from '../models/RasterData';
+import { DataRetreiverService, DecoupledCoords } from "../utility/data-retreiver.service";
+import { ColorScale } from '../../models/colorScale';
+import { RasterHeader, IndexedValues } from '../../models/RasterData';
 
 export let R: any = L;
 //export type RasterLayer = R.GridLayer.RasterLayer;
@@ -33,12 +33,18 @@ export class LeafletRasterLayerService {
         this.emptyTileCache.clear();
       },
 
-      setData: function(header: RasterHeader, values: IndexedValues) {
-        this.options.data = {
-          values: values,
-          header: header
-        };
+      setData: function(values: IndexedValues, header?: RasterHeader) {
+        this.options.data.values = values;
+        if(header != undefined) {
+          this.options.data.header = header;
+          //need to clear empty tile cache if changing header
+          this.clearEmptyTileCache();
+        }
         this.redraw();
+      },
+
+      setColorScale: function(colorScale: ColorScale) {
+        this.options.colorScale = colorScale;
       },
 
       createTile: function(coords) {

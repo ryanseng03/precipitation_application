@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus } from "../../models/RasterData";
+import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus, UpdateFlags } from "../../models/RasterData";
 import {Subject, Observable} from "rxjs";
 import {SiteMetadata, SiteValue, SiteInfo} from "../../models/SiteMetadata";
-import {DataLoaderService} from "../localDataLoader/data-loader.service";
-import {DataRequestorService} from "../dataRequestor/data-requestor.service";
-import {MetadataStoreService} from "../dataRequestor/auxillary/siteManagement/metadata-store.service";
+import {DataLoaderService} from "../dataLoaders/localDataLoader/data-loader.service";
+import {DataRequestorService} from "../dataLoaders/dataRequestor/data-requestor.service";
 
 
 
@@ -13,9 +12,9 @@ import {MetadataStoreService} from "../dataRequestor/auxillary/siteManagement/me
 })
 export class DataManagerService {
   //this will be replaced with some result from initialization that indicates newest data date
-  //public static readonly BASE_DATE = "Jan_1_1970";
   public static readonly DEFAULT_TYPE = "rainfall";
   public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
+  public static readonly FALLBACK_DATE: string = "1970-01-01T00:00:00.000Z";
 
   //emit currently focused set, map will use this to populate
   private stateEmitter: Subject<FocusedData>;
@@ -30,7 +29,7 @@ export class DataManagerService {
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private metaRetreiver: MetadataStoreService) {
+  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService) {
     this.data = {
       header: null,
       primary: {},
@@ -42,129 +41,203 @@ export class DataManagerService {
 
   //store single raster data object and swap out bands
 
-  //NOT DONE
+  
   initialize(): Promise<void> {
+    let initData: InternalDataPack = {
+      bands: null,
+      sites: null,
+      metrics: null
+    }
     //want to retreive both things in parallel, so how to deal with date? Can just do the same for both, then add validation to ensure date is the same
     //need to add some additional information to returned like date
     let rasterLoader = this.dataLoader.getInitRaster().then((raster: RasterData) => {
+      console.log(raster);
       this.data.header = raster.getHeader();
+      //freeze header so can't be inadvertantly modified when passed out of data manager
+      Object.freeze(this.data.header);
+      initData.bands = raster.getBands();
     });
 
-    let siteLoader: Promise<SiteInfo[]> = this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
+
+
+    let siteLoader = this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
+      console.log(values);
       //print error if there's no values, should never happen, promise should reject if couldn't get data
       if(values.length == 0) {
         console.error("No values returned");
-        return [];
       }
-      else {
-        return this.combineMetaWithValues(values);
-      }
+      initData.sites = values;
     }, (e) => {
       console.error(`Could not get site values: ${e}`);
-      return [];
+      initData.sites = [];
     });
     
-    this.initPromise = Promise.all([rasterLoader, siteLoader]).then(() => {});
+    let date: string = DataManagerService.FALLBACK_DATE;
+    this.initPromise = Promise.all([rasterLoader, siteLoader]).then(() => {
+      //for now just use date from sites (or fallback date if no sites), should verify raster date though once database retreival up
+      if(initData.sites.length > 0) {
+        date = initData.sites[0].date;
+      }
+      this.data.primary[date] = initData;
+    });
+    this.initPromise.then(() => {
+      //set the focused data to the init data
+      this.setFocusedData(date);
+    });
     return this.initPromise;
   }
 
+  //combining metadata here instead of ahead of time cuts down on a lot of memory for redundant cached values in exchange for somewhat minor overhead
   private combineMetaWithValues(values: SiteValue[]): Promise<SiteInfo[]> {
     let resPromises: Promise<SiteInfo>[] = [];
     for(let i = 0; i < values.length; i++) {
       let value: SiteValue = values[i];
       let skn: string = value.skn;
-      resPromises.push(this.metaRetreiver.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
-        return new SiteInfo(metadata, value);
+      resPromises.push(this.dataRequestor.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
+        if(metadata != undefined) {
+          return new SiteInfo(metadata, value);
+        }
+        else {
+          //could not find metadata, print error
+          console.error("Could not find metadata for site.");
+          return null;
+        }
       }));
     }
-    return Promise.all(resPromises);
+    return Promise.all(resPromises).then((info: SiteInfo[]) => {
+      console.log(info);
+      //filter out any instances where metadata could not be found to maintain consistency
+      return info.filter((si) => {
+        return si != null;
+      });
+    });
   }
 
+  //need to set something that cancels old calls on new data request to ensure synch
+  //should also add some sort of small delay or cancel logic to data request logic to prevent slow down on rapid input changes, some sort of input throttle
+  //sets the data focused by the application
   setFocusedData(date: string): Promise<FocusedData> {
-    let focus: FocusedData = {
-      date: date,
-      data: null,
-    };
-    let dataPack: InternalDataPack = this.data.primary[date];
-    this.combineMetaWithValues(dataPack.sites).then(());
+    return this.initPromise.then(() => {
+      return new Promise<FocusedData>((resolve, reject) => {
+        let focus: FocusedData = {
+          date: date,
+          data: null,
+        };
+        let internalData: InternalDataPack = this.data.primary[date];
+        
+    
+        //if undefined then the date doesn't exist, do nothign and return null
+        if(internalData != undefined) {
+          let data: DataPack = {
+            raster: null,
+            sites: null,
+            metrics: null
+          };
+          focus.data = data;
+          this.combineMetaWithValues(internalData.sites).then((info: SiteInfo[]) => {
+            data.sites = info;
+            console.log(internalData.sites);
+            //wrap in rasterdata object
+            let raster: RasterData = new RasterData(this.data.header);
+            if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {
+              reject("Error Setting bands.");
+            }
+            else {
+              data.raster = raster;
+              //freeze focused object, don't want anything external messing with the state
+              Object.freeze(focus);
+              this.data.focusedData = focus;
+              this.stateEmitter.next(focus);
+              console.log(focus);
+              resolve(focus);
+            }
+            
+          });
+        }
+        else {
+          //cache data
+          //not implemented just reject for now
+          reject();
+        }
+        //resolve(focus);
+      });
+    });
+    
+    
+  }
 
-    //if undefined then the date doesn't exist, do nothign and return null
-    if(dataPack != undefined) {
-      let data = dataPack.raster.getBands([type])[type];
-      //if there is no band of a specified data type for a date range then the internal state is wrong and an error should be thrown
-      if(data == undefined) {
-        throw new Error("Internal state error: Data band " + type + " for date does not exist");
-      }
-      focus.data = data;
-      focus.header = dataPack.raster.getHeader();
-      //freeze focused object, don't want anything external messing with the state
-      Object.freeze(focus);
-      this.data.focusedData = focus;
-      this.stateEmitter.next(focus);
-    }
-    return focus;
+  cacheDateRange(): void {
+
   }
 
 
-  getFocusedData(): FocusedData {
-    return this.data.focusedData;
+  getFocusedData(): Promise<FocusedData> {
+    return this.initPromise.then(() => {
+      return this.data.focusedData;
+    });
   }
 
   getFocusedDataListener(): Observable<FocusedData> {
     return this.stateEmitter.asObservable();
   }
 
-  getRasterData(date: Date, types?: DataType[]): BandData | null {
-    let data = null
-    let dataPack: DataPack = this.data.primary[date];
-    //if no types defined assume all types
-    if(types == undefined) {
-      types = DataManagerService.DATA_TYPES;
-    }
-    //if undefined then the date doesn't exist, do nothign and return null
-    if(dataPack != undefined) {
-      let bands: BandData = dataPack.raster.getBands(types);
-      let bandNames = Object.keys(bands);
-      //verify internal state
-      let bandName: string;
-      let i: number;
-      for(i = 0; i < bandNames.length; i++) {
-        bandName = bandNames[i];
-        //if value undefined for band then the internal state is wrong
-        if(bands[bandName] == undefined) {
-          throw new Error("Internal state error: Data band " + bandName + " for date does not exist");
-        }
+  getRasterData(date: Date, types?: DataType[]): Promise<BandData> {
+    return this.initPromise.then(() => {
+      let data = null
+      let dataPack: InternalDataPack = this.data.primary[date];
+      //if no types defined assume all types
+      if(types == undefined) {
+        types = DataManagerService.DATA_TYPES;
       }
-      data = bands;
-    }
-    return data;
+      //if undefined then the date doesn't exist, do nothign and return null
+      if(dataPack != undefined) {
+        let bands: BandData = dataPack.bands;
+        let bandNames = Object.keys(bands);
+        //verify internal state
+        let bandName: string;
+        let i: number;
+        for(i = 0; i < bandNames.length; i++) {
+          bandName = bandNames[i];
+          //if value undefined for band then the internal state is wrong
+          if(bands[bandName] == undefined) {
+            throw new Error("Internal state error: Data band " + bandName + " for date does not exist");
+          }
+        }
+        data = bands;
+      }
+      return data;
+    });
   }
 
-  getRasterHeader(date: Date): RasterHeader | null {
-    let header: RasterHeader = null;
-    let data: DataPack = this.data.primary[date];
-    if(data != undefined) {
-      header = data.raster.getHeader()
-    }
-    return header;
+  getRasterHeader(): Promise<RasterHeader> {
+    return this.initPromise.then(() => {
+      return this.data.header;
+    });
   }
 
-  getMetrics(date: Date): Metrics | null {
-    let metrics: Metrics = null;
-    let data: DataPack = this.data.primary[date];
-    if(data != undefined) {
-      metrics = data.metrics;
-    }
-    return metrics;
+  getMetrics(date: Date): Promise<Metrics> {
+    return this.initPromise.then(() => {
+      let metrics: Metrics = null;
+      let data: InternalDataPack = this.data.primary[date];
+      if(data != undefined) {
+        metrics = data.metrics;
+      }
+      //return null for now, instead should pull the data into the cache
+      return metrics;
+    });
   }
 
-  getSiteMetadata(date: Date): SiteMetadata[] | null {
-    let metadata: SiteMetadata[] = null;
-    let data: DataPack = this.data.primary[date];
-    if(data != undefined) {
-      metadata = data.sites;
-    }
-    return metadata;
+  getSiteInfo(date: Date): Promise<SiteInfo[]> {
+    return this.initPromise.then(() => {
+      let metadata: SiteInfo[] = null;
+      let data: InternalDataPack = this.data.primary[date];
+      if(data != undefined) {
+        return this.combineMetaWithValues(data.sites);
+      }
+      //return null for now, instead should pull the data into the cache
+      return metadata;
+    });
+    
   }
 
   //should set up some sort of data listener for managing data set changes, maybe a hooking system like the parameter service

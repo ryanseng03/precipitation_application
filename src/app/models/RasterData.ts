@@ -22,7 +22,7 @@ export class RasterData {
         };
         if(renameFunction == undefined) {
             renameFunction = (bandName: string) => {
-                return undefined;
+                return null;
             };
         }
         //can only combine if headers are the same (data must be spatially coincident)
@@ -32,11 +32,11 @@ export class RasterData {
             let name: string;
             let rename: string;
             let band: string;
-            for(band in bands) {
+            for(band in inBands) {
                 name = band;
                 rename = renameFunction(band);
                 //rename if defined
-                if(rename != undefined) {
+                if(rename !== undefined && rename !== null) {
                     name = rename;
                 }
                 bands[name] = inBands[band];

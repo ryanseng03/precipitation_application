@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { UtilityService } from "./utility.service";
 import {LatLng, latLng, bounds} from "leaflet";
-import {DataManagerService} from "./data-manager.service"
-import { ColorScale, Color } from '../classes/color-scale';
+import { ColorScale, Color } from '../../models/colorScale';
 import { GeoJSON, Feature } from "geojson";
-import {RasterHeader, IndexedValues} from "../models/RasterData";
+import {RasterHeader, IndexedValues} from "../../models/RasterData";
 
 @Injectable({
   providedIn: 'root'

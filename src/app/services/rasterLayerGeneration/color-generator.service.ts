@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as chroma from "chroma-js";
-import {Color, ColorScale} from "../classes/color-scale"
+import {Color, ColorScale} from "../../models/colorScale"
 
 @Injectable({
   providedIn: 'root'

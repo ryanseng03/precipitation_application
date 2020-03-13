@@ -99,7 +99,7 @@ export class DataProcessorService {
     //catch type error if doc.$date undefined
     try {
       let props = {
-        date: doc.$date.date,
+        date: doc.date.$date,
         type: doc.type,
         value: doc.value,
         skn: doc.skn
@@ -109,10 +109,12 @@ export class DataProcessorService {
         value = new SiteValue(props);
       }
     }
-    catch(e) { }
+    catch(e) { console.log(e);}
     
     return value;
   }
+
+  
 
   private verifyAssignedPropertiesNotUndefined(o: Object): boolean {
     let keys = Object.keys(o);

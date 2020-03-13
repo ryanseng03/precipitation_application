@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 
 import { HttpClient } from '@angular/common/http';
-import {RasterData, RasterHeader, BandData, IndexedValues, UpdateFlags, UpdateStatus} from "../../../models/RasterData";
-import {DataProcessorService} from "../../dataProcessor/data-processor.service"
+import {RasterData, RasterHeader, BandData, IndexedValues, UpdateFlags, UpdateStatus} from "../../../../models/RasterData";
+import {DataProcessorService} from "../../../dataProcessor/data-processor.service"
 
 @Injectable({
   providedIn: 'root'

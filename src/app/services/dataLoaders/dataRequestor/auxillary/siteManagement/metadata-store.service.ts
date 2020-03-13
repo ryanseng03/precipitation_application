@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DbConService } from "../dbCon/db-con.service";
-import { SiteMetadata } from "../../../../models/SiteMetadata";
-import {DataProcessorService} from "../../../dataProcessor/data-processor.service";
+import { SiteMetadata } from "../../../../../models/SiteMetadata";
+import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 import { LatLng } from "leaflet";
 import dsconfig from "./DataSetConfig.json";
 

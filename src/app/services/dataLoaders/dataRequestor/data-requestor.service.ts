@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import {SiteValueFetcherService, DateRefValues} from "./auxillary/siteManagement/site-value-fetcher.service";
 import {MetadataStoreService, SKNRefMeta} from "./auxillary/siteManagement/metadata-store.service";
-import { SiteValue, SiteMetadata, SiteInfo } from '../../models/SiteMetadata';
+import { SiteValue, SiteMetadata, SiteInfo } from '../../../models/SiteMetadata';
 import Day from "dayjs";
-import { RasterData, IndexedValues } from '../../models/RasterData';
+import { RasterData, IndexedValues } from '../../../models/RasterData';
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
 //eventually also routes requests for remote raster data fetching
@@ -35,6 +35,16 @@ export class DataRequestorService {
   //all non-init raster data is just passed as a set of indexed values
   getRasters(start: string, end: string): Promise<IndexedValues> {
     throw new Error("Unimplemented");
+  }
+
+
+  //wrappers, everything should go through this service rather than aux services directly
+  getMetaBySKN(skn: string): Promise<SiteMetadata> {
+    return this.metaRetreiver.getMetaBySKN(skn);
+  }
+
+  getMetaBySKNs(skns: string[]): Promise<SKNRefMeta> {
+    return this.metaRetreiver.getMetaBySKNs(skns);
   }
 
   
