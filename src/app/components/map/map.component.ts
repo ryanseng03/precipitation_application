@@ -38,12 +38,24 @@ export class MapComponent implements OnInit {
     focused: FocusedData,
     band: string
   };
+  private dataLayers: {
+    [band: string]: any
+  };
+
+  private layerLabelMap: TwoWayLabelMap;
 
   constructor(private eventRegistrar: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private paramService: ParameterStoreService, private colors: ColorGeneratorService, private dataManager: DataManagerService, private rasterLayerService: LeafletRasterLayerService) {
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
       Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
     };
+    this.dataLayers = {};
+    this.layerLabelMap = new TwoWayLabelMap({
+      "rainfall": "Rainfall",
+      "anomaly": "Anomaly",
+      "se_rainfall": "Rainfall Standard Error",
+      "se_anomaly": "Anomaly Standard Error"
+    });
 
     this.options = {
       layers: [this.baseLayers.Satellite],
@@ -126,10 +138,11 @@ export class MapComponent implements OnInit {
           }
         };
         let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
-        layerGroups.Types[band] = rasterLayer;
+        layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
+        this.dataLayers[band] = rasterLayer;
       }
 
-      map.addLayer(layerGroups.Types["rainfall"]);
+      map.addLayer(this.dataLayers["rainfall"]);
 
       
     
@@ -140,12 +153,13 @@ export class MapComponent implements OnInit {
 
       
 
-      var layerGroupControlOptions = {
+      let layerGroupControlOptions = {
         exclusiveGroups: ["Types"],
         groupCheckboxes: true
       };
 
-      C.groupedLayers(this.baseLayers, layerGroups, layerGroupControlOptions).addTo(map);
+      let lc = C.groupedLayers(this.baseLayers, layerGroups, layerGroupControlOptions);
+      lc.addTo(map);
 
       this.addPopupOnHover(1000);
 
@@ -179,24 +193,35 @@ export class MapComponent implements OnInit {
       //console.log(siteMarkers);
       map.addLayer(siteMarkers);
       //console.log(sites);
+
+      //after first go only set data
+      this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
+        //need to make sure it has all the expected bands otherwise print error and ignore data
+        let bandData: BandData = data.data.raster.getBands();
+        let bands = Object.keys(bandData);
+        if(bands.length != Object.keys(this.dataLayers).length) {
+          console.error("Bands don't match");
+          return;
+        }
+        for(let band in bands) {
+          let indexedData: IndexedValues = bandData[band];
+          this.dataLayers[band].setData(indexedData);
+        }
+        this.active.focused = data;
+
+      });
     });
 
     this.setBaseLayerHandlers();
 
-    //after first go only set data
-    this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
-      this.active = {
-        focused: data,
-        band: "rainfall"
-      };
-    });
+    
   }
 
   setBaseLayerHandlers() {
     this.map.on('overlayadd', (e: L.LayersControlEvent) => {
-      //console.log(e);
-      let type: DataType = <DataType>e.name;
-      //this.dataManager.setFocusedData(this.focused.date, type);
+      //set layer to type any
+      //let layer: any = e.layer;
+      this.active.band = e.name;
     });
   }
 
@@ -271,4 +296,27 @@ export class MapComponent implements OnInit {
 interface PopupData {
   popupTimer: any,
   highlightedCell: L.Layer
+}
+
+class TwoWayLabelMap {
+  nameToLabelMap: any;
+  labelToNameMap: any;
+
+  constructor(nameToLabelMap: {[name: string]: string}) {
+    this.labelToNameMap = {};
+    let keys = Object.keys(nameToLabelMap);
+    for(let key in keys) {
+      let label = nameToLabelMap[key];
+      this.labelToNameMap[label] = name;
+    }
+    this.nameToLabelMap = nameToLabelMap;
+  }
+
+  getLabel(name: string) {
+    return this.nameToLabelMap[name];
+  }
+
+  getName(label: string) {
+    return this.labelToNameMap[label];
+  }
 }

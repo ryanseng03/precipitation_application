@@ -155,6 +155,8 @@ export class DataManagerService {
           });
         }
         else {
+          //only get site data for now
+          //this.dataRequestor.getSiteVals(date)
           //cache data
           //not implemented just reject for now
           reject();
@@ -166,9 +168,17 @@ export class DataManagerService {
     
   }
 
-  cacheDateRange(): void {
-
+  //should require a focused date too, need some place to pivot around
+  //should it just start the display at the min value? should also just focus that after retreival
+  setDateRange(start: string, end: string) {
+    //for now just get and cache everything, should be chunked
+    this.dataRequestor.getSiteVals
   }
+
+  // retreiveDateRange(start: string, end: string): Promise {
+  //   //only get site data for now
+  //   this.dataRequestor.getSiteVals(date)
+  // }
 
 
   getFocusedData(): Promise<FocusedData> {

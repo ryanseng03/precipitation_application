@@ -7,6 +7,8 @@ import { RasterHeader, IndexedValues } from '../../models/RasterData';
 export let R: any = L;
 //export type RasterLayer = R.GridLayer.RasterLayer;
 
+// export type test extends L.GridLayer
+
 @Injectable({
   providedIn: 'root'
 })
@@ -45,6 +47,7 @@ export class LeafletRasterLayerService {
 
       setColorScale: function(colorScale: ColorScale) {
         this.options.colorScale = colorScale;
+        this.redraw();
       },
 
       createTile: function(coords) {
