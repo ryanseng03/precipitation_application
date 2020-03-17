@@ -1,0 +1,26 @@
+<div>
+
+  <mat-form-field>
+    <mat-label>Start Date</mat-label>
+    <input #startDateInput matInput [formControl]="testFormControl" [matDatepicker]="startDatePicker">
+    
+    <mat-datepicker-toggle #startCalendar matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+    <mat-datepicker #startDatePicker></mat-datepicker>
+    <mat-error>test</mat-error>
+  </mat-form-field>
+  <mat-form-field>
+      <input matInput [formControl]="testFormControl">
+      <mat-error>test</mat-error>
+    </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>End Date</mat-label>
+    <input matInput [matDatepicker]="endDateInput">
+    <mat-datepicker-toggle matSuffix [for]="endDateInput"></mat-datepicker-toggle>
+    <mat-datepicker #endDateInput
+      startView={{dateConfig.view}}>
+    </mat-datepicker>
+  </mat-form-field>
+</div>
+
+

@@ -20,6 +20,17 @@ import { RangeSliderComponent } from './components/controls/generics/range-slide
 import { VisComponent } from './components/vis/vis.component';
 import { ControlPanelComponent } from './components/control-panel/control-panel.component';
 
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import { DateSelectorComponent } from './components/controls/date-selector/date-selector.component';
+import {MatInputModule} from "@angular/material/input";
+import {MatMomentDateModule} from "@angular/material-moment-adapter";
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import { MatSliderModule } from '@angular/material/slider';
+import { DataSetSelectorComponent } from './components/controls/data-set-selector/data-set-selector.component';
+import { DataSetIntervalSelectorComponent } from './components/controls/data-set-interval-selector/data-set-interval-selector.component';
+import { RfSiteDetailsComponent } from './components/rf-site-details/rf-site-details.component';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -30,7 +41,11 @@ import { ControlPanelComponent } from './components/control-panel/control-panel.
     SliderComponent,
     RangeSliderComponent,
     VisComponent,
-    ControlPanelComponent
+    ControlPanelComponent,
+    DateSelectorComponent,
+    DataSetSelectorComponent,
+    DataSetIntervalSelectorComponent,
+    RfSiteDetailsComponent
   ],
   imports: [
     BrowserModule,
@@ -39,7 +54,14 @@ import { ControlPanelComponent } from './components/control-panel/control-panel.
     LeafletDrawModule.forRoot(),
     HttpClientModule,
     MatIconModule,
-    MatButtonModule
+    MatButtonModule,
+    MatDatepickerModule,
+    MatInputModule,
+    MatMomentDateModule,
+    BrowserAnimationsModule,
+    MatSliderModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
