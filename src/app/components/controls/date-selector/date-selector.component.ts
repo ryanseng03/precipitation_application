@@ -2,7 +2,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import {MAT_DATE_FORMATS} from '@angular/material/core';
 import {DateFormatHelperService} from "../../../services/controlHelpers/date-format-helper.service";
 import {Platform} from '@angular/cdk/platform';
-import {FormControl, Validators} from '@angular/forms';
+import {FormControl, Validators, AbstractControl} from '@angular/forms';
+import {MatCalendarHeader} from "@angular/material/datepicker"
 
 
 let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
@@ -29,41 +30,41 @@ export class DateSelectorComponent implements OnInit {
     view: "month"
   }
 
-  //https://angular.io/guide/form-validation
-  testFormControl = new FormControl('a', [
-    Validators.required,
-    Validators.email,
-  ])
+  
+  testFormControl = new FormControl("", []);
 
   constructor(private dateFormat: DateFormatHelperService) {
-
-    
-    
-    setTimeout(() => {
-      this.startDateInput.nativeElement.value = "dsda";
-      this.startDatePicker.monthSelected.subscribe((value) => {
-        console.log(value);
-      });
-      this.startDatePicker.openedStream.subscribe((value) => {
-        console.log(value);
-      });
-      this.startDatePicker.closedStream.subscribe((value) => {
-        console.log(value);
-      });
-      console.log(this.startCalendar);
-      console.log("set");
-      dateFormat.setDateMinUnit("month");
-    }, 1000);
+    console.log(MatCalendarHeader.prototype.currentPeriodClicked);
+    //override the dumb default method that switches to random things and make it go up one level
+    MatCalendarHeader.prototype.currentPeriodClicked = function () {
+      console.log(this.calendar.currentView);
+      switch(this.calendar.currentView) {
+        case "year": {
+          this.calendar.currentView = "multi-year";
+          break;
+        }
+        case "month": {
+          this.calendar.currentView = "year";
+        }
+      }
+    };
     
   }
 
   ngOnInit() {
   }
 
-  monthSelectHandler() {
+  monthSelectHandler(event: any) {
     if(this.dateConfig.view == "year") {
       this.startDatePicker.close();
     }
+  }
+
+  dateInputValidator(control: AbstractControl) {
+    let df = /[0-9]{2}\/[0-9]{2}\/[0-9]{4}/;
+    console.log("called validator");
+    return null;
+    //return forbidden ? {'forbiddenName': {value: control.value}} : null;
   }
 
 }
