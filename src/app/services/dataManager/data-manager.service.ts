@@ -61,7 +61,7 @@ export class DataManagerService {
 
 
     let siteLoader = this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
-      console.log(values);
+      //console.log(values);
       //print error if there's no values, should never happen, promise should reject if couldn't get data
       if(values.length == 0) {
         console.error("No values returned");
@@ -105,7 +105,7 @@ export class DataManagerService {
       }));
     }
     return Promise.all(resPromises).then((info: SiteInfo[]) => {
-      console.log(info);
+      //console.log(info);
       //filter out any instances where metadata could not be found to maintain consistency
       return info.filter((si) => {
         return si != null;
@@ -136,7 +136,7 @@ export class DataManagerService {
           focus.data = data;
           this.combineMetaWithValues(internalData.sites).then((info: SiteInfo[]) => {
             data.sites = info;
-            console.log(internalData.sites);
+            //console.log(internalData.sites);
             //wrap in rasterdata object
             let raster: RasterData = new RasterData(this.data.header);
             if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {

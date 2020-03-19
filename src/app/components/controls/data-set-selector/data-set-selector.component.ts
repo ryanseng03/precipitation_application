@@ -7,7 +7,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DataSetSelectorComponent implements OnInit {
 
-  constructor() { }
+  dataSets: string[];
+
+  constructor() {
+    this.dataSets = [
+      "Daily",
+      "Monthly"
+    ];
+  }
 
   ngOnInit() {
   }

@@ -30,6 +30,7 @@ import { DataSetSelectorComponent } from './components/controls/data-set-selecto
 import { DataSetIntervalSelectorComponent } from './components/controls/data-set-interval-selector/data-set-interval-selector.component';
 import { RfSiteDetailsComponent } from './components/rf-site-details/rf-site-details.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {MatSelectModule} from "@angular/material/select"
 
 @NgModule({
   declarations: [
@@ -61,7 +62,8 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
     BrowserAnimationsModule,
     MatSliderModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatSelectModule
   ],
   providers: [],
   bootstrap: [AppComponent]

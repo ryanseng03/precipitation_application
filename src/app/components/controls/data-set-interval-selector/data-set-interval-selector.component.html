@@ -1,3 +1,8 @@
-<p>
-  data-set-interval-selector works!
-</p>
+<mat-form-field >
+  <mat-label>Data Set</mat-label>
+  <mat-select [disableOptionCentering]="true" (openedChange)="setAttributes()">
+    <mat-option #options *ngFor="let set of dataSets" [value]="set">
+      {{set.label}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>

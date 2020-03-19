@@ -183,7 +183,7 @@ export class SiteValueFetcherService {
       }
       else {
         this.getRecentValuesMain(date, step).then((value) => {
-          console.log(value);
+          //console.log(value);
           resolve(value);
         }, (min) => {
           return this.getRecentValuesRecursive(min, step, max, i + 1);
