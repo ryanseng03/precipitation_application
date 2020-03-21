@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output, ViewChildren, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 //import {MatSelect} from "@angular/material/select";
 import {ClassModificationService} from "../../../services/controlHelpers/class-modification.service";
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-data-set-interval-selector',
@@ -10,61 +10,75 @@ import { Observable, Subject } from 'rxjs';
 })
 export class DataSetIntervalSelectorComponent implements AfterViewInit {
 
-  dataSets: DataSetInfoBuilder[];
+  @ViewChild("options", {read: ElementRef}) options: ElementRef;
 
-  @ViewChild("options", {read: ElementRef}) options;
+  //dataSets: DataSetInfoBuilder[];
+  readonly initDataSet: DataSetComponents = {
+    timeGranularity: "daily",
+    setType: "rainfall_1990_present",
+    fill: "not_filled"
+  };
+  formValues: ValidValues;
 
-  //@Output() panelOpen = new EventEmitter();
 
   constructor(private classModifier: ClassModificationService) {
-    this.dataSets = [];
+    this.formValues = {
+      timeGranularity: null,
+      setType: null,
+      fill: null
+    };
+
+    let definitions: DataSetComponents[] = [];
+
     for(let fillType of ["filled", "partial_filled", "not_filled"]) {
-      this.dataSets.push(new DataSetInfoBuilder({
-        valueType: "daily",
-        setType: "rainfall",
-        timeRange: ["1990", "present"],
+      definitions.push({
+        timeGranularity: "daily",
+        setType: "rainfall_1990_present",
         fill: fillType
-      }));
+      });
     }
     for(let fillType of ["filled", "partial_filled"]) {
-      this.dataSets.push(new DataSetInfoBuilder({
-        valueType: "monthly",
-        setType: "rainfall",
-        timeRange: ["1920", "present"],
+      definitions.push({
+        timeGranularity: "monthly",
+        setType: "rainfall_1920_present",
         fill: fillType
-      }));
+      });
     }
 
-    this.dataSets.push(new DataSetInfoBuilder({
-      valueType: "monthly",
-      setType: "rainfall",
-      timeRange: ["1990", "present"],
+    definitions.push({
+      timeGranularity: "monthly",
+      setType: "rainfall_1990_present",
       fill: "not_filled"
-    }));
+    });
 
     for(let fillType of ["filled", "not_filled"]) {
-      this.dataSets.push(new DataSetInfoBuilder({
-        valueType: "average",
-        setType: "temperature",
-        timeRange: ["1899", "present"],
+      definitions.push({
+        timeGranularity: "monthly",
+        setType: "average_temperature_1899_present",
         fill: fillType
-      }));
+      });
     }
     for(let fillType of ["filled", "not_filled"]) {
-      this.dataSets.push(new DataSetInfoBuilder({
-        valueType: "maximum",
-        setType: "temperature",
-        timeRange: ["1899", "present"],
+      definitions.push({
+        timeGranularity: "monthly",
+        setType: "maximum_temperature_1899_present",
         fill: fillType
-      }));
+      });
     }
     for(let fillType of ["filled", "not_filled"]) {
-      this.dataSets.push(new DataSetInfoBuilder({
-        valueType: "minimum",
-        setType: "temperature",
-        timeRange: ["1899", "present"],
+      definitions.push({
+        timeGranularity: "monthly",
+        setType: "minimum_temperature_1899_present",
         fill: fillType
-      }));
+      });
+    }
+
+    let setCoordinator: DataSetCoordinator = new DataSetCoordinator(definitions, this.initDataSet);
+    let validValuesObservables: ValidValuesObservables = setCoordinator.getValidValuesObservables();
+    for(let component in validValuesObservables) {
+      validValuesObservables[component].subscribe((values: string[]) => {
+        this.formValues[component] = values;
+      });
     }
   }
 
@@ -115,9 +129,9 @@ interface DataSetComponents {
 class DataSetCoordinator {
 
   validValueSubjects: {
-    timeGranularity: Subject<string[]>,
-    setType: Subject<string[]>,
-    fill: Subject<string[]>
+    timeGranularity: BehaviorSubject<Set<string>>,
+    setType: BehaviorSubject<Set<string>>,
+    fill: BehaviorSubject<Set<string>>
   }
 
   definitions: DataSetComponents[];
@@ -125,11 +139,7 @@ class DataSetCoordinator {
   setValues: DataSetComponents;
 
   constructor(validComponents: DataSetComponents[], defaultValues?: DataSetComponents) {
-    this.validValueSubjects = {
-      timeGranularity: new Subject<string[]>(),
-      setType: new Subject<string[]>(),
-      fill: new Subject<string[]>()
-    }
+    
     this.definitions = validComponents;
 
     let nulledValues: DataSetComponents = {
@@ -138,11 +148,27 @@ class DataSetCoordinator {
       fill: null
     }
     //set to nulled values if no default set
-    this.setValues = defaultValues == undefined ? nulledValues : JSON.parse(JSON.stringify(defaultValues));
-    //validate and set to null if invalid (no rule specified for default state)
-    if(!this.validate()) {
+    if(defaultValues == undefined) {
       this.setValues = nulledValues;
     }
+    else {
+      this.setValues = JSON.parse(JSON.stringify(defaultValues));
+      console.log(this.setValues);
+      //validate and set to null if invalid (no rule specified for default state)
+      if(!this.validate()) {
+        this.setValues = nulledValues;
+      }
+    }
+
+    //get valid component values based on provided definitions
+    let initValid: ValidValues = this.getValidComponents();
+    //initialize emitters with the current set of valid values based on initialization
+    this.validValueSubjects = {
+      timeGranularity: new BehaviorSubject<Set<string>>(initValid.timeGranularity),
+      setType: new BehaviorSubject<Set<string>>(initValid.setType),
+      fill: new BehaviorSubject<Set<string>>(initValid.fill)
+    };
+    
   }
 
   validate(): boolean {
@@ -159,7 +185,7 @@ class DataSetCoordinator {
     }
     else {
       //check that non-null component combo in state matches some rule
-      for(let def in this.definitions) {
+      for(let def of this.definitions) {
         let match = true;
         for(let component of nonNull) {
           //rule does not match, set to false and break
@@ -175,7 +201,6 @@ class DataSetCoordinator {
         }
       }
     }
-
     return valid;
   }
 
@@ -207,11 +232,52 @@ class DataSetCoordinator {
   }
 
   private getValidComponents(): ValidValues {
-    return null;
+    let validValues: ValidValues = {
+      timeGranularity: new Set<string>(),
+      setType: new Set<string>(),
+      fill: new Set<string>()
+    };
+
+    //get non-null components in current set
+    let nonNull = [];
+    for(let component in this.setValues) {
+      if(this.setValues[component] !== null) {
+        nonNull.push(component);
+      }
+    }
+
+
+    for(let definition of this.definitions) {
+      let definitionValid = true;
+      //compare each component in the definition to the others in the current set to see if this definition is valid for the current set
+      componentSearchMain:
+      for(let component in definition) {
+        //only need to compare if non-null components
+        for(let componentPair of nonNull) {
+          //matches only validate for pairings with other components, not the identity component
+          if(component != componentPair) {
+            if(definition[component] !=this.setValues[componentPair]) {
+              definitionValid = false;
+              //break out of nested comparison loops
+              break componentSearchMain;
+            }
+          }
+        }
+      }
+
+      //if the definition is found to be valid based on the current set values, add component values to validValues
+      if(definitionValid) {
+        for(let component in definition) {
+          validValues[component].add(definition[component]);
+        }
+      }
+    }
+
+    return validValues;
   }
 
   private emitValidComponents(validComponents: ValidValues): void {
-    let values: any = {};
+    //let values: any = {};
     for(let component in validComponents) {
       this.validValueSubjects[component].next(validComponents[component]);
     }
@@ -224,7 +290,7 @@ class DataSetCoordinator {
       fill: null
     }
     for(let subject in this.validValueSubjects) {
-      let observable = this.validValueSubjects[subject].toObservable();
+      let observable = this.validValueSubjects[subject].asObservable();
       observables[subject] = observable;
     }
     return observables;
@@ -232,9 +298,9 @@ class DataSetCoordinator {
 }
 
 interface ValidValues {
-  timeGranularity: string[],
-  setType: string[],
-  fill: string[]
+  timeGranularity: Set<string>,
+  setType: Set<string>,
+  fill: Set<string>
 }
 
 interface ValidValuesObservables {
@@ -243,40 +309,40 @@ interface ValidValuesObservables {
   fill: Observable<string[]>
 }
 
-class DataSetInfoBuilder {
-  private _components: DataSetComponents;
-  private _label: string
+// class DataSetInfoBuilder {
+//   private _components: DataSetComponents;
+//   private _label: string
 
-  constructor(components: DataSetComponents) {
-    this._components = components;
-    this._label = this.buildLabel();
-  }
+//   constructor(components: DataSetComponents) {
+//     this._components = components;
+//     this._label = this.buildLabel();
+//   }
 
-  private buildLabel(): string {
-    let replacement = (noCap?: Set<string>) => {
-      return (match: string, boundary: string, word: string, first: string, rest: string) => {
-        let replace = match;
-        if(noCap === undefined || !noCap.has(word.toLowerCase())) {
-          replace = `${boundary}${first.toUpperCase()}${rest}`;
-        }
-        return replace;
-      }
-    };
-    let prettifyString = (s: string, noCap?: Set<string>) => {
-      let pretty = s;
-      pretty = pretty.replace(/_/g, " ");
-      pretty = pretty.replace(/(\b)((\w)(\w*))/g, replacement(noCap));
-      console.log(pretty);
-      return pretty;
-    };
-    return prettifyString(`${this._components.valueType} ${this._components.setType} (${this._components.timeRange[0]}-${this._components.timeRange[1]}), ${this._components.fill}`);
-  }
+//   private buildLabel(): string {
+//     let replacement = (noCap?: Set<string>) => {
+//       return (match: string, boundary: string, word: string, first: string, rest: string) => {
+//         let replace = match;
+//         if(noCap === undefined || !noCap.has(word.toLowerCase())) {
+//           replace = `${boundary}${first.toUpperCase()}${rest}`;
+//         }
+//         return replace;
+//       }
+//     };
+//     let prettifyString = (s: string, noCap?: Set<string>) => {
+//       let pretty = s;
+//       pretty = pretty.replace(/_/g, " ");
+//       pretty = pretty.replace(/(\b)((\w)(\w*))/g, replacement(noCap));
+//       console.log(pretty);
+//       return pretty;
+//     };
+//     return prettifyString(`${this._components.valueType} ${this._components.setType} (${this._components.timeRange[0]}-${this._components.timeRange[1]}), ${this._components.fill}`);
+//   }
 
-  get label(): string {
-    return this._label;
-  }
+//   get label(): string {
+//     return this._label;
+//   }
 
-  get components(): DataSetComponents {
-    return JSON.parse(JSON.stringify(this._components));
-  }
-}
+//   get components(): DataSetComponents {
+//     return JSON.parse(JSON.stringify(this._components));
+//   }
+// }

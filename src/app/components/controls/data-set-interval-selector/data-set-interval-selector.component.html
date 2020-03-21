@@ -1,8 +1,26 @@
-<mat-form-field >
+<mat-form-field>
   <mat-label>Data Set</mat-label>
   <mat-select [disableOptionCentering]="true" (openedChange)="setAttributes()">
-    <mat-option #options *ngFor="let set of dataSets" [value]="set">
-      {{set.label}}
+    <mat-option #options *ngFor="let set of formValues.timeGranularity" [value]="set">
+      {{set}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-form-field>
+  <br>
+  <mat-label>Data Set</mat-label>
+  <mat-select [disableOptionCentering]="true" (openedChange)="setAttributes()">
+    <mat-option #options *ngFor="let set of formValues.setType" [value]="set">
+      {{set}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-form-field>
+  <br>
+  <mat-label>Data Set</mat-label>
+  <mat-select [disableOptionCentering]="true" (openedChange)="setAttributes()">
+    <mat-option #options *ngFor="let set of formValues.fill" [value]="set">
+      {{set}}
     </mat-option>
   </mat-select>
 </mat-form-field>
