@@ -14,9 +14,9 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
 
   //dataSets: DataSetInfoBuilder[];
   readonly initDataSet: DataSetComponents = {
-    timeGranularity: "daily",
-    setType: "rainfall_1990_present",
-    fill: "not_filled"
+    timeGranularity: "monthly",
+    setType: "rainfall_1920_present",
+    fill: "partial_filled"
   };
   formValues: ValidValues;
 
@@ -246,32 +246,30 @@ class DataSetCoordinator {
       }
     }
 
-
     for(let definition of this.definitions) {
-      let definitionValid = true;
       //compare each component in the definition to the others in the current set to see if this definition is valid for the current set
-      componentSearchMain:
       for(let component in definition) {
+        let definitionValid = true;
         //only need to compare if non-null components
         for(let componentPair of nonNull) {
           //matches only validate for pairings with other components, not the identity component
           if(component != componentPair) {
-            if(definition[component] !=this.setValues[componentPair]) {
+            //check if component pairing matches in the definition and the current value set
+            if(definition[componentPair] != this.setValues[componentPair]) {
+              //definition isn't valid for this component, break out of pair comparitor loop
               definitionValid = false;
-              //break out of nested comparison loops
-              break componentSearchMain;
+              break;
             }
+    
           }
         }
-      }
-
-      //if the definition is found to be valid based on the current set values, add component values to validValues
-      if(definitionValid) {
-        for(let component in definition) {
+        //if component pairs all matched then add the component value for this def to the valid set
+        if(definitionValid) {
           validValues[component].add(definition[component]);
         }
       }
     }
+    
 
     return validValues;
   }
