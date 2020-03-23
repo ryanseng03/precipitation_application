@@ -45,6 +45,12 @@ export class EventParamRegistrarService {
     return label;
   }
 
+  // registerStateSet() {
+  //   let label = `state_set_${this.tagGen.getTag()}`;
+  //   let sub = this.paramService.registerParameter<any>(label);
+
+  // }
+
   
 }
 

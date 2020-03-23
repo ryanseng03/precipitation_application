@@ -10,7 +10,9 @@ import { Observable, Subject, BehaviorSubject } from 'rxjs';
 })
 export class DataSetIntervalSelectorComponent implements AfterViewInit {
 
-  @ViewChild("options", {read: ElementRef}) options: ElementRef;
+  @ViewChild("timeGranularityOptions", {read: ElementRef}) timeGranularityOptions: ElementRef;
+  @ViewChild("setTypeOptions", {read: ElementRef}) setTypeOptions: ElementRef;
+  @ViewChild("fillOptions", {read: ElementRef}) fillOptions: ElementRef;
 
   //dataSets: DataSetInfoBuilder[];
   readonly initDataSet: DataSetComponents = {
@@ -19,7 +21,8 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
     fill: "partial_filled"
   };
   formValues: ValidValues;
-
+  setCoordinator: DataSetCoordinator;
+  state: DataSetComponents;
 
   constructor(private classModifier: ClassModificationService) {
     this.formValues = {
@@ -73,39 +76,44 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
       });
     }
 
-    let setCoordinator: DataSetCoordinator = new DataSetCoordinator(definitions, this.initDataSet);
-    let validValuesObservables: ValidValuesObservables = setCoordinator.getValidValuesObservables();
+    this.setCoordinator = new DataSetCoordinator(definitions, this.initDataSet);
+    let validValuesObservables: ValidValuesObservables = this.setCoordinator.getValidValuesObservables();
     for(let component in validValuesObservables) {
       validValuesObservables[component].subscribe((values: string[]) => {
         this.formValues[component] = values;
       });
     }
+
+    //set state to setcoorrdinator state in case invalid or undefined init state
+    this.state = this.setCoordinator.state;
   }
 
   ngAfterViewInit() {
     
   }
 
-  setAttributes() {
+  setAttributes(element: ElementRef) {
+    console.log(element);
     //move to back of queue so dom finished setting up and doesn't get overwritten
     setTimeout(() => {
-      this.classModifier.setAttributesInAncestorWithClass(this.options.nativeElement, "mat-select-panel", {
+      console.log(this.classModifier.setAttributesInAncestorWithClass(element.nativeElement, "mat-select-panel", {
         minWidth: {
           value: "180px",
         }
-      });
+      }));
     }, 0);
-
-    // setTimeout(() => {
-    //   this.classModifier.setAttributesInAncestorWithClass(this.options.nativeElement, "cdk-overlay-pane", {
-    //     transform: {
-    //       value: "none",
-    //     }
-    //   });
-    // }, 0);
-
-
     
+  }
+
+
+  valueSet(e: any, component: keyof DataSetComponents) {
+    let setValue = e.value === undefined ? null : e.value;
+    if(!this.setCoordinator.setComponent(component, setValue)) {
+      //set internal state to match coordinator state for consistency and print error (should never happen)
+      this.state = this.setCoordinator.state;
+      console.error(`Invalid value set for component ${component}`);
+    }
+
   }
 }
 
@@ -152,6 +160,7 @@ class DataSetCoordinator {
       this.setValues = nulledValues;
     }
     else {
+      //copy the object to avoid issues
       this.setValues = JSON.parse(JSON.stringify(defaultValues));
       console.log(this.setValues);
       //validate and set to null if invalid (no rule specified for default state)
@@ -169,6 +178,10 @@ class DataSetCoordinator {
       fill: new BehaviorSubject<Set<string>>(initValid.fill)
     };
     
+  }
+
+  get state(): DataSetComponents {
+    return JSON.parse(JSON.stringify(this.setValues));
   }
 
   validate(): boolean {
