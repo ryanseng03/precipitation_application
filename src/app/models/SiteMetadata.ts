@@ -36,21 +36,21 @@ export class SiteValue {
 
 //should add other properties to this
 export class SiteMetadata {
-    private meta: {
-        skn: string,
-        name: string,
-        location: LatLng,
-        network: string
-    }
+    private meta: SiteMetadataFields;
     
-    constructor(metadata: {skn: string, name: string, lat: number, lng: number, network: string}) {
-        this.meta = {
-            skn: metadata.skn,
-            name: metadata.name,
-            location: new LatLng(metadata.lat, metadata.lng),
-            network: metadata.network
+    constructor(metadata: SiteMetadataFields, nodata: string) {
+        this.meta = JSON.parse(JSON.stringify(metadata));
+        for(let field in this.meta) {
+            if(field == nodata) {
+                this.meta[field] = null;
+            }
+        }
+        //make sure basics arent null, must have at least skn and lat lng (anything else?)
+        if(this.meta.skn === null || this.meta.lat === null || this.meta.lng === null) {
+            throw new Error("Invalid site metadata: a required value had no data.");
         }
     }
+
 
     get skn(): string {
         return this.meta.skn;
@@ -61,40 +61,85 @@ export class SiteMetadata {
     }
 
     get location(): LatLng {
-        return this.meta.location;
+        return this.meta.elevation === null ? latLng(this.meta.lat, this.meta.lng) : latLng(this.meta.lat, this.meta.lng, this.meta.elevation);
     }
 
     get lat(): number {
-        return this.meta.location.lat;
+        return this.meta.lat;
     }
 
     get lng(): number {
-        return this.meta.location.lng;
+        return this.meta.lng;
+    }
+
+    get elevation(): number {
+        return this.meta.elevation;
     }
 
     get network(): string {
         return this.meta.network;
     }
+
+    get observer(): string {
+        return this.meta.observer;
+    }
+
+    get island(): string {
+        return this.meta.island;
+    }
+
+    get nceiID(): string {
+        return this.meta.nceiID;
+    }
+
+    get nwsID(): string {
+        return this.meta.nwsID;
+    }
+
+    get scanID(): string {
+        return this.meta.scanID;
+    }
+
+    get smartNodeRfID(): string {
+        return this.meta.smartNodeRfID;
+    }
+}
+
+export interface SiteMetadataFields {
+    skn: string,
+    name: string,
+    observer: string,
+    network: string,
+    island: string,
+    //elevation in meters
+    elevation: number,
+    lat: number,
+    lng: number,
+    nceiID: string,
+    nwsID: string,
+    scanID: string,
+    smartNodeRfID: string
 }
 
 //should store everything not actually being displayed separately to avoid unnecessary memory usage
 export class SiteInfo {
-    private info: {
-        skn: string,
-        name: string,
-        location: LatLng,
-        network: string,
-        value: number,
-        type: string,
-        date: string
-    }
+    private info: SiteInfoFields;
 
     constructor(metadata: SiteMetadata, value: SiteValue) {
         this.info = {
             skn: metadata.skn,
             name: metadata.name,
-            location: metadata.location,
+            observer: metadata.observer,
             network: metadata.network,
+            island: metadata.island,
+            //elevation in meters
+            elevation: metadata.elevation,
+            lat: metadata.lat,
+            lng: metadata.lng,
+            nceiID: metadata.nceiID,
+            nwsID: metadata.nwsID,
+            scanID: metadata.scanID,
+            smartNodeRfID: metadata.smartNodeRfID,
             value: value.value,
             type: value.type,
             date: value.date,
@@ -110,11 +155,47 @@ export class SiteInfo {
     }
 
     get location(): LatLng {
-        return this.info.location;
+        return this.info.elevation === null ? latLng(this.info.lat, this.info.lng) : latLng(this.info.lat, this.info.lng, this.info.elevation);
+    }
+
+    get lat(): number {
+        return this.info.lat;
+    }
+
+    get lng(): number {
+        return this.info.lng;
+    }
+
+    get elevation(): number {
+        return this.info.elevation;
     }
 
     get network(): string {
         return this.info.network;
+    }
+
+    get observer(): string {
+        return this.info.observer;
+    }
+
+    get island(): string {
+        return this.info.island;
+    }
+
+    get nceiID(): string {
+        return this.info.nceiID;
+    }
+
+    get nwsID(): string {
+        return this.info.nwsID;
+    }
+
+    get scanID(): string {
+        return this.info.scanID;
+    }
+
+    get smartNodeRfID(): string {
+        return this.info.smartNodeRfID;
     }
 
     get type(): string {
@@ -129,11 +210,27 @@ export class SiteInfo {
         return this.info.date;
     }
 
-    get lat(): number {
-        return this.info.location.lat;
+    public getFields() {
+        return ["skn", "name", "observer", "network", "island", "elevation", "lat", "lng", "nceiID", "nwsID", "scanID", "smartNodeRfID", "value", "type", "date"];
     }
 
-    get lng(): number {
-        return this.info.location.lng;
-    }
+}
+
+export interface SiteInfoFields {
+    skn: string,
+    name: string,
+    observer: string,
+    network: string,
+    island: string,
+    //elevation in meters
+    elevation: number,
+    lat: number,
+    lng: number,
+    nceiID: string,
+    nwsID: string,
+    scanID: string,
+    smartNodeRfID: string
+    value: number,
+    type: string,
+    date: string
 }

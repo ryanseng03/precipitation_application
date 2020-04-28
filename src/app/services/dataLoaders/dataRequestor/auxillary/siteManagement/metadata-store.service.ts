@@ -67,9 +67,3 @@ export interface SKNRefMeta {
 }
 
 
-// new SiteMetadata({
-//   skn: result.value.skn,
-//   name: result.value.name,
-//   location: new LatLng(result.value.lat, result.value.lon),
-//   network: result.value.network
-// }

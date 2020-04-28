@@ -31,7 +31,12 @@ import { DataSetIntervalSelectorComponent } from './components/controls/data-set
 import { RfSiteDetailsComponent } from './components/rf-site-details/rf-site-details.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {MatSelectModule} from "@angular/material/select";
-import { DisplayValuePipe } from './pipes/display-value.pipe'
+import { DisplayValuePipe } from './pipes/display-value.pipe';
+import { SiteFilterComponent } from './components/controls/site-filter/site-filter.component';
+import { SiteSearchComponent } from './components/controls/site-search/site-search.component';
+import { SiteDataTableComponent } from './components/controls/site-data-table/site-data-table.component';
+import { SiteAvailabilityTableComponent } from './components/controls/site-availability-table/site-availability-table.component';
+import { DataSetFormComponent } from './components/data-set-form/data-set-form.component'
 
 @NgModule({
   declarations: [
@@ -48,7 +53,12 @@ import { DisplayValuePipe } from './pipes/display-value.pipe'
     DataSetSelectorComponent,
     DataSetIntervalSelectorComponent,
     RfSiteDetailsComponent,
-    DisplayValuePipe
+    DisplayValuePipe,
+    SiteFilterComponent,
+    SiteSearchComponent,
+    SiteDataTableComponent,
+    SiteAvailabilityTableComponent,
+    DataSetFormComponent
   ],
   imports: [
     BrowserModule,

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DbConService } from "../dbCon/db-con.service";
-import Day from "dayjs";
+import Moment from "moment";
+import "moment-timezone";
 import dsconfig from "./DataSetConfig.json";
 import { SiteValue } from '../../../../../models/SiteMetadata';
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
@@ -18,7 +19,7 @@ export class SiteValueFetcherService {
   }
 
   //keep date static for lifetime (from initialization), can make dynamic if you think it's necessary later
-  readonly date: Day.Dayjs = LIVE ? Day(null, null, "utc") : Day("1990-05-10T00:00:00.000Z");
+  readonly date: Moment.Moment = LIVE ? Moment(null, null, "utc") : Moment("1990-05-10T00:00:00.000Z");
   
 
   constructor(private dbcon: DbConService, private processor: DataProcessorService) {
@@ -34,7 +35,7 @@ export class SiteValueFetcherService {
   //test date querying
   private getValuesTest() {
     //just use iso standard time format for everything and explicitly specify utc to ensure consistency
-    console.log(Day(undefined, {utc: true}).toISOString(), Day("1990-05-10T00:00:00.000Z", {utc: true}).toISOString());
+    console.log(Moment().tz("UTC").toISOString(), Moment("1990-05-10T00:00:00.000Z").toISOString());
     //cant do any sorting or just get nearest date, so just subtract the expected data time step from the live (or test) date and use the first result; resubmit query with next timestep if no results
 
     // this.getAllValues().then((result) => {
@@ -75,7 +76,7 @@ export class SiteValueFetcherService {
   }
 
   //get values on range [min, max]
-  getValueRange(min: Day.Dayjs, max: Day.Dayjs): Promise<DateRefValues> {
+  getValueRange(min: Moment.Moment, max: Moment.Moment): Promise<DateRefValues> {
     return new Promise<DateRefValues>((resolve, reject) => {
       let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
 
@@ -112,9 +113,9 @@ export class SiteValueFetcherService {
   }
 
   //resolves if recent value was found, otherwise rejects with lower bound date used
-  private getRecentValuesMain(date: Day.Dayjs, step: TimeStep): Promise<SiteValue[]> {
+  private getRecentValuesMain(date: Moment.Moment, step: TimeStep): Promise<SiteValue[]> {
     return new Promise((resolve, reject) => {
-      let lastDataMin = Day(date).subtract(step.size, step.scale);
+      let lastDataMin = Moment(date).subtract(step.size, step.scale);
 
       let lastDataRange = [lastDataMin.toISOString(), date.toISOString()];
   
@@ -156,7 +157,7 @@ export class SiteValueFetcherService {
       let value = this.processor.processValueDocs(doc.value);
       //if value is null then value doc from database is in an unexpected format
       if(value != null) {
-        let date = Day(value.date);
+        let date = Moment(value.date);
         //the date of this doc falls after the others found or this is the first valid value doc, set max date and overwrite list of value docs with docs under current date
         if(maxDate == null || date.isAfter(maxDate)) {
           maxDate = date;
@@ -176,7 +177,7 @@ export class SiteValueFetcherService {
   }
 
   
-  private getRecentValuesRecursive(date: Day.Dayjs, step: TimeStep, max: number, i: number = 0): Promise<SiteValue[]> {
+  private getRecentValuesRecursive(date: Moment.Moment, step: TimeStep, max: number, i: number = 0): Promise<SiteValue[]> {
     return new Promise((resolve, reject) => {
       if(i >= max) {
         reject("Too many iterations.");
@@ -195,8 +196,8 @@ export class SiteValueFetcherService {
 }
 
 export interface TimeStep {
-  size: number,
-  scale: Day.OpUnitType
+  size: Moment.DurationInputArg1,
+  scale: Moment.unitOfTime.DurationConstructor
 }
 
 //remember that any date strings should always be iso standard at time 0

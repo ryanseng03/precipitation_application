@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
 
 @Component({
   selector: 'app-data-set-selector',
@@ -6,6 +6,8 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./data-set-selector.component.scss']
 })
 export class DataSetSelectorComponent implements OnInit {
+
+  @ViewChild("testButton") testButton;
 
   dataSets: string[];
 
@@ -17,6 +19,11 @@ export class DataSetSelectorComponent implements OnInit {
   }
 
   ngOnInit() {
+
   }
+
+ 
+
+  
 
 }

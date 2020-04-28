@@ -1,0 +1,8 @@
+<table>
+  <tr>
+    <th *ngFor="let column of sites.header">{{column}}</th>
+  </tr>
+  <tr #dataRows class="data-row selectable" *ngFor="let row of sites.rows; index as i" [ngClass]="{'highlight': row.selected}" (click)="setSelected($event.currentTarget, i)">
+    <td *ngFor="let column of row.values">{{column}}</td>
+  </tr>
+</table>

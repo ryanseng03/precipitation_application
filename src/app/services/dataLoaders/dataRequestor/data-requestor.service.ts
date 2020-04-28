@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {SiteValueFetcherService, DateRefValues} from "./auxillary/siteManagement/site-value-fetcher.service";
 import {MetadataStoreService, SKNRefMeta} from "./auxillary/siteManagement/metadata-store.service";
 import { SiteValue, SiteMetadata, SiteInfo } from '../../../models/SiteMetadata';
-import Day from "dayjs";
+import Moment from "moment";
 import { RasterData, IndexedValues } from '../../../models/RasterData';
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
@@ -25,7 +25,7 @@ export class DataRequestorService {
   }
 
   getSiteVals(start: string, end: string) {
-    return this.siteRetreiver.getValueRange(Day(start), Day(end));
+    return this.siteRetreiver.getValueRange(Moment(start), Moment(end));
   }
 
   getInitRasters(): Promise<RasterData> {

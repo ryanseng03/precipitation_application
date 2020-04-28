@@ -6,7 +6,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class DisplayValuePipe implements PipeTransform {
 
   transform(value: any, special?: string): any {
-    console.log(special);
     switch(special) {
       case undefined: 
       case "default": {

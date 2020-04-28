@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Subject, merge, Observable, Subscribable, Subscription } from 'rxjs';
 
 @Injectable({
@@ -9,7 +9,7 @@ export class ParameterStoreService {
   private parametersSubjects: {[name: string]: Subject<any>};
   private parametersState: {[name: string]: any};
 
-  constructor() {
+  constructor(private ngZone: NgZone) {
     this.parametersSubjects = {};
     this.parametersState = {};
   }
@@ -24,6 +24,8 @@ export class ParameterStoreService {
     }
     return paramSubject;
   }
+
+
 
   // public getParametersListener(paramNames?: string[]): Observable<ParameterEvent<any>> {
   //   let observables = [];
@@ -48,7 +50,13 @@ export class ParameterStoreService {
     let hook: ParameterHook = null;
     let subject: Subject<any> = this.parametersSubjects[paramName];
     if(subject != undefined) {
-      hook = new ParameterHook(subject, cb);
+      //use ngZone.run to execute callback, triggers change detection, functions called in rxjs subscriptions don't trigger by default
+      let zonedCB = (value) => {
+        this.ngZone.run(() => {
+          cb(value);
+        })
+      };
+      hook = new ParameterHook(subject, zonedCB);
       if(install) {
         hook.install();
       }

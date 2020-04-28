@@ -83,12 +83,25 @@ export class DataProcessorService {
     let props = {
       skn: doc.skn,
       name: doc.name,
+      observer: doc.observer,
+      network: doc.network,
+      island: doc.island,
+      //elevation in meters
+      elevation: doc.elevation_m,
       lat: doc.lat,
       lng: doc.lon,
-      network: doc.network
+      nceiID: doc.ncei_id,
+      nwsID: doc.nws_id,
+      scanID: doc.scan_id,
+      smartNodeRfID: doc.smart_node_rf_id
     }
     if(this.verifyAssignedPropertiesNotUndefined(props)) {
-      meta = new SiteMetadata(props);
+      try {
+        meta = new SiteMetadata(props, "NA");
+      }
+      catch(e) {
+        console.error(e);
+      }
     }
     
     return meta;

@@ -51,7 +51,6 @@ export class DataManagerService {
     //want to retreive both things in parallel, so how to deal with date? Can just do the same for both, then add validation to ensure date is the same
     //need to add some additional information to returned like date
     let rasterLoader = this.dataLoader.getInitRaster().then((raster: RasterData) => {
-      console.log(raster);
       this.data.header = raster.getHeader();
       //freeze header so can't be inadvertantly modified when passed out of data manager
       Object.freeze(this.data.header);
@@ -148,7 +147,6 @@ export class DataManagerService {
               Object.freeze(focus);
               this.data.focusedData = focus;
               this.stateEmitter.next(focus);
-              console.log(focus);
               resolve(focus);
             }
             
