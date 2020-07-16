@@ -1,6 +1,62 @@
-<table>
-  <tr *ngFor="let field of siteIndex">
-    <td>{{field}}</td>
-    <td>{{site[field]}}</td>
-  </tr>
-</table>
+<div class="wrapper">
+  <table class="outer-table">
+    <tr>
+        <th colspan="2" class="header">
+          Rainfall Site Metadata
+        </th>
+    </tr>
+    <tr *ngFor="let field of siteIndex">
+      <td class="field-cell">{{field}}</td>
+      <td>{{site[field]}}</td>
+    </tr>
+  
+    <tr>
+      <th colspan="2" class="header">
+        Rainfall Site Values
+      </th>
+    </tr>
+
+    <tr>
+      <td colspan="2" class="embeded-cell">
+        <div class="collapsible-wrapper" [@expand]="state">
+          <table class="internal-table collapsible">
+            <thead>
+                <tr>
+                  <th>
+                    Date
+                  </th>
+                  <th>
+                    Value
+                  </th>
+                </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let test of testData">
+                <td *ngFor="let v of test">
+                  {{v}}
+                </td>
+              </tr>
+            </tbody>
+            
+          </table>
+        </div>
+          
+      </td>
+    </tr>
+  
+    <tr (click)=changeState()>
+      <th colspan="2" class="embeded-cell">
+        <div class="selector">
+          <div class="label-left">
+              {{labelL}}
+          </div>
+          <div [innerHTML]="labelR" class="label-right">
+          </div>
+        </div>
+      </th>
+  
+    </tr>
+  
+  </table>
+</div>
+

@@ -1,3 +1,30 @@
-<p>
-  data-set-form works!
-</p>
+<div>
+  <app-date-selector
+    label="Start Date"
+    [min]="dataRange.min"
+    [max]="max"
+    [timestep]="timestep"
+    (setDate)="setMin($event)">
+  </app-date-selector>
+
+  <app-date-selector
+    label="End Date"
+    [min]="min"
+    [max]="dataRange.max"
+    [timestep]="timestep"
+    (setDate)="setMax($event)">
+  </app-date-selector>
+
+  <app-data-set-interval-selector
+    (setTimestep)="setTimestep($event)"
+    (setDateRange)="setDateRange($event)"
+    (setType)="setType($event)"
+    (setFill)="setFill($event)">
+  </app-data-set-interval-selector>
+  <!-- <app-data-set-selector></app-data-set-selector> -->
+
+  <button mat-raised-button color="primary" [disabled]="!valid">
+    test
+  </button>
+</div>
+  

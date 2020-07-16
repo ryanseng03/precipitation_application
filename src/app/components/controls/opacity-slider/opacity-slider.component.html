@@ -1,12 +1,3 @@
 <div>
   <mat-slider min="0" max="100" step="1" value="1"></mat-slider>
 </div>
-
-<mat-form-field>
-    <mat-label>End Date</mat-label>
-    <input matInput [matDatepicker]="endDateInput">
-    <mat-datepicker-toggle matSuffix [for]="endDateInput"></mat-datepicker-toggle>
-    <mat-datepicker #endDateInput
-      startView="multi-year">
-    </mat-datepicker>
-  </mat-form-field>

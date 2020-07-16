@@ -1,24 +1,39 @@
 .map-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+}
+
+.map {
     position: absolute;
-    width: 50%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    
+}
+
+.dummy {
+    margin-top: 100%;
 }
 
 .control-container {
     position: absolute;
-    width: 50%;
-    left: 50%;
+    display: inline-block;
+    width: 20%;
+    left: calc(80% + 20px);
 }
 
 .filter-table {
-    position: absolute;
+    display: inline-block;
     width: 50%;
-    left: 50%;
-    top: 500px;
+    left: 0%;
+    top: 0%;
 }
 
 .site-data-table {
-    position: absolute;
+    display: inline-block;
     width: 50%;
-    left: 120%;
-    top: 20px;
+    left: 50%;
 }

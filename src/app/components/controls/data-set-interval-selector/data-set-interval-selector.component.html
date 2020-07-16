@@ -1,5 +1,5 @@
 <mat-form-field>
-  <mat-label>Data Set</mat-label>
+  <mat-label>Interval</mat-label>
   <mat-select [disableOptionCentering]="true" (selectionChange)="valueSet($event, 'timeGranularity')" [(value)]="state.timeGranularity">
     <mat-option #timeGranularityOptions *ngFor="let set of formValues.timeGranularity" [value]="set">
       {{set | displayValue}}
@@ -9,7 +9,7 @@
 </mat-form-field>
 <br>
 <mat-form-field>
-  <mat-label>Data Set</mat-label>
+  <mat-label>Data Set Type</mat-label>
   <mat-select [disableOptionCentering]="true" (selectionChange)="valueSet($event, 'setType')" [(value)]="state.setType">
     <mat-option #setTypeOptions *ngFor="let set of formValues.setType" [value]="set">
       {{set | displayValue:"dateRange"}}
@@ -19,7 +19,7 @@
 </mat-form-field>
 <br>
 <mat-form-field>
-  <mat-label>Data Set</mat-label>
+  <mat-label>Fill Type</mat-label>
   <mat-select [disableOptionCentering]="true" (selectionChange)="valueSet($event, 'fill')" [(value)]="state.fill">
     <mat-option #fillOptions *ngFor="let set of formValues.fill" [value]="set">
       {{set | displayValue}}

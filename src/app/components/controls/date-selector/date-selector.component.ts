@@ -1,12 +1,11 @@
-import { Component, OnInit, ViewChild, Input, Output } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import {MAT_DATE_FORMATS} from '@angular/material/core';
 import {DateFormatHelperService, DateUnit} from "../../../services/controlHelpers/date-format-helper.service";
 import {Platform} from '@angular/cdk/platform';
 import {FormControl, Validators, AbstractControl} from '@angular/forms';
 import {MatCalendarHeader, MatDatepicker, MatDatepickerInput, MatDatepickerModule} from "@angular/material/datepicker";
-import {EventParamRegistrarService} from ".././../../services/inputManager/event-param-registrar.service";
 import Moment from "moment";
-import "moment-timezone";
+import { map } from 'rxjs/operators';
 
 
 let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
@@ -23,37 +22,29 @@ let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
       deps: [DateFormatHelperService]
     }]
 })
-export class DateSelectorComponent implements OnInit {
+export class DateSelectorComponent implements OnInit, OnChanges {
   
   @ViewChild("datePicker") datePicker; 
 
-  //how to deal with time zones? should it all be HST? local? UTC?
-  //this does affect what day it is, for now use utc, probably should change
-  private static readonly DATE_LIMIT = {
-    min:  Moment("1990-05-10T00:00:00.000Z"),
-    max: Moment().tz("utc")
-  }
-  private _min: Moment.Moment = DateSelectorComponent.DATE_LIMIT.min;
-  private _max: Moment.Moment = DateSelectorComponent.DATE_LIMIT.max;
+  private _min: Moment.Moment = null;
+  private _max: Moment.Moment = null;
 
   @Input() label: string;
   @Input()
   set min(date: Moment.Moment) {
-    this._min = date ? date : DateSelectorComponent.DATE_LIMIT.min;
+    this._min = date;
   }
   @Input()
   set max(date: Moment.Moment) {
-    this._max = date ? date : DateSelectorComponent.DATE_LIMIT.max;
+    this._max = date;
   }
   @Output() setDate;
 
-  private timeGranularity: string;
+  @Input() timestep: string;
   
   dateControl = new FormControl("");
 
-  constructor(private dateFormat: DateFormatHelperService, private paramService: EventParamRegistrarService) {
-    let gmin =  Moment("1990-05-10T00:00:00.000Z");
-    let gmax = Moment().tz("utc");
+  constructor(private dateFormat: DateFormatHelperService) {
 
     //override the dumb default method that switches to random things and make it go up one level
     MatCalendarHeader.prototype.currentPeriodClicked = function () {
@@ -68,18 +59,51 @@ export class DateSelectorComponent implements OnInit {
       }
     };
     
-    this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.timestep, (timestep: string) => {
-      this.timeGranularity = timestep;
-      let unit: DateUnit = this.getUnit();
-      this.dateFormat.setDateMinUnit(unit);
-    });
+    // this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.timestep, (timestep: string) => {
+    //   this.timeGranularity = timestep;
+    //   let unit: DateUnit = this.getUnit();
+    //   this.dateFormat.setDateMinUnit(unit);
+    // });
     
     //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
-    this.setDate = this.dateControl.valueChanges;
+    //use map pipe to send null if invalid date
+    this.setDate = this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
+      if(this.dateControl.valid) {
+        return date;
+      }
+      else {
+        return null;
+      }
+    }));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    //if timestep changed, run filter update
+    if(changes.timestep) {
+      this.setFormatUnit();
+      //trigger value change so formatting updates current input
+      this.dateControl.setValue(this.dateControl.value);
+    }
+    //set value to edge of range if out of new bounds
+    if(changes.min) {
+      if(this._min.isAfter(this.dateControl.value)) {
+        this.dateControl.setValue(this._min);
+      }
+    }
+    if(changes.max) {
+      if(this._max.isBefore(this.dateControl.value)) {
+        this.dateControl.setValue(this._max);
+      }
+    }
+  }
+
+  setFormatUnit() {
+    let unit: DateUnit = this.getUnit();
+    this.dateFormat.setDateMinUnit(unit);
   }
 
   getUnit(): DateUnit {
-    switch(this.timeGranularity) {
+    switch(this.timestep) {
       case "daily": {
         return "day";
       }
@@ -93,7 +117,7 @@ export class DateSelectorComponent implements OnInit {
   }
 
   getDefaultView() {
-    switch(this.timeGranularity) {
+    switch(this.timestep) {
       case "daily": {
         return "month";
       }
@@ -107,19 +131,20 @@ export class DateSelectorComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.setFormatUnit();
   }
 
   monthSelectHandler(event: Moment.Moment) {
-    if(this.timeGranularity == "monthly") {
+    if(this.timestep == "monthly") {
       //event is a moment object for the selected date, set form control
       this.dateControl.setValue(event);
       this.datePicker.close();
     }
   }
 
-  updateHandler(e) {
-    console.log(e);
-  }
+  // updateHandler(e) {
+  //   console.log(e);
+  // }
 
   // dateInputValidator(control: AbstractControl) {
   //   let df = /[0-9]{2}\/[0-9]{2}\/[0-9]{4}/;

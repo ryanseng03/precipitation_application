@@ -1,6 +1,8 @@
 .vis-container {
     position: absolute;
-    left: 5%;
-    width: 90%;
-    top: calc(5%);
+    left: calc(20px + 5%);
+    width: calc(90% - 40px);
+    // height: calc(90% - 40px);
+    top: calc(20px + 5%);
+    background: red;
 }

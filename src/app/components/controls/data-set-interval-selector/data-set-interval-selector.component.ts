@@ -1,8 +1,9 @@
-import { Component, EventEmitter, OnInit, Output, ViewChildren, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChildren, AfterViewInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 //import {MatSelect} from "@angular/material/select";
 import {ClassModificationService} from "../../../services/controlHelpers/class-modification.service";
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
+import Moment from "moment";
 
 export type Timestep = "monthly" | "daily";
 
@@ -11,11 +12,16 @@ export type Timestep = "monthly" | "daily";
   templateUrl: './data-set-interval-selector.component.html',
   styleUrls: ['./data-set-interval-selector.component.scss']
 })
-export class DataSetIntervalSelectorComponent implements AfterViewInit {
+export class DataSetIntervalSelectorComponent implements OnInit {
 
   @ViewChild("timeGranularityOptions", {read: ElementRef}) timeGranularityOptions: ElementRef;
   @ViewChild("setTypeOptions", {read: ElementRef}) setTypeOptions: ElementRef;
   @ViewChild("fillOptions", {read: ElementRef}) fillOptions: ElementRef;
+
+  @Output() setTimestep: EventEmitter<Timestep>;
+  @Output() setDateRange: EventEmitter<[Moment.Moment, Moment.Moment]>;
+  @Output() setType: EventEmitter<string>;
+  @Output() setFill: EventEmitter<string>;
 
   //dataSets: DataSetInfoBuilder[];
   readonly initDataSet: DataSetComponents = {
@@ -26,8 +32,19 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
   formValues: ValidValues;
   setCoordinator: DataSetCoordinator;
   state: DataSetComponents;
+  dateRangeMap: Map<string, [Moment.Moment, Moment.Moment]>;
 
-  constructor(private classModifier: ClassModificationService, private paramService: EventParamRegistrarService) {
+  constructor(private classModifier: ClassModificationService) {
+    
+    this.setTimestep = new EventEmitter<Timestep>();
+    this.setDateRange = new EventEmitter<[Moment.Moment, Moment.Moment]>();
+    this.setType = new EventEmitter<string>();
+    this.setFill = new EventEmitter<string>();
+
+    //create date range mapping
+    this.dateRangeMap = new Map<string, [Moment.Moment, Moment.Moment]>();
+    this.generateDateRangeMap();
+    
     this.formValues = {
       timeGranularity: null,
       setType: null,
@@ -89,14 +106,12 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
       });
     }
 
-    //set state to setcoorrdinator state in case invalid or undefined init state
+    //set state to setcoordinator state in case invalid or undefined init state
     this.state = this.setCoordinator.state;
-
-    this.paramService.pushTimestep(this.state.timeGranularity.toLowerCase())
   }
 
-  ngAfterViewInit() {
-    
+  ngOnInit() {
+    this.updateOutput();
   }
 
   setAttributes(element: ElementRef) {
@@ -111,6 +126,25 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
     
   }
 
+  //again, time zone? All hard coded dates can be utc as long as tz set to utc
+  //current date is an issue though (could be ahead)
+  //lets use local timezone for current date, most user friendly
+  //then just utc time and tz if hard coded for a specific time
+  private generateDateRangeMap() {
+    let present = Moment();
+
+    this.dateRangeMap.set("rainfall_1990_present", [Moment("1990-01-01T00:00:00.000Z").tz("utc"), present]);
+    this.dateRangeMap.set("rainfall_1920_present", [Moment("1920-01-01T00:00:00.000Z").tz("utc"), present]);
+
+    this.dateRangeMap.set("average_temperature_1899_present", [Moment("1899-01-01T00:00:00.000Z").tz("utc"), present]);
+    this.dateRangeMap.set("maximum_temperature_1899_present", [Moment("1899-01-01T00:00:00.000Z").tz("utc"), present]);
+    this.dateRangeMap.set("minimum_temperature_1899_present", [Moment("1899-01-01T00:00:00.000Z").tz("utc"), present]);
+
+  }
+
+  private getDateRange(value: string): [Moment.Moment, Moment.Moment] {
+    return value === null ? null : this.dateRangeMap.get(value);
+  }
 
   valueSet(e: any, component: keyof DataSetComponents) {
     let setValue = e.value === undefined ? null : e.value;
@@ -119,10 +153,37 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
       this.state = this.setCoordinator.state;
       console.error(`Invalid value set for component ${component}`);
     }
+    // if(component == "timeGranularity") {
+    //   //if null just set to daily (lowest timestep, unrestrict selection)
+    //   this.setTimestep.emit(setValue);
+    // }
+    // if(component == "setType") {
+    //   let range = this.getDateRange(setValue);
+    //   this.setDateRange.emit(range);
+    // }
+    this.updateOutput(component);
+  }
 
-    if(component == "timeGranularity") {
-      //if null just set to daily (lowest timestep, unrestrict selection)
-      setValue !== null ? this.paramService.pushTimestep(setValue.toLowerCase()) : this.paramService.pushTimestep("daily");
+  private updateOutput(component?: keyof DataSetComponents) {
+    if(component) {
+      if(component == "timeGranularity") {
+        this.setTimestep.emit(this.state.timeGranularity);
+      }
+      else if(component == "setType") {
+        let range = this.getDateRange(this.state.setType);
+        this.setDateRange.emit(range);
+        this.setType.emit(this.state.setType);
+      }
+      else if(component == "fill") {
+        this.setFill.emit(this.state.fill);
+      }
+    }
+    else {
+      this.setTimestep.emit(this.state.timeGranularity);
+      let range = this.getDateRange(this.state.setType);
+      this.setDateRange.emit(range);
+      this.setFill.emit(this.state.fill);
+      this.setType.emit(this.state.setType);
     }
   }
 }
@@ -137,7 +198,7 @@ export class DataSetIntervalSelectorComponent implements AfterViewInit {
 //how to break this up?
 //granularity, fill, and set (including time range and type)
 interface DataSetComponents {
-  timeGranularity: string,
+  timeGranularity: Timestep,
   setType: string,
   fill: string
 }
@@ -363,7 +424,6 @@ class DataSetCoordinator {
         this.setValues = nulledValues;
       }
     }
-    console.log(this.setValues);
     //get valid component values based on provided definitions
     let initValid: ValidValues = this.getValidComponents();
     //initialize emitters with the current set of valid values based on initialization

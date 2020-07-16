@@ -60,7 +60,6 @@ export class DateFormatHelperService {
       }
       case "month": {
         this.setAllProperties(this.monthFormat, this.format);
-        console.log(this.format);
         break;
       }
     }

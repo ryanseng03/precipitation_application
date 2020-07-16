@@ -53,7 +53,6 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
       if(index === undefined) {
         console.error(`No mapping for selected site in site table.`);
       }
-      console.log("!!!");
       this.selectFromTable(index);
     });
   }
@@ -68,6 +67,8 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
       this.selected.selected = false;
     }
     
+    console.log();
+
     this.selected = this.sites.rows[rowIndex];
     this.selected.selected = true;
   }

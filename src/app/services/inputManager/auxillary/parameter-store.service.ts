@@ -54,7 +54,7 @@ export class ParameterStoreService {
       let zonedCB = (value) => {
         this.ngZone.run(() => {
           cb(value);
-        })
+        });
       };
       hook = new ParameterHook(subject, zonedCB);
       if(install) {
