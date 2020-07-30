@@ -117,8 +117,8 @@ export class MapComponent implements OnInit {
     //have to use "function()" syntax if new context
 
 
-    //let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
-    let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
+    let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
+    //let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
 
 
 

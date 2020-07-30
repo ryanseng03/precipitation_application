@@ -3,6 +3,7 @@
     position: relative;
     width: 100%;
     max-width: 800px;
+    
 }
 
 .map {
@@ -11,29 +12,37 @@
     bottom: 0;
     left: 0;
     right: 0;
-    
 }
 
 .dummy {
     margin-top: 100%;
 }
 
+.filter {
+    display: none;
+}
+
 .control-container {
     position: absolute;
-    display: inline-block;
+    // display: inline-block;
     width: 20%;
     left: calc(80% + 20px);
+    top: 2000px;
 }
 
 .filter-table {
+    position: absolute;
     display: inline-block;
     width: 50%;
-    left: 0%;
-    top: 0%;
+    left: 850px;
+    top: 0;
 }
 
 .site-data-table {
+    position: absolute;
     display: inline-block;
     width: 50%;
-    left: 50%;
+    // left: 50%;
+    left: 840px;
+    top: 500px;
 }
