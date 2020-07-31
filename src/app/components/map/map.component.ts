@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from "leaflet";
-import  "../../../../node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js";
 import * as chroma from "chroma-js";
 import {saveAs} from "file-saver";
 import * as geotiff from "geotiff";
@@ -24,7 +23,7 @@ let C: any = L.control;
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit {
-  
+
   //private R: any = L;
 
   private options: L.MapOptions
@@ -99,16 +98,16 @@ export class MapComponent implements OnInit {
     //   });
     // }
 
-    
+
   }
 
 
 
   onMapReady(map: L.Map) {
-    
+
     L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
 
-    
+
 
     this.map = map;
 
@@ -150,7 +149,7 @@ export class MapComponent implements OnInit {
     let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
       this.active.data.sites = sites;
 
-      
+
       let markers = [];
 
       let markerLayer = L.layerGroup();
@@ -180,7 +179,7 @@ export class MapComponent implements OnInit {
         //console.log(siteDetails);
         markerLayer.addLayer(marker);
         markers.push(marker);
-        
+
       });
 
 
@@ -192,7 +191,7 @@ export class MapComponent implements OnInit {
       //map.addLayer(markerLayer);
     });
 
-    
+
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
       this.active.data.raster = raster;
@@ -229,12 +228,12 @@ export class MapComponent implements OnInit {
           this.dataLayers[band].setData(values);
         }
       });
-      
+
     });
 
     let selectedSiteHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
       let marker: L.Marker = markerMap.get(site);
-      
+
       siteMarkers.zoomToShowLayer(marker, () => {
         if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
           this.selectedMarker.closePopup();
@@ -255,11 +254,11 @@ export class MapComponent implements OnInit {
           if(marker.isPopupOpen && this.selectedMarker === marker) {
             marker.openPopup();
           }
-          
+
         })
       });
-      
-      
+
+
     });
 
     let dateHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: string) => {
@@ -279,7 +278,7 @@ export class MapComponent implements OnInit {
 
     this.setBaseLayerHandlers();
 
-    
+
   }
 
   setBaseLayerHandlers() {
@@ -315,11 +314,11 @@ export class MapComponent implements OnInit {
         if(position == null) {
           return;
         }
-        
+
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
-  
-  
+
+
         let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
         if(geojson != undefined) {
@@ -332,9 +331,9 @@ export class MapComponent implements OnInit {
             fillOpacity: 0.2
           })
           .addTo(this.map)
-  
+
           let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
-  
+
           //popup cell value
           popupData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
@@ -343,7 +342,7 @@ export class MapComponent implements OnInit {
         }
       }, timeout);
     }
-    
+
   }
 
   // setDrawingHandlers() {
@@ -358,7 +357,7 @@ export class MapComponent implements OnInit {
 
   }
 
-  
+
 }
 
 interface ActiveData {

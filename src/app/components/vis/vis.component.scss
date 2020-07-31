@@ -1,9 +1,16 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
 .map-container {
     display: inline-block;
     position: relative;
     width: 100%;
-    max-width: 800px;
-    
+    height: 100vh;
+    max-width: 400px;
+
 }
 
 .map {
@@ -23,26 +30,37 @@
 }
 
 .control-container {
-    position: absolute;
-    // display: inline-block;
-    width: 20%;
-    left: calc(80% + 20px);
-    top: 2000px;
+  position: absolute;
+  // display: inline-block;
+  width: 20%;
+  left: calc(80% + 20px);
+  top: 2000px;
 }
 
 .filter-table {
-    position: absolute;
     display: inline-block;
-    width: 50%;
-    left: 850px;
-    top: 0;
+    width: 500px;
 }
 
 .site-data-table {
-    position: absolute;
     display: inline-block;
     width: 50%;
     // left: 50%;
     left: 840px;
     top: 500px;
+}
+
+.resize-bar {
+  width: 10px;
+  height: 100vh;
+  background-color: red;
+}
+
+.view-container {
+  height: 100vh;
+  overflow-y: scroll;
+}
+
+.resize-bar:hover {
+  cursor: ew-resize;
 }

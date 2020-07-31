@@ -37,6 +37,7 @@ import { SiteSearchComponent } from './components/controls/site-search/site-sear
 import { SiteDataTableComponent } from './components/controls/site-data-table/site-data-table.component';
 import { SiteAvailabilityTableComponent } from './components/controls/site-availability-table/site-availability-table.component';
 import { DataSetFormComponent } from './components/data-set-form/data-set-form.component'
+import {MatSidenavModule} from '@angular/material/sidenav';
 
 @NgModule({
   declarations: [
@@ -75,7 +76,8 @@ import { DataSetFormComponent } from './components/data-set-form/data-set-form.c
     MatSliderModule,
     FormsModule,
     ReactiveFormsModule,
-    MatSelectModule
+    MatSelectModule,
+    MatSidenavModule
   ],
   providers: [],
   bootstrap: [AppComponent]

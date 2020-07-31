@@ -41,7 +41,6 @@
               "src/app/themes/mat-theme.sass"
             ],
             "scripts": [
-              "./node_modules/leaflet-canvaslayer-field/dist/leaflet.canvaslayer.field.js"
             ],
             "es5BrowserSupport": true
           },
