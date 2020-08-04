@@ -26,7 +26,7 @@ export class MapComponent implements OnInit {
 
   //private R: any = L;
 
-  private options: L.MapOptions
+  options: L.MapOptions
   // private drawnItems: L.FeatureGroup;
   // private drawOptions: any;
   private map: L.Map;
@@ -134,7 +134,7 @@ export class MapComponent implements OnInit {
 
     let layerGroups = {
       Types: {}
-    }
+    };
 
     let clusterOptions = {
       //chunkedLoading: true
