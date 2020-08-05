@@ -8,7 +8,7 @@ import Moment from "moment";
 import { map } from 'rxjs/operators';
 
 
-let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
+export let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
   return formatHelper.getDateFormat();
 }
 
@@ -23,8 +23,8 @@ let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
     }]
 })
 export class DateSelectorComponent implements OnInit, OnChanges {
-  
-  @ViewChild("datePicker") datePicker; 
+
+  @ViewChild("datePicker") datePicker;
 
   private _min: Moment.Moment = null;
   private _max: Moment.Moment = null;
@@ -41,11 +41,13 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   @Output() setDate;
 
   @Input() timestep: string;
-  
-  dateControl = new FormControl("");
+
+  @Input() initDate: Moment.Moment = null;
+
+  //set up initial form control starting with null value
+  dateControl: FormControl = new FormControl(null);
 
   constructor(private dateFormat: DateFormatHelperService) {
-
     //override the dumb default method that switches to random things and make it go up one level
     MatCalendarHeader.prototype.currentPeriodClicked = function () {
       switch(this.calendar.currentView) {
@@ -58,13 +60,13 @@ export class DateSelectorComponent implements OnInit, OnChanges {
         }
       }
     };
-    
+
     // this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.timestep, (timestep: string) => {
     //   this.timeGranularity = timestep;
     //   let unit: DateUnit = this.getUnit();
     //   this.dateFormat.setDateMinUnit(unit);
     // });
-    
+
     //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
     //use map pipe to send null if invalid date
     this.setDate = this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
@@ -131,6 +133,8 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
+    //set value to initial date input value
+    this.dateControl.setValue(this.initDate);
     this.setFormatUnit();
   }
 

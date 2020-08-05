@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-vis',
@@ -9,6 +10,7 @@ export class VisComponent implements OnInit {
 
   @ViewChild("mapContainer") mapContainer: ElementRef;
   @ViewChild("dragBar") dragBar: ElementRef;
+  @ViewChild("viewNav") viewNav: MatSidenav;
 
   resizeBarWidth: string = "10px";
   mapWidth: string = "calc(50% - 10px)";
@@ -16,15 +18,17 @@ export class VisComponent implements OnInit {
 
   dragState: DragState;
 
+  view: string = "select";
+
   constructor() {
     this.dragState = {
       lastEvent: null,
       moveHandler: (event: MouseEvent) => {
         let dx = event.x - this.dragState.lastEvent.x;
         this.mapWidth = this.mapContainer.nativeElement.offsetWidth + dx + "px";
-        
+
         this.dragState.lastEvent = event;
-        
+
         return false;
       }
     }
@@ -55,7 +59,7 @@ export class VisComponent implements OnInit {
       document.removeEventListener("mousemove", dragState.moveHandler);
       document.removeEventListener("mouseup", this);
       dragState.lastEvent = null;
-  
+
       return false;
     }
   }
@@ -68,7 +72,11 @@ export class VisComponent implements OnInit {
 
   }
 
-
+  viewNavClick(value: string) {
+    this.view = value;
+    console.log(this.viewNav);
+    this.viewNav.close();
+  }
 
 }
 

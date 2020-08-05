@@ -1,0 +1,54 @@
+<div class="container">
+  <div class="button-container">
+    <button mat-mini-fab>
+      <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
+      <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
+      <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
+    </button>
+    <button mat-mini-fab>
+      <mat-icon class="mat-icon-compress">chevron_left</mat-icon>
+      <mat-icon class="mat-icon-compress">chevron_left</mat-icon>
+    </button>
+    <button mat-mini-fab>
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+
+  </div>
+
+
+  <div class="date-container">
+    <app-date-selector
+      label="Focused Date"
+      [min]="dateRange.min"
+      [max]="dateRange.max"
+      [timestep]="timestep"
+      [initDate]="initDate"
+      (setDate)="setDate($event)">
+    </app-date-selector>
+  </div>
+
+
+  <div class="button-container">
+    <button mat-icon-button class=small-button>
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    <button mat-mini-fab>
+      <mat-icon class="mat-icon-compress">chevron_right</mat-icon>
+      <mat-icon class="mat-icon-compress">chevron_right</mat-icon>
+    </button>
+    <button mat-mini-fab>
+      <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
+      <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
+      <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
+    </button>
+  </div>
+
+
+
+
+
+</div>
+
+
+

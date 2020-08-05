@@ -38,6 +38,9 @@ import { SiteDataTableComponent } from './components/controls/site-data-table/si
 import { SiteAvailabilityTableComponent } from './components/controls/site-availability-table/site-availability-table.component';
 import { DataSetFormComponent } from './components/data-set-form/data-set-form.component'
 import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatListModule} from '@angular/material/list';
+import { DataInfoComponent } from './components/data-info/data-info.component';
+import { DateFocusComponent } from './components/controls/date-focus/date-focus.component';
 
 @NgModule({
   declarations: [
@@ -59,7 +62,9 @@ import {MatSidenavModule} from '@angular/material/sidenav';
     SiteSearchComponent,
     SiteDataTableComponent,
     SiteAvailabilityTableComponent,
-    DataSetFormComponent
+    DataSetFormComponent,
+    DataInfoComponent,
+    DateFocusComponent
   ],
   imports: [
     BrowserModule,
@@ -77,7 +82,8 @@ import {MatSidenavModule} from '@angular/material/sidenav';
     FormsModule,
     ReactiveFormsModule,
     MatSelectModule,
-    MatSidenavModule
+    MatSidenavModule,
+    MatListModule
   ],
   providers: [],
   bootstrap: [AppComponent]

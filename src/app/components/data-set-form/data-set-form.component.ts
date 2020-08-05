@@ -89,7 +89,7 @@ export class DataSetFormComponent implements OnInit {
     if(timestep != null) {
       this.timestep = timestep;
       this.validParts.timeGranularity = true;
-    } 
+    }
     else {
       this.timestep = DataSetFormComponent.DEFAULT_TIMESTEP;
       this.validParts.timeGranularity = false;
@@ -101,7 +101,7 @@ export class DataSetFormComponent implements OnInit {
   setType(type: string) {
     if(type != null) {
       this.validParts.setType = true;
-    } 
+    }
     else {
       this.validParts.setType = false;
     }
@@ -111,7 +111,7 @@ export class DataSetFormComponent implements OnInit {
   setFill(fill: string) {
     if(fill != null) {
       this.validParts.fill = true;
-    } 
+    }
     else {
       this.validParts.fill = false;
     }
@@ -128,18 +128,20 @@ export class DataSetFormComponent implements OnInit {
       this.dataRange.min = DataSetFormComponent.GLOBAL_MIN;
       this.dataRange.max = DataSetFormComponent.GLOBAL_MAX;
     }
-    
+
   }
 
   validate() {
-    console.log(this.validParts);
     let valid = true;
     for(let item in this.validParts) {
       valid = valid && this.validParts[item];
     }
-    console.log(valid);
     this.valid = valid;
-    
+
     return valid;
+  }
+
+  updateDataSet() {
+
   }
 }

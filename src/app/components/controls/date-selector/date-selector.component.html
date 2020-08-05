@@ -3,13 +3,12 @@
   <mat-form-field>
     <mat-label>{{label}}</mat-label>
 
-    <input matInput 
-      #startDateInput  
-      [formControl]="dateControl" 
-      [matDatepicker]="datePicker" 
+    <input matInput
+      [formControl]="dateControl"
+      [matDatepicker]="datePicker"
       [min]="_min"
       [max]="_max">
-    
+
     <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
     <mat-datepicker #datePicker
       (monthSelected)="monthSelectHandler($event)"
@@ -18,15 +17,15 @@
     <mat-error>Invalid Date</mat-error>
   </mat-form-field>
 
-<!-- 
+<!--
 
 
   <mat-form-field>
     <mat-label>End Date</mat-label>
 
     <input matInput
-      #startDateInput 
-      [formControl]="endDateControl" 
+      #startDateInput
+      [formControl]="endDateControl"
       [matDatepicker]="endDatePicker"
       [min]="dateConfig.min"
       [max]="dateConfig.gmax">

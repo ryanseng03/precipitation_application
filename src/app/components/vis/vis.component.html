@@ -1,14 +1,12 @@
 <div class="container">
-  <div class="dataset-info-container">
-    Dataset Info Placeholder
-  </div>
+
   <div class="filter-container">
     <span class="view-select">
       <button (click)="viewNav.toggle()" mat-icon-button><mat-icon>menu</mat-icon></button>
     </span>
     <app-site-filter></app-site-filter>
-    
-    
+
+
   </div>
   <div class="data-container">
 
@@ -18,19 +16,38 @@
 
     <div #dragBar [ngStyle]="{'width': resizeBarWidth}" (mousedown)="startResize($event)" class="resize-bar"></div>
 
-    <mat-sidenav-container class="view-container" >
-        <mat-sidenav #viewNav position="end" mode="over" hasBackdrop="true">End</mat-sidenav>
-        <!-- <section>Main</section> -->
+    <mat-sidenav-container class="view-container" [ngSwitch]="view">
+      <div class="dataset-info-container">
+        <app-date-focus></app-date-focus>
+      </div>
+      <mat-sidenav #viewNav position="end" mode="over" hasBackdrop="true">
+        <mat-nav-list>
+          <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
+          <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
+          <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
+        </mat-nav-list>
+      </mat-sidenav>
 
-      <div class="filter-table">
-        <app-site-availability-table></app-site-availability-table>
+      <div *ngSwitchCase="'select'">
+        <app-data-set-form></app-data-set-form>
       </div>
-      <div class="site-data-table">
-        <app-site-data-table></app-site-data-table>
+
+      <div *ngSwitchCase="'tables'" >
+        <div class="filter-table">
+          <app-site-availability-table></app-site-availability-table>
+        </div>
+        <div class="site-data-table">
+          <app-site-data-table></app-site-data-table>
+        </div>
       </div>
+
+      <div *ngSwitchCase="'export'">
+        <div>export</div>
+      </div>
+
     </mat-sidenav-container>
 
-    
+
   </div>
 </div>
 
