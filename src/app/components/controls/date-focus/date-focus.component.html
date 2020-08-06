@@ -1,15 +1,19 @@
 <div class="container">
   <div class="button-container">
-    <button mat-mini-fab>
-      <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
-      <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
-      <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
+    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].back.e.tooltip" [disabled]="controlData[dataset.timestep].back.e.disabled()" (click)="controlData[dataset.timestep].back.e.trigger()">
+      <div>
+        <mat-icon class="bar-icon-wrapper"><div class="bar-icon"></div></mat-icon>
+        <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
+        <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
+      </div>  
     </button>
-    <button mat-mini-fab>
+
+    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].back.ff.tooltip" [disabled]="controlData[dataset.timestep].back.ff.disabled()" (click)="controlData[dataset.timestep].back.ff.trigger()">
       <mat-icon class="mat-icon-compress">chevron_left</mat-icon>
       <mat-icon class="mat-icon-compress">chevron_left</mat-icon>
     </button>
-    <button mat-mini-fab>
+
+    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].back.f.tooltip" [disabled]="controlData[dataset.timestep].back.f.disabled()" (click)="controlData[dataset.timestep].back.f.trigger()">
       <mat-icon>chevron_left</mat-icon>
     </button>
 
@@ -20,24 +24,24 @@
   <div class="date-container">
     <app-date-selector
       label="Focused Date"
-      [min]="dateRange.min"
-      [max]="dateRange.max"
-      [timestep]="timestep"
-      [initDate]="initDate"
-      (setDate)="setDate($event)">
+      [min]="dataset.startDate"
+      [max]="dataset.endDate"
+      [timestep]="dataset.timestep"
+      [initDate]="dataset.endDate"
+      [(date)]="focusedDate">
     </app-date-selector>
   </div>
 
 
   <div class="button-container">
-    <button mat-icon-button class=small-button>
+    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].forward.f.tooltip" [disabled]="controlData[dataset.timestep].forward.f.disabled()" (click)="controlData[dataset.timestep].forward.f.trigger()">
       <mat-icon>chevron_right</mat-icon>
     </button>
-    <button mat-mini-fab>
+    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].forward.ff.tooltip" [disabled]="controlData[dataset.timestep].forward.ff.disabled()" (click)="controlData[dataset.timestep].forward.ff.trigger()">
       <mat-icon class="mat-icon-compress">chevron_right</mat-icon>
       <mat-icon class="mat-icon-compress">chevron_right</mat-icon>
     </button>
-    <button mat-mini-fab>
+    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].forward.e.tooltip" [disabled]="controlData[dataset.timestep].forward.e.disabled()" (click)="controlData[dataset.timestep].forward.e.trigger()">
       <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
       <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
       <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>

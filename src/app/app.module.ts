@@ -41,6 +41,9 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatListModule} from '@angular/material/list';
 import { DataInfoComponent } from './components/data-info/data-info.component';
 import { DateFocusComponent } from './components/controls/date-focus/date-focus.component';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import { DatasetInfoComponent } from './components/controls/dataset-info/dataset-info.component';
+
 
 @NgModule({
   declarations: [
@@ -64,7 +67,8 @@ import { DateFocusComponent } from './components/controls/date-focus/date-focus.
     SiteAvailabilityTableComponent,
     DataSetFormComponent,
     DataInfoComponent,
-    DateFocusComponent
+    DateFocusComponent,
+    DatasetInfoComponent
   ],
   imports: [
     BrowserModule,
@@ -83,7 +87,8 @@ import { DateFocusComponent } from './components/controls/date-focus/date-focus.
     ReactiveFormsModule,
     MatSelectModule,
     MatSidenavModule,
-    MatListModule
+    MatListModule,
+    MatTooltipModule
   ],
   providers: [],
   bootstrap: [AppComponent]

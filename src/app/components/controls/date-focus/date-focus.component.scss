@@ -6,6 +6,24 @@
   width: 5px;
 }
 
+.mat-icon-compress-extra-extra {
+  width: 3px;
+  vertical-align: top;
+}
+
+.bar-icon-wrapper {
+  height: 15px;
+  width: 0px;
+  padding: 0px;
+}
+
+.bar-icon {
+  width: 3px;
+  height: 12px;
+  background-color: white;
+  transform: translate(5px, -3px);
+}
+
 .button-container {
   display: inline-block;
   background-color: chartreuse;

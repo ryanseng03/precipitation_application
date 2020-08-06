@@ -6,6 +6,7 @@ import {FormControl, Validators, AbstractControl} from '@angular/forms';
 import {MatCalendarHeader, MatDatepicker, MatDatepickerInput, MatDatepickerModule} from "@angular/material/datepicker";
 import Moment from "moment";
 import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 
 export let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
@@ -38,7 +39,13 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   set max(date: Moment.Moment) {
     this._max = date;
   }
-  @Output() setDate;
+
+  @Input()
+  set date(date: Moment.Moment) {
+    console.log("!!!");
+    this.dateControl.setValue(date);
+  }
+  @Output() dateChange: Observable<Moment.Moment>;
 
   @Input() timestep: string;
 
@@ -69,7 +76,8 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
     //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
     //use map pipe to send null if invalid date
-    this.setDate = this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
+    this.dateChange = this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
+      console.log(date)
       if(this.dateControl.valid) {
         return date;
       }
