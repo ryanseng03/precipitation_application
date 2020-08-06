@@ -2,11 +2,9 @@ FROM node:14.5-buster
 
 WORKDIR /usr/src/app
 
-# Get the latest master version of the app
-RUN git clone https://github.com/ikewai/precipitation_application.git
-# Or, use your local version (untested syntax)
-#COPY * .
+COPY / .
 
-RUN cd precipitation_application; npm install; npm install -g @angular/cli
+RUN npm install
+RUN npm install -g @angular/cli
 
-CMD [ "sleep", "infinity" ]
+CMD [ "ng", "serve", "--host", "0.0.0.0" ]
