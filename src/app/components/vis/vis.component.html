@@ -1,51 +1,73 @@
 <div class="container">
-
-  <div class="filter-container">
-    <span class="view-select">
-      <button (click)="viewNav.toggle()" mat-icon-button><mat-icon>menu</mat-icon></button>
-    </span>
-    <app-site-filter></app-site-filter>
-
-
+  <div #topbar class="topbar-container">
+    <!-- <div [ngClass]="topbar.offsetWidth > 1000 ? 'dataset-info-container-half' : 'dataset-info-container-full'">
+      <app-dataset-info></app-dataset-info>
+    </div> -->
+    <div class="filter-container">
+      <span class="view-select">
+        
+      </span>
+      <app-site-filter></app-site-filter>
+    </div>
   </div>
+
+  <div #p1 class="dataset-info-container-full">
+    
+  </div>
+
   <div class="data-container">
 
     <div #mapContainer class="map-container" [ngStyle]="{'width': mapWidth}">
       <app-map class="map"></app-map>
     </div>
 
-    <div #dragBar [ngStyle]="{'width': resizeBarWidth}" (mousedown)="startResize($event)" class="resize-bar"></div>
+    <div #dragBar [ngStyle]="{'width': resizeBarWidth}" (mousedown)="startResize($event)" class="resize-bar">
+      <div class="line"></div>
+    </div>
+    
 
-    <mat-sidenav-container class="view-container" [ngSwitch]="view">
-      <div class="dataset-info-container">
-        <app-dataset-info></app-dataset-info>
-      </div>
-      <mat-sidenav #viewNav position="end" mode="over" hasBackdrop="true">
-        <mat-nav-list>
-          <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
-          <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
-          <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
-        </mat-nav-list>
-      </mat-sidenav>
-
-      <div *ngSwitchCase="'select'">
-        <app-data-set-form></app-data-set-form>
-      </div>
-
-      <div *ngSwitchCase="'tables'" >
-        <div class="filter-table">
-          <app-site-availability-table></app-site-availability-table>
+    <div #viewContainer class="view-container">
+      <div #p2 class="dataset-info-container">
+        <div #dsInfo>
+          <app-dataset-info class="dataset-info"></app-dataset-info>
+          <div class="menu-button-container">
+            <button class="button-pos" (click)="viewNav.toggle()" mat-icon-button><mat-icon>menu</mat-icon></button>
+          </div>
+         
         </div>
-        <div class="site-data-table">
-          <app-site-data-table></app-site-data-table>
+        
+      </div>
+      
+      <mat-sidenav-container class="inner-view-container" [ngSwitch]="view">
+  
+        <mat-sidenav #viewNav position="end" mode="over" hasBackdrop="true">
+          <mat-nav-list>
+            <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
+            <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
+            <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
+          </mat-nav-list>
+        </mat-sidenav>
+  
+        <div *ngSwitchCase="'select'">
+          <app-data-set-form></app-data-set-form>
         </div>
-      </div>
-
-      <div *ngSwitchCase="'export'">
-        <div>export</div>
-      </div>
-
-    </mat-sidenav-container>
+  
+        <div *ngSwitchCase="'tables'" >
+          <div class="filter-table">
+            <app-site-availability-table></app-site-availability-table>
+          </div>
+          <div class="site-data-table">
+            <app-site-data-table></app-site-data-table>
+          </div>
+        </div>
+  
+        <div *ngSwitchCase="'export'">
+          <div>export</div>
+        </div>
+  
+      </mat-sidenav-container>
+    </div>
+    
 
 
   </div>

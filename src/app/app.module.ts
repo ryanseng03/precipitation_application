@@ -44,6 +44,7 @@ import { DateFocusComponent } from './components/controls/date-focus/date-focus.
 import {MatTooltipModule} from '@angular/material/tooltip';
 import { DatasetInfoComponent } from './components/controls/dataset-info/dataset-info.component';
 
+import { AngularResizedEventModule } from 'angular-resize-event';
 
 @NgModule({
   declarations: [
@@ -88,7 +89,8 @@ import { DatasetInfoComponent } from './components/controls/dataset-info/dataset
     MatSelectModule,
     MatSidenavModule,
     MatListModule,
-    MatTooltipModule
+    MatTooltipModule,
+    AngularResizedEventModule
   ],
   providers: [],
   bootstrap: [AppComponent]
