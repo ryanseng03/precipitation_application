@@ -26,8 +26,8 @@
 .dataset-info {
     display: inline-block;
     width: calc(100% - 50px);
-    color: white !important;
-    background-color: #3875c2;
+    
+    
 }
 
 
@@ -58,6 +58,8 @@
   position: relative;
   width: 100%;
   display: inline-block;
+  background-image: linear-gradient(0deg, #598dd1, #3875c2);
+  color: white !important;
 }
 
 
@@ -65,8 +67,9 @@
 
 .filter-container {
     width: 100%;
-    background-color: red;
+    background-image: linear-gradient(0deg, #3875c2, #175db6);
     display: inline-block;
+    color: white;
 }
 
 
@@ -143,6 +146,7 @@
     width: 100%;
     display: inline-block;
     flex: 1;
+    padding: 20px;
 }
 
 .resize-bar:hover {
@@ -153,4 +157,21 @@
     float: right;
 }
 
-// :host /deep/
+.dataset-info-container /deep/ .mat-datepicker-toggle {
+    color: white;
+}
+
+.dataset-info-container /deep/ .mat-form-field-label {
+    color: white;
+    font-weight: 500 !important;
+}
+
+
+
+
+.sidenav {
+    padding: 0 !important;
+}
+
+
+

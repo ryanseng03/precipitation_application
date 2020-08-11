@@ -4,16 +4,15 @@
       <app-dataset-info></app-dataset-info>
     </div> -->
     <div class="filter-container">
-      <span class="view-select">
-
-      </span>
+      
       <app-site-filter></app-site-filter>
+    </div>
+    <div #p1 class="dataset-info-container">
+
     </div>
   </div>
 
-  <div #p1 class="dataset-info-container">
-
-  </div>
+  
 
   <div class="data-container">
 
@@ -41,7 +40,7 @@
       <mat-sidenav-container class="inner-view-container" [ngSwitch]="view">
 
         <mat-sidenav #viewNav position="end" mode="over" hasBackdrop="true">
-          <mat-nav-list>
+          <mat-nav-list class="sidenav">
             <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
             <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
             <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
