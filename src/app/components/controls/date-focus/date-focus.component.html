@@ -1,20 +1,15 @@
 <div class="container">
   <div class="button-container">
-    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].back.e.tooltip" [disabled]="controlData[dataset.timestep].back.e.disabled()" (click)="controlData[dataset.timestep].back.e.trigger()">
-      <div>
-        <mat-icon class="bar-icon-wrapper"><div class="bar-icon"></div></mat-icon>
-        <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
-        <mat-icon class="mat-icon-compress-extra">chevron_left</mat-icon>
-      </div>  
+    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].back.e.tooltip" [disabled]="controlData[dataset.timestep].back.e.disabled()" (click)="controlData[dataset.timestep].back.e.trigger()">
+      <mat-icon svgIcon="el"></mat-icon>
     </button>
 
-    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].back.ff.tooltip" [disabled]="controlData[dataset.timestep].back.ff.disabled()" (click)="controlData[dataset.timestep].back.ff.trigger()">
-      <mat-icon class="mat-icon-compress">chevron_left</mat-icon>
-      <mat-icon class="mat-icon-compress">chevron_left</mat-icon>
+    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].back.ff.tooltip" [disabled]="controlData[dataset.timestep].back.ff.disabled()" (click)="controlData[dataset.timestep].back.ff.trigger()">
+      <mat-icon svgIcon="ffl"></mat-icon>
     </button>
 
-    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].back.f.tooltip" [disabled]="controlData[dataset.timestep].back.f.disabled()" (click)="controlData[dataset.timestep].back.f.trigger()">
-      <mat-icon>chevron_left</mat-icon>
+    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].back.f.tooltip" [disabled]="controlData[dataset.timestep].back.f.disabled()" (click)="controlData[dataset.timestep].back.f.trigger()">
+      <mat-icon svgIcon="fl"></mat-icon>
     </button>
 
 
@@ -28,23 +23,21 @@
       [max]="dataset.endDate"
       [timestep]="dataset.timestep"
       [initDate]="dataset.endDate"
-      [(date)]="focusedDate">
+      [(date)]="focusedDate"
+      [readonly]="true">
     </app-date-selector>
   </div>
 
 
   <div class="button-container">
-    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].forward.f.tooltip" [disabled]="controlData[dataset.timestep].forward.f.disabled()" (click)="controlData[dataset.timestep].forward.f.trigger()">
-      <mat-icon>chevron_right</mat-icon>
+    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].forward.f.tooltip" [disabled]="controlData[dataset.timestep].forward.f.disabled()" (click)="controlData[dataset.timestep].forward.f.trigger()">
+      <mat-icon svgIcon="fr"></mat-icon>
     </button>
-    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].forward.ff.tooltip" [disabled]="controlData[dataset.timestep].forward.ff.disabled()" (click)="controlData[dataset.timestep].forward.ff.trigger()">
-      <mat-icon class="mat-icon-compress">chevron_right</mat-icon>
-      <mat-icon class="mat-icon-compress">chevron_right</mat-icon>
+    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].forward.ff.tooltip" [disabled]="controlData[dataset.timestep].forward.ff.disabled()" (click)="controlData[dataset.timestep].forward.ff.trigger()">
+      <mat-icon svgIcon="ffr"></mat-icon>
     </button>
-    <button mat-mini-fab [matTooltip]="controlData[dataset.timestep].forward.e.tooltip" [disabled]="controlData[dataset.timestep].forward.e.disabled()" (click)="controlData[dataset.timestep].forward.e.trigger()">
-      <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
-      <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
-      <mat-icon class="mat-icon-compress-extra">chevron_right</mat-icon>
+    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].forward.e.tooltip" [disabled]="controlData[dataset.timestep].forward.e.disabled()" (click)="controlData[dataset.timestep].forward.e.trigger()">
+      <mat-icon svgIcon="er"></mat-icon>
     </button>
   </div>
 

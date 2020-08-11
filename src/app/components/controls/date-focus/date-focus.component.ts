@@ -1,6 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import Moment from 'moment';
 import {Dataset, Timestep, FillType} from "../../../models/dataset";
+import {MatIconRegistry} from "@angular/material/icon";
+import {DomSanitizer} from "@angular/platform-browser";
 
 @Component({
   selector: 'app-date-focus',
@@ -136,8 +138,13 @@ export class DateFocusComponent implements OnInit {
     }
   };
 
-  constructor() {
-    console.log(this.dataset)
+  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
+    this.matIconRegistry.addSvgIcon("fl", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/fl_m.svg"));
+    this.matIconRegistry.addSvgIcon("ffl", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/ffl_m.svg"));
+    this.matIconRegistry.addSvgIcon("el", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/el_m.svg"));
+    this.matIconRegistry.addSvgIcon("fr", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/fr_m.svg"));
+    this.matIconRegistry.addSvgIcon("ffr", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/ffr_m.svg"));
+    this.matIconRegistry.addSvgIcon("er", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/er_m.svg"));
   }
 
   ngOnInit() {

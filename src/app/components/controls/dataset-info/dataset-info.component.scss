@@ -1,6 +1,6 @@
 .container {
     position: relative;
-    background-color: paleturquoise;
+    // background-color: paleturquoise;
     display: inline-flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -15,21 +15,29 @@
     height: 100%;
     // transform: scale(.8);
     display: inline-block;
-    background-color: darkorange;
+    // background-color: darkorange;
     // min-width: 500px;
+    width: max-content;
     flex-grow: 1;
 }
 
 .info-container {
     position: relative;
     top: 50%;
-    background-color: darkgreen;
+    // background-color: darkgreen;
     display: inline-block;
-    flex-basis: 200px;
+    flex-basis: 250px;
     flex-grow: 1;
+    font-family: 'Roboto';
 }
 
 .info-container p {
     display: inline-block;
     margin: 0;
+    font-size:  18px;
+}
+
+.info-container h3 {
+  font-size: 16px;
+  margin: 0;
 }

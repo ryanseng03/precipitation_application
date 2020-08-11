@@ -35,7 +35,7 @@ export class DataSetIntervalSelectorComponent implements OnInit {
   dateRangeMap: Map<string, [Moment.Moment, Moment.Moment]>;
 
   constructor(private classModifier: ClassModificationService) {
-    
+
     this.setTimestep = new EventEmitter<Timestep>();
     this.setDateRange = new EventEmitter<[Moment.Moment, Moment.Moment]>();
     this.setType = new EventEmitter<string>();
@@ -44,7 +44,7 @@ export class DataSetIntervalSelectorComponent implements OnInit {
     //create date range mapping
     this.dateRangeMap = new Map<string, [Moment.Moment, Moment.Moment]>();
     this.generateDateRangeMap();
-    
+
     this.formValues = {
       timeGranularity: null,
       setType: null,
@@ -123,7 +123,7 @@ export class DataSetIntervalSelectorComponent implements OnInit {
         }
       });
     }, 0);
-    
+
   }
 
   //again, time zone? All hard coded dates can be utc as long as tz set to utc
@@ -218,7 +218,7 @@ interface DataSetComponents {
 //   setValues: DataSetComponents;
 
 //   constructor(validComponents: DataSetComponents[], defaultValues?: DataSetComponents) {
-    
+
 //     this.definitions = validComponents;
 
 //     let nulledValues: DataSetComponents = {
@@ -248,7 +248,7 @@ interface DataSetComponents {
 //       setType: new BehaviorSubject<Set<string>>(initValid.setType),
 //       fill: new BehaviorSubject<Set<string>>(initValid.fill)
 //     };
-    
+
 //   }
 
 //   get state(): DataSetComponents {
@@ -344,7 +344,7 @@ interface DataSetComponents {
 //               definitionValid = false;
 //               break;
 //             }
-    
+
 //           }
 //         }
 //         //if component pairs all matched then add the component value for this def to the valid set
@@ -353,7 +353,7 @@ interface DataSetComponents {
 //         }
 //       }
 //     }
-    
+
 
 //     return validValues;
 //   }
@@ -432,7 +432,7 @@ class DataSetCoordinator {
       setType: new BehaviorSubject<Set<string>>(initValid.setType),
       fill: new BehaviorSubject<Set<string>>(initValid.fill)
     };
-    
+
   }
 
   get state(): DataSetComponents {
@@ -508,7 +508,7 @@ class DataSetCoordinator {
     }
   }
 
-  setComponent(component: keyof DataSetComponents, value: string): boolean {
+  setComponent(component: keyof DataSetComponents, value: string | Timestep): boolean {
     let valid = true;
     let temp = this.setValues[component];
     this.setValues[component] = value;
@@ -601,7 +601,7 @@ class DataSetCoordinator {
     if(root === undefined) {
       return false;
     }
-    
+
     let typedRoot: any = root;
     let component = this.indexOrder[level];
     let value = this.setValues[component];

@@ -32,7 +32,7 @@ export class VisComponent implements OnInit, AfterViewInit {
       moveHandler: (event: MouseEvent) => {
         let dx = event.x - this.dragState.lastEvent.x;
         this.mapWidth = this.mapContainer.nativeElement.offsetWidth + dx + "px";
-
+        this.checkMoveInfo();
         this.dragState.lastEvent = event;
 
         return false;
@@ -45,7 +45,7 @@ export class VisComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    
+
     // setTimeout(() => {
     //   this.moveInfo();
     // }, 2000);
@@ -88,7 +88,6 @@ export class VisComponent implements OnInit, AfterViewInit {
       document.removeEventListener("mousemove", dragState.moveHandler);
       document.removeEventListener("mouseup", this);
       dragState.lastEvent = null;
-      checkState();
       return false;
     }
   }

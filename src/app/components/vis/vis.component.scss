@@ -25,13 +25,21 @@
 
 .dataset-info {
     display: inline-block;
-    width: 100%;
+    width: calc(100% - 50px);
+    color: white !important;
+    background-color: #3875c2;
 }
 
-.button-pos {
-    position: absolute;
-    bottom: 0;
-    right: 0;
+
+.menu-button-container {
+  position: absolute;
+  display: inline-flex;
+  width: 50px;
+  height: 50px;
+  bottom: 0;
+  right: 0;
+  justify-content: center;
+  align-items: center;
 }
 
 
@@ -40,7 +48,6 @@
     width: 100%;
 //   overflow-y: hidden;
 //   overflow-x: hidden;
-    background-color: yellow;
     display: inline-flex;
     overflow: hidden;
     flex: 1;
@@ -48,18 +55,12 @@
 
 
 .dataset-info-container {
-    width: 100%;
-    background-color: blue;
-    display: inline-block;
+  position: relative;
+  width: 100%;
+  display: inline-block;
 }
 
-.menu-button-container {
-    position: relative;
-    
-    background-color: coral;
-    width: 30px;
-    float: right;
-}
+
 
 
 .filter-container {
@@ -68,19 +69,6 @@
     display: inline-block;
 }
 
-.dataset-info-container-half {
-    width: 50%;
-    // height: 50px;
-    background-color: blue;
-    display: inline-block;
-}
-
-.filter-container-half {
-    width: 50%;
-    // height: 50px;
-    background-color: red;
-    display: inline-block;
-}
 
 .topbar-container {
     display: inline-flex;
@@ -165,3 +153,4 @@
     float: right;
 }
 
+// :host /deep/

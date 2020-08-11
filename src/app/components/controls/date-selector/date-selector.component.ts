@@ -51,6 +51,8 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   @Input() initDate: Moment.Moment = null;
 
+  @Input() readonly: boolean = false;
+
   //set up initial form control starting with null value
   dateControl: FormControl = new FormControl(null);
 
