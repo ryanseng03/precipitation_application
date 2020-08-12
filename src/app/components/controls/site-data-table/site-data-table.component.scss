@@ -6,13 +6,13 @@
 .header {
     background: rgb(28, 58, 97);
     color: white;
-    padding: 15px 0px;
+    padding: 10px 0px;
 }
 
 table {
     border-collapse: collapse;
 }
-  
+
 table, th, td {
     border: 1px solid black;
 }
@@ -22,17 +22,17 @@ table, th, td {
 }
 
 .wrapper {
-    padding: 10px;
+    padding: 0;
 }
 
 .selector {
-    height: 30px;
+    height: 25px;
     width: calc(100% - 36px);
     background: rgb(56, 117, 194);
     color: white;
     cursor: pointer;
     padding: 5px 18px;
-    line-height: 30px;
+    line-height: 25px;
 }
 
 // .outer-table tr:nth-of-type(even) {
@@ -109,10 +109,13 @@ table, th, td {
 }
 
 
+thead {
+  height: 30px;
+}
+
 .internal-table thead {
     display: block;
-    height: 30px;
-    padding: 5px 0px;
+    // padding: 5px 0px;
     width: 100%;
  }
 
@@ -124,6 +127,7 @@ table, th, td {
 
 td {
     padding: 5px;
+    font-size: 14px;
 }
 
 .internal-table td {
@@ -135,7 +139,7 @@ td {
     border: none;
     text-align: left;
     width: 50%;
-    line-height: 30px;
+    line-height: 25px;
 }
 
 .internal-table th:nth-child(1) {

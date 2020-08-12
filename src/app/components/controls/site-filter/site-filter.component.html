@@ -1,3 +1,53 @@
-<p>
-  site-filter works!
-</p>
+
+
+
+<form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+  <mat-form-field>
+    <mat-label>
+      Filter Type
+    </mat-label>
+    <mat-select>
+      <mat-option>Include</mat-option>
+      <mat-option>Exclude</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+
+
+<mat-form-field>
+  <mat-label>
+    Property
+  </mat-label>
+  <mat-select>
+    <mat-option>Include</mat-option>
+    <mat-option>Exclude</mat-option>
+  </mat-select>
+</mat-form-field>
+
+  <mat-select-autocomplete
+    [placeholder]="'Select Options'"
+    [options]="options"
+    [multiple]='true'
+    name="optionsSelector"
+    ngDefaultControl
+    [formControl]="profileForm.controls['selected']">
+    <!-- To use formControl within formGroup, provide [formControl] = formGroupName.controls[‘formControlName’] otherwise just [formControl] = ‘formControlName’ -->
+  </mat-select-autocomplete>
+  <button mat-raised-button type="submit" color="primary">Submit</button>
+</form>
+
+<!-- <button mat-raised-button>Basic</button> -->
+
+<div class="filter-label" matTooltip="!!">
+  <div class="filter-text-container">
+    <p>
+      loooooo ooooooooooo ooooong text
+    </p>
+  </div>
+
+  <button mat-icon-button class="filter-delete-button">
+    <mat-icon>
+      close
+    </mat-icon>
+  </button>
+</div>

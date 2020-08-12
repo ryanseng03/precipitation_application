@@ -45,8 +45,10 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 import { DatasetInfoComponent } from './components/controls/dataset-info/dataset-info.component';
 
 import { AngularResizedEventModule } from 'angular-resize-event';
-
-
+import { ExportComponent } from './components/export/export.component';
+import { DataViewsComponent } from './components/data-views/data-views.component';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
+import { SelectAutocompleteModule } from 'mat-select-autocomplete';
 
 @NgModule({
   declarations: [
@@ -71,7 +73,9 @@ import { AngularResizedEventModule } from 'angular-resize-event';
     DataSetFormComponent,
     DataInfoComponent,
     DateFocusComponent,
-    DatasetInfoComponent
+    DatasetInfoComponent,
+    ExportComponent,
+    DataViewsComponent
   ],
   imports: [
     BrowserModule,
@@ -92,7 +96,9 @@ import { AngularResizedEventModule } from 'angular-resize-event';
     MatSidenavModule,
     MatListModule,
     MatTooltipModule,
-    AngularResizedEventModule
+    AngularResizedEventModule,
+    MatAutocompleteModule,
+    SelectAutocompleteModule
   ],
   providers: [],
   bootstrap: [AppComponent]

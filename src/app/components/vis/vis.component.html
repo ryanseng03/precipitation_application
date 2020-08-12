@@ -4,7 +4,7 @@
       <app-dataset-info></app-dataset-info>
     </div> -->
     <div class="filter-container">
-      
+
       <app-site-filter></app-site-filter>
     </div>
     <div #p1 class="dataset-info-container">
@@ -12,7 +12,7 @@
     </div>
   </div>
 
-  
+
 
   <div class="data-container">
 
@@ -47,22 +47,20 @@
           </mat-nav-list>
         </mat-sidenav>
 
-        <div *ngSwitchCase="'select'">
-          <app-data-set-form></app-data-set-form>
+        <div class="view-padding">
+          <div *ngSwitchCase="'select'">
+            <app-data-set-form></app-data-set-form>
+          </div>
+
+          <div *ngSwitchCase="'tables'" >
+            <app-data-views></app-data-views>
+          </div>
+
+          <div *ngSwitchCase="'export'">
+            <app-export></app-export>
+          </div>
         </div>
 
-        <div *ngSwitchCase="'tables'" >
-          <div class="filter-table">
-            <app-site-availability-table></app-site-availability-table>
-          </div>
-          <div class="site-data-table">
-            <app-site-data-table></app-site-data-table>
-          </div>
-        </div>
-
-        <div *ngSwitchCase="'export'">
-          <div>export</div>
-        </div>
 
       </mat-sidenav-container>
     </div>
