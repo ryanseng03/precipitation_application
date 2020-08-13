@@ -34,10 +34,10 @@ export class SiteDataTableComponent implements OnInit {
   labelR = "\u25BE";
 
   constructor(private paramService: EventParamRegistrarService) {
+    this.siteIndex = SiteInfo.getFields();
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
+      
       this.site = site;
-      this.siteIndex = site.getFields();
-      console.log(site);
     });
 
     this.createTestData();

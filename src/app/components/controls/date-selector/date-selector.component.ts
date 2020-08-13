@@ -42,7 +42,6 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   @Input()
   set date(date: Moment.Moment) {
-    console.log("!!!");
     this.dateControl.setValue(date);
   }
   @Output() dateChange: Observable<Moment.Moment>;

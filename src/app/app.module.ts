@@ -49,6 +49,7 @@ import { ExportComponent } from './components/export/export.component';
 import { DataViewsComponent } from './components/data-views/data-views.component';
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import { SelectAutocompleteModule } from 'mat-select-autocomplete';
+import { FilterPipe } from './pipes/filter.pipe';
 
 @NgModule({
   declarations: [
@@ -75,7 +76,8 @@ import { SelectAutocompleteModule } from 'mat-select-autocomplete';
     DateFocusComponent,
     DatasetInfoComponent,
     ExportComponent,
-    DataViewsComponent
+    DataViewsComponent,
+    FilterPipe
   ],
   imports: [
     BrowserModule,

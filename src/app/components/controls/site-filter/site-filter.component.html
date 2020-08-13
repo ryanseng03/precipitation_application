@@ -1,53 +1,87 @@
+<!-- 
+<mat-form-field>
+  <mat-label>
+    Filter Types
+  </mat-label>
+  <mat-select [disabled]="options.filterType.disabled"
+  [formControl]="options.filterType.control">
+    <mat-option value="include">Include</mat-option>
+    <mat-option value="exclude">Exclude</mat-option>
+  </mat-select>
+</mat-form-field> -->
 
 
 
-<form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+<form [formGroup]="filterForm" (ngSubmit)="onSubmit($event)">
   <mat-form-field>
     <mat-label>
-      Filter Type
+      {{options.filterType.name}}
     </mat-label>
-    <mat-select>
-      <mat-option>Include</mat-option>
-      <mat-option>Exclude</mat-option>
+    <mat-select [disabled]="options.filterType.disabled"
+      [formControl]="options.filterType.control">
+      <mat-option *ngFor="let selector of options.filterType.values" [value]="selector.value">{{selector.display}}</mat-option>
     </mat-select>
   </mat-form-field>
 
 
 
-<mat-form-field>
-  <mat-label>
-    Property
-  </mat-label>
-  <mat-select>
-    <mat-option>Include</mat-option>
-    <mat-option>Exclude</mat-option>
-  </mat-select>
-</mat-form-field>
+  <mat-form-field>
+    <mat-label>
+      {{options.filterFields.name}}
+    </mat-label>
+    <mat-select [disabled]="options.filterFields.disabled"
+      [formControl]="options.filterFields.control">
+      <ng-container *ngFor="let selector of options.filterFields.values">
+        <mat-option *ngIf="selector.include" [value]="selector.value">{{selector.display}}</mat-option>
+      </ng-container>
+      
+    </mat-select>
+  </mat-form-field>
 
-  <mat-select-autocomplete
+  
+
+  <mat-select-autocomplete *ngIf="filterTypes[options.filterFields.control.value] == 'selector'"
     [placeholder]="'Select Options'"
-    [options]="options"
-    [multiple]='true'
-    name="optionsSelector"
+    [options]="options.filterValues.values"
+    [multiple]="true"
+    
     ngDefaultControl
-    [formControl]="profileForm.controls['selected']">
-    <!-- To use formControl within formGroup, provide [formControl] = formGroupName.controls[‘formControlName’] otherwise just [formControl] = ‘formControlName’ -->
+    [formControl]="options.filterValues.control"
+    [disabled]="options.filterValues.disabled">
+    
   </mat-select-autocomplete>
-  <button mat-raised-button type="submit" color="primary">Submit</button>
+
+
+  <app-range-slider *ngIf="filterTypes[options.filterFields.control.value] == 'range'"></app-range-slider>
+
+
+  <button [disabled]="filterIncomplete()" mat-raised-button type="submit" color="primary">Create Filter</button>
 </form>
 
-<!-- <button mat-raised-button>Basic</button> -->
 
-<div class="filter-label" matTooltip="!!">
-  <div class="filter-text-container">
-    <p>
-      loooooo ooooooooooo ooooong text
-    </p>
+<div *ngFor="let filter of filters; index as i;">
+  <div class="filter-label" matTooltip="!!">
+    <div class="filter-text-container">
+      <p>
+        loooooo ooooooooooo ooooong text
+      </p>
+    </div>
+  
+    <button (click)="deleteFilter(i)" mat-icon-button class="filter-delete-button">
+      <mat-icon>
+        close
+      </mat-icon>
+    </button>
   </div>
-
-  <button mat-icon-button class="filter-delete-button">
-    <mat-icon>
-      close
-    </mat-icon>
-  </button>
 </div>
+
+
+
+
+
+
+
+
+
+
+<!-- To use formControl within formGroup, provide [formControl] = formGroupName.controls[‘formControlName’] otherwise just [formControl] = ‘formControlName’ -->
