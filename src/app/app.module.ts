@@ -53,7 +53,8 @@ import { FilterPipe } from './pipes/filter.pipe';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatToolbarModule} from '@angular/material/toolbar';
 
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+
+import { NavbarComponent } from './components/navbar/navbar.component';
 
 @NgModule({
   declarations: [
@@ -81,7 +82,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     DatasetInfoComponent,
     ExportComponent,
     DataViewsComponent,
-    FilterPipe
+    FilterPipe,
+    NavbarComponent
   ],
   imports: [
     BrowserModule,
@@ -106,8 +108,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     MatAutocompleteModule,
     SelectAutocompleteModule,
     MatMenuModule,
-    MatToolbarModule,
-    NgbModule.forRoot()
+    MatToolbarModule
   ],
   providers: [],
   bootstrap: [AppComponent]

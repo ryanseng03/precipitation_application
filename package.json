@@ -38,7 +38,6 @@
     "@types/moment-timezone": "^0.5.13",
     "angular-bootstrap-md": "^7.5.4",
     "angular-resize-event": "^1.2.2",
-    "bootstrap": "^4.5.2",
     "chart.js": "^2.5.0",
     "chroma-js": "^2.0.6",
     "core-js": "^2.5.4",
