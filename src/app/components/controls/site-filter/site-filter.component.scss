@@ -13,13 +13,7 @@
   line-height: 40px;
 }
 
-.filter-text-container {
-  position: relative;
-  display: block;
-  width: 100px;
-  float: left;
-  background-color: purple;
-}
+
 
 .form-container {
   display: inline-block;
@@ -28,4 +22,79 @@
 .filter-delete-button {
   float: right;
 
+}
+
+
+
+.filter-text-container {
+  font-size: 14px;
+  padding-left: 10px;
+  position: relative;
+  display: -webkit-box;
+  //DO NOT REMOVE AUTOPREFIXER COMMENT, DIRECTIVE PREVENTS ANGULAR AUTOPREFIXER FROM BREAKING TEXT TRUNCATION
+  /* autoprefixer: ignore next */
+  -webkit-box-orient: vertical;
+  width: calc(100% - 40px);
+  float: left;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  visibility: visible;
+  word-wrap: break-word;
+}
+
+.filter-container {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+}
+
+.container {
+  transform: translateY(5px);
+}
+
+// .filter-text-container::before {
+//   content: "...";
+//   position: absolute;
+//   bottom: 0;
+//   right: 0;
+// }
+
+// .filter-text-container::after {
+//   content: "";
+//   position: absolute;
+//   right: 0; /* note: not using bottom */
+//   width: 1rem;
+//   height: 1rem;
+//   background-color: white;
+// }
+
+form {
+  display: inline-block;
+  padding: 0 10px 0 10px;
+}
+
+mat-form-field {
+  padding-right: 10px;
+}
+
+mat-select-autocomplete {
+  padding-right: 10px;
+}
+
+form /deep/ .mat-form-field {
+  font-size: 14px;
+}
+
+form /deep/ .mat-form-field-flex {
+  padding: 0;
+}
+
+.label-container {
+  display: inline-block;
+  padding: 10px;
+  font-family: "Roboto";
+  font-size: 18px;
+  color: #0a4693;
 }

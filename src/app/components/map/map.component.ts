@@ -26,6 +26,8 @@ export class MapComponent implements OnInit {
 
   //private R: any = L;
 
+  markers: L.Marker[];
+
   options: L.MapOptions
   // private drawnItems: L.FeatureGroup;
   // private drawOptions: any;
@@ -150,7 +152,7 @@ export class MapComponent implements OnInit {
       this.active.data.sites = sites;
 
 
-      let markers = [];
+      let markers: L.Marker[] = [];
 
       let markerLayer = L.layerGroup();
       sites.forEach((site: SiteInfo) => {
@@ -182,6 +184,12 @@ export class MapComponent implements OnInit {
 
       });
 
+      if(this.markers) {
+        console.log("test");
+        siteMarkers.removeLayers(this.markers);
+        map.removeLayer(siteMarkers);
+      }
+      this.markers = markers;
 
       //console.log(markers);
       siteMarkers.addLayers(markers);

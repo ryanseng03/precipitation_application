@@ -38,7 +38,8 @@
               "./node_modules/material-design-icons/iconfont/material-icons.css",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
-              "src/app/themes/mat-theme.sass"
+              "src/app/themes/mat-theme.sass",
+              "./node_modules/bootstrap/dist/css/bootstrap.min.css"
             ],
             "scripts": [
             ],

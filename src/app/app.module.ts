@@ -50,6 +50,10 @@ import { DataViewsComponent } from './components/data-views/data-views.component
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import { SelectAutocompleteModule } from 'mat-select-autocomplete';
 import { FilterPipe } from './pipes/filter.pipe';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatToolbarModule} from '@angular/material/toolbar';
+
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
@@ -100,7 +104,10 @@ import { FilterPipe } from './pipes/filter.pipe';
     MatTooltipModule,
     AngularResizedEventModule,
     MatAutocompleteModule,
-    SelectAutocompleteModule
+    SelectAutocompleteModule,
+    MatMenuModule,
+    MatToolbarModule,
+    NgbModule.forRoot()
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -9,8 +9,8 @@ export class SiteFilterService {
 
   constructor(private paramService: EventParamRegistrarService) {
     let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
-      let filtered = this.applySiteFilter(sites);
-      paramService.pushSiteFilter(filtered);
+      // let filtered = this.applySiteFilter(sites);
+      // paramService.pushSiteFilter(filtered);
     });
   }
 

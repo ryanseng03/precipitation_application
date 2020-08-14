@@ -22,6 +22,7 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
       rows: []
     }
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
+      this.sites.rows = [];
       for(let site of sites) {
         let values = [];
         values.push(site.name);
@@ -66,7 +67,7 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     if(this.selected !== undefined) {
       this.selected.selected = false;
     }
-    
+
     console.log();
 
     this.selected = this.sites.rows[rowIndex];
