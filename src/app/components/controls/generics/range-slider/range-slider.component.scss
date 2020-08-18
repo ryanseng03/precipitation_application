@@ -5,11 +5,34 @@
     z-index: 0;
 }
 
+.container {
+    position: relative;
+    display: inline-flex;
+    // background-color: lawngreen;
+    justify-content: center;
+    align-items: center;
+}
+
+.slider-container {
+    // background-color: lavender;
+    height: 40px;
+    width: 150px;
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-container {
+    position: relative;
+    display: inline-block;
+}
+
+
 .track {
     position: absolute;
-    left: 100px;
     width: 100px;
-    height: 8px;
+    height: 4px;
     border-radius: 10px;
     background-color: lightgrey;
 }
@@ -17,9 +40,9 @@
 .circle-slider {
     position: absolute;
     left: -8px;
-    top: -4px;
-    width: 16px;
-    height: 16px;
+    top: -2px;
+    width: 14px;
+    height: 14px;
     border-radius: 100%;
     background-color: rgb(56, 117, 194);
 }
@@ -36,41 +59,47 @@
 .left-slider {
     position: absolute;
     left: -10px;
-    top: -4px;
+    top: -5px;
     width: 10px;
-    height: 16px;
-    border-radius: 100% 0% 0% 100%;
-    background-color: rgb(56, 117, 194);
+    height: 14px;
+    border-radius: 100% 0 0 100%;
+    border-right: 2px solid;
+    border-color: rgba(0, 0, 0, .5);
+    background-color: white;
     z-index: 1;
 }
 
 .left-slider:hover {
     cursor: -webkit-grab;
-    background-color: rgb(43, 86, 140);
+    background-color: rgb(173, 164, 192);
 }
 
 .left-slider:active {
     cursor: -webkit-grabbing;
+    background-color: rgb(173, 164, 192);
 }
 
 .right-slider {
     position: absolute;
     left: 0px;
-    top: -4px;
+    top: -5px;
     width: 10px;
-    height: 16px;
-    border-radius: 0% 100% 100% 0%;
-    background-color: rgb(56, 117, 194);
+    height: 14px;
+    border-radius: 0 100% 100% 0;
+    border-left: 2px solid;
+    background-color: white;
+    border-color: rgba(0, 0, 0, .5);
     z-index: 2;
 }
 
 .right-slider:hover {
     cursor: -webkit-grab;
-    background-color: rgb(43, 86, 140);
+    background-color: rgb(173, 164, 192);
 }
 
 .right-slider:active {
     cursor: -webkit-grabbing;
+    background-color: rgb(173, 164, 192);
 }
 
 

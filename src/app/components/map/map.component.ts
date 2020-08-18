@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnChanges, Input } from '@angular/core';
 import * as L from "leaflet";
 import * as chroma from "chroma-js";
 import {saveAs} from "file-saver";
@@ -23,6 +23,8 @@ let C: any = L.control;
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit {
+
+  @ViewChild("map") mapElement: ElementRef;
 
   //private R: any = L;
 
@@ -99,13 +101,19 @@ export class MapComponent implements OnInit {
     //     popup: this._popup
     //   });
     // }
+  }
 
-
+  invalidateSize() {
+    this.map.invalidateSize();
   }
 
 
 
   onMapReady(map: L.Map) {
+
+    // setInterval(() => {
+    //   map.invalidateSize();
+    // }, 1000);
 
     L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
 

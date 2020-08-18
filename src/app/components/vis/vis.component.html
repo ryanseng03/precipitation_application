@@ -18,10 +18,10 @@
   <div class="data-container">
 
     <div #mapContainer class="map-container" [ngStyle]="{'width': mapWidth}">
-      <app-map class="map"></app-map>
+      <app-map #map class="map"></app-map>
     </div>
 
-    <div #dragBar [ngStyle]="{'width': resizeBarWidth}" (mousedown)="startResize($event)" class="resize-bar">
+    <div #dragBar [ngStyle]="{'width': resizeBarWidth}" (touchstart)="startResize($event, true)" (mousedown)="startResize($event, false)" class="resize-bar">
       <div class="line"></div>
     </div>
 

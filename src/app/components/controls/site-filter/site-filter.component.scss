@@ -15,13 +15,22 @@
 
 
 
-.form-container {
-  display: inline-block;
-}
+
 
 .filter-delete-button {
   float: right;
 
+}
+
+.form-component {
+  display: inline-block;
+  padding-right: 10px;
+}
+
+.submit-button-container {
+  display: inline-block;
+  //button on own line gets cut off unless container height 4px larger than button (why?)
+  height: 40px;
 }
 
 
@@ -52,6 +61,29 @@
 
 .main-container {
   transform: translateY(5px);
+  display: inline-flex;
+  flex-direction: row;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-container {
+  display: inline-flex;
+  flex-grow: 1;
+  flex-wrap: row;
+}
+
+
+
+
+.filter-manager-container {
+  display: inline-block;
+  flex-grow: 1;
+  color: white;
+  max-height: 40px;
+  max-width: 150px;
+  padding-right: 15px;
 }
 
 // .filter-text-container::before {
@@ -75,13 +107,13 @@ form {
   padding: 0 10px 0 10px;
 }
 
-mat-form-field {
-  padding-right: 10px;
-}
+// mat-form-field {
+  
+// }
 
-mat-select-autocomplete {
-  padding-right: 10px;
-}
+// mat-select-autocomplete {
+//   padding-right: 10px;
+// }
 
 form /deep/ .mat-form-field {
   font-size: 14px;
@@ -91,10 +123,19 @@ form /deep/ .mat-form-field-flex {
   padding: 0;
 }
 
+.dark-theme /deep/ .mat-button {
+  color: white;
+}
+
 .label-container {
   display: inline-block;
   padding: 10px;
   font-family: "Roboto";
   font-size: 18px;
-  color: #0a4693;
+  color: rgba(255, 255, 255, .75);
+  flex-grow: 1;
 }
+
+
+
+

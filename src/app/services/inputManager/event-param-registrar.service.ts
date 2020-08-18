@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { DataManagerService, FocusedData, DataType, Metrics } from "../../services/dataManager/data-manager.service";
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
-import { Subject } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -25,16 +25,16 @@ export class EventParamRegistrarService {
   };
 
   //global handler aux events
-  private _siteSelectSource = new Subject<SiteInfo>();
-  private _filteredSiteSource = new Subject<SiteInfo[]>();
+  private _siteSelectSource = new BehaviorSubject<SiteInfo>(null);
+  private _filteredSiteSource = new BehaviorSubject<SiteInfo[]>(null);
 
   //dataset select persistent
-  private _startDateSource = new Subject<string>();
-  private _endDateSource = new Subject<string>();
-  private _timestepSource = new Subject<string>();
+  private _startDateSource = new BehaviorSubject<string>(null);
+  private _endDateSource = new BehaviorSubject<string>(null);
+  private _timestepSource = new BehaviorSubject<string>(null);
 
   //selected dataset, change from any type when defined
-  private _datasetSource = new Subject<any>();
+  private _datasetSource = new BehaviorSubject<any>(null);
 
   pushSiteSelect(selectedSite: SiteInfo): void {
     this._siteSelectSource.next(selectedSite);

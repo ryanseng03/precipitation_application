@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
+import { MapComponent } from '../map/map.component';
 
 @Component({
   selector: 'app-vis',
@@ -15,6 +16,8 @@ export class VisComponent implements OnInit, AfterViewInit {
   @ViewChild("p1") p1: ElementRef;
   @ViewChild("p2") p2: ElementRef;
   @ViewChild("dsInfo", {read: ElementRef}) dsInfo: ElementRef;
+
+  @ViewChild("map") map: MapComponent;
 
   @ViewChild("viewContainer") viewContainer: ElementRef;
 
@@ -53,7 +56,6 @@ export class VisComponent implements OnInit, AfterViewInit {
 
   @HostListener('window:resize', ['$event'])
   checkMoveInfo() {
-    console.log(this.viewContainer.nativeElement.offsetWidth);
     let parent: HTMLElement;
     if(this.viewContainer.nativeElement.offsetWidth < 500) {
       parent = this.p1.nativeElement;
@@ -71,22 +73,38 @@ export class VisComponent implements OnInit, AfterViewInit {
     parent.appendChild(child);
   }
 
-  startResize(event: MouseEvent): boolean {
+  startResize(event: MouseEvent, touch: boolean): boolean {
     this.dragState.lastEvent = event;
-    document.addEventListener("mousemove", this.dragState.moveHandler)
-    document.addEventListener("mouseup", this.stopResize());
+    if(touch) {
+      document.addEventListener("touchmove", this.dragState.moveHandler)
+      document.addEventListener("touchend", this.stopResize(touch));
+    }
+    else {
+      document.addEventListener("mousemove", this.dragState.moveHandler)
+      document.addEventListener("mouseup", this.stopResize(touch));
+    }
 
     //stops default and propogation, equivalent of calling preventDefault and stopPropagation
     return false;
   }
 
   //curry stop resize function to include dragState from component context
-  stopResize() {
+  stopResize(touch: boolean) {
     let dragState = this.dragState;
     let checkState = this.checkMoveInfo.bind(this);
+    let map = this.map;
     return function(event: MouseEvent): boolean {
-      document.removeEventListener("mousemove", dragState.moveHandler);
-      document.removeEventListener("mouseup", this);
+      if(touch) {
+        document.removeEventListener("touchmove", dragState.moveHandler);
+        document.removeEventListener("touchend", this);
+      }
+      else {
+        document.removeEventListener("mousemove", dragState.moveHandler);
+        document.removeEventListener("mouseup", this);
+      }
+
+      map.invalidateSize();
+      
       dragState.lastEvent = null;
       return false;
     }

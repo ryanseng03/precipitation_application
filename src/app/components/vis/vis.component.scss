@@ -3,6 +3,7 @@
   width: 100%;
   display: inline-flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .map-container {
@@ -66,7 +67,7 @@
 
 .filter-container {
     width: 100%;
-    //background-image: linear-gradient(0deg, #3875c2, #175db6);
+    background-image: linear-gradient(0deg, #3875c2, #175db6);
     display: inline-block;
     // color: white;
     background-color: white;

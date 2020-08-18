@@ -36,7 +36,6 @@ export class SiteDataTableComponent implements OnInit {
   constructor(private paramService: EventParamRegistrarService) {
     this.siteIndex = SiteInfo.getFields();
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      
       this.site = site;
     });
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Pipe, Injectable, PipeTransform, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ViewChild, Pipe, Injectable, PipeTransform, ChangeDetectionStrategy, NgZone } from '@angular/core';
 import {SiteFilterService} from "src/app/services/controlHelpers/site-filter.service";
 import { FormControl, FormGroup } from '@angular/forms';
 import { EventParamRegistrarService, ParameterHook } from 'src/app/services/inputManager/event-param-registrar.service';
@@ -49,8 +49,8 @@ export class SiteFilterComponent implements OnInit {
 
   filterForm = new FormGroup({
     filterType: new FormControl("include"),
-    filterFields: new FormControl(null),
-    filterValues: new FormControl(null)
+    filterFields: new FormControl(""),
+    filterValues: new FormControl("")
   });
 
   options: {
@@ -79,7 +79,7 @@ export class SiteFilterComponent implements OnInit {
   }
 
 
-  constructor(private filter: SiteFilterService, private paramService: EventParamRegistrarService) {
+  constructor(private filter: SiteFilterService, private paramService: EventParamRegistrarService, private ngZone: NgZone) {
 
     this.siteInfo = {
      filteredSites: null,
@@ -124,14 +124,17 @@ export class SiteFilterComponent implements OnInit {
     }
     //this.options.filterValues.disabled = this.options.filterFields.control.value == null;
 
-    let valueSelectors: {[field: string]: ValueSelector[]} = {};
-    for(let field of SiteInfo.getFields()) {
+    let valueSelectors: {[field: string]: ValueSelector[]} = {
+      "": []
+    };
+    let fields = SiteInfo.getFields();
+    for(let field of fields) {
       valueSelectors[field] = [];
     }
 
     let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
       this.siteInfo.sites = sites;
-      for(let field in valueSelectors) {
+      for(let field of fields) {
         let selectors = [];
         let uniqueVals = new Set<any>();
         for(let site of sites) {
@@ -146,13 +149,16 @@ export class SiteFilterComponent implements OnInit {
           };
           selectors.push(selector);
         });
-
         valueSelectors[field] = selectors;
-        this.clearFilterFields();
+        
+        this.options.filterValues.control.setValue("");
       }
 
       this.filterSites(sites, this.filters);
 
+      this.ngZone.run(() => {
+        this.options.filterValues.values = valueSelectors[this.options.filterFields.control.value];
+      });
     });
 
 
@@ -167,7 +173,6 @@ export class SiteFilterComponent implements OnInit {
   //apply filter to sites and emit
   filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
     let filtered = sites.filter(this.siteFilter(this.filters));
-    console.log(filtered);
     this.siteInfo.filteredSites = filtered;
     this.paramService.pushSiteFilter(filtered);
     return filtered;
@@ -197,8 +202,8 @@ export class SiteFilterComponent implements OnInit {
 
 
   clearFilterFields() {
-    this.options.filterValues.control.setValue(null);
-    this.options.filterFields.control.setValue(null);
+    this.options.filterValues.control.setValue("");
+    this.options.filterFields.control.setValue("");
   }
 
   ngOnInit() {
