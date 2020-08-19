@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, RootRenderer } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, RootRenderer, ChangeDetectionStrategy, AfterContentChecked, AfterContentInit, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 
@@ -6,16 +6,18 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
   selector: 'app-site-availability-table',
   templateUrl: './site-availability-table.component.html',
   styleUrls: ['./site-availability-table.component.scss']
+  // changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SiteAvailabilityTableComponent implements AfterViewInit {
+export class SiteAvailabilityTableComponent implements AfterViewInit, AfterContentInit {
 
-  @ViewChildren("dataRows") dataRows: QueryList<HTMLElement>;
+  @ViewChildren("dataRows") dataRows: QueryList<ElementRef>;
+  @ViewChild("tbody") tbody: ElementRef;
 
   sites: TableFormat;
   siteMap: Map<SiteInfo, number>;
   selected: RowRef;
 
-  constructor(private paramService: EventParamRegistrarService) {
+  constructor(private paramService: EventParamRegistrarService, private cdr: ChangeDetectorRef) {
     this.siteMap = new Map<SiteInfo, number>();
     this.sites = {
       header: ["Site Name", "Site Network", "Site Island"],
@@ -38,27 +40,41 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     });
   }
 
-  ngAfterViewInit() {
-    this.dataRows.changes.subscribe((rows: QueryList<HTMLElement>) => {
-      this.siteMap.clear();
-      rows.forEach((row: HTMLElement, i: number) => {
-        let rowRef = this.sites.rows[i];
-        rowRef.element = row;
-        this.siteMap.set(rowRef.site, i);
-      });
+  generateRowMap(rows: QueryList<ElementRef>) {
+    this.siteMap.clear();
+    rows.forEach((row: ElementRef, i: number) => {
+      let rowRef = this.sites.rows[i];
+      rowRef.element = row;
+      this.siteMap.set(rowRef.site, i);
     });
+  }
 
+  ngAfterViewInit() {
+    console.log("viewinit");
+    this.generateRowMap(this.dataRows);
+    this.dataRows.changes.subscribe((rows: QueryList<ElementRef>) => {
+      console.log(rows);
+      this.generateRowMap(rows);
+    });
     this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
       let index = this.siteMap.get(site);
       //can unfiltered elements be selected? if so remove error and just ignore
       if(index === undefined) {
         console.error(`No mapping for selected site in site table.`);
       }
-      this.selectFromTable(index);
+      else {
+        this.selectFromTable(index);
+        this.cdr.detectChanges();
+      }
+
     });
   }
 
-  setSelected(selected: HTMLElement, i: number) {
+  ngAfterContentInit() {
+
+  }
+
+  setSelected(selected: ElementRef, i: number) {
     let site = this.sites.rows[i].site;
     this.paramService.pushSiteSelect(site);
   }
@@ -68,9 +84,16 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
       this.selected.selected = false;
     }
 
-    console.log();
-
     this.selected = this.sites.rows[rowIndex];
+    let selectedEl = this.selected.element.nativeElement;
+    let position = selectedEl.offsetTop - 30;
+    let tbodyEl = this.tbody.nativeElement;
+    let viewRange = [tbodyEl.scrollTop, tbodyEl.scrollTop + tbodyEl.offsetHeight];
+    console.log(viewRange);
+    if(position < viewRange[0] || position >= viewRange[1]) {
+      tbodyEl.scrollTo(0, position);
+    }
+    console.log(this.selected);
     this.selected.selected = true;
   }
 
@@ -83,7 +106,7 @@ interface TableFormat {
 
 interface RowRef {
   site: SiteInfo,
-  element: HTMLElement,
+  element: ElementRef,
   selected: boolean,
   values: string[]
 }

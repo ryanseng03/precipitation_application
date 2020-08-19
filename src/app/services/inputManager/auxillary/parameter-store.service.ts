@@ -1,12 +1,12 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Subject, merge, Observable, Subscribable, Subscription } from 'rxjs';
+import { Subject, merge, Observable, Subscribable, Subscription, ReplaySubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ParameterStoreService {
 
-  private parametersSubjects: {[name: string]: Subject<any>};
+  private parametersSubjects: {[name: string]: ReplaySubject<any>};
   private parametersState: {[name: string]: any};
 
   constructor(private ngZone: NgZone) {
@@ -14,11 +14,11 @@ export class ParameterStoreService {
     this.parametersState = {};
   }
 
-  public registerParameter<T>(name: string, initValue: T = null): Subject<T> {
+  public registerParameter<T>(name: string, initValue: T = null): ReplaySubject<T> {
     let paramSubject = null;
     //ensure this parameter does not already exist
     if(this.parametersSubjects[name] == undefined) {
-      paramSubject = new Subject<T>();
+      paramSubject = new ReplaySubject<T>();
       this.parametersSubjects[name] = paramSubject;
       this.parametersState[name] = initValue;
     }
@@ -31,7 +31,7 @@ export class ParameterStoreService {
   //   let observables = [];
   //   if(paramNames == undefined) {
   //     let subjects = Object.values(this.parametersSubjects);
-  //     subjects.forEach((subject: Subject<ParameterEvent<any>>) => {
+  //     subjects.forEach((subject: ReplaySubject<ParameterEvent<any>>) => {
   //       observables.push(subject.asObservable());
   //     });
   //   }
@@ -40,7 +40,7 @@ export class ParameterStoreService {
   //       let subject = this.parametersSubjects[name];
   //       if(subject != undefined) {
   //         observables.push(subject.asObservable());
-  //       }    
+  //       }
   //     });
   //   }
   //   return merge(...observables);
@@ -48,7 +48,7 @@ export class ParameterStoreService {
 
   public createParameterHook(paramName: string, cb: (value: any) => void, install: boolean = true): ParameterHook {
     let hook: ParameterHook = null;
-    let subject: Subject<any> = this.parametersSubjects[paramName];
+    let subject: ReplaySubject<any> = this.parametersSubjects[paramName];
     if(subject != undefined) {
       //use ngZone.run to execute callback, triggers change detection, functions called in rxjs subscriptions don't trigger by default
       let zonedCB = (value) => {
@@ -79,7 +79,7 @@ export class ParameterStoreService {
     return params;
   }
 
-  
+
 }
 
 
@@ -92,14 +92,14 @@ export class ParameterStoreService {
 export class ParameterHook {
   private active: boolean;
   private sub: Subscription;
-  private source: Subject<any>;
+  private source: ReplaySubject<any>;
   private cb: (value: any) => void;
 
-  constructor(source: Subject<any>, cb: (value: any) => void) {
+  constructor(source: ReplaySubject<any>, cb: (value: any) => void) {
     this.source = source;
     this.cb = cb;
   }
-  
+
   install(): boolean {
     let installed = true;
     if(!this.active) {

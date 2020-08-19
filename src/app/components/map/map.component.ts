@@ -58,7 +58,7 @@ export class MapComponent implements OnInit {
     });
 
     this.options = {
-      layers: [this.baseLayers.Satellite],
+      layers: this.baseLayers.Satellite,
       zoom: 7,
       center: L.latLng(20.5, -157.917480),
       attributionControl: false,
@@ -116,6 +116,7 @@ export class MapComponent implements OnInit {
     // }, 1000);
 
     L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
+    L.control.scale({position: 'bottomleft'}).addTo(map);
 
 
 
@@ -138,13 +139,13 @@ export class MapComponent implements OnInit {
         raster: null,
         date: null
       },
-      band: "rainfall"
+      band: "rainfall",
     };
 
 
-    let layerGroups = {
-      Types: {}
-    };
+    // let layerGroups = {
+    //   Types: {}
+    // };
 
     let clusterOptions = {
       //chunkedLoading: true
@@ -158,7 +159,6 @@ export class MapComponent implements OnInit {
     //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
     let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
       this.active.data.sites = sites;
-
 
       let markers: L.Marker[] = [];
 
@@ -193,7 +193,6 @@ export class MapComponent implements OnInit {
       });
 
       if(this.markers) {
-        console.log("test");
         siteMarkers.removeLayers(this.markers);
         map.removeLayer(siteMarkers);
       }
@@ -207,7 +206,8 @@ export class MapComponent implements OnInit {
       //map.addLayer(markerLayer);
     });
 
-
+    let lc = C.layers(this.baseLayers);
+    lc.addTo(map);
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
       this.active.data.raster = raster;
@@ -223,11 +223,14 @@ export class MapComponent implements OnInit {
           }
         };
         let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
-        layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
+        //layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
         this.dataLayers[band] = rasterLayer;
       }
       //add rainfall layer to map as default
       map.addLayer(this.dataLayers["rainfall"]);
+
+      //for now at least only one layer, make sure to replace if multiple
+      lc.addOverlay(this.dataLayers["rainfall"], "Rainfall");
 
       //install hover handler (requires raster to be set to work)
       let hoverTag = this.paramService.registerMapHover(map);
@@ -282,20 +285,40 @@ export class MapComponent implements OnInit {
     });
 
 
+    // C.RemoveAll = L.Control.extend(
+    //   {
+    //       options:
+    //       {
+    //           position: 'topright',
+    //       },
+    //       onAdd: function (map) {
+    //           var controlDiv = L.DomUtil.create('div', 'leaflet-draw-toolbar leaflet-bar');
 
-    let layerGroupControlOptions = {
-      exclusiveGroups: ["Types"],
-      groupCheckboxes: true
-    };
+    //           var controlUI = L.DomUtil.create('app-navbar', "", controlDiv);
+    //           controlUI.title = 'Remove All Polygons';
+    //           return controlDiv;
+    //       }
+    //   });
+    //   var removeAllControl = new C.RemoveAll();
+    //   map.addControl(removeAllControl);
 
-    let lc = C.groupedLayers(this.baseLayers, layerGroups, layerGroupControlOptions);
-    lc.addTo(map);
+    // let layerGroupControlOptions = {
+    //   exclusiveGroups: ["Types"],
+    //   groupCheckboxes: true
+    // };
+
+
 
 
     this.setBaseLayerHandlers();
 
+    map.on("baselayerchange", () => {
+
+    });
 
   }
+
+
 
   setBaseLayerHandlers() {
     this.map.on('overlayadd', (e: L.LayersControlEvent) => {

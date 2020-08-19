@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { DataManagerService, FocusedData, DataType, Metrics } from "../../services/dataManager/data-manager.service";
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
-import { BehaviorSubject } from "rxjs";
+import { Subject } from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -25,16 +25,16 @@ export class EventParamRegistrarService {
   };
 
   //global handler aux events
-  private _siteSelectSource = new BehaviorSubject<SiteInfo>(null);
-  private _filteredSiteSource = new BehaviorSubject<SiteInfo[]>(null);
+  private _siteSelectSource = new Subject<SiteInfo>();
+  private _filteredSiteSource = new Subject<SiteInfo[]>();
 
   //dataset select persistent
-  private _startDateSource = new BehaviorSubject<string>(null);
-  private _endDateSource = new BehaviorSubject<string>(null);
-  private _timestepSource = new BehaviorSubject<string>(null);
+  private _startDateSource = new Subject<string>();
+  private _endDateSource = new Subject<string>();
+  private _timestepSource = new Subject<string>();
 
   //selected dataset, change from any type when defined
-  private _datasetSource = new BehaviorSubject<any>(null);
+  private _datasetSource = new Subject<any>();
 
   pushSiteSelect(selectedSite: SiteInfo): void {
     this._siteSelectSource.next(selectedSite);
@@ -83,6 +83,10 @@ export class EventParamRegistrarService {
 
 
   private setupGlobalHandlers() {
+
+    //need to add data set emitter, site series emitter
+
+
     //get focused data from data manager and split into data, raster, and site handlers
     //parameter hooks can then be used
     let rasterTag = EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster;
