@@ -27,7 +27,7 @@ export class VisComponent implements OnInit, AfterViewInit {
 
   dragState: DragState;
 
-  view: string = "tables";
+  view: string = "select";
 
   constructor() {
     this.dragState = {

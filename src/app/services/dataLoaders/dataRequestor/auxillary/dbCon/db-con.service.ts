@@ -45,7 +45,7 @@ export class DbConService {
       .pipe(
         retry(3),
         catchError((e) => {
-          return Observable.throw(new Error(e.message));
+          return Observable.throw(e);
         })
       ).toPromise().then((response: ResponseResults) => {
         return resultHandler(response.result);

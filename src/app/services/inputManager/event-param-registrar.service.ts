@@ -5,6 +5,7 @@ import { DataManagerService, FocusedData, DataType, Metrics } from "../../servic
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { Subject } from "rxjs";
+import { Dataset } from "../../models/dataset";
 
 @Injectable({
   providedIn: 'root'
@@ -56,7 +57,7 @@ export class EventParamRegistrarService {
     this._timestepSource.next(timestep);
   }
 
-  pushDataset(dataset: any): void {
+  pushDataset(dataset: Dataset): void {
     this._datasetSource.next(dataset);
   }
 
@@ -84,7 +85,7 @@ export class EventParamRegistrarService {
 
   private setupGlobalHandlers() {
 
-    //need to add data set emitter, site series emitter
+    //need to add site series emitter
 
 
     //get focused data from data manager and split into data, raster, and site handlers
@@ -115,7 +116,7 @@ export class EventParamRegistrarService {
     let endDateSub = this.paramService.registerParameter<string>(endDateTag);
     let timestepSub = this.paramService.registerParameter<string>(timestepTag);
 
-    let datasetSub = this.paramService.registerParameter<any>(datasetTag);
+    let datasetSub = this.paramService.registerParameter<Dataset>(datasetTag);
 
     let siteSelectObserver = this._siteSelectSource.asObservable();
     let filteredSiteObserver = this._filteredSiteSource.asObservable();

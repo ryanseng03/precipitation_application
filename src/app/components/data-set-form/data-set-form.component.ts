@@ -1,12 +1,15 @@
-import { Component, OnInit, AfterContentInit, AfterViewInit, NgZone } from '@angular/core';
+import { Component, OnInit, AfterContentInit, AfterViewInit, NgZone, ChangeDetectionStrategy } from '@angular/core';
 import {Timestep} from "../controls/data-set-interval-selector/data-set-interval-selector.component";
 import Moment from "moment";
 import "moment-timezone";
+import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
+import {Dataset, SetType, FillType} from "../../models/dataset";
 
 @Component({
   selector: 'app-data-set-form',
   templateUrl: './data-set-form.component.html',
-  styleUrls: ['./data-set-form.component.scss']
+  styleUrls: ['./data-set-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataSetFormComponent implements OnInit {
   //local tz for current date set (UTC for hardcoded dates)
@@ -20,6 +23,13 @@ export class DataSetFormComponent implements OnInit {
   private static readonly GLOBAL_MIN = Moment("0000-01-01T00:00:00.000Z").tz("utc");
   private static readonly DEFAULT_TIMESTEP = "daily";
 
+  dataset: Dataset = {
+    startDate: null,
+    endDate: null,
+    timestep: null,
+    fill: null,
+    type: null
+  };
 
   valid: boolean;
   validParts: {
@@ -39,12 +49,12 @@ export class DataSetFormComponent implements OnInit {
   //should probably store as UTC, provide as local
   min: Moment.Moment;
   max: Moment.Moment;
-  timestep: string;
+  timestep: Timestep;
 
-  constructor() {
+  constructor(private paramRegistrar: EventParamRegistrarService) {
     this.min = this.dataRange.min;
     this.max = this.dataRange.max
-    this.timestep ="monthly";
+    this.timestep = "monthly";
     this.validParts = {
       min: false,
       max: false,
@@ -68,7 +78,7 @@ export class DataSetFormComponent implements OnInit {
       this.min = this.dataRange.min;
       this.validParts.min = false;
     }
-    this.min = date ? date : this.dataRange.min;
+    this.dataset.startDate = this.min;
     this.validate();
   }
 
@@ -81,7 +91,7 @@ export class DataSetFormComponent implements OnInit {
       this.max = this.dataRange.max;
       this.validParts.max = false;
     }
-    this.max = date ? date : this.dataRange.max;
+    this.dataset.endDate = this.max;
     this.validate();
   }
 
@@ -94,6 +104,7 @@ export class DataSetFormComponent implements OnInit {
       this.timestep = DataSetFormComponent.DEFAULT_TIMESTEP;
       this.validParts.timeGranularity = false;
     }
+    this.dataset.timestep = this.timestep;
     this.validate();
   }
 
@@ -105,6 +116,16 @@ export class DataSetFormComponent implements OnInit {
     else {
       this.validParts.setType = false;
     }
+    if(type == null) {
+      this.dataset.type = null
+    }
+    //this stuff is sketchy at best, should refactor form and types to align
+    else if(type.includes("rainfall")) {
+      this.dataset.type = "rainfall";
+    }
+    else {
+      this.dataset.type = "temperature";
+    }
     this.validate();
   }
 
@@ -115,6 +136,19 @@ export class DataSetFormComponent implements OnInit {
     else {
       this.validParts.fill = false;
     }
+    if(fill == null) {
+      this.dataset.fill = null
+    }
+    //this stuff is sketchy at best, should refactor form and types to align
+    else if(fill.includes("filled")) {
+      this.dataset.fill = "full";
+    }
+    else if(fill.includes("partial")) {
+      this.dataset.fill = "partial";
+    }
+    else {
+      this.dataset.fill = "none";
+    };
     this.validate();
   }
 
@@ -142,6 +176,13 @@ export class DataSetFormComponent implements OnInit {
   }
 
   updateDataSet() {
-
+    let dscp: Dataset = {
+      startDate: this.dataset.startDate,
+      endDate: this.dataset.endDate,
+      timestep: this.dataset.timestep,
+      fill: this.dataset.fill,
+      type: this.dataset.type
+    }
+    this.paramRegistrar.pushDataset(dscp);
   }
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {Dataset, FillType, Timestep} from "../../../models/dataset";
 import Moment from "moment";
+import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
 
 @Component({
   selector: 'app-dataset-info',
@@ -19,19 +20,26 @@ export class DatasetInfoComponent implements OnInit {
 
   datasetStr: string;
 
-  constructor() {
+  constructor(private paramRegistrar: EventParamRegistrarService) {
     this.datasetStr = this.genDSStr();
+
+    paramRegistrar.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+      this.dataset = dataset;
+      console.log(dataset);
+      this.datasetStr = this.genDSStr();
+    });
   }
 
   ngOnInit() {
   }
 
   genDSStr(): string {
+    console.log(this.dataset.endDate.format("MMM DD, YYYY"));
     let timestep = this.capFirst(this.dataset.timestep);
     let type = this.capFirst(this.dataset.type);
     let fill = this.fillStr(this.dataset.fill);
     let start = this.startStr(this.dataset.startDate, this.dataset.timestep);
-    let end = this.endStr(this.dataset.startDate, this.dataset.timestep);
+    let end = this.endStr(this.dataset.endDate, this.dataset.timestep);
     
     return `${timestep} ${fill} ${type}, ${start} - ${end}`;
   }
@@ -65,7 +73,7 @@ export class DatasetInfoComponent implements OnInit {
         break;
       }
       case "daily": {
-        dateStr = date.format("MMM DO, YYYY");
+        dateStr = date.format("MMM DD, YYYY");
         break;
       }
       default: {
@@ -76,7 +84,7 @@ export class DatasetInfoComponent implements OnInit {
   }
 
   fillStr(fill: FillType): string {
-    let s;
+    let s: string;
     switch(fill) {
       case "full": {
         s = "Filled"
