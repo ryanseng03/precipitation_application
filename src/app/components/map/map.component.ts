@@ -108,6 +108,10 @@ export class MapComponent implements OnInit {
   }
 
 
+  focusSpatialExtent(bounds: number[][]) {
+    this.map.flyToBounds(bounds);
+  }
+
 
   onMapReady(map: L.Map) {
 
