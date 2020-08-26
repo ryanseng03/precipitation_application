@@ -26,6 +26,14 @@ export class MapComponent implements OnInit {
 
   @ViewChild("map") mapElement: ElementRef;
 
+  readonly extents: {[county: string]: L.LatLngBoundsExpression} = {
+    ka: [ [ 21.819, -159.816 ], [ 22.269, -159.25125 ] ],
+    oa: [ [ 21.18, -158.322 ], [ 21.7425, -157.602 ] ],
+    ma: [ [ 20.343, -157.35 ], [ 21.32175, -155.92575 ] ],
+    bi: [ [ 18.849, -156.243 ], [ 20.334, -154.668 ] ],
+    st: [ [ 18.849, -159.816 ], [ 22.269, -154.668 ] ],
+    bounds: [ [14.050369038588524, -167.60742187500003], [26.522031143884014, -144.47021484375003] ]
+  };
   //private R: any = L;
 
   markers: L.Marker[];
@@ -66,10 +74,7 @@ export class MapComponent implements OnInit {
       // wheelPxPerZoomLevel: 200,
       minZoom: 6,
       maxZoom: 20,
-      maxBounds: [
-        [18.302381, -160.762939],
-        [22.603869, -153.973389]
-      ]
+      maxBounds: this.extents.bounds
     };
 
     // this.drawnItems = new L.FeatureGroup;
@@ -107,9 +112,20 @@ export class MapComponent implements OnInit {
     this.map.invalidateSize();
   }
 
-
-  focusSpatialExtent(bounds: number[][]) {
+  focusedBoundary = null
+  focusSpatialExtent(extent: string) {
+    this.clearExtent();
+    let bounds: L.LatLngBoundsExpression = this.extents[extent];
     this.map.flyToBounds(bounds);
+    let boundary = L.rectangle(bounds, {weight: 2, fillOpacity: 0});
+    boundary.addTo(this.map);
+    this.focusedBoundary = boundary;
+  }
+
+  clearExtent() {
+    if(this.focusedBoundary != null) {
+      this.map.removeLayer(this.focusedBoundary);
+    }
   }
 
 

@@ -55,6 +55,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 
 
 import { NavbarComponent } from './components/navbar/navbar.component';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 
 @NgModule({
   declarations: [
@@ -108,7 +109,8 @@ import { NavbarComponent } from './components/navbar/navbar.component';
     MatAutocompleteModule,
     SelectAutocompleteModule,
     MatMenuModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatCheckboxModule
   ],
   providers: [],
   bootstrap: [AppComponent]

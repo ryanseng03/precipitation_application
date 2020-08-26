@@ -1,3 +1,54 @@
-<p>
-  export works!
-</p>
+<div class="form-container">
+  <form [formGroup]="exportForm" (ngSubmit)="onSubmit($event)">
+    <div class="form-component">
+      <mat-form-field>
+        <mat-label>
+          {{options.spatialExtent.name}}
+        </mat-label>
+        <mat-select disableOptionCentering
+          [formControl]="options.spatialExtent.control">
+          <ng-container *ngFor="let selector of options.spatialExtent.values">
+            <mat-option [value]="selector.value">{{selector.display}}</mat-option>
+          </ng-container>
+
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+
+
+
+    <div class="form-component">
+      <mat-checkbox [formControl]="options.includeRaster.control">
+        {{options.includeRaster.label}}
+      </mat-checkbox>
+    </div>
+
+
+    <div class="form-component">
+      <mat-checkbox [formControl]="options.includeStations.control">
+        {{options.includeStations.label}}
+      </mat-checkbox>
+    </div>
+
+
+    <div class="form-component">
+      <mat-form-field>
+        <mat-label>
+          {{options.timePeriod.name}}
+        </mat-label>
+        <mat-select disableOptionCentering
+          [formControl]="options.timePeriod.control">
+          <ng-container *ngFor="let selector of options.timePeriod.values">
+            <mat-option [value]="selector.value">{{selector.display}}</mat-option>
+          </ng-container>
+
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="submit-button-container">
+      <button [disabled]="!valid" mat-raised-button type="submit" color="accent">Export</button>
+    </div>
+  </form>
+</div>
