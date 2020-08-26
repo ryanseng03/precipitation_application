@@ -62,7 +62,7 @@
       
   
       <div class="form-component">
-        <app-range-slider *ngIf="filterTypes[options.filterFields.control.value] == 'range'"></app-range-slider>
+        <app-range-slider *ngIf="filterTypes[options.filterFields.control.value] == 'range'" [control]="options.filterValues.control" [min]="options.filterValues.values.min" [max]="options.filterValues.values.max"></app-range-slider>
       </div>
       
       <div class="submit-button-container">

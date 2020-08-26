@@ -11,7 +11,7 @@ interface FilterSelectorOptions {
   name: string,
   disabled: boolean,
   control: FormControl,
-  values: ValueSelector[] | NumericRange
+  values: any
 }
 
 interface NumericRange {
@@ -28,7 +28,7 @@ interface ValueSelector {
 interface Filter {
   type: "include" | "exclude"
   field: string,
-  values: any[]
+  values: any
 }
 
 @Component({
@@ -124,7 +124,7 @@ export class SiteFilterComponent implements OnInit {
     }
     //this.options.filterValues.disabled = this.options.filterFields.control.value == null;
 
-    let valueSelectors: {[field: string]: ValueSelector[]} = {
+    let valueSelectors: {[field: string]: any} = {
       "": []
     };
     let fields = SiteInfo.getFields();
@@ -135,21 +135,40 @@ export class SiteFilterComponent implements OnInit {
     let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
       this.siteInfo.sites = sites;
       for(let field of fields) {
-        let selectors = [];
-        let uniqueVals = new Set<any>();
-        for(let site of sites) {
-          let value = site[field];
-          uniqueVals.add(value);
+        let values: any;
+        if(this.filterTypes[field] == "selector") {
+          let values = [];
+          let uniqueVals = new Set<any>();
+          for(let site of sites) {
+            let value = site[field];
+            uniqueVals.add(value);
+          }
+          uniqueVals.forEach((value: any) => {
+            let selector: ValueSelector = {
+              display: value.toString(),
+              value: value,
+              include: true
+            };
+            values.push(selector);
+          });
         }
-        uniqueVals.forEach((value: any) => {
-          let selector: ValueSelector = {
-            display: value.toString(),
-            value: value,
-            include: true
+        else {
+          let range: NumericRange = {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY
           };
-          selectors.push(selector);
-        });
-        valueSelectors[field] = selectors;
+          for(let site of sites) {
+            let value = site[field];
+            if(typeof value != "number") {
+              value = Number.parseFloat(value);
+            }
+            if(value < range.min) range.min = value;
+            if(value > range.max) range.max = value;
+          }
+          values = range;
+        }
+        
+        valueSelectors[field] = values;
         
         this.options.filterValues.control.setValue("");
       }
@@ -172,7 +191,7 @@ export class SiteFilterComponent implements OnInit {
 
   //apply filter to sites and emit
   filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
-    let filtered = sites.filter(this.siteFilter(this.filters));
+    let filtered = sites.filter(this.siteFilter(filters));
     this.siteInfo.filteredSites = filtered;
     this.paramService.pushSiteFilter(filtered);
     return filtered;
@@ -182,15 +201,29 @@ export class SiteFilterComponent implements OnInit {
   siteFilter(filters: Filter[]) {
     return (site: SiteInfo): boolean => {
       for(let filter of filters) {
+
+        let type = this.filterTypes[filter.field];
+        let includes = (value: any) => {
+          if(type == "selector") { 
+            return filter.values.includes(value)
+          }
+          else {
+            if(typeof value != "number") {
+              value = Number.parseFloat(value);
+            }
+            return value >= filter.values.min && value < filter.values.max;
+          }
+        }
+
         let value = site[filter.field];
         if(filter.type == "include") {
-          if(!filter.values.includes(value)) {
+          if(!includes(value)) {
             return false;
           }
         }
         //exclude
         else {
-          if(filter.values.includes(value)) {
+          if(includes(value)) {
             return false;
           }
         }
@@ -212,6 +245,7 @@ export class SiteFilterComponent implements OnInit {
 
   filterIncomplete(): boolean {
     let values = this.options.filterValues.control.value;
+    console.log(values);
     return values == null || values.length == 0;
   }
 

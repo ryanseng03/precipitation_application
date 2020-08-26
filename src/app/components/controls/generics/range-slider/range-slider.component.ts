@@ -25,13 +25,14 @@ export class RangeSliderComponent implements OnInit {
   @ViewChild("popup") popup;
   @ViewChild("popupText") popupText;
 
-  @Output() lower: Subject<number>;
-  @Output() upper: Subject<number>;
+  // @Output() lower: Subject<number>;
+  // @Output() upper: Subject<number>;
 
-  @Input() min: number = 0;
-  @Input() max: number = 100;
+  @Input() min: number;
+  @Input() max: number;
   @Input() intervals: number = 0;
   // @Input() width: number = 500;
+  @Input() control: FormControl;
 
   trackWidth: number;
   intervalsWidth: number;
@@ -54,8 +55,8 @@ export class RangeSliderComponent implements OnInit {
   }
 
   constructor(private util: UtilityService) {
-    this.lower = new Subject<number>();
-    this.upper = new Subject<number>();
+    // this.lower = new Subject<number>();
+    // this.upper = new Subject<number>();
   }
 
   sliderOptions: {
@@ -79,7 +80,11 @@ export class RangeSliderComponent implements OnInit {
         updateValue: (pxOffset: number) => {
           let value = this.getValueFromPXOff(pxOffset);
           this.sliderOptions.lower.formControl.setValue(value);
-          this.lower.next(this.getValueFromPXOff(pxOffset));
+          this.control.setValue({
+            min: this.getValueFromPXOff(pxOffset),
+            max: this.control.value.max
+          });
+          //this.lower.next(this.getValueFromPXOff(pxOffset));
         },
         formControl: new FormControl(this.min, {updateOn: "blur"})
       },
@@ -93,7 +98,11 @@ export class RangeSliderComponent implements OnInit {
         updateValue: (pxOffset: number) => {
           let value = this.getValueFromPXOff(pxOffset);
           this.sliderOptions.upper.formControl.setValue(value);
-          this.upper.next(value);
+          this.control.setValue({
+            min: this.control.value.min,
+            max: value
+          });
+          //this.upper.next(value);
         },
         formControl: new FormControl(this.max, {updateOn: "blur"})
       }
@@ -119,7 +128,7 @@ export class RangeSliderComponent implements OnInit {
     });
     let lastValidR = this.max;
     this.sliderOptions.lower.formControl.valueChanges.subscribe((value: any) => {
-      console.log(value);
+      //console.log(value);
     });
     
     this.setupSlider(this.sliderL.nativeElement, this.sliderOptions.lower);
@@ -188,7 +197,7 @@ export class RangeSliderComponent implements OnInit {
         
         
         slider.style.width = slider.clientWidth - this.expandPX + "px";
-        console.log(slider.style.width);
+        //console.log(slider.style.width);
         slider.style.height = slider.clientHeight - this.expandPX + "px";
         slider.style.top = slider.offsetTop + this.expandPX / 2 + "px";
         slider.style.transform = transDefault;
