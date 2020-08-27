@@ -10,7 +10,7 @@
   </mat-select>
 </mat-form-field> -->
 
-<div class="main-container dark-theme">
+<!-- <div class="main-container dark-theme">
   <div class="label-container">
     Rainfall Station Filters
   </div>
@@ -27,9 +27,9 @@
           </mat-select>
         </mat-form-field>
       </div>
-      
-  
-  
+
+
+
       <div class="form-component">
         <mat-form-field>
           <mat-label>
@@ -40,37 +40,37 @@
             <ng-container *ngFor="let selector of options.filterFields.values">
               <mat-option *ngIf="selector.include" [value]="selector.value">{{selector.display}}</mat-option>
             </ng-container>
-    
+
           </mat-select>
         </mat-form-field>
       </div>
-      
-  
-  
+
+
+
       <div class="form-component">
         <mat-select-autocomplete *ngIf="filterTypes[options.filterFields.control.value] == 'selector'"
           [placeholder]="'Select Options'"
           [options]="options.filterValues.values"
           [multiple]="true"
-  
+
           ngDefaultControl
           [formControl]="options.filterValues.control"
           [disabled]="options.filterValues.disabled">
-  
+
         </mat-select-autocomplete>
       </div>
-      
-  
+
+
       <div class="form-component">
         <app-range-slider *ngIf="filterTypes[options.filterFields.control.value] == 'range'" [control]="options.filterValues.control" [min]="options.filterValues.values.min" [max]="options.filterValues.values.max"></app-range-slider>
       </div>
-      
+
       <div class="submit-button-container">
         <button [disabled]="filterIncomplete()" mat-raised-button type="submit" color="accent">Create Filter</button>
       </div>
     </form>
   </div>
-  
+
 
   <div class="filter-manager-container">
     <button mat-button [matMenuTriggerFor]="filterMenu">Manage Filters ({{filters.length}})</button>
@@ -87,8 +87,8 @@
       </div>
     </mat-menu>
   </div>
-  
-</div>
+
+</div> -->
 
 
 
