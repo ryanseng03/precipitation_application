@@ -27,8 +27,8 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   @ViewChild("datePicker") datePicker;
 
-  private _min: Moment.Moment = null;
-  private _max: Moment.Moment = null;
+  _min: Moment.Moment = null;
+  _max: Moment.Moment = null;
 
   @Input() label: string;
   @Input()

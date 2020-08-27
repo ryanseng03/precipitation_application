@@ -44,7 +44,7 @@ export class SiteFilterComponent implements OnInit {
   }
 
 
-  filters: Filter[] = [];
+  // filters: Filter[] = [];
 
   filterForm: FormGroup;
 
@@ -208,51 +208,51 @@ export class SiteFilterComponent implements OnInit {
   }
 
   //apply filter to sites and emit
-  filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
-    let filtered = sites.filter(this.siteFilter(filters));
-    this.siteInfo.filteredSites = filtered;
-    this.paramService.pushSiteFilter(filtered);
-    return filtered;
-  }
+  // filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
+  //   let filtered = sites.filter(this.siteFilter(filters));
+  //   this.siteInfo.filteredSites = filtered;
+  //   this.paramService.pushSiteFilter(filtered);
+  //   return filtered;
+  // }
 
-  //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
-  siteFilter(filters: Filter[]) {
-    return (site: SiteInfo): boolean => {
-      for(let filter of filters) {
-        if(!filter.filter(site)) {
-          return false
-        }
+  // //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
+  // siteFilter(filters: Filter[]) {
+  //   return (site: SiteInfo): boolean => {
+  //     for(let filter of filters) {
+  //       if(!filter.filter(site)) {
+  //         return false
+  //       }
 
-        // let type = this.filterTypes[filter.field];
-        // let includes = (value: any) => {
-        //   if(type == "selector") {
-        //     return filter.values.includes(value)
-        //   }
-        //   else {
-        //     if(typeof value != "number") {
-        //       value = Number.parseFloat(value);
-        //     }
-        //     return value >= filter.values.min && value < filter.values.max;
-        //   }
-        // }
+  //       // let type = this.filterTypes[filter.field];
+  //       // let includes = (value: any) => {
+  //       //   if(type == "selector") {
+  //       //     return filter.values.includes(value)
+  //       //   }
+  //       //   else {
+  //       //     if(typeof value != "number") {
+  //       //       value = Number.parseFloat(value);
+  //       //     }
+  //       //     return value >= filter.values.min && value < filter.values.max;
+  //       //   }
+  //       // }
 
-        // let value = site[filter.field];
-        // if(filter.type == "include") {
-        //   if(!includes(value)) {
-        //     return false;
-        //   }
-        // }
-        // //exclude
-        // else {
-        //   if(includes(value)) {
-        //     return false;
-        //   }
-        // }
-      }
-      return true;
-    }
+  //       // let value = site[filter.field];
+  //       // if(filter.type == "include") {
+  //       //   if(!includes(value)) {
+  //       //     return false;
+  //       //   }
+  //       // }
+  //       // //exclude
+  //       // else {
+  //       //   if(includes(value)) {
+  //       //     return false;
+  //       //   }
+  //       // }
+  //     }
+  //     return true;
+  //   }
 
-  }
+  // }
 
 
   clearFilterFields() {
@@ -321,21 +321,21 @@ export class SiteFilterComponent implements OnInit {
     // this.clearFilterFields();
   }
 
-  deleteFilter(e: MouseEvent, i: number) {
-    e.stopPropagation();
-    e.preventDefault();
+  // deleteFilter(e: MouseEvent, i: number) {
+  //   e.stopPropagation();
+  //   e.preventDefault();
 
-    let filter = this.filters[i];
-    for(let selector of (<ValueSelector[]>this.options.filterFields.values)) {
-      if(selector.value == filter.field) {
-        selector.include = true;
-        break;
-      }
-    }
-    this.filters.splice(i, 1);
-    //need to redo filters over full set of sites
-    this.filterSites(this.siteInfo.sites, this.filters);
-  }
+  //   let filter = this.filters[i];
+  //   for(let selector of (<ValueSelector[]>this.options.filterFields.values)) {
+  //     if(selector.value == filter.field) {
+  //       selector.include = true;
+  //       break;
+  //     }
+  //   }
+  //   this.filters.splice(i, 1);
+  //   //need to redo filters over full set of sites
+  //   // this.filterSites(this.siteInfo.sites, this.filters);
+  // }
 
   menuClick(e: MouseEvent) {
     console.log("click!");

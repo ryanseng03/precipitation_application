@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { UtilityService } from "./utility.service";
 import {LatLng, latLng, bounds} from "leaflet";
 import { ColorScale, Color } from '../../models/colorScale';
-import { GeoJSON, Feature } from "geojson";
+//import { GeoJSON, Feature } from "geojson";
 import {RasterHeader, IndexedValues} from "../../models/RasterData";
 
 @Injectable({
@@ -22,7 +22,7 @@ export class DataRetreiverService {
   flattenGridCoords(header: RasterHeader, coords: DecoupledCoords): number {
     return header.nCols * coords.y + coords.x
   }
-  
+
 
   decoupleGridIndex(header: RasterHeader, index: number): DecoupledCoords {
     return {
@@ -35,8 +35,8 @@ export class DataRetreiverService {
     return new LatLng(pos.lat - header.yllCorner, pos.lng - header.xllCorner);
   }
 
-  
-  //need to ensure in grid range, 
+
+  //need to ensure in grid range,
   geoPosToGridCoords(header: RasterHeader, pos: LatLng): DecoupledCoords {
     let offset = this.offsetPosByLL(header, pos);
     let coords = null;
@@ -54,7 +54,7 @@ export class DataRetreiverService {
         };
       }
     }
-    
+
     return coords;
   }
 
@@ -68,7 +68,7 @@ export class DataRetreiverService {
     let coords = this.geoPosToGridCoords(header, pos);
     if(coords != null) {
       index = this.flattenGridCoords(header, coords);
-    }             
+    }
     return index;
   }
 
@@ -106,11 +106,11 @@ export class DataRetreiverService {
         let ul = new LatLng(yll + header.cellYSize, xll);
         bounds = [ll, lr, ur, ul];
       }
-      
+
     }
     return bounds;
   }
-  
+
   //if no value at cell or out of bounds returns null
   //geojson uses long, lat
   //geojson counterclockwise
@@ -136,12 +136,12 @@ export class DataRetreiverService {
     return geojson;
   }
 
-  getGeoJSONBBox(geojson: Feature) {
+  getGeoJSONBBox(geojson: any) {
     console.log(geojson.geometry);
     //get outer ring(s) and perform basic coordinate depth validation
     //if multiple polygons/features, get bounding box of all shapes and subshapes
     //evaluate if in outer bounding box, if is evaluate if in any inner bounding boxes, parse indices in inner bounding boxes that intersected
-    
+
   }
 
   getBBoxFromCoordinates(coords: number[][]) {
