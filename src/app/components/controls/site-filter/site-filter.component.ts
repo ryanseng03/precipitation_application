@@ -6,7 +6,6 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
 import {FilterPipe} from "../../../pipes/filter.pipe";
 
 
-
 interface FilterSelectorOptions {
   name: string,
   disabled: boolean,
@@ -25,11 +24,11 @@ interface ValueSelector {
   include: boolean
 }
 
-interface Filter {
-  type: "include" | "exclude"
-  field: string,
-  values: any
-}
+// interface Filter {
+//   type: "include" | "exclude"
+//   field: string,
+//   values: any
+// }
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,20 +46,12 @@ export class SiteFilterComponent implements OnInit {
 
   filters: Filter[] = [];
 
-  filterForm = new FormGroup({
-    filterType: new FormControl("include"),
-    filterFields: new FormControl(""),
-    filterValues: new FormControl("")
-  });
+  filterForm: FormGroup;
 
-  options: {
-    filterType: FilterSelectorOptions,
-    filterFields: FilterSelectorOptions,
-    filterValues: FilterSelectorOptions
-  }
+  options: any;
 
 
-  filterTypes = {
+  private filterTypes = {
     "skn": "selector",
     "name": "selector",
     "observer": "selector",
@@ -79,6 +70,7 @@ export class SiteFilterComponent implements OnInit {
   }
 
 
+
   constructor(private filter: SiteFilterService, private paramService: EventParamRegistrarService, private ngZone: NgZone) {
 
     this.siteInfo = {
@@ -90,7 +82,8 @@ export class SiteFilterComponent implements OnInit {
       filterType: {
         name: "Type",
         disabled: false,
-        control: <FormControl>this.filterForm.controls["filterType"],
+        control: null,
+        default: "include",
         values: [{
           display: "Include",
           value: "include",
@@ -99,12 +92,13 @@ export class SiteFilterComponent implements OnInit {
           display: "Exclude",
           value: "exclude",
           include: true
-        }]
+        }],
       },
       filterFields: {
         name: "Property",
         disabled: false,
-        control: <FormControl>this.filterForm.controls["filterFields"],
+        control: null,
+        default: "",
         values: SiteInfo.getFields().map((field: string) => {
           //names should be translated when mappings created
           let selector: ValueSelector = {
@@ -118,21 +112,45 @@ export class SiteFilterComponent implements OnInit {
       filterValues: {
         name: "Values",
         disabled: false,
-        control: <FormControl>this.filterForm.controls["filterValues"],
-        values: []
+        default: null,
+        control: null,
+        values: null
       }
     }
-    //this.options.filterValues.disabled = this.options.filterFields.control.value == null;
 
-    let valueSelectors: {[field: string]: any} = {
-      "": []
-    };
-    let fields = SiteInfo.getFields();
-    for(let field of fields) {
-      valueSelectors[field] = [];
+    for(let item in this.options) {
+      let controls: {[item: string]: FormControl};
+      let control = new FormControl(this.options[item].default);
+      controls[item] = control;
+      this.options[item].control = control;
     }
 
+    this.options.filterValues.values = new FilterValuesManager(this.options.filterValues.control, this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
+
+
+
+    //this.options.filterValues.disabled = this.options.filterFields.control.value == null;
+
+    // let valueSelectors: {[field: string]: any} = {
+    //   "": []
+    // };
+    // let fields = SiteInfo.getFields();
+    // for(let field of fields) {
+    //   valueSelectors[field] = [];
+    // }
+
     let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
+      this.options.filterValues.values.populate(sites);
+      this.siteInfo.sites = sites;
+      this.filterSites(sites, this.filters);
+    });
+
+
+
+
+
+
+    hook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
       this.siteInfo.sites = sites;
       for(let field of fields) {
         let values: any;
@@ -167,9 +185,9 @@ export class SiteFilterComponent implements OnInit {
           }
           values = range;
         }
-        
+
         valueSelectors[field] = values;
-        
+
         this.options.filterValues.control.setValue("");
       }
 
@@ -201,32 +219,35 @@ export class SiteFilterComponent implements OnInit {
   siteFilter(filters: Filter[]) {
     return (site: SiteInfo): boolean => {
       for(let filter of filters) {
-
-        let type = this.filterTypes[filter.field];
-        let includes = (value: any) => {
-          if(type == "selector") { 
-            return filter.values.includes(value)
-          }
-          else {
-            if(typeof value != "number") {
-              value = Number.parseFloat(value);
-            }
-            return value >= filter.values.min && value < filter.values.max;
-          }
+        if(!filter.filter(site)) {
+          return false
         }
 
-        let value = site[filter.field];
-        if(filter.type == "include") {
-          if(!includes(value)) {
-            return false;
-          }
-        }
-        //exclude
-        else {
-          if(includes(value)) {
-            return false;
-          }
-        }
+        // let type = this.filterTypes[filter.field];
+        // let includes = (value: any) => {
+        //   if(type == "selector") {
+        //     return filter.values.includes(value)
+        //   }
+        //   else {
+        //     if(typeof value != "number") {
+        //       value = Number.parseFloat(value);
+        //     }
+        //     return value >= filter.values.min && value < filter.values.max;
+        //   }
+        // }
+
+        // let value = site[filter.field];
+        // if(filter.type == "include") {
+        //   if(!includes(value)) {
+        //     return false;
+        //   }
+        // }
+        // //exclude
+        // else {
+        //   if(includes(value)) {
+        //     return false;
+        //   }
+        // }
       }
       return true;
     }
@@ -323,4 +344,160 @@ export class SiteFilterComponent implements OnInit {
   }
 }
 
+class FilterValuesManager {
+  private control: FormControl;
+  private filterTypes: {[field: string]: string}
+  private values: {[field: string]: FilterValues}
+  private filterValues: FilterValues;
 
+  constructor(valuesControl: FormControl, fieldControl: FormControl, fields: string[], filterTypes: {[field: string]: string}) {
+    this.control = valuesControl;
+    fieldControl.valueChanges.subscribe((field: string) => {
+      this.control.setValue(null);
+      this.filterValues = this.values[field];
+    });
+
+    for(let type in this.filterTypes) {
+
+    }
+  }
+
+  getControlType() {
+    return this.filterValues.type;
+  }
+
+  populate(sites: SiteInfo[]) {
+    for(let field of fields) {
+      let values: any;
+      if(this.filterTypes[field] == "selector") {
+        let values = [];
+        let uniqueVals = new Set<any>();
+        for(let site of sites) {
+          let value = site[field];
+          uniqueVals.add(value);
+        }
+        uniqueVals.forEach((value: any) => {
+          let selector: ValueSelector = {
+            display: value.toString(),
+            value: value,
+            include: true
+          };
+          values.push(selector);
+        });
+      }
+      else {
+        let range: NumericRange = {
+          min: Number.POSITIVE_INFINITY,
+          max: Number.NEGATIVE_INFINITY
+        };
+        for(let site of sites) {
+          let value = site[field];
+          if(typeof value != "number") {
+            value = Number.parseFloat(value);
+          }
+          if(value < range.min) range.min = value;
+          if(value > range.max) range.max = value;
+        }
+        values = range;
+      }
+
+      valueSelectors[field] = values;
+
+      this.options.filterValues.control.setValue("");
+    }
+  }
+
+}
+
+abstract class FilterValues {
+  constructor(sites: SiteInfo[], field: string, control: FormControl) {}
+  abstract type: string;
+  abstract control: FormControl;
+  abstract getValues(): any;
+  abstract getFilter(): Filter;
+}
+
+class RangeFilterValues extends FilterValues {
+  private range: NumericRange;
+  type = "range";
+
+  constructor(sites: SiteInfo[], field: string) {
+    super(sites, field);
+
+    this.range = {
+      min: Number.POSITIVE_INFINITY,
+      max: Number.NEGATIVE_INFINITY
+    };
+    for(let site of sites) {
+      let value = site[field];
+      if(typeof value != "number") {
+        value = Number.parseFloat(value);
+      }
+      if(value < this.range.min) this.range.min = value;
+      if(value > this.range.max) this.range.max = value;
+    }
+  }
+
+  getValues(): NumericRange {
+    return this.range;
+  }
+}
+
+class DiscreteFilterValues extends FilterValues {
+  private values: ValueSelector[];
+  type = "discrete";
+
+  constructor(sites: SiteInfo[], field: string) {
+    super(sites, field);
+    this.values = [];
+    let uniqueVals = new Set<any>();
+    for(let site of sites) {
+      let value = site[field];
+      uniqueVals.add(value);
+    }
+    uniqueVals.forEach((value: any) => {
+      let selector: ValueSelector = {
+        display: value.toString(),
+        value: value,
+        include: true
+      };
+      this.values.push(selector);
+    });
+  }
+
+  getValues(): ValueSelector[] {
+    return this.values;
+  }
+}
+
+
+//base class for filters
+abstract class Filter {
+  abstract type: "include" | "exclude";
+  constructor(type: "include" | "exclude", values: T, field: string) {}
+
+  abstract filter(site: SiteInfo): boolean;
+}
+
+//filters over a specific extent
+class RangeFilter extends Filter {
+  constructor(type: "include" | "exclude", values: T, field: string) {
+    super();
+  }
+
+  filter(site: SiteInfo): boolean {
+
+
+  }
+}
+
+class DiscreteFilter extends Filter<ValueSelector[]> {
+  constructor() {
+    super();
+  }
+
+  filter(site: SiteInfo): boolean {
+    return filter.values.includes(value)
+
+  }
+}
