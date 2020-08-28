@@ -10,7 +10,7 @@
   </mat-select>
 </mat-form-field> -->
 
-<!-- <div class="main-container dark-theme">
+<div class="main-container dark-theme">
   <div class="label-container">
     Rainfall Station Filters
   </div>
@@ -48,7 +48,7 @@
 
 
       <div class="form-component">
-        <mat-select-autocomplete *ngIf="filterTypes[options.filterFields.control.value] == 'selector'"
+        <mat-select-autocomplete *ngIf="options.filterValues.values.getControlType() == 'selector'"
           [placeholder]="'Select Options'"
           [options]="options.filterValues.values"
           [multiple]="true"
@@ -62,7 +62,7 @@
 
 
       <div class="form-component">
-        <app-range-slider *ngIf="filterTypes[options.filterFields.control.value] == 'range'" [control]="options.filterValues.control" [min]="options.filterValues.values.min" [max]="options.filterValues.values.max"></app-range-slider>
+        <app-range-slider *ngIf="options.filterValues.values.getControlType() == 'range'" [control]="options.filterValues.control" [min]="options.filterValues.values.getValues().min" [max]="options.filterValues.values.getValues().max"></app-range-slider>
       </div>
 
       <div class="submit-button-container">
@@ -88,7 +88,7 @@
     </mat-menu>
   </div>
 
-</div> -->
+</div>
 
 
 

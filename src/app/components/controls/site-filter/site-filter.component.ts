@@ -3,14 +3,23 @@ import {SiteFilterService} from "src/app/services/controlHelpers/site-filter.ser
 import { FormControl, FormGroup } from '@angular/forms';
 import { EventParamRegistrarService, ParameterHook } from 'src/app/services/inputManager/event-param-registrar.service';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
-import {FilterPipe} from "../../../pipes/filter.pipe";
 
 
-interface FilterSelectorOptions {
-  name: string,
-  disabled: boolean,
-  control: FormControl,
-  values: any
+abstract class FilterOptions {
+  name: string;
+  disabled: boolean;
+  control: FormControl;
+  default: any;
+  abstract values: any;
+}
+
+//interface can extend class and inherit member variables
+interface FilterSelector extends FilterOptions {
+  values: any;
+}
+
+interface FilterValues extends FilterOptions {
+  values: FilterValuesManager;
 }
 
 interface NumericRange {
@@ -44,11 +53,15 @@ export class SiteFilterComponent implements OnInit {
   }
 
 
-  // filters: Filter[] = [];
+  filters: Filter[] = [];
 
   filterForm: FormGroup;
 
-  options: any;
+  options: {
+    filterType: FilterSelector,
+    filterFields: FilterSelector,
+    filterValues: FilterValues
+  };
 
 
   private filterTypes = {
@@ -71,194 +84,123 @@ export class SiteFilterComponent implements OnInit {
 
 
 
-  constructor(private filter: SiteFilterService, private paramService: EventParamRegistrarService, private ngZone: NgZone) {
+  constructor(private filter: SiteFilterService, private paramService: EventParamRegistrarService) {
 
-    // this.siteInfo = {
-    //  filteredSites: null,
-    //  sites: null
-    // };
+    this.siteInfo = {
+     filteredSites: null,
+     sites: null
+    };
 
-    // this.options = {
-    //   filterType: {
-    //     name: "Type",
-    //     disabled: false,
-    //     control: null,
-    //     default: "include",
-    //     values: [{
-    //       display: "Include",
-    //       value: "include",
-    //       include: true
-    //     }, {
-    //       display: "Exclude",
-    //       value: "exclude",
-    //       include: true
-    //     }],
-    //   },
-    //   filterFields: {
-    //     name: "Property",
-    //     disabled: false,
-    //     control: null,
-    //     default: "",
-    //     values: SiteInfo.getFields().map((field: string) => {
-    //       //names should be translated when mappings created
-    //       let selector: ValueSelector = {
-    //         display: field,
-    //         value: field,
-    //         include: true
-    //       }
-    //       return selector;
-    //     })
-    //   },
-    //   filterValues: {
-    //     name: "Values",
-    //     disabled: false,
-    //     default: null,
-    //     control: null,
-    //     values: null
-    //   }
-    // }
+    this.options = {
+      filterType: {
+        name: "Type",
+        disabled: false,
+        control: null,
+        default: "include",
+        values: [{
+          display: "Include",
+          value: "include",
+          include: true
+        }, {
+          display: "Exclude",
+          value: "exclude",
+          include: true
+        }],
+      },
+      filterFields: {
+        name: "Property",
+        disabled: false,
+        control: null,
+        default: "",
+        values: SiteInfo.getFields().map((field: string) => {
+          //names should be translated when mappings created
+          let selector: ValueSelector = {
+            display: field,
+            value: field,
+            include: true
+          }
+          return selector;
+        })
+      },
+      filterValues: {
+        name: "Values",
+        disabled: false,
+        default: null,
+        control: null,
+        values: null
+      }
+    }
 
-    // for(let item in this.options) {
-    //   let controls: {[item: string]: FormControl};
-    //   let control = new FormControl(this.options[item].default);
-    //   controls[item] = control;
-    //   this.options[item].control = control;
-    // }
+    let controls: {[item: string]: FormControl} = {};
+    for(let item in this.options) {
+      let control = new FormControl(this.options[item].default);
+      controls[item] = control;
+      this.options[item].control = control;
+    }
+    this.filterForm = new FormGroup(controls);
 
-    // this.options.filterValues.values = new FilterValuesManager(this.options.filterValues.control, this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
-
-
-
-    // //this.options.filterValues.disabled = this.options.filterFields.control.value == null;
-
-    // // let valueSelectors: {[field: string]: any} = {
-    // //   "": []
-    // // };
-    // // let fields = SiteInfo.getFields();
-    // // for(let field of fields) {
-    // //   valueSelectors[field] = [];
-    // // }
-
-    // let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
-    //   this.options.filterValues.values.populate(sites);
-    //   this.siteInfo.sites = sites;
-    //   this.filterSites(sites, this.filters);
-    // });
+    this.options.filterValues.values = new FilterValuesManager(this.options.filterValues.control, this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
 
 
-
-
-
-
-    // hook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
-    //   this.siteInfo.sites = sites;
-    //   for(let field of fields) {
-    //     let values: any;
-    //     if(this.filterTypes[field] == "selector") {
-    //       let values = [];
-    //       let uniqueVals = new Set<any>();
-    //       for(let site of sites) {
-    //         let value = site[field];
-    //         uniqueVals.add(value);
-    //       }
-    //       uniqueVals.forEach((value: any) => {
-    //         let selector: ValueSelector = {
-    //           display: value.toString(),
-    //           value: value,
-    //           include: true
-    //         };
-    //         values.push(selector);
-    //       });
-    //     }
-    //     else {
-    //       let range: NumericRange = {
-    //         min: Number.POSITIVE_INFINITY,
-    //         max: Number.NEGATIVE_INFINITY
-    //       };
-    //       for(let site of sites) {
-    //         let value = site[field];
-    //         if(typeof value != "number") {
-    //           value = Number.parseFloat(value);
-    //         }
-    //         if(value < range.min) range.min = value;
-    //         if(value > range.max) range.max = value;
-    //       }
-    //       values = range;
-    //     }
-
-    //     valueSelectors[field] = values;
-
-    //     this.options.filterValues.control.setValue("");
-    //   }
-
-    //   this.filterSites(sites, this.filters);
-
-    //   this.ngZone.run(() => {
-    //     this.options.filterValues.values = valueSelectors[this.options.filterFields.control.value];
-    //   });
-    // });
-
-
-
-
-    // this.options.filterFields.control.valueChanges.subscribe((field: string) => {
-    //   this.options.filterValues.values = valueSelectors[field];
-    //   this.options.filterValues.control.setValue([]);
-    // });
+    let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
+      this.options.filterValues.values.populate(sites);
+      this.siteInfo.sites = sites;
+      this.filterSites(sites, this.filters);
+    });
   }
 
   //apply filter to sites and emit
-  // filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
-  //   let filtered = sites.filter(this.siteFilter(filters));
-  //   this.siteInfo.filteredSites = filtered;
-  //   this.paramService.pushSiteFilter(filtered);
-  //   return filtered;
-  // }
-
-  // //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
-  // siteFilter(filters: Filter[]) {
-  //   return (site: SiteInfo): boolean => {
-  //     for(let filter of filters) {
-  //       if(!filter.filter(site)) {
-  //         return false
-  //       }
-
-  //       // let type = this.filterTypes[filter.field];
-  //       // let includes = (value: any) => {
-  //       //   if(type == "selector") {
-  //       //     return filter.values.includes(value)
-  //       //   }
-  //       //   else {
-  //       //     if(typeof value != "number") {
-  //       //       value = Number.parseFloat(value);
-  //       //     }
-  //       //     return value >= filter.values.min && value < filter.values.max;
-  //       //   }
-  //       // }
-
-  //       // let value = site[filter.field];
-  //       // if(filter.type == "include") {
-  //       //   if(!includes(value)) {
-  //       //     return false;
-  //       //   }
-  //       // }
-  //       // //exclude
-  //       // else {
-  //       //   if(includes(value)) {
-  //       //     return false;
-  //       //   }
-  //       // }
-  //     }
-  //     return true;
-  //   }
-
-  // }
-
-
-  clearFilterFields() {
-    this.options.filterValues.control.setValue("");
-    this.options.filterFields.control.setValue("");
+  filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
+    let filtered = sites.filter(this.siteFilter(filters));
+    this.siteInfo.filteredSites = filtered;
+    this.paramService.pushSiteFilter(filtered);
+    return filtered;
   }
+
+  //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
+  siteFilter(filters: Filter[]) {
+    return (site: SiteInfo): boolean => {
+      for(let filter of filters) {
+        if(!filter.filter(site)) {
+          return false
+        }
+
+        // let type = this.filterTypes[filter.field];
+        // let includes = (value: any) => {
+        //   if(type == "selector") {
+        //     return filter.values.includes(value)
+        //   }
+        //   else {
+        //     if(typeof value != "number") {
+        //       value = Number.parseFloat(value);
+        //     }
+        //     return value >= filter.values.min && value < filter.values.max;
+        //   }
+        // }
+
+        // let value = site[filter.field];
+        // if(filter.type == "include") {
+        //   if(!includes(value)) {
+        //     return false;
+        //   }
+        // }
+        // //exclude
+        // else {
+        //   if(includes(value)) {
+        //     return false;
+        //   }
+        // }
+      }
+      return true;
+    }
+
+  }
+
+
+  // clearFilterFields() {
+  //   this.options.filterValues.control.setValue("");
+  //   this.options.filterFields.control.setValue("");
+  // }
 
   ngOnInit() {
 
@@ -303,39 +245,33 @@ export class SiteFilterComponent implements OnInit {
         break;
       }
     }
+    let filterValues: FilterValuesManager = this.options.filterValues.values;
+    let type: string = filterValues.getControlType();
+    if(type == null) {
+      throw new Error("Invalid form state");
+    }
+    filterValues.getValues()
 
+    let filter: Filter = filterValues.createFilter(this.options.filterType.control.value);
 
-
-
-
-
-    // let filter: Filter = {
-    //   type: this.options.filterType.control.value,
-    //   field: this.options.filterFields.control.value,
-    //   values: this.options.filterValues.control.value
-    // }
-    // this.filters.push(filter);
-
-    // this.filterSites(this.siteInfo.filteredSites, [filter]);
-
-    // this.clearFilterFields();
+    this.options.filterFields.control.setValue("");
   }
 
-  // deleteFilter(e: MouseEvent, i: number) {
-  //   e.stopPropagation();
-  //   e.preventDefault();
+  deleteFilter(e: MouseEvent, i: number) {
+    e.stopPropagation();
+    e.preventDefault();
 
-  //   let filter = this.filters[i];
-  //   for(let selector of (<ValueSelector[]>this.options.filterFields.values)) {
-  //     if(selector.value == filter.field) {
-  //       selector.include = true;
-  //       break;
-  //     }
-  //   }
-  //   this.filters.splice(i, 1);
-  //   //need to redo filters over full set of sites
-  //   // this.filterSites(this.siteInfo.sites, this.filters);
-  // }
+    let filter = this.filters[i];
+    for(let selector of (<ValueSelector[]>this.options.filterFields.values)) {
+      if(selector.value == filter.field) {
+        selector.include = true;
+        break;
+      }
+    }
+    this.filters.splice(i, 1);
+    //need to redo filters over full set of sites
+    // this.filterSites(this.siteInfo.sites, this.filters);
+  }
 
   menuClick(e: MouseEvent) {
     console.log("click!");
@@ -344,160 +280,144 @@ export class SiteFilterComponent implements OnInit {
   }
 }
 
-// class FilterValuesManager {
-//   private control: FormControl;
-//   private filterTypes: {[field: string]: string}
-//   private values: {[field: string]: FilterValues}
-//   private filterValues: FilterValues;
+class FilterValuesManager {
+  private control: FormControl;
+  private filterTypes: {[field: string]: string}
+  private values: {[field: string]: any}
+  private populated: boolean;
+  private fields: string[];
+  private field: string;
 
-//   constructor(valuesControl: FormControl, fieldControl: FormControl, fields: string[], filterTypes: {[field: string]: string}) {
-//     this.control = valuesControl;
-//     fieldControl.valueChanges.subscribe((field: string) => {
-//       this.control.setValue(null);
-//       this.filterValues = this.values[field];
-//     });
+  constructor(valuesControl: FormControl, fieldControl: FormControl, fields: string[], filterTypes: {[field: string]: string}) {
+    this.populated = false;
+    this.control = valuesControl;
+    this.filterTypes = filterTypes;
+    this.fields = fields;
+    this.field = "";
+    fieldControl.valueChanges.subscribe((field: string) => {
+      this.control.setValue(null);
+      this.field = field;
+    });
+  }
 
-//     for(let type in this.filterTypes) {
+  getValues(): any {
+    return this.values[this.field];
+  }
 
-//     }
-//   }
+  getControlType(): string {
+    let type = null
+    if(this.populated) {
+      type = this.filterTypes[this.field];
+    }
+    return type;
+  }
 
-//   getControlType() {
-//     return this.filterValues.type;
-//   }
+  populate(sites: SiteInfo[]) {
+    this.populated = true;
+    for(let field of this.fields) {
+      let values: any;
+      if(this.filterTypes[field] == "selector") {
+        let values: ValueSelector[] = [];
+        let uniqueVals = new Set<any>();
+        for(let site of sites) {
+          let value = site[field];
+          uniqueVals.add(value);
+        }
+        uniqueVals.forEach((value: any) => {
+          let selector: ValueSelector = {
+            display: value.toString(),
+            value: value,
+            include: true
+          };
+          values.push(selector);
+        });
+      }
+      else {
+        let range: NumericRange = {
+          min: Number.POSITIVE_INFINITY,
+          max: Number.NEGATIVE_INFINITY
+        };
+        for(let site of sites) {
+          let value = site[field];
+          if(typeof value != "number") {
+            value = Number.parseFloat(value);
+          }
+          if(value < range.min) range.min = value;
+          if(value > range.max) range.max = value;
+        }
+        values = range;
+      }
+    }
+  }
 
-//   populate(sites: SiteInfo[]) {
-//     for(let field of fields) {
-//       let values: any;
-//       if(this.filterTypes[field] == "selector") {
-//         let values = [];
-//         let uniqueVals = new Set<any>();
-//         for(let site of sites) {
-//           let value = site[field];
-//           uniqueVals.add(value);
-//         }
-//         uniqueVals.forEach((value: any) => {
-//           let selector: ValueSelector = {
-//             display: value.toString(),
-//             value: value,
-//             include: true
-//           };
-//           values.push(selector);
-//         });
-//       }
-//       else {
-//         let range: NumericRange = {
-//           min: Number.POSITIVE_INFINITY,
-//           max: Number.NEGATIVE_INFINITY
-//         };
-//         for(let site of sites) {
-//           let value = site[field];
-//           if(typeof value != "number") {
-//             value = Number.parseFloat(value);
-//           }
-//           if(value < range.min) range.min = value;
-//           if(value > range.max) range.max = value;
-//         }
-//         values = range;
-//       }
+  createFilter(type: "include" | "exclude"): Filter {
+    let filter: Filter;
+    if(!this.populated) {
+      filter = null;
+    }
+    if(this.filterTypes[this.field] == "selector") {
+      filter = new DiscreteFilter(type, this.control.value, this.field);
+    }
+    else {
+      filter = new RangeFilter(type, this.control.value, this.field);
+    }
+    return filter;
+  }
 
-//       valueSelectors[field] = values;
-
-//       this.options.filterValues.control.setValue("");
-//     }
-//   }
-
-// }
-
-// abstract class FilterValues {
-//   constructor(sites: SiteInfo[], field: string, control: FormControl) {}
-//   abstract type: string;
-//   abstract control: FormControl;
-//   abstract getValues(): any;
-//   abstract getFilter(): Filter;
-// }
-
-// class RangeFilterValues extends FilterValues {
-//   private range: NumericRange;
-//   type = "range";
-
-//   constructor(sites: SiteInfo[], field: string) {
-//     super(sites, field);
-
-//     this.range = {
-//       min: Number.POSITIVE_INFINITY,
-//       max: Number.NEGATIVE_INFINITY
-//     };
-//     for(let site of sites) {
-//       let value = site[field];
-//       if(typeof value != "number") {
-//         value = Number.parseFloat(value);
-//       }
-//       if(value < this.range.min) this.range.min = value;
-//       if(value > this.range.max) this.range.max = value;
-//     }
-//   }
-
-//   getValues(): NumericRange {
-//     return this.range;
-//   }
-// }
-
-// class DiscreteFilterValues extends FilterValues {
-//   private values: ValueSelector[];
-//   type = "discrete";
-
-//   constructor(sites: SiteInfo[], field: string) {
-//     super(sites, field);
-//     this.values = [];
-//     let uniqueVals = new Set<any>();
-//     for(let site of sites) {
-//       let value = site[field];
-//       uniqueVals.add(value);
-//     }
-//     uniqueVals.forEach((value: any) => {
-//       let selector: ValueSelector = {
-//         display: value.toString(),
-//         value: value,
-//         include: true
-//       };
-//       this.values.push(selector);
-//     });
-//   }
-
-//   getValues(): ValueSelector[] {
-//     return this.values;
-//   }
-// }
+}
 
 
-// //base class for filters
-// abstract class Filter {
-//   abstract type: "include" | "exclude";
-//   constructor(type: "include" | "exclude", values: T, field: string) {}
-
-//   abstract filter(site: SiteInfo): boolean;
-// }
-
-// //filters over a specific extent
-// class RangeFilter extends Filter {
-//   constructor(type: "include" | "exclude", values: T, field: string) {
-//     super();
-//   }
-
-//   filter(site: SiteInfo): boolean {
 
 
-//   }
-// }
+//base class for filters
+abstract class Filter {
+  type: "include" | "exclude";
+  field: string;
+  values: any;
+  constructor(type: "include" | "exclude", values: any, field: string) {
+    this.type = type;
+    this.values = values;
+    this.field = field;
+  }
 
-// class DiscreteFilter extends Filter<ValueSelector[]> {
-//   constructor() {
-//     super();
-//   }
+  filter(site: SiteInfo): boolean {
+    let value = site[this.field];
+    if(this.type == "include") {
+      if(!this.includes(value)) {
+        return false;
+      }
+    }
+    //exclude
+    else {
+      if(this.includes(value)) {
+        return false;
+      }
+    }
+  }
 
-//   filter(site: SiteInfo): boolean {
-//     return filter.values.includes(value)
+  protected abstract includes(value: any)
+}
 
-//   }
-// }
+//filters over a specific extent
+class RangeFilter extends Filter {
+  constructor(type: "include" | "exclude", values: NumericRange, field: string) {
+    super(type, values, field);
+  }
+
+  includes(value: number | string): boolean {
+    if(typeof value != "number") {
+      value = Number.parseFloat(value);
+    }
+    return value >= this.values.min && value < this.values.max;
+  }
+}
+
+class DiscreteFilter extends Filter {
+  constructor(type: "include" | "exclude", values: string[], field: string) {
+    super(type, values, field);
+  }
+
+  includes(value: string): boolean {
+    return this.values.includes(value);
+  }
+}
