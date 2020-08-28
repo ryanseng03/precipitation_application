@@ -44,6 +44,7 @@
           <mat-nav-list class="sidenav">
             <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
             <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
+            <a mat-list-item (click)="viewNavClick('controls')">Map Controls</a>
             <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
           </mat-nav-list>
         </mat-sidenav>
@@ -59,6 +60,10 @@
 
           <div *ngSwitchCase="'export'">
             <app-export [map]="map"></app-export>
+          </div>
+
+          <div *ngSwitchCase="'controls'">
+            <app-map-controls [map]="map"></app-map-controls>
           </div>
         </div>
 

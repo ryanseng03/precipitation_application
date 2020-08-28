@@ -8,7 +8,7 @@ import { map, retry, catchError, mergeMap } from 'rxjs/operators';
 })
 export class DbConService {
 
-  static readonly TOKEN_FILE = "/assets/APIToken.txt";
+  static readonly TOKEN_FILE = "./assets/APIToken.txt";
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
@@ -33,14 +33,14 @@ export class DbConService {
       if(url.length > DbConService.MAX_URI) {
         throw new Error("Query too long.");
       }
-  
+
       let head = new HttpHeaders()
       .set("Authorization", "Bearer " + this.oAuthAccessToken)
       .set("Content-Type", "application/x-www-form-urlencoded");
       let options = {
         headers: head
       };
-  
+
       let results = this.http.get<ResponseResults>(url, options)
       .pipe(
         retry(3),
@@ -50,9 +50,9 @@ export class DbConService {
       ).toPromise().then((response: ResponseResults) => {
         return resultHandler(response.result);
       });
-  
+
       return results;
-  
+
     });
   }
 }

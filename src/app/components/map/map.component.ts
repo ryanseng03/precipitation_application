@@ -93,9 +93,9 @@ export class MapComponent implements OnInit {
     // };
 
     L.Icon.Default.mergeOptions({
-      iconRetinaUrl: "assets/marker-icon-2x.png",
-      iconUrl: "assets/marker-icon.png",
-      shadowUrl: "assets/marker-shadow.png"
+      iconRetinaUrl: "./assets/marker-icon-2x.png",
+      iconUrl: "./assets/marker-icon.png",
+      shadowUrl: "./assets/marker-shadow.png"
     });
 
     //don't want popup to be force closed when another one appears
@@ -128,6 +128,38 @@ export class MapComponent implements OnInit {
     }
   }
 
+
+  setOpacity(opacity: number) {
+    let layer: L.GridLayer = this.dataLayers[this.active.band];
+    if(layer) {
+      layer.setOpacity(opacity);
+    }
+  }
+
+  layerReady(): boolean {
+    return this.dataLayers[this.active.band] != undefined;
+  }
+
+  rasterOptions: RasterOptions
+
+  setColorScheme(scheme: string) {
+    let layer: any = this.dataLayers[this.active.band];
+    if(layer) {
+      let colorScheme: ColorScale;
+      switch(scheme) {
+        case "mono": {
+          colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
+          break;
+        }
+        case "rainbow": {
+          colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
+          break;
+        }
+      }
+      layer.setColorScale(colorScheme);
+    }
+
+  }
 
   onMapReady(map: L.Map) {
 
@@ -234,7 +266,7 @@ export class MapComponent implements OnInit {
       let bands = raster.getBands();
       let header = raster.getHeader();
       for(let band in bands) {
-        let rasterOptions: RasterOptions = {
+        this.rasterOptions = {
           cacheEmpty: true,
           colorScale: colorScale,
           data: {
@@ -242,7 +274,7 @@ export class MapComponent implements OnInit {
             values: bands[band]
           }
         };
-        let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
+        let rasterLayer = R.gridLayer.RasterLayer(this.rasterOptions);
         //layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
         this.dataLayers[band] = rasterLayer;
       }
@@ -344,7 +376,7 @@ export class MapComponent implements OnInit {
     this.map.on('overlayadd', (e: L.LayersControlEvent) => {
       //set layer to type any
       //let layer: any = e.layer;
-      this.active.band = e.name;
+      this.active.band = e.name.toLowerCase();
     });
   }
 

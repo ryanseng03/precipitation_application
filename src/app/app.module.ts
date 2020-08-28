@@ -56,6 +56,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 
 import { NavbarComponent } from './components/navbar/navbar.component';
 import {MatCheckboxModule} from '@angular/material/checkbox';
+import { MapControlsComponent } from './components/map-controls/map-controls.component';
 
 @NgModule({
   declarations: [
@@ -84,7 +85,8 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
     ExportComponent,
     DataViewsComponent,
     FilterPipe,
-    NavbarComponent
+    NavbarComponent,
+    MapControlsComponent
   ],
   imports: [
     BrowserModule,
