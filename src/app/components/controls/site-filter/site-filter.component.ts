@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Pipe, Injectable, PipeTransform, ChangeDetectionStrategy, NgZone } from '@angular/core';
+import { Component, OnInit, ViewChild, Pipe, Injectable, PipeTransform, ChangeDetectionStrategy, NgZone, ChangeDetectorRef } from '@angular/core';
 import {SiteFilterService} from "src/app/services/controlHelpers/site-filter.service";
 import { FormControl, FormGroup } from '@angular/forms';
 import { EventParamRegistrarService, ParameterHook } from 'src/app/services/inputManager/event-param-registrar.service';
@@ -8,14 +8,14 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
 abstract class FilterOptions {
   name: string;
   disabled: boolean;
-  control: FormControl;
-  default: any;
   abstract values: any;
 }
 
 //interface can extend class and inherit member variables
 interface FilterSelector extends FilterOptions {
-  values: any;
+  control: FormControl;
+  default: string;
+  values: ValueSelector[];
 }
 
 interface FilterValues extends FilterOptions {
@@ -84,7 +84,7 @@ export class SiteFilterComponent implements OnInit {
 
 
 
-  constructor(private filter: SiteFilterService, private paramService: EventParamRegistrarService) {
+  constructor(private paramService: EventParamRegistrarService, private cdRef: ChangeDetectorRef) {
 
     this.siteInfo = {
      filteredSites: null,
@@ -125,25 +125,25 @@ export class SiteFilterComponent implements OnInit {
       filterValues: {
         name: "Values",
         disabled: false,
-        default: null,
-        control: null,
         values: null
       }
     }
 
     let controls: {[item: string]: FormControl} = {};
-    for(let item in this.options) {
+    for(let item of ["filterType", "filterFields"]) {
       let control = new FormControl(this.options[item].default);
       controls[item] = control;
       this.options[item].control = control;
     }
     this.filterForm = new FormGroup(controls);
 
-    this.options.filterValues.values = new FilterValuesManager(this.options.filterValues.control, this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
+    this.options.filterValues.values = new FilterValuesManager(this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
 
 
     let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
       this.options.filterValues.values.populate(sites);
+      cdRef.detectChanges();
+
       this.siteInfo.sites = sites;
       this.filterSites(sites, this.filters);
     });
@@ -162,7 +162,7 @@ export class SiteFilterComponent implements OnInit {
     return (site: SiteInfo): boolean => {
       for(let filter of filters) {
         if(!filter.filter(site)) {
-          return false
+          return false;
         }
 
         // let type = this.filterTypes[filter.field];
@@ -207,54 +207,29 @@ export class SiteFilterComponent implements OnInit {
   }
 
   filterIncomplete(): boolean {
-    let values = this.options.filterValues.control.value;
-    console.log(values);
+    let values = this.options.filterValues.values.getOutputValues();
+    //console.log(values);
     return values == null || values.length == 0;
   }
 
 
 
-  // options = [
-  //   {
-  //     display: 'One',
-  //     value: '1'
-  //   }, {
-  //     display: 'Two',
-  //     value: '2'
-  //   }, {
-  //     display: 'Three',
-  //     value: '3'
-  //   }, {
-  //     display: 'Four',
-  //     value: '4'
-  //   }, {
-  //     display: 'Five',
-  //     value: '5'
-  //   }, {
-  //     display: 'Six',
-  //     value: '6'
-  //   }
-  // ];
-
-
   onSubmit(e) {
+    let field = this.options.filterFields.control.value;
+    let type = this.options.filterType.control.value;
     //remove field from list, should only have one for each
-    for(let selector of (<ValueSelector[]>this.options.filterFields.values)) {
-      if(selector.value == this.options.filterFields.control.value) {
+    for(let selector of (this.options.filterFields.values)) {
+      if(selector.value == field) {
         selector.include = false;
         break;
       }
     }
-    let filterValues: FilterValuesManager = this.options.filterValues.values;
-    let type: string = filterValues.getControlType();
-    if(type == null) {
-      throw new Error("Invalid form state");
-    }
-    filterValues.getValues()
-
-    let filter: Filter = filterValues.createFilter(this.options.filterType.control.value);
-
+    let filter: Filter = this.options.filterValues.values.createFilter(type);
+    console.log(filter);
+    this.filters.push(filter);
+    //reset field value
     this.options.filterFields.control.setValue("");
+    this.filterSites(this.siteInfo.filteredSites, [filter]);
   }
 
   deleteFilter(e: MouseEvent, i: number) {
@@ -262,7 +237,7 @@ export class SiteFilterComponent implements OnInit {
     e.preventDefault();
 
     let filter = this.filters[i];
-    for(let selector of (<ValueSelector[]>this.options.filterFields.values)) {
+    for(let selector of (this.options.filterFields.values)) {
       if(selector.value == filter.field) {
         selector.include = true;
         break;
@@ -270,7 +245,7 @@ export class SiteFilterComponent implements OnInit {
     }
     this.filters.splice(i, 1);
     //need to redo filters over full set of sites
-    // this.filterSites(this.siteInfo.sites, this.filters);
+    this.filterSites(this.siteInfo.sites, this.filters);
   }
 
   menuClick(e: MouseEvent) {
@@ -281,89 +256,197 @@ export class SiteFilterComponent implements OnInit {
 }
 
 class FilterValuesManager {
-  private control: FormControl;
-  private filterTypes: {[field: string]: string}
-  private values: {[field: string]: any}
-  private populated: boolean;
-  private fields: string[];
+  // private filterTypes: {[field: string]: string};
+  private values: {[field: string]: FilterValueControl<any, any>};
+  // private populated: boolean;
+  // private fields: string[];
   private field: string;
 
-  constructor(valuesControl: FormControl, fieldControl: FormControl, fields: string[], filterTypes: {[field: string]: string}) {
-    this.populated = false;
-    this.control = valuesControl;
-    this.filterTypes = filterTypes;
-    this.fields = fields;
+  constructor(fieldControl: FormControl, fields: string[], filterTypes: {[field: string]: string}) {
+    this.values = {};
+    for(let field of fields) {
+      if(filterTypes[field] == "selector") {
+        this.values[field] = new DiscreteControl(field);
+      }
+      else {
+        this.values[field] = new RangeControl(field);
+      }
+
+    }
+
     this.field = "";
+
+    //update state when selected field changes
     fieldControl.valueChanges.subscribe((field: string) => {
-      this.control.setValue(null);
       this.field = field;
     });
   }
 
-  getValues(): any {
-    return this.values[this.field];
+  getOutputValues(): any {
+    let output: any;
+    if(this.values[this.field]) {
+      output = this.values[this.field].getOutputValues();
+    }
+    else {
+      output = null;
+    }
+    return output;
+  }
+
+  getInputValues(): any {
+    let input: any;
+    if(this.values[this.field]) {
+      input = this.values[this.field].getInputValues();
+    }
+    else {
+      input = null;
+    }
+    return input;
+  }
+
+  getControl(): FormControl {
+    let control: FormControl;
+    if(this.values[this.field]) {
+      control = this.values[this.field].getControl();
+    }
+    else {
+      control = null;
+    }
+    return control;
   }
 
   getControlType(): string {
-    let type = null
-    if(this.populated) {
-      type = this.filterTypes[this.field];
+    let controlType: string;
+    //if input value is undefined then don't give control type to prevent issues with usage before init
+    if(this.values[this.field] && this.values[this.field].getInputValues() != undefined) {
+      controlType = this.values[this.field].getControlType();
     }
-    return type;
+    else {
+      controlType = null;
+    }
+    return controlType;
   }
 
   populate(sites: SiteInfo[]) {
-    this.populated = true;
-    for(let field of this.fields) {
-      let values: any;
-      if(this.filterTypes[field] == "selector") {
-        let values: ValueSelector[] = [];
-        let uniqueVals = new Set<any>();
-        for(let site of sites) {
-          let value = site[field];
-          uniqueVals.add(value);
-        }
-        uniqueVals.forEach((value: any) => {
-          let selector: ValueSelector = {
-            display: value.toString(),
-            value: value,
-            include: true
-          };
-          values.push(selector);
-        });
-      }
-      else {
-        let range: NumericRange = {
-          min: Number.POSITIVE_INFINITY,
-          max: Number.NEGATIVE_INFINITY
-        };
-        for(let site of sites) {
-          let value = site[field];
-          if(typeof value != "number") {
-            value = Number.parseFloat(value);
-          }
-          if(value < range.min) range.min = value;
-          if(value > range.max) range.max = value;
-        }
-        values = range;
-      }
+    //this.populated = true;
+    for(let field in this.values) {
+      this.values[field].updateInputFromSites(sites);
     }
   }
 
   createFilter(type: "include" | "exclude"): Filter {
-    let filter: Filter;
-    if(!this.populated) {
-      filter = null;
-    }
-    if(this.filterTypes[this.field] == "selector") {
-      filter = new DiscreteFilter(type, this.control.value, this.field);
-    }
-    else {
-      filter = new RangeFilter(type, this.control.value, this.field);
-    }
-    return filter;
+    return this.values[this.field].createFilter(type);
   }
 
+
+
+}
+
+//t input value type (used to populate control), v output value type (control value type)
+abstract class FilterValueControl<T, V> {
+  protected control: FormControl;
+  //these are input values (discrete from control/output values)
+  protected values: T;
+  protected field: string;
+  constructor(field: string, values?: T) {
+    this.values = values;
+    this.field = field;
+    this.control = new FormControl(this.getDefault());
+  }
+  protected abstract getDefault(): T;
+
+  getControl(): FormControl {
+    return this.control;
+  }
+
+  public getInputValues(): T {
+    return this.values;
+  }
+
+  public getOutputValues(): V {
+    return this.control.value;
+  }
+
+  //sets input values
+  protected updateInput(values: T) {
+    this.values = values;
+    //should reset form control when values updated
+    this.control.setValue(this.getDefault());
+  }
+
+  public abstract updateInputFromSites(sites: SiteInfo[]): void;
+
+  public abstract createFilter(type: "include" | "exclude"): Filter;
+
+  public abstract getControlType(): string;
+}
+
+//input value is the full range, output is the subrange
+class RangeControl extends FilterValueControl<NumericRange, NumericRange> {
+
+  protected getDefault(): NumericRange {
+    return this.values;
+  }
+
+  public updateInputFromSites(sites: SiteInfo[]): void {
+    let range: NumericRange = {
+      min: Number.POSITIVE_INFINITY,
+      max: Number.NEGATIVE_INFINITY
+    };
+    for(let site of sites) {
+      let value = site[this.field];
+      if(typeof value != "number") {
+        value = Number.parseFloat(value);
+      }
+      if(value < range.min) range.min = value;
+      if(value > range.max) range.max = value;
+    }
+
+    this.updateInput(range);
+  }
+
+  public createFilter(type: "include" | "exclude"): RangeFilter {
+    return new RangeFilter(type, this.getOutputValues(), this.field);
+  }
+
+  public getControlType(): string {
+    return "range";
+  }
+}
+
+//input value is the set of selectors used to generate list, output is the set of selected values
+class DiscreteControl extends FilterValueControl<ValueSelector[], string[]> {
+
+  protected getDefault(): ValueSelector[] {
+    return [];
+  }
+
+  public updateInputFromSites(sites: SiteInfo[]) {
+    let selectors: ValueSelector[] = [];
+    let uniqueVals = new Set<any>();
+    for(let site of sites) {
+      let value = site[this.field];
+      uniqueVals.add(value);
+    }
+    uniqueVals.forEach((value: any) => {
+      let selector: ValueSelector = {
+        display: value.toString(),
+        value: value,
+        include: true
+      };
+      selectors.push(selector);
+    });
+
+    this.updateInput(selectors);
+  }
+
+  public createFilter(type: "include" | "exclude"): DiscreteFilter {
+    return new DiscreteFilter(type, this.getOutputValues(), this.field);
+  }
+
+  public getControlType(): string {
+    return "selector";
+  }
 }
 
 
@@ -393,10 +476,15 @@ abstract class Filter {
         return false;
       }
     }
+    return true;
   }
 
-  protected abstract includes(value: any)
+  protected abstract includes(value: any): boolean;
+
+  abstract getValuesText(): string;
+
 }
+
 
 //filters over a specific extent
 class RangeFilter extends Filter {
@@ -410,6 +498,10 @@ class RangeFilter extends Filter {
     }
     return value >= this.values.min && value < this.values.max;
   }
+
+  getValuesText(): string {
+    return `${this.values.min} - ${this.values.max}`;
+  }
 }
 
 class DiscreteFilter extends Filter {
@@ -419,5 +511,9 @@ class DiscreteFilter extends Filter {
 
   includes(value: string): boolean {
     return this.values.includes(value);
+  }
+
+  getValuesText(): string {
+    return this.values.join(", ");
   }
 }

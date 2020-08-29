@@ -50,11 +50,11 @@
       <div class="form-component">
         <mat-select-autocomplete *ngIf="options.filterValues.values.getControlType() == 'selector'"
           [placeholder]="'Select Options'"
-          [options]="options.filterValues.values"
+          [options]="options.filterValues.values.getInputValues()"
           [multiple]="true"
 
           ngDefaultControl
-          [formControl]="options.filterValues.control"
+          [formControl]="options.filterValues.values.getControl()"
           [disabled]="options.filterValues.disabled">
 
         </mat-select-autocomplete>
@@ -62,7 +62,7 @@
 
 
       <div class="form-component">
-        <app-range-slider *ngIf="options.filterValues.values.getControlType() == 'range'" [control]="options.filterValues.control" [min]="options.filterValues.values.getValues().min" [max]="options.filterValues.values.getValues().max"></app-range-slider>
+        <app-range-slider *ngIf="options.filterValues.values.getControlType() == 'range'" [control]="options.filterValues.values.getControl()" [min]="options.filterValues.values.getInputValues().min" [max]="options.filterValues.values.getInputValues().max"></app-range-slider>
       </div>
 
       <div class="submit-button-container">
@@ -77,7 +77,7 @@
     <mat-menu #filterMenu="matMenu">
       <div (click)="menuClick($event)" class="filter-container" *ngFor="let filter of filters; index as i;">
         <p class="filter-text-container">
-          {{filter.type}} {{filter.field}}: {{filter.values.join(", ")}}
+          {{filter.type}} {{filter.field}}: {{filter.getValuesText()}}
         </p>
         <button (click)="deleteFilter($event, i)" mat-icon-button class="filter-delete-button">
           <mat-icon>
