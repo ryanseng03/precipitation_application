@@ -51,6 +51,9 @@ export class DataSetFormComponent implements OnInit {
   max: Moment.Moment;
   timestep: Timestep;
 
+  defaultLow: Moment.Moment = Moment("2019-12-01T00:00:00.000-10:00");
+  defaultHigh: Moment.Moment = Moment("2019-12-01T00:00:00.000-10:00");
+
   constructor(private paramRegistrar: EventParamRegistrarService) {
     this.min = this.dataRange.min;
     this.max = this.dataRange.max

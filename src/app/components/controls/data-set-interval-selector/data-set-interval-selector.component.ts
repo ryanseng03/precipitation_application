@@ -26,8 +26,8 @@ export class DataSetIntervalSelectorComponent implements OnInit {
   //dataSets: DataSetInfoBuilder[];
   readonly initDataSet: DataSetComponents = {
     timeGranularity: "monthly",
-    setType: "rainfall_1920_present",
-    fill: "partial"
+    setType: "rainfall_1990_present",
+    fill: "partial_filled"
   };
   formValues: ValidValues;
   setCoordinator: DataSetCoordinator;
@@ -52,49 +52,56 @@ export class DataSetIntervalSelectorComponent implements OnInit {
     };
 
     let definitions: DataSetComponents[] = [];
+    //DO NOT DELETE!!! FULL SET OF DATA SET DEFINITIONS
+    // for(let fillType of ["filled", "partial_filled", "not_filled"]) {
+    //   definitions.push({
+    //     timeGranularity: "daily",
+    //     setType: "rainfall_1990_present",
+    //     fill: fillType
+    //   });
+    // }
+    // for(let fillType of ["filled", "partial_filled"]) {
+    //   definitions.push({
+    //     timeGranularity: "monthly",
+    //     setType: "rainfall_1920_present",
+    //     fill: fillType
+    //   });
+    // }
 
-    for(let fillType of ["filled", "partial_filled", "not_filled"]) {
-      definitions.push({
-        timeGranularity: "daily",
-        setType: "rainfall_1990_present",
-        fill: fillType
-      });
-    }
-    for(let fillType of ["filled", "partial_filled"]) {
-      definitions.push({
-        timeGranularity: "monthly",
-        setType: "rainfall_1920_present",
-        fill: fillType
-      });
-    }
+    // definitions.push({
+    //   timeGranularity: "monthly",
+    //   setType: "rainfall_1990_present",
+    //   fill: "not_filled"
+    // });
 
+    // for(let fillType of ["filled", "not_filled"]) {
+    //   definitions.push({
+    //     timeGranularity: "monthly",
+    //     setType: "average_temperature_1899_present",
+    //     fill: fillType
+    //   });
+    // }
+    // for(let fillType of ["filled", "not_filled"]) {
+    //   definitions.push({
+    //     timeGranularity: "monthly",
+    //     setType: "maximum_temperature_1899_present",
+    //     fill: fillType
+    //   });
+    // }
+    // for(let fillType of ["filled", "not_filled"]) {
+    //   definitions.push({
+    //     timeGranularity: "monthly",
+    //     setType: "minimum_temperature_1899_present",
+    //     fill: fillType
+    //   });
+    // }
+
+    //for now just using monthly partial filled rainfall 1990-p
     definitions.push({
       timeGranularity: "monthly",
       setType: "rainfall_1990_present",
-      fill: "not_filled"
+      fill: "partial_filled"
     });
-
-    for(let fillType of ["filled", "not_filled"]) {
-      definitions.push({
-        timeGranularity: "monthly",
-        setType: "average_temperature_1899_present",
-        fill: fillType
-      });
-    }
-    for(let fillType of ["filled", "not_filled"]) {
-      definitions.push({
-        timeGranularity: "monthly",
-        setType: "maximum_temperature_1899_present",
-        fill: fillType
-      });
-    }
-    for(let fillType of ["filled", "not_filled"]) {
-      definitions.push({
-        timeGranularity: "monthly",
-        setType: "minimum_temperature_1899_present",
-        fill: fillType
-      });
-    }
 
 
 
@@ -108,6 +115,7 @@ export class DataSetIntervalSelectorComponent implements OnInit {
 
     //set state to setcoordinator state in case invalid or undefined init state
     this.state = this.setCoordinator.state;
+    console.log(this.state);
   }
 
   ngOnInit() {

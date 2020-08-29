@@ -20,7 +20,7 @@ export class SiteValueFetcherService {
 
   //keep date static for lifetime (from initialization), can make dynamic if you think it's necessary later
   readonly date: Moment.Moment = LIVE ? Moment(null, null, "utc") : Moment("1990-05-10T00:00:00.000Z");
-  
+
 
   constructor(private dbcon: DbConService, private processor: DataProcessorService) {
 
@@ -62,17 +62,17 @@ export class SiteValueFetcherService {
   private getAllValues() {
     return new Promise((resolve, reject) => {
       let query = `{'name':'${dsconfig.valueDocName}'}`;
-  
-  
+
+
       let resultHandler: (results: any) => any = (results: any) => {
         return results;
       }
-  
+
       this.dbcon.query<any[]>(query, resultHandler).then((vals) => {
         resolve(vals);
       });
     });
-     
+
   }
 
   //get values on range [min, max]
@@ -84,7 +84,7 @@ export class SiteValueFetcherService {
       let wrappedResultHandler = (results: any[]) => {
         return this.sortByDate(results);
       }
-  
+
       this.dbcon.query<DateRefValues>(query, wrappedResultHandler).then((vals) => {
         console.log(vals);
         resolve(vals);
@@ -107,10 +107,68 @@ export class SiteValueFetcherService {
         console.error("Unrecognized value document format received.");
       }
 
-      
+
     });
     return sorted;
   }
+
+
+
+  //MOVE THIS TO CONFIG FILE
+  current = {
+    name: "prew1",
+    version: "v1.0",
+  }
+
+  //for rainfall station data probably just use fake date transform for now and just use what's there (what is there???)
+
+
+  //should sort out typing, etc
+  private getRasterRange(min: Moment.Moment, max: Moment.Moment): Promise<any> {
+
+    return new Promise((resolve, reject) => {
+      let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':${this.current.version}},{'value.type':'raster'},{'value.date':{$gte:{'$date':'${min.toISOString()}'}}},{'value.date':{$lte:{'$date':'${max.toISOString()}'}}}]}`;
+
+
+      let resultHandler: (results: any) => any = (results: any) => {
+        return results;
+      }
+
+      this.dbcon.query<any[]>(query, resultHandler).then((vals) => {
+        resolve(vals);
+      });
+    });
+  }
+
+  private getRasterHeader(): Promise<any> {
+
+    return new Promise((resolve, reject) => {
+      let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':${this.current.version}},{'value.type':'header'}]}`;
+
+
+      let resultHandler: (results: any) => any = (results: any) => {
+        return results;
+      }
+
+      this.dbcon.query<any[]>(query, resultHandler).then((vals) => {
+        resolve(vals);
+      });
+    });
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   //resolves if recent value was found, otherwise rejects with lower bound date used
   private getRecentValuesMain(date: Moment.Moment, step: TimeStep): Promise<SiteValue[]> {
@@ -118,20 +176,20 @@ export class SiteValueFetcherService {
       let lastDataMin = Moment(date).subtract(step.size, step.scale);
 
       let lastDataRange = [lastDataMin.toISOString(), date.toISOString()];
-  
+
       //let dateRange = [2017/01/01];
       //!!working!!
       //one of these (top one with dots) adds 10 hours, must be a weird time zone thing, make sure to standardize (change parser to use second time format, can use a string replace to replace dots with dashes)
       //Z indicates time zone always zero
       //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
-  
+
       let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$gte:{'$date':'${lastDataRange[0]}'}}},{'value.date':{$lte:{'$date':'${lastDataRange[1]}'}}}]}`;
 
       //wrap data handler to lexically bind to this
       let wrappedResultHandler = (recent: any[]) => {
         return this.extractLastValues(recent)
       }
-  
+
       //need to add in some error handling
       this.dbcon.query<SiteValue[]>(query, wrappedResultHandler).then((vals) => {
         if(Object.keys(vals).length == 0) {
@@ -140,10 +198,10 @@ export class SiteValueFetcherService {
         else {
           resolve(vals);
         }
-        
+
       });
     });
-    
+
   }
 
   //need to create a better definition for the value docs, using any for now
@@ -176,7 +234,7 @@ export class SiteValueFetcherService {
     return valueDocs;
   }
 
-  
+
   private getRecentValuesRecursive(date: Moment.Moment, step: TimeStep, max: number, i: number = 0): Promise<SiteValue[]> {
     return new Promise((resolve, reject) => {
       if(i >= max) {
