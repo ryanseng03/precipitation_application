@@ -11,7 +11,7 @@ import {Dataset, SetType, FillType} from "../../models/dataset";
   styleUrls: ['./data-set-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DataSetFormComponent implements OnInit {
+export class DataSetFormComponent implements OnInit, AfterViewInit {
   //local tz for current date set (UTC for hardcoded dates)
 
 
@@ -69,6 +69,10 @@ export class DataSetFormComponent implements OnInit {
   }
 
   ngOnInit() {
+  }
+
+  ngAfterViewInit() {
+    this.updateDataSet();
   }
 
 
