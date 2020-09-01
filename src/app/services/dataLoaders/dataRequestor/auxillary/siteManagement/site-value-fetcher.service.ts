@@ -5,6 +5,7 @@ import "moment-timezone";
 import dsconfig from "./DataSetConfig.json";
 import { SiteValue } from '../../../../../models/SiteMetadata';
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
+import { BandData, RasterHeader, RasterData, IndexedValues } from 'src/app/models/RasterData';
 
 const LIVE: boolean = false;
 
@@ -25,6 +26,160 @@ export class SiteValueFetcherService {
   constructor(private dbcon: DbConService, private processor: DataProcessorService) {
 
   }
+
+  //MOVE THIS TO CONFIG FILE
+  current = {
+    name: "prew1",
+    version: "v1.0",
+  }
+
+  getRasterHeader(): Promise<RasterHeader> {
+
+    return new Promise((resolve, reject) => {
+      let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'header'}]}`;
+
+
+      let resultHandler: (results: any[]) => RasterHeader = (results: any[]) => {
+        let res = results[0];
+        let header: RasterHeader = {
+          nCols: res.value.nCols,
+          nRows: res.value.nRows,
+          xllCorner: res.value.xllCorner,
+          yllCorner: res.value.yllCorner,
+          cellXSize: res.value.cellXSize,
+          cellYSize: res.value.cellYSize,
+        }
+        return header;
+      }
+
+      this.dbcon.query<RasterHeader>(query, resultHandler).then((header: RasterHeader) => {
+        console.log(header);
+        resolve(header);
+      });
+    });
+  }
+
+  
+  
+
+  getRastersDate(date: Moment.Moment): Promise<BandData> {
+    return new Promise((resolve, reject) => {
+      //right now have month and year as fields, should change this to date?
+
+      let year = date.year();
+      let month = date.month();
+
+      let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'raster'},{'value.year':${year}},{'value.month':${month}}]}`;
+      
+    //   `{'$and':
+    //   [
+    //     {'name':'${this.current.name}'},
+    //     {'value.version':${this.current.version}},
+    //     {'value.type':'raster'},{'value.year':${year}},
+    //     {'value.month':${month}}
+    // ]
+    // }`
+
+      let resultHandler: (results: any) => any = (results: any) => {
+        return results;
+      }
+
+      this.dbcon.query<any[]>(query, resultHandler).then((vals: any[]) => {
+        if(vals.length < 1) {
+          resolve(null);
+        }
+        let res = vals[0];
+        let data2map: IndexedValues = new Map<number, number>();
+        for(let index in res.value.data) {
+          let nIndex = Number(index);
+          data2map.set(nIndex, res.value.data[index]);
+        }
+        let bands: BandData = {
+          rainfall: data2map
+        };
+        resolve(bands);
+      });
+    });
+  }
+
+  getSiteValsDate(date: Moment.Moment): Promise<SiteValue[]> {
+    
+
+    return new Promise((resolve, reject) => {
+      // let year = date.year();
+      // let month = date.month();
+
+      //let dateRange = [2017/01/01];
+      //!!working!!
+      //one of these (top one with dots) adds 10 hours, must be a weird time zone thing, make sure to standardize (change parser to use second time format, can use a string replace to replace dots with dashes)
+      //Z indicates time zone always zero
+      //ISO standard: YYYY-MM-DDTHH:MM:SS.SSSZ
+
+      //looks like only have data for december (-2018)
+      //remember moments mutable so don't use date manipulations, make a new one then set date
+      date = Moment(date);
+      if(date.year() > 2018) {
+        
+        //set new moment year to 2018
+        date.year(2018);
+      }
+      console.log(date.toISOString());
+      //use month as day in december to bypass issues
+      //+1 because 0 based index
+      let month = date.month() + 1;
+      console.log(date.toISOString());
+      //0 based indexing
+      date.month(11);
+      console.log(date.toISOString(), month);
+      date.date(month);
+      console.log(date.toISOString());
+
+      let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$eq:{'$date':'${date.toISOString()}'}}}]}`;
+      //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
+
+      //wrap data handler to lexically bind to this
+      let wrappedResultHandler = (recent: any[]) => {
+        let siteData = [];
+        let dates = new Set();
+        for(let item of recent) {
+          dates.add(item.value.date.$date);
+          let siteValue: SiteValue = this.processor.processValueDocs(item.value);
+          siteData.push(siteValue);
+        }
+        console.log(dates);
+        console.log(siteData);
+
+        return siteData;//this.extractLastValues(recent)
+      }
+
+      //need to add in some error handling
+      this.dbcon.query<SiteValue[]>(query, wrappedResultHandler).then((vals: SiteValue[]) => {
+        resolve(vals)
+      });
+    });
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+  /////////////////////////////
+  //////////////////////////
+  //////////////////////
+
+
+
+
+
+
+
 
 
   getInitValues() {
@@ -114,11 +269,6 @@ export class SiteValueFetcherService {
 
 
 
-  //MOVE THIS TO CONFIG FILE
-  current = {
-    name: "prew1",
-    version: "v1.0",
-  }
 
   //for rainfall station data probably just use fake date transform for now and just use what's there (what is there???)
 
@@ -140,21 +290,7 @@ export class SiteValueFetcherService {
     });
   }
 
-  private getRasterHeader(): Promise<any> {
-
-    return new Promise((resolve, reject) => {
-      let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':${this.current.version}},{'value.type':'header'}]}`;
-
-
-      let resultHandler: (results: any) => any = (results: any) => {
-        return results;
-      }
-
-      this.dbcon.query<any[]>(query, resultHandler).then((vals) => {
-        resolve(vals);
-      });
-    });
-  }
+  
 
 
 

@@ -131,7 +131,7 @@ export class EventParamRegistrarService {
       rasterSub.next(data.data.raster);
       sitesSub.next(data.data.sites);
       metricsSub.next(data.data.metrics);
-      dateSub.next(data.date);
+      dateSub.next(data.date.toISOString());
     });
 
     siteSelectObserver.subscribe((data: SiteInfo) => {

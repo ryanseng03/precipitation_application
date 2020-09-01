@@ -44,14 +44,14 @@ export class SiteDataTableComponent implements OnInit {
 
   createTestData() {
     this.testData = [];
-    let current = [];
-    for(let i = 0; i < 200; i++) {
-      if(i % 2 == 0) {
-        current = [];
-        this.testData.push(current);
-      }
-      current.push(i.toString());
-    }
+    // let current = [];
+    // for(let i = 0; i < 200; i++) {
+    //   if(i % 2 == 0) {
+    //     current = [];
+    //     this.testData.push(current);
+    //   }
+    //   current.push(i.toString());
+    // }
   }
 
   ngOnInit() {

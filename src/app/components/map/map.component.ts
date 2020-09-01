@@ -227,8 +227,9 @@ export class MapComponent implements OnInit {
         let siteDetails: string = "Name: " + site.name
         + "<br> Network: " + site.network
         + "<br> Lat: " + site.lat + ", Lng: " + site.lng
-        //cheating here for now, should get actual site value
-        + "<br> Value: " + site.value;
+        + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
+        + `, ${Math.round((site.value / 2.54) * 100) / 100}in`;
+        
         //console.log(site.location);
         let marker = L.marker(site.location);
         //console.log(marker);
@@ -428,7 +429,8 @@ export class MapComponent implements OnInit {
           //popup cell value
           popupData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
-          popupData.popup.setContent("Value: " + value);
+          let content = `${Math.round(value * 100) / 100}mm<br>${Math.round((value / 2.54) * 100) / 100}in<br>`;
+          popupData.popup.setContent(content);
           popupData.popup.openOn(this.map);
         }
       }, timeout);

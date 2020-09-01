@@ -3,6 +3,7 @@ import Moment from 'moment';
 import {Dataset, Timestep, FillType} from "../../../models/dataset";
 import {MatIconRegistry} from "@angular/material/icon";
 import {DomSanitizer} from "@angular/platform-browser";
+import {DataManagerService} from "../../../services/dataManager/data-manager.service";
 
 @Component({
   selector: 'app-date-focus',
@@ -138,7 +139,7 @@ export class DateFocusComponent implements OnInit {
     }
   };
 
-  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
+  constructor(private dataManager: DataManagerService, private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
     this.matIconRegistry.addSvgIcon("fl", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/fl_m.svg"));
     this.matIconRegistry.addSvgIcon("ffl", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/ffl_m.svg"));
     this.matIconRegistry.addSvgIcon("el", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/el_m.svg"));
@@ -151,8 +152,16 @@ export class DateFocusComponent implements OnInit {
     this.focusedDate = this.dataset.endDate;
   }
 
+
   setDate(date: Moment.Moment) {
     this.focusedDate = date;
+    date.set({hour:0,minute:0,second:0,millisecond:0});
+    date.utcOffset(0);
+    this.broadcast(date);
+  }
+
+  broadcast(date: Moment.Moment) {
+    this.dataManager.getData(date);
   }
 
   moveDate(number: Moment.DurationInputArg1, unit: Moment.unitOfTime.DurationConstructor) {

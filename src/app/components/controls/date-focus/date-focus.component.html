@@ -23,7 +23,8 @@
       [max]="dataset.endDate"
       [timestep]="dataset.timestep"
       [initDate]="dataset.endDate"
-      [(date)]="focusedDate"
+      [date]="focusedDate"
+      (dateChange)="setDate($event)"
       [readonly]="true">
     </app-date-selector>
   </div>

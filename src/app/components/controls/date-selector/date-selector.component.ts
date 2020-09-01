@@ -77,7 +77,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
     //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
     //use map pipe to send null if invalid date
-    this.dateChange = this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
+    this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
       if(this.dateControl.valid) {
         return date;
       }
@@ -85,6 +85,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
         return null;
       }
     }));
+    this.dateChange = this.dateControl.valueChanges;
   }
 
   ngOnChanges(changes: SimpleChanges) {

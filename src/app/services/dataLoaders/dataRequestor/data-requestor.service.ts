@@ -3,7 +3,7 @@ import {SiteValueFetcherService, DateRefValues} from "./auxillary/siteManagement
 import {MetadataStoreService, SKNRefMeta} from "./auxillary/siteManagement/metadata-store.service";
 import { SiteValue, SiteMetadata, SiteInfo } from '../../../models/SiteMetadata';
 import Moment from "moment";
-import { RasterData, IndexedValues } from '../../../models/RasterData';
+import { RasterData, IndexedValues, BandData, RasterHeader } from '../../../models/RasterData';
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
 //eventually also routes requests for remote raster data fetching
@@ -18,6 +18,18 @@ export class DataRequestorService {
 
   //need to be careful how you set up separation between site and raster data, need to keep date consistent
   //
+
+  getRasterHeader(): Promise<RasterHeader> {
+    return this.siteRetreiver.getRasterHeader();
+  }
+
+  getSiteValsDate(date: Moment.Moment): Promise<SiteValue[]> {
+    return this.siteRetreiver.getSiteValsDate(date);
+  }
+
+  getRastersDate(date: Moment.Moment): Promise<BandData> {
+    return this.siteRetreiver.getRastersDate(date);
+  }
 
   //just return values, wait to combine with metadata references until needed to avoid excess storage
   getInitSiteVals(): Promise<SiteValue[]> {

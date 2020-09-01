@@ -37,7 +37,7 @@ export class ColorGeneratorService {
   getDefaultMonochromaticRainfallColorScale() {
     let parts = 450;
     let max = Math.pow(400, 2);
-    let range: [number, number] = [0, 400];
+    let range: [number, number] = [0, 750];
     let colors = ["#f7fbff", "#6baed6", "#08519c", "#08306b"];
     //let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
 
