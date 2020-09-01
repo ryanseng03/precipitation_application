@@ -29,7 +29,7 @@
     <div #viewContainer class="view-container">
       <div #p2 class="dataset-info-container">
         <div #dsInfo>
-          <app-dataset-info class="dataset-info"></app-dataset-info>
+          <app-dataset-info [map]="map" class="dataset-info"></app-dataset-info>
           <div class="menu-button-container">
             <button (click)="viewNav.toggle()" mat-icon-button><mat-icon>menu</mat-icon></button>
           </div>

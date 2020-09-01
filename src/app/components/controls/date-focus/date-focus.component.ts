@@ -4,6 +4,7 @@ import {Dataset, Timestep, FillType} from "../../../models/dataset";
 import {MatIconRegistry} from "@angular/material/icon";
 import {DomSanitizer} from "@angular/platform-browser";
 import {DataManagerService} from "../../../services/dataManager/data-manager.service";
+import { MapComponent } from '../../map/map.component';
 
 @Component({
   selector: 'app-date-focus',
@@ -13,6 +14,7 @@ import {DataManagerService} from "../../../services/dataManager/data-manager.ser
 export class DateFocusComponent implements OnInit {
 
   @Input() dataset: Dataset;
+  @Input() map: MapComponent;
 
   focusedDate: Moment.Moment;
 
@@ -152,16 +154,24 @@ export class DateFocusComponent implements OnInit {
     this.focusedDate = this.dataset.endDate;
   }
 
-
+  //should move this to param thing so dont have to pass through map
   setDate(date: Moment.Moment) {
     this.focusedDate = date;
-    date.set({hour:0,minute:0,second:0,millisecond:0});
+    //time zone things
+    date.set({
+      hour: 0,
+      minute:0,
+      second:0,
+      millisecond:0
+    });
     date.utcOffset(0);
     this.broadcast(date);
   }
 
   broadcast(date: Moment.Moment) {
-    this.dataManager.getData(date);
+    //the loading mechanism here is sketch at best, fix this
+    //note can't do loading here because of throttle, should create more robust loading and retreival cancel mechanisms (should also cancel old requests if a new one is submitted before load complete, just cache but don't emit)
+    this.dataManager.getData(date, this.map);
   }
 
   moveDate(number: Moment.DurationInputArg1, unit: Moment.unitOfTime.DurationConstructor) {

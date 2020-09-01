@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import {Dataset, FillType, Timestep} from "../../../models/dataset";
 import Moment from "moment";
 import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
+import { MapComponent } from '../../map/map.component';
 
 @Component({
   selector: 'app-dataset-info',
@@ -9,6 +10,8 @@ import {EventParamRegistrarService} from "../../../services/inputManager/event-p
   styleUrls: ['./dataset-info.component.scss']
 })
 export class DatasetInfoComponent implements OnInit {
+
+  @Input() map: MapComponent;
 
   dataset: Dataset = {
     startDate: Moment("1920-01-01"),

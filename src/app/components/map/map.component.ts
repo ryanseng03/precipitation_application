@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnChanges, Input } from '@angular/core';
 import * as L from "leaflet";
+import "leaflet-spin";
 import * as chroma from "chroma-js";
 import {saveAs} from "file-saver";
 import * as geotiff from "geotiff";
@@ -161,6 +162,16 @@ export class MapComponent implements OnInit {
 
   }
 
+  //spin seems to already have an internal counter, neat
+  setLoad(load: boolean) {
+    if(load) {
+      (<any>this.map).spin(true, {color: "white", length: 20});
+    }
+    else {
+      (<any>this.map).spin(false);
+    }
+  }
+
   onMapReady(map: L.Map) {
 
     // setInterval(() => {
@@ -228,7 +239,7 @@ export class MapComponent implements OnInit {
         + "<br> Network: " + site.network
         + "<br> Lat: " + site.lat + ", Lng: " + site.lng
         + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
-        + `, ${Math.round((site.value / 2.54) * 100) / 100}in`;
+        + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
         
         //console.log(site.location);
         let marker = L.marker(site.location);
@@ -263,6 +274,7 @@ export class MapComponent implements OnInit {
     lc.addTo(map);
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
+
       this.active.data.raster = raster;
       let bands = raster.getBands();
       let header = raster.getHeader();
@@ -429,7 +441,7 @@ export class MapComponent implements OnInit {
           //popup cell value
           popupData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
-          let content = `${Math.round(value * 100) / 100}mm<br>${Math.round((value / 2.54) * 100) / 100}in<br>`;
+          let content = `${Math.round(value * 100) / 100}mm<br>${Math.round((value / 25.4) * 100) / 100}in<br>`;
           popupData.popup.setContent(content);
           popupData.popup.openOn(this.map);
         }

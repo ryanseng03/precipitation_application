@@ -5,6 +5,7 @@ import {SiteMetadata, SiteValue, SiteInfo} from "../../models/SiteMetadata";
 import {DataLoaderService} from "../dataLoaders/localDataLoader/data-loader.service";
 import {DataRequestorService} from "../dataLoaders/dataRequestor/data-requestor.service";
 import Moment from 'moment';
+import { MapComponent } from 'src/app/components/map/map.component';
 
 
 
@@ -40,7 +41,7 @@ export class DataManagerService {
     this.header = dataRequestor.getRasterHeader();
     // this.initPromise = this.initialize();
     //no delay for init data
-    this.getData(this.initDate, 0);
+    //this.getData(this.initDate, 0);
     // setTimeout(() => {
     //   console.log("second submitted");
     //   this.getData(Moment("2018-11-01T00:00:00.000Z"));
@@ -123,12 +124,13 @@ export class DataManagerService {
 
   throttle = null;
 
-  getData(date: Moment.Moment, delay: number = 5000): void {
+  getData(date: Moment.Moment, map: MapComponent, delay: number = 3000): void {
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this?)
     if(this.throttle) {
       clearTimeout(this.throttle);
     }
     this.throttle = setTimeout(() => {
+      map.setLoad(true);
       let dateRange = this.getDateRange(date);
       let initData: InternalDataPack = {
         bands: null,
@@ -137,6 +139,7 @@ export class DataManagerService {
       }
       this.getDataCheckSource(date).then((data: InternalDataPack) => {
         console.log(data);
+        map.setLoad(false);
         //emit the data to the application
         this.setFocusedData(date, data);
       });
