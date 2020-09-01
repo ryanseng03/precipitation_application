@@ -16,10 +16,10 @@ export class DataLoaderService {
 
   private getInitRasterDataFromFiles(): Promise<RasterData> {
     let promises = [
-      this.geotiffLoader.getDataFromGeotiff("./assets/test_data/test_a.tif", -3.3999999521443642e+38),
-      this.geotiffLoader.getDataFromGeotiff("./assets/test_data/test_b.tif", -3.3999999521443642e+38),
-      this.geotiffLoader.getDataFromGeotiff("./assets/test_data/test_c.tif", -3.3999999521443642e+38),
-      this.geotiffLoader.getDataFromGeotiff("./assets/test_data/test_d.tif", -3.3999999521443642e+38)
+      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_a.tif", -3.3999999521443642e+38),
+      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_b.tif", -3.3999999521443642e+38),
+      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_c.tif", -3.3999999521443642e+38),
+      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_d.tif", -3.3999999521443642e+38)
     ];
     return Promise.all(promises).then((geotiffData: RasterData[]) => {
       let dataMain = geotiffData[0];

@@ -93,11 +93,26 @@ export class MapComponent implements OnInit {
     //   }
     // };
 
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: "./assets/marker-icon-2x.png",
-      iconUrl: "./assets/marker-icon.png",
-      shadowUrl: "./assets/marker-shadow.png"
-    });
+    // L.Icon.Default.mergeOptions({
+    //   iconRetinaUrl: "/assets/marker-icon-2x.png",
+    //   iconUrl: "/assets/marker-icon.png",
+    //   shadowUrl: "/assets/marker-shadow.png"
+    // });
+    
+    // const iconRetinaUrl = '/assets/marker-icon-2x.png';
+    // const iconUrl = '/assets/marker-icon.png';
+    // const shadowUrl = '/assets/marker-shadow.png';
+    // const iconDefault = L.icon({
+    //   iconRetinaUrl,
+    //   iconUrl,
+    //   shadowUrl,
+    //   iconSize: [25, 41],
+    //   iconAnchor: [12, 41],
+    //   popupAnchor: [1, -34],
+    //   tooltipAnchor: [16, -28],
+    //   shadowSize: [41, 41]
+    // });
+    // L.Marker.prototype.options.icon = iconDefault;
 
     //don't want popup to be force closed when another one appears
     // L.Map.prototype.openPopup = function(popup) {
@@ -107,7 +122,15 @@ export class MapComponent implements OnInit {
     //     popup: this._popup
     //   });
     // }
+
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+      iconUrl: require('leaflet/dist/images/marker-icon.png'),
+      shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    });
   }
+
+
 
   invalidateSize() {
     this.map.invalidateSize();

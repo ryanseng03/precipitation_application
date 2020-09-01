@@ -142,12 +142,12 @@ export class DateFocusComponent implements OnInit {
   };
 
   constructor(private dataManager: DataManagerService, private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
-    this.matIconRegistry.addSvgIcon("fl", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/fl_m.svg"));
-    this.matIconRegistry.addSvgIcon("ffl", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/ffl_m.svg"));
-    this.matIconRegistry.addSvgIcon("el", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/el_m.svg"));
-    this.matIconRegistry.addSvgIcon("fr", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/fr_m.svg"));
-    this.matIconRegistry.addSvgIcon("ffr", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/ffr_m.svg"));
-    this.matIconRegistry.addSvgIcon("er", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/er_m.svg"));
+    this.matIconRegistry.addSvgIcon("fl", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/fl_m.svg"));
+    this.matIconRegistry.addSvgIcon("ffl", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/ffl_m.svg"));
+    this.matIconRegistry.addSvgIcon("el", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/el_m.svg"));
+    this.matIconRegistry.addSvgIcon("fr", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/fr_m.svg"));
+    this.matIconRegistry.addSvgIcon("ffr", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/ffr_m.svg"));
+    this.matIconRegistry.addSvgIcon("er", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/er_m.svg"));
   }
 
   ngOnInit() {

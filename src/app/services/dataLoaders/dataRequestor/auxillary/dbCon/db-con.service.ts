@@ -8,7 +8,7 @@ import { map, retry, catchError, mergeMap } from 'rxjs/operators';
 })
 export class DbConService {
 
-  static readonly TOKEN_FILE = "./assets/APIToken.txt";
+  static readonly TOKEN_FILE = "/assets/APIToken.txt";
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
