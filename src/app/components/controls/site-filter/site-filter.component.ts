@@ -159,6 +159,7 @@ export class SiteFilterComponent implements OnInit {
     //filter set of sites using siteFilter function
     let filtered = sites.filter(this.siteFilter(filters));
     this.siteInfo.filteredSites = filtered;
+    //push the filtered sites to the parameter service
     this.paramService.pushSiteFilter(filtered);
     return filtered;
   }
