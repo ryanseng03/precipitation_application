@@ -64,6 +64,7 @@ export class SiteFilterComponent implements OnInit {
   };
 
 
+  //mapping of the control types for each field
   private filterTypes = {
     "skn": "selector",
     "name": "selector",
@@ -91,6 +92,7 @@ export class SiteFilterComponent implements OnInit {
      sites: null
     };
 
+    //information tracking for the three controls (type, field, values)
     this.options = {
       filterType: {
         name: "Type",
@@ -137,11 +139,14 @@ export class SiteFilterComponent implements OnInit {
     }
     this.filterForm = new FormGroup(controls);
 
+    //create a filter value manager with the field control, complete set of fields, and field control type mapping
     this.options.filterValues.values = new FilterValuesManager(this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
 
-
+    //parameter hook for rainfall stations coming into application
     let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
+      //populate the values manager with the set of site info
       this.options.filterValues.values.populate(sites);
+      //trigger change detection to update controls
       cdRef.detectChanges();
 
       this.siteInfo.sites = sites;
@@ -151,6 +156,7 @@ export class SiteFilterComponent implements OnInit {
 
   //apply filter to sites and emit
   filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
+    //filter set of sites using siteFilter function
     let filtered = sites.filter(this.siteFilter(filters));
     this.siteInfo.filteredSites = filtered;
     this.paramService.pushSiteFilter(filtered);
@@ -159,38 +165,15 @@ export class SiteFilterComponent implements OnInit {
 
   //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
   siteFilter(filters: Filter[]) {
+    //return function for checking if site matches the set of filters
     return (site: SiteInfo): boolean => {
+      //run the site through each filter and return false if it doesn;t match any of them
       for(let filter of filters) {
         if(!filter.filter(site)) {
           return false;
         }
-
-        // let type = this.filterTypes[filter.field];
-        // let includes = (value: any) => {
-        //   if(type == "selector") {
-        //     return filter.values.includes(value)
-        //   }
-        //   else {
-        //     if(typeof value != "number") {
-        //       value = Number.parseFloat(value);
-        //     }
-        //     return value >= filter.values.min && value < filter.values.max;
-        //   }
-        // }
-
-        // let value = site[filter.field];
-        // if(filter.type == "include") {
-        //   if(!includes(value)) {
-        //     return false;
-        //   }
-        // }
-        // //exclude
-        // else {
-        //   if(includes(value)) {
-        //     return false;
-        //   }
-        // }
       }
+      //matches all filters, return true
       return true;
     }
 
@@ -206,6 +189,7 @@ export class SiteFilterComponent implements OnInit {
 
   }
 
+  //check if filter is complete by checking if any values have been selected
   filterIncomplete(): boolean {
     let values = this.options.filterValues.values.getOutputValues();
     //console.log(values);
@@ -213,43 +197,49 @@ export class SiteFilterComponent implements OnInit {
   }
 
 
-
+  //submit selected values to create filter
   onSubmit(e) {
+    //get selected field and type values from controls
     let field = this.options.filterFields.control.value;
     let type = this.options.filterType.control.value;
     //remove field from list, should only have one for each
-    for(let selector of (this.options.filterFields.values)) {
+    for(let selector of this.options.filterFields.values) {
+      //find matching selector and set include to false
       if(selector.value == field) {
         selector.include = false;
         break;
       }
     }
+    //create filter from the set values object
     let filter: Filter = this.options.filterValues.values.createFilter(type);
-    console.log(filter);
     this.filters.push(filter);
     //reset field value
     this.options.filterFields.control.setValue("");
+    //run filtered sites through newly constructed filter
     this.filterSites(this.siteInfo.filteredSites, [filter]);
   }
 
+  //delete one of the filters
   deleteFilter(e: MouseEvent, i: number) {
     e.stopPropagation();
     e.preventDefault();
 
     let filter = this.filters[i];
-    for(let selector of (this.options.filterFields.values)) {
+    //find field selector and set to include
+    for(let selector of this.options.filterFields.values) {
       if(selector.value == filter.field) {
         selector.include = true;
         break;
       }
     }
+    //remove filter from set of filters
     this.filters.splice(i, 1);
     //need to redo filters over full set of sites
     this.filterSites(this.siteInfo.sites, this.filters);
   }
 
+  //prevent menu from closing on clicking menu item by stopping click event
   menuClick(e: MouseEvent) {
-    console.log("click!");
     e.stopPropagation();
     e.preventDefault();
   }
@@ -342,7 +332,8 @@ class FilterValuesManager {
 
 }
 
-//t input value type (used to populate control), v output value type (control value type)
+
+//T input value type (used to populate control), V output value type (control value type)
 abstract class FilterValueControl<T, V> {
   protected control: FormControl;
   //these are input values (discrete from control/output values)
@@ -355,14 +346,17 @@ abstract class FilterValueControl<T, V> {
   }
   protected abstract getDefault(): T;
 
+  //get form control
   getControl(): FormControl {
     return this.control;
   }
 
+  //get input values
   public getInputValues(): T {
     return this.values;
   }
 
+  //get output values from control
   public getOutputValues(): V {
     return this.control.value;
   }
@@ -374,6 +368,7 @@ abstract class FilterValueControl<T, V> {
     this.control.setValue(this.getDefault());
   }
 
+  //abstract methods, specific to continuous/discreet control types
   public abstract updateInputFromSites(sites: SiteInfo[]): void;
 
   public abstract createFilter(type: "include" | "exclude"): Filter;
@@ -383,16 +378,18 @@ abstract class FilterValueControl<T, V> {
 
 //input value is the full range, output is the subrange
 class RangeControl extends FilterValueControl<NumericRange, NumericRange> {
-
+  //default full range of values
   protected getDefault(): NumericRange {
     return this.values;
   }
 
+  //get input from sites
   public updateInputFromSites(sites: SiteInfo[]): void {
     let range: NumericRange = {
       min: Number.POSITIVE_INFINITY,
       max: Number.NEGATIVE_INFINITY
     };
+    //find range of values
     for(let site of sites) {
       let value = site[this.field];
       if(typeof value != "number") {
@@ -401,14 +398,16 @@ class RangeControl extends FilterValueControl<NumericRange, NumericRange> {
       if(value < range.min) range.min = value;
       if(value > range.max) range.max = value;
     }
-
+    //update value range
     this.updateInput(range);
   }
 
+  //construct filter from range
   public createFilter(type: "include" | "exclude"): RangeFilter {
     return new RangeFilter(type, this.getOutputValues(), this.field);
   }
 
+  //get control type for generating html control
   public getControlType(): string {
     return "range";
   }
@@ -416,18 +415,22 @@ class RangeControl extends FilterValueControl<NumericRange, NumericRange> {
 
 //input value is the set of selectors used to generate list, output is the set of selected values
 class DiscreteControl extends FilterValueControl<ValueSelector[], string[]> {
-
+  //default value empty list
   protected getDefault(): ValueSelector[] {
     return [];
   }
 
+  //get field values from set of sites
   public updateInputFromSites(sites: SiteInfo[]) {
+    //set of ValueSelectors, display, value, include fields used for generating 
     let selectors: ValueSelector[] = [];
+    //only want unique values so add them to a set
     let uniqueVals = new Set<any>();
     for(let site of sites) {
       let value = site[this.field];
       uniqueVals.add(value);
     }
+    //generate selector info from each unique value
     uniqueVals.forEach((value: any) => {
       let selector: ValueSelector = {
         display: value.toString(),
@@ -436,14 +439,16 @@ class DiscreteControl extends FilterValueControl<ValueSelector[], string[]> {
       };
       selectors.push(selector);
     });
-
+    //update input values based on generated items
     this.updateInput(selectors);
   }
 
+  //create a filter from the current field and selected values
   public createFilter(type: "include" | "exclude"): DiscreteFilter {
     return new DiscreteFilter(type, this.getOutputValues(), this.field);
   }
 
+  //control type for generating html control
   public getControlType(): string {
     return "selector";
   }
@@ -457,21 +462,26 @@ abstract class Filter {
   type: "include" | "exclude";
   field: string;
   values: any;
+  //set filter type field and values
   constructor(type: "include" | "exclude", values: any, field: string) {
     this.type = type;
     this.values = values;
     this.field = field;
   }
 
+  //check if the site info object matches the filter
   filter(site: SiteInfo): boolean {
     let value = site[this.field];
+    //make sure value is included in filter
     if(this.type == "include") {
+      //value not in filter, return false
       if(!this.includes(value)) {
         return false;
       }
     }
-    //exclude
+    //value should not be in filter
     else {
+      //value in filter, return false
       if(this.includes(value)) {
         return false;
       }
@@ -479,19 +489,22 @@ abstract class Filter {
     return true;
   }
 
+  //abstract method to check for filter inclusion
   protected abstract includes(value: any): boolean;
 
+  //abstract method to construct string from values
   abstract getValuesText(): string;
 
 }
 
 
-//filters over a specific extent
+//filters for continuous values
 class RangeFilter extends Filter {
   constructor(type: "include" | "exclude", values: NumericRange, field: string) {
     super(type, values, field);
   }
 
+  //check if value falls in range
   includes(value: number | string): boolean {
     if(typeof value != "number") {
       value = Number.parseFloat(value);
@@ -499,20 +512,24 @@ class RangeFilter extends Filter {
     return value >= this.values.min && value < this.values.max;
   }
 
+  //construct range string from min and max
   getValuesText(): string {
     return `${this.values.min} - ${this.values.max}`;
   }
 }
 
+//filters for categorical values
 class DiscreteFilter extends Filter {
   constructor(type: "include" | "exclude", values: string[], field: string) {
     super(type, values, field);
   }
 
+  //check if the value is in the set of values 
   includes(value: string): boolean {
     return this.values.includes(value);
   }
 
+  //combine the set of values into a comma separated list string
   getValuesText(): string {
     return this.values.join(", ");
   }
