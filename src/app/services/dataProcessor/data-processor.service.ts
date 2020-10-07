@@ -31,7 +31,7 @@ export class DataProcessorService {
           if(bands == undefined || bands.length == 0) {
             bands = Array.from(rasters.keys());
           }
-    
+
           let noData = Number.parseFloat(fileDirectory.GDAL_NODATA);
 
           let header: RasterHeader = {
@@ -42,7 +42,7 @@ export class DataProcessorService {
             cellXSize: xScale,
             cellYSize: yScale,
           }
-          
+
           let geotiffData: RasterData = new RasterData(header);
 
           //package data
@@ -55,7 +55,7 @@ export class DataProcessorService {
               throw new Error("Could not find band: " + band);
             }
             let values: IndexedValues = new Map<number, number>();
-            
+
             let j: number;
             for(j = 0; j < raster.length; j++) {
               let value = raster[j];
@@ -68,12 +68,12 @@ export class DataProcessorService {
             if(rasterStat.code != UpdateFlags.OK) {
               throw new Error("Error adding band to raster: " + band);
             }
-            
+
           }
           return geotiffData;
         });
       });
-      
+
     });
   }
 
@@ -89,7 +89,7 @@ export class DataProcessorService {
       //elevation in meters
       elevation: doc.elevation_m,
       lat: doc.lat,
-      lng: doc.lon,
+      lng: doc.lng,
       nceiID: doc.ncei_id,
       nwsID: doc.nws_id,
       scanID: doc.scan_id,
@@ -103,7 +103,7 @@ export class DataProcessorService {
         console.error(e);
       }
     }
-    
+
     return meta;
   }
 
@@ -123,11 +123,11 @@ export class DataProcessorService {
       }
     }
     catch(e) { console.log(e);}
-    
+
     return value;
   }
 
-  
+
 
   private verifyAssignedPropertiesNotUndefined(o: Object): boolean {
     let keys = Object.keys(o);
