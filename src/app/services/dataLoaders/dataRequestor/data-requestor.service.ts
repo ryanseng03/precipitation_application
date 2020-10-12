@@ -27,6 +27,10 @@ export class DataRequestorService {
     return this.siteRetreiver.getSiteValsDate(date);
   }
 
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, gpl: string): Promise<SiteValue[]> {
+    return this.siteRetreiver.getSiteTimeSeries(start, end, gpl);
+  }
+
   getRastersDate(date: Moment.Moment): Promise<BandData> {
     return this.siteRetreiver.getRastersDate(date);
   }
@@ -59,8 +63,8 @@ export class DataRequestorService {
     return this.metaRetreiver.getMetaBySKNs(skns);
   }
 
-  
+
 
   //getInitData()
-  
+
 }

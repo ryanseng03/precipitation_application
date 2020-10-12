@@ -6,6 +6,7 @@ import dsconfig from "./DataSetConfig.json";
 import { SiteValue } from '../../../../../models/SiteMetadata';
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 import { BandData, RasterHeader, RasterData, IndexedValues } from 'src/app/models/RasterData';
+import moment from 'moment';
 
 const LIVE: boolean = false;
 
@@ -59,8 +60,8 @@ export class SiteValueFetcherService {
     });
   }
 
-  
-  
+
+
 
   getRastersDate(date: Moment.Moment): Promise<BandData> {
     return new Promise((resolve, reject) => {
@@ -70,7 +71,7 @@ export class SiteValueFetcherService {
       let month = date.month();
 
       let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'raster'},{'value.year':${year}},{'value.month':${month}}]}`;
-      
+
     //   `{'$and':
     //   [
     //     {'name':'${this.current.name}'},
@@ -102,8 +103,41 @@ export class SiteValueFetcherService {
     });
   }
 
+
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, gpl: string): Promise<SiteValue[]> {
+    return new Promise((resolve, reject) => {
+      let startS = start.format("YYYY-MM-DD");
+      let endS = end.format("YYYY-MM-DD");
+
+      let query = `{'$and':[{'name':'station_vals'},{'value.date':{$gt:'${startS}'}},{'value.date':{$lt:'${endS}'}},{'value.gpl':${gpl}},{'value.version':'v1.2'}]}`;
+      //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
+
+      //wrap data handler to lexically bind to this
+      let wrappedResultHandler = (recent: any[]) => {
+        console.log(recent)
+        let siteData = [];
+        let dates = new Set();
+        for(let item of recent) {
+          dates.add(item.value.date);
+          let siteValue: SiteValue = this.processor.processValueDocs(item.value);
+          siteData.push(siteValue);
+        }
+        console.log(dates);
+        console.log(siteData);
+
+        return siteData;//this.extractLastValues(recent)
+      }
+
+      //need to add in some error handling
+      this.dbcon.query<SiteValue[]>(query, wrappedResultHandler).then((vals: SiteValue[]) => {
+        resolve(vals)
+      });
+    });
+  }
+
+
   getSiteValsDate(date: Moment.Moment): Promise<SiteValue[]> {
-    
+
 
     return new Promise((resolve, reject) => {
       // let year = date.year();
@@ -117,32 +151,35 @@ export class SiteValueFetcherService {
 
       //looks like only have data for december (-2018)
       //remember moments mutable so don't use date manipulations, make a new one then set date
-      date = Moment(date);
-      if(date.year() > 2018) {
-        
-        //set new moment year to 2018
-        date.year(2018);
-      }
-      console.log(date.toISOString());
-      //use month as day in december to bypass issues
-      //+1 because 0 based index
-      let month = date.month() + 1;
-      console.log(date.toISOString());
-      //0 based indexing
-      date.month(11);
-      console.log(date.toISOString(), month);
-      date.date(month);
-      console.log(date.toISOString());
+      // date = Moment(date);
+      // if(date.year() > 2018) {
 
-      let query = `{'$and':[{'name':'${dsconfig.valueDocName}'},{'value.date':{$eq:{'$date':'${date.toISOString()}'}}}]}`;
+      //   //set new moment year to 2018
+      //   date.year(2018);
+      // }
+      // console.log(date.toISOString());
+      // //use month as day in december to bypass issues
+      // //+1 because 0 based index
+      // let month = date.month() + 1;
+      // console.log(date.toISOString());
+      // //0 based indexing
+      // date.month(11);
+      // console.log(date.toISOString(), month);
+      // date.date(month);
+      // console.log(date.toISOString());
+      //for now only daily, use simple format
+      let dayFormat = date.format("YYYY-MM-DD");
+
+      let query = `{'$and':[{'name':'station_vals'},{'value.date':{$eq:'${dayFormat}'}},{'value.version':'v1.2'}]}`;
       //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
 
       //wrap data handler to lexically bind to this
       let wrappedResultHandler = (recent: any[]) => {
+        console.log(recent)
         let siteData = [];
         let dates = new Set();
         for(let item of recent) {
-          dates.add(item.value.date.$date);
+          dates.add(item.value.date);
           let siteValue: SiteValue = this.processor.processValueDocs(item.value);
           siteData.push(siteValue);
         }
@@ -290,7 +327,7 @@ export class SiteValueFetcherService {
     });
   }
 
-  
+
 
 
 

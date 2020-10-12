@@ -112,8 +112,8 @@ export class DataProcessorService {
     //catch type error if doc.$date undefined
     try {
       let props = {
-        date: doc.date.$date,
-        type: doc.type,
+        date: doc.date,
+        type: doc.datatype,
         value: doc.value,
         skn: doc.skn
       }
@@ -122,7 +122,7 @@ export class DataProcessorService {
         value = new SiteValue(props);
       }
     }
-    catch(e) { console.log(e);}
+    catch(e) { console.error(e);}
 
     return value;
   }

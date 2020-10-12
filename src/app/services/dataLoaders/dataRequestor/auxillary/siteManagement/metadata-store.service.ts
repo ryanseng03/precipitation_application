@@ -14,12 +14,12 @@ export class MetadataStoreService {
   private siteMeta: Promise<SKNRefMeta>;
 
   constructor(private dbcon: DbConService, private processor: DataProcessorService) {
-    let query = "{'name':'ing3'}";
+    let query = "{$and:[{'name':'station_metadata'},{value.version:'v1.3'}]}";
     //query = `{'name':'${dsconfig.metaDocName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
       let metadata: SKNRefMeta = {};
+      console.log(results)
       results.forEach((result) => {
-        console.log(result);
         //process data from database into internal metadata object
         let metadatum = processor.processMetadataDoc(result.value);
         //if returns null then the format was unexpected
@@ -31,6 +31,8 @@ export class MetadataStoreService {
           console.error("Unrecognized metadata document format received.");
         }
       });
+      console.log(metadata);
+      console.log(Object.keys(metadata).length);
       return metadata;
     }
 

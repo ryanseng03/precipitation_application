@@ -6,7 +6,8 @@ import {DataLoaderService} from "../dataLoaders/localDataLoader/data-loader.serv
 import {DataRequestorService} from "../dataLoaders/dataRequestor/data-requestor.service";
 import Moment from 'moment';
 import { MapComponent } from 'src/app/components/map/map.component';
-
+import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
+import {Dataset} from "../../models/dataset";
 
 
 @Injectable({
@@ -18,8 +19,7 @@ export class DataManagerService {
   public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
   public static readonly FALLBACK_DATE: string = "1970-01-01T00:00:00.000Z";
 
-  //emit currently focused set, map will use this to populate
-  private stateEmitter: Subject<FocusedData>;
+
 
   //use manager to mitigate issues with changing data structure
   private data: DataModel;
@@ -27,17 +27,17 @@ export class DataManagerService {
   //provides initial data and verifies that initialization is complete
   private initPromise: Promise<void>;
 
+  private dataset = null;
   //track and emit currently active data set
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService) {
+  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService) {
     // this.data = {
     //   header: null,
     //   primary: {},
     //   focusedData: null
     // };
-    this.stateEmitter = new Subject<FocusedData>();
     this.header = dataRequestor.getRasterHeader();
     // this.initPromise = this.initialize();
     //no delay for init data
@@ -46,6 +46,21 @@ export class DataManagerService {
     //   console.log("second submitted");
     //   this.getData(Moment("2018-11-01T00:00:00.000Z"));
     // }, 10000);
+
+    let focusedSite = null;
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+      this.dataset = dataset;
+      this.updateStationTimeSeries()
+    });
+    //track selected station and emit series data based on
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
+      this.updateStationTimeSeries()
+    });
+
+  }
+
+  updateStationTimeSeries() {
+    console.log("!!!!");
   }
 
   //store single raster data object and swap out bands
@@ -56,6 +71,9 @@ export class DataManagerService {
   ///////////////////////////
   /////////////////
 
+  //store time range info for current site
+
+
   //TEMP PATCH
   //all months for now
   initDate = Moment("2019-12-01T00:00:00.000Z");
@@ -64,15 +82,39 @@ export class DataManagerService {
   cache = new Map<string, Promise<InternalDataPack>>();
   header: Promise<RasterHeader>;
 
-  
+  //available movement 1 ahead of base granularity
+  granularities = ["daily", "monthly", "yearly"]
+  cacheRange = [1, 3, 5];
+
+  private getRangeBreakdown(magnitude: 1 | -1, baseGranularity: string, granularityOfMagnitude: string) {
+    let toAdd = []
+    let info = {
+      magnitude: magnitude,
+      granularity: {
+        same: null,
+        opposite: null
+      }
+    }
+    //verify magnitude granularity valid for base
+    let baseI = this.granularities.indexOf(baseGranularity);
+
+
+    //list of add objects (magnitude, granularity)
+    return toAdd;
+  }
+
+  //get 3 months around each
   private getDateRange(focus: Moment.Moment): Moment.Moment[] {
     //let's get 3 months around
     let range = [];
-    for(let i = -3; i < 0; i++) {
-      range.push(focus.add(i, "months"));
-    }
-    for(let i = 1; i <= 3; i++) {
-      range.push(focus.add(i, "months"));
+    //remember moments are mutable
+    let dbase = Moment(focus)
+    //add 3 months to it then subtract and add copies
+    dbase.add(3, "month");
+    for(let i = 0; i > -8; i--) {
+      dbase.add(i, "month");
+      let date = Moment(dbase)
+      range.push(date);
     }
     return range;
   }
@@ -92,7 +134,7 @@ export class DataManagerService {
           }
           let rasterLoader = this.dataRequestor.getRastersDate(date);
           let siteLoader = this.dataRequestor.getSiteValsDate(date);
-  
+
           Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
             dataPack.bands = data[0];
             dataPack.sites = data[1];
@@ -103,7 +145,7 @@ export class DataManagerService {
       }
       resolve(data);
     });
-    
+
   }
 
   //header stuff part of dataRequestor
@@ -137,18 +179,26 @@ export class DataManagerService {
         sites: null,
         metrics: null
       }
-      this.getDataCheckSource(date).then((data: InternalDataPack) => {
-        console.log(data);
-        map.setLoad(false);
-        //emit the data to the application
-        this.setFocusedData(date, data);
-      });
+
       //set the other dates in the range
       for(let sdate of dateRange) {
-        this.getDataCheckSource(sdate);
+        console.log(sdate.toISOString(), date.toISOString());
+        if(sdate.isSame(date, "month")) {
+          console.log("!");
+          this.getDataCheckSource(sdate).then((data: InternalDataPack) => {
+            map.setLoad(false);
+            console.log(data);
+            //emit the data to the application
+          this.setFocusedData(date, data);
+          });
+        }
+        else {
+          this.getDataCheckSource(sdate);
+        }
+
       }
     }, delay);
-    
+
   }
 
 
@@ -165,9 +215,9 @@ export class DataManagerService {
           date: date,
           data: null,
         };
-        
-    
-        //if undefined then the date doesn't exist, do nothign and return null
+
+
+        //if undefined then the date doesn't exist, do nothing and return null
         if(internalData != undefined) {
           let data: DataPack = {
             raster: null,
@@ -186,10 +236,10 @@ export class DataManagerService {
             else {
               data.raster = raster;
               // this.data.focusedData = focus;
-              this.stateEmitter.next(focus);
+              this.paramService.pushFocusedData(focus);
               resolve(focus);
             }
-            
+
           });
         }
         else {
@@ -217,7 +267,7 @@ export class DataManagerService {
         }
         else {
           //could not find metadata, print error
-          console.error("Could not find metadata for site.");
+          console.error(`Could not find metadata for site, skn: ${skn}.`);
           return null;
         }
       }));
@@ -233,9 +283,6 @@ export class DataManagerService {
 
 
 
-  getFocusedDataListener(): Observable<FocusedData> {
-    return this.stateEmitter.asObservable();
-  }
 
   ////////////
   /////////////
@@ -276,7 +323,7 @@ export class DataManagerService {
   //     console.error(`Could not get site values: ${e}`);
   //     initData.sites = [];
   //   });
-    
+
   //   let date: string = DataManagerService.FALLBACK_DATE;
   //   this.initPromise = Promise.all([rasterLoader, siteLoader]).then(() => {
   //     //for now just use date from sites (or fallback date if no sites), should verify raster date though once database retreival up
@@ -314,7 +361,7 @@ export class DataManagerService {
   //   });
   // }
 
-  
+
 
   // getRasterData(date: Date, types?: DataType[]): Promise<BandData> {
   //   return this.initPromise.then(() => {
@@ -372,7 +419,7 @@ export class DataManagerService {
   //     //return null for now, instead should pull the data into the cache
   //     return metadata;
   //   });
-    
+
   // }
 
   // //should set up some sort of data listener for managing data set changes, maybe a hooking system like the parameter service
@@ -386,10 +433,10 @@ export class DataManagerService {
   // // getCurrentData
 
   // //SWITCH TO STORE EACH OF THE FOUR DATA TYPES AS SEPARATE BANDS
-  // //APPROPRIATE BECAUSE GARENTEED TO BE SPATIALLY COINCIDENT DATA 
+  // //APPROPRIATE BECAUSE GARENTEED TO BE SPATIALLY COINCIDENT DATA
 
   // //reconstruct asserts that band names should be consistent and raster does not need to be reconstructed, verifies and returns false if incorrect
-  
+
 
   // //data has to be added in sets of 4 to maintain consistency
   // addData(date: string, data: DataBands) {
@@ -405,7 +452,7 @@ export class DataManagerService {
   //     success = true;
   //   }
   //   return success
-    
+
   // }
 }
 
@@ -446,7 +493,7 @@ export interface FocusedData {
   date: Moment.Moment
 }
 
-export interface DataBands { 
+export interface DataBands {
   rainfall: IndexedValues,
   anomaly: IndexedValues,
   se_rainfall: IndexedValues,
@@ -458,5 +505,5 @@ export type DataType = keyof DataBands;
 
 //define metrics structure
 export interface Metrics {
-  
+
 }

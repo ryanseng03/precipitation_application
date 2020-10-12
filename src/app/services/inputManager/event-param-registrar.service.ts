@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ParameterStoreService, ParameterHook } from "./auxillary/parameter-store.service"
 import { Observable } from 'rxjs';
-import { DataManagerService, FocusedData, DataType, Metrics } from "../../services/dataManager/data-manager.service";
+import { FocusedData, DataType, Metrics } from "../../services/dataManager/data-manager.service";
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { Subject } from "rxjs";
@@ -35,7 +35,9 @@ export class EventParamRegistrarService {
   private _timestepSource = new Subject<string>();
 
   //selected dataset, change from any type when defined
-  private _datasetSource = new Subject<any>();
+  private _datasetSource = new Subject<Dataset>();
+
+  private _focusedDataSource = new Subject<FocusedData>();
 
   pushSiteSelect(selectedSite: SiteInfo): void {
     this._siteSelectSource.next(selectedSite);
@@ -61,9 +63,13 @@ export class EventParamRegistrarService {
     this._datasetSource.next(dataset);
   }
 
+  pushFocusedData(focusedData: FocusedData): void {
+    this._focusedDataSource.next(focusedData);
+  }
+
   tagGen: UniqueTagID;
 
-  constructor(private paramService: ParameterStoreService, private dataManager: DataManagerService) {
+  constructor(private paramService: ParameterStoreService) {
     this.tagGen = new UniqueTagID();
     this.setupGlobalHandlers();
   }
@@ -124,16 +130,15 @@ export class EventParamRegistrarService {
     let startDateObserver = this._startDateSource.asObservable();
     let endDateObserver = this._endDateSource.asObservable();
     let timestepObserver = this._timestepSource.asObservable();
-
+    let focusedDataObserver = this._focusedDataSource.asObservable();
     let datasetObserver = this._datasetSource.asObservable();
 
-    this.dataManager.getFocusedDataListener().subscribe((data: FocusedData) => {
+    focusedDataObserver.subscribe((data: FocusedData) => {
       rasterSub.next(data.data.raster);
       sitesSub.next(data.data.sites);
       metricsSub.next(data.data.metrics);
       dateSub.next(data.date.toISOString());
     });
-
     siteSelectObserver.subscribe((data: SiteInfo) => {
       siteSelectSub.next(data);
     });
@@ -156,6 +161,8 @@ export class EventParamRegistrarService {
     });
 
   }
+
+
 
 
   registerMapHover(map: L.Map) {
