@@ -155,7 +155,7 @@ export class DateFocusComponent implements OnInit {
   }
 
   //should move this to param thing so dont have to pass through map
-  setDate(date: Moment.Moment) {
+  setDate(date: Moment.Moment, magnitude: 1 | -1, baseGranularity: string, granularityOfMagnitude: string) {
     this.focusedDate = date;
     //time zone things
     date.set({
@@ -165,13 +165,13 @@ export class DateFocusComponent implements OnInit {
       millisecond:0
     });
     date.utcOffset(0);
-    this.broadcast(date);
+    this.broadcast(date, magnitude, baseGranularity, granularityOfMagnitude);
   }
 
-  broadcast(date: Moment.Moment) {
+  broadcast(date: Moment.Moment, magnitude: 1 | -1, baseGranularity: string, granularityOfMagnitude: string) {
     //the loading mechanism here is sketch at best, fix this
     //note can't do loading here because of throttle, should create more robust loading and retreival cancel mechanisms (should also cancel old requests if a new one is submitted before load complete, just cache but don't emit)
-    this.dataManager.getData(date, this.map);
+    this.dataManager.getData(date, this.map, magnitude, baseGranularity, granularityOfMagnitude);
   }
 
   moveDate(number: Moment.DurationInputArg1, unit: Moment.unitOfTime.DurationConstructor) {

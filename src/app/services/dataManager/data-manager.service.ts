@@ -83,69 +83,75 @@ export class DataManagerService {
   header: Promise<RasterHeader>;
 
   //available movement 1 ahead of base granularity
-  granularities = ["daily", "monthly", "yearly"]
+  granularities = ["daily", "monthly", "yearly"];
   cacheRange = [1, 3, 5];
 
-  private getRangeBreakdown(magnitude: 1 | -1, baseGranularity: string, granularityOfMagnitude: string) {
-    let toAdd = []
+  private getRangeBreakdown(movementInfo: MovementVector): [number, string][] {
+    //if null magnitude (moved to a set date using map navigation), just use +/-3 baseGranularity/other granularity
+    if(movementInfo.magnitude == null) {
+
+    }
+    let baseI = this.granularities.indexOf(movementInfo.baseGranularity);
+    if(baseI < 0 || baseI >= this.granularities.length - 1) {
+      throw new Error("Invalid base granularity.");
+    }
     let info = {
-      magnitude: magnitude,
+      magnitude: {
+        same: movementInfo.magnitude,
+        opposite: -movementInfo.magnitude
+      },
       granularity: {
-        same: null,
-        opposite: null
+        same: movementInfo.granularityOfMagnitude,
+        opposite: movementInfo.baseGranularity == movementInfo.granularityOfMagnitude ? this.granularities[baseI + 1] : movementInfo.baseGranularity
       }
     }
-    //verify magnitude granularity valid for base
-    let baseI = this.granularities.indexOf(baseGranularity);
-
+    let toAdd: [number, string][] = [
+      [info.magnitude.same * this.cacheRange[2], info.granularity.same],
+      [info.magnitude.opposite * this.cacheRange[1], info.granularity.same],
+      [info.magnitude.same * this.cacheRange[1], info.granularity.opposite],
+      [info.magnitude.opposite * this.cacheRange[0], info.granularity.opposite]
+    ]
 
     //list of add objects (magnitude, granularity)
     return toAdd;
   }
 
-  //get 3 months around each
-  private getDateRange(focus: Moment.Moment): Moment.Moment[] {
-    //let's get 3 months around
+  
+  private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
+    let breakdown = this.getRangeBreakdown(movementInfo);
+    let dateCopy = null;
     let range = [];
-    //remember moments are mutable
-    let dbase = Moment(focus)
-    //add 3 months to it then subtract and add copies
-    dbase.add(3, "month");
-    for(let i = 0; i > -8; i--) {
-      dbase.add(i, "month");
-      let date = Moment(dbase)
-      range.push(date);
+    for(let item of breakdown) {
+      let v = Math.sign(item[0]);
+      let lim = Math.abs(item[0]);
+      //need to get magnitude!!!!
+      for(let i = 1; i <= lim; i++) {
+        dateCopy = Moment(focus)
+        dateCopy.add(v * i, item[1]);
+        range.push(dateCopy);
+      }    
     }
     return range;
   }
 
-  private getDataCheckSource(date: Moment.Moment): Promise<InternalDataPack> {
-    return new Promise((resolve, reject) => {
-      let isoStr = date.toISOString();
-      let data: Promise<InternalDataPack> = this.cache.get(isoStr);
-      //data not in cache (not available or being retreived)
-      //set to retrieve and add to cache
-      if(data === undefined) {
-        data = new Promise((resolve, reject) => {
-          let dataPack = {
-            bands: null,
-            sites: null,
-            metrics: null
-          }
-          let rasterLoader = this.dataRequestor.getRastersDate(date);
-          let siteLoader = this.dataRequestor.getSiteValsDate(date);
-
-          Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
-            dataPack.bands = data[0];
-            dataPack.sites = data[1];
-            resolve(dataPack);
-          });
-        });
-        this.cache.set(isoStr, data);
+  throttle = null;
+  private getDataPackRetreiver(date: Moment.Moment): Promise<InternalDataPack> {
+    let dataPackRetreiver: Promise<InternalDataPack> = new Promise((resolve, reject) => {
+      let dataPack: InternalDataPack = {
+        bands: null,
+        sites: null,
+        metrics: null
       }
-      resolve(data);
-    });
+      let rasterLoader = this.dataRequestor.getRastersDate(date);
+      let siteLoader = this.dataRequestor.getSiteValsDate(date);
 
+      Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
+        dataPack.bands = data[0];
+        dataPack.sites = data[1];
+        resolve(dataPack);
+      });
+    });
+    return dataPackRetreiver;
   }
 
   //header stuff part of dataRequestor
@@ -164,39 +170,72 @@ export class DataManagerService {
 
   //note init calls setFocusedData
 
-  throttle = null;
+  
 
-  getData(date: Moment.Moment, map: MapComponent, delay: number = 3000): void {
-    //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this?)
+  lastComplete: boolean = true;
+  focusDataRetreiver: CancellablePromise<InternalDataPack> = null;
+  getData(date: Moment.Moment, map: MapComponent, movementInfo: MovementVector, delay: number = 3000): void {
+    //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
     if(this.throttle) {
       clearTimeout(this.throttle);
     }
+    if(!this.lastComplete) {
+      //don't care about previous data being loaded
+      map.setLoad(false);
+      //cancel the last data retrieval
+      this.focusDataRetreiver.cancel("A new set of data has been requested");
+    }
+
+    //two different cases where this used (cache hit/miss), set as function
+    let setFocusedDataRetreiverHandler = (dataRetreiver) => {
+      this.lastComplete = false;
+      this.focusDataRetreiver = new CancellablePromise((resolve, reject) => {
+        //resolve after cached promise resolves to allow for cancellation
+        dataRetreiver.then((data: InternalDataPack) => {
+          resolve(data);
+        });
+      });
+      this.focusDataRetreiver.then((data: InternalDataPack) => {
+        //indicate this load completed to prevent multiple calls to map.setLoad(false)
+        this.lastComplete = true;
+        //set map loading to false (got data)
+        //note: should probably change this to a param thing
+        map.setLoad(false);
+        //emit the data to the application
+        this.setFocusedData(date, data);
+      }, () => {/*cancelled*/});
+    };
+
+    map.setLoad(true);
+    let isoStr: string = date.toISOString();
+    let dataRetreiver: Promise<InternalDataPack> = this.cache.get(isoStr);
+    //NO DONT WANT CACHED PROMISES TO BE CANCELLED BECAUSE CAN STILL BE USED BY OTHER QUERIES, NEED TO ADD A WRAPPER TO ONLY CANCEL HANDLER CODE
+    //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
+    if(dataRetreiver) {
+      setFocusedDataRetreiverHandler(dataRetreiver);
+    }
+    //set timeout regardless of initial cache hit to delay other cached dates
     this.throttle = setTimeout(() => {
-      map.setLoad(true);
-      let dateRange = this.getDateRange(date);
-      let initData: InternalDataPack = {
-        bands: null,
-        sites: null,
-        metrics: null
+      //cache missed, get focus date data
+      if(!dataRetreiver) {
+        dataRetreiver = this.getDataPackRetreiver(date);
+        this.cache.set(date.toISOString(), dataRetreiver);
+        setFocusedDataRetreiverHandler(dataRetreiver);
       }
 
-      //set the other dates in the range
-      for(let sdate of dateRange) {
-        console.log(sdate.toISOString(), date.toISOString());
-        if(sdate.isSame(date, "month")) {
-          console.log("!");
-          this.getDataCheckSource(sdate).then((data: InternalDataPack) => {
-            map.setLoad(false);
-            console.log(data);
-            //emit the data to the application
-          this.setFocusedData(date, data);
-          });
-        }
-        else {
-          this.getDataCheckSource(sdate);
-        }
+      /////////
+      //dates//
+      /////////
 
+      //get additional dates to pull data for for cache
+      let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+      //
+      for(let date of cacheDates) {
+        let cecheData = this.getDataPackRetreiver(date);
+        this.cache.set(date.toISOString(), cecheData);
       }
+      
+
     }, delay);
 
   }
@@ -207,7 +246,7 @@ export class DataManagerService {
   //need to set something that cancels old calls on new data request to ensure synch
   //should also add some sort of small delay or cancel logic to data request logic to prevent slow down on rapid input changes, some sort of input throttle
   //sets the data focused by the application
-  setFocusedData(date: Moment.Moment, internalData: InternalDataPack): Promise<FocusedData> {
+  private setFocusedData(date: Moment.Moment, internalData: InternalDataPack): Promise<FocusedData> {
     //need to wait for raster header if not already in
     return this.header.then((header: RasterHeader) => {
       return new Promise<FocusedData>((resolve, reject) => {
@@ -280,180 +319,32 @@ export class DataManagerService {
       });
     });
   }
+}
 
 
 
 
-  ////////////
-  /////////////
-  //////////////
-  /////////////
+class CancellablePromise<T> extends Promise<T> {
+  private reject = null;
+  constructor(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
+    super((resolve, reject) => {
+      this.reject = reject;
+      return executor(resolve, reject);
+    });
+  }
 
+  public cancel(reason: string) {
+    this.reject(reason);
+  }
+}
 
-
-
-
-
-  // //instead of initializing like this just use init date
-  // initialize(): Promise<void> {
-  //   let initData: InternalDataPack = {
-  //     bands: null,
-  //     sites: null,
-  //     metrics: null
-  //   }
-  //   //want to retreive both things in parallel, so how to deal with date? Can just do the same for both, then add validation to ensure date is the same
-  //   //need to add some additional information to returned like date
-  //   let rasterLoader = this.dataLoader.getInitRaster().then((raster: RasterData) => {
-  //     this.data.header = raster.getHeader();
-  //     //freeze header so can't be inadvertantly modified when passed out of data manager
-  //     Object.freeze(this.data.header);
-  //     initData.bands = raster.getBands();
-  //   });
-
-
-
-  //   let siteLoader = this.dataRequestor.getInitSiteVals().then((values: SiteValue[]) => {
-  //     //console.log(values);
-  //     //print error if there's no values, should never happen, promise should reject if couldn't get data
-  //     if(values.length == 0) {
-  //       console.error("No values returned");
-  //     }
-  //     initData.sites = values;
-  //   }, (e) => {
-  //     console.error(`Could not get site values: ${e}`);
-  //     initData.sites = [];
-  //   });
-
-  //   let date: string = DataManagerService.FALLBACK_DATE;
-  //   this.initPromise = Promise.all([rasterLoader, siteLoader]).then(() => {
-  //     //for now just use date from sites (or fallback date if no sites), should verify raster date though once database retreival up
-  //     if(initData.sites.length > 0) {
-  //       date = initData.sites[0].date;
-  //     }
-  //     this.data.primary[date] = initData;
-  //   });
-  //   this.initPromise.then(() => {
-  //     //set the focused data to the init data
-  //     this.setFocusedData(date);
-  //   });
-  //   return this.initPromise;
-  // }
-
-
-
-
-  // //should require a focused date too, need some place to pivot around
-  // //should it just start the display at the min value? should also just focus that after retreival
-  // setDateRange(start: string, end: string) {
-  //   //for now just get and cache everything, should be chunked
-  //   this.dataRequestor.getSiteVals
-  // }
-
-  // // retreiveDateRange(start: string, end: string): Promise {
-  // //   //only get site data for now
-  // //   this.dataRequestor.getSiteVals(date)
-  // // }
-
-
-  // getFocusedData(): Promise<FocusedData> {
-  //   return this.initPromise.then(() => {
-  //     return this.data.focusedData;
-  //   });
-  // }
-
-
-
-  // getRasterData(date: Date, types?: DataType[]): Promise<BandData> {
-  //   return this.initPromise.then(() => {
-  //     let data = null
-  //     let dataPack: InternalDataPack = this.data.primary[date];
-  //     //if no types defined assume all types
-  //     if(types == undefined) {
-  //       types = DataManagerService.DATA_TYPES;
-  //     }
-  //     //if undefined then the date doesn't exist, do nothign and return null
-  //     if(dataPack != undefined) {
-  //       let bands: BandData = dataPack.bands;
-  //       let bandNames = Object.keys(bands);
-  //       //verify internal state
-  //       let bandName: string;
-  //       let i: number;
-  //       for(i = 0; i < bandNames.length; i++) {
-  //         bandName = bandNames[i];
-  //         //if value undefined for band then the internal state is wrong
-  //         if(bands[bandName] == undefined) {
-  //           throw new Error("Internal state error: Data band " + bandName + " for date does not exist");
-  //         }
-  //       }
-  //       data = bands;
-  //     }
-  //     return data;
-  //   });
-  // }
-
-  // getRasterHeader(): Promise<RasterHeader> {
-  //   return this.initPromise.then(() => {
-  //     return this.data.header;
-  //   });
-  // }
-
-  // getMetrics(date: Date): Promise<Metrics> {
-  //   return this.initPromise.then(() => {
-  //     let metrics: Metrics = null;
-  //     let data: InternalDataPack = this.data.primary[date];
-  //     if(data != undefined) {
-  //       metrics = data.metrics;
-  //     }
-  //     //return null for now, instead should pull the data into the cache
-  //     return metrics;
-  //   });
-  // }
-
-  // getSiteInfo(date: Date): Promise<SiteInfo[]> {
-  //   return this.initPromise.then(() => {
-  //     let metadata: SiteInfo[] = null;
-  //     let data: InternalDataPack = this.data.primary[date];
-  //     if(data != undefined) {
-  //       return this.combineMetaWithValues(data.sites);
-  //     }
-  //     //return null for now, instead should pull the data into the cache
-  //     return metadata;
-  //   });
-
-  // }
-
-  // //should set up some sort of data listener for managing data set changes, maybe a hooking system like the parameter service
-
-  // // setCurrentData(date: string): boolean {
-  // //   let success = true;
-
-  // //   return success;
-  // // }
-
-  // // getCurrentData
-
-  // //SWITCH TO STORE EACH OF THE FOUR DATA TYPES AS SEPARATE BANDS
-  // //APPROPRIATE BECAUSE GARENTEED TO BE SPATIALLY COINCIDENT DATA
-
-  // //reconstruct asserts that band names should be consistent and raster does not need to be reconstructed, verifies and returns false if incorrect
-
-
-  // //data has to be added in sets of 4 to maintain consistency
-  // addData(date: string, data: DataBands) {
-
-  // }
-
-  // purgeData(date: Date): boolean {
-
-  //   let success: boolean = false;
-  //   //cannot delete focused data
-  //   if(date != this.data.focusedData.date) {
-  //     delete this.data.primary[date];
-  //     success = true;
-  //   }
-  //   return success
-
-  // }
+interface MovementVector {
+  magnitude: {
+    direction: 1 | -1,
+    granularity: string
+  } | null
+  baseGranularity: string,
+  
 }
 
 //update as needed
