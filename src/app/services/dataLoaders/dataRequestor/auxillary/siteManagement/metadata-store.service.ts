@@ -18,7 +18,6 @@ export class MetadataStoreService {
     //query = `{'name':'${dsconfig.metaDocName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
       let metadata: SKNRefMeta = {};
-      console.log(results)
       results.forEach((result) => {
         //process data from database into internal metadata object
         let metadatum = processor.processMetadataDoc(result.value);
@@ -31,8 +30,6 @@ export class MetadataStoreService {
           console.error("Unrecognized metadata document format received.");
         }
       });
-      console.log(metadata);
-      console.log(Object.keys(metadata).length);
       return metadata;
     }
 

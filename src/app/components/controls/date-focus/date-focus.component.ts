@@ -3,7 +3,7 @@ import Moment from 'moment';
 import {Dataset, Timestep, FillType} from "../../../models/dataset";
 import {MatIconRegistry} from "@angular/material/icon";
 import {DomSanitizer} from "@angular/platform-browser";
-import {DataManagerService} from "../../../services/dataManager/data-manager.service";
+import {DataManagerService, MovementVector} from "../../../services/dataManager/data-manager.service";
 import { MapComponent } from '../../map/map.component';
 
 @Component({
@@ -155,7 +155,13 @@ export class DateFocusComponent implements OnInit {
   }
 
   //should move this to param thing so dont have to pass through map
-  setDate(date: Moment.Moment, magnitude: 1 | -1, baseGranularity: string, granularityOfMagnitude: string) {
+  setDate(date: Moment.Moment, movementInfo?: MovementVector) {
+    if(movementInfo == undefined) {
+      movementInfo = {
+        baseGranularity: this.dataset.timestep,
+        magnitude: null
+      }
+    }
     this.focusedDate = date;
     //time zone things
     date.set({
@@ -165,20 +171,33 @@ export class DateFocusComponent implements OnInit {
       millisecond:0
     });
     date.utcOffset(0);
-    this.broadcast(date, magnitude, baseGranularity, granularityOfMagnitude);
+    this.broadcast(date, movementInfo);
   }
 
-  broadcast(date: Moment.Moment, magnitude: 1 | -1, baseGranularity: string, granularityOfMagnitude: string) {
+  broadcast(date: Moment.Moment, movementInfo: MovementVector) {
     //the loading mechanism here is sketch at best, fix this
     //note can't do loading here because of throttle, should create more robust loading and retreival cancel mechanisms (should also cancel old requests if a new one is submitted before load complete, just cache but don't emit)
-    this.dataManager.getData(date, this.map, magnitude, baseGranularity, granularityOfMagnitude);
+    this.dataManager.getData(date, movementInfo);
   }
 
-  moveDate(number: Moment.DurationInputArg1, unit: Moment.unitOfTime.DurationConstructor) {
+  moveDate(change: number, unit: Moment.unitOfTime.DurationConstructor) {
+    let magnitude = null;
+    //if 0 (should never happen) just pass no magnitude (null)
+    if(change != 0) {
+      //note Math.sign should always return -1 or 1 unless passed a 0
+      magnitude = {
+        direction: <1 | -1>Math.sign(change),
+        granularity: unit
+      }
+    }
+    let movementInfo: MovementVector = {
+      baseGranularity: this.dataset.timestep,
+      magnitude: magnitude
+    }
     //add mutates date and returns old date (what a weird way of doing this)
     //doesn't work with binding properly since same object so clone, modify, then set
     let newDate = this.focusedDate.clone();
-    newDate.add(number, unit);
+    newDate.add(change, unit);
     //verify bounds of new time and adjust to min or max
     if(newDate.diff(this.dataset.startDate) < 0) {
       newDate = this.dataset.startDate;
@@ -187,7 +206,7 @@ export class DateFocusComponent implements OnInit {
       newDate = this.dataset.endDate;
     }
 
-    this.setDate(newDate);
+    this.setDate(newDate, movementInfo);
   }
 
 }

@@ -14,6 +14,7 @@ import { BandData, IndexedValues, RasterHeader, RasterData } from 'src/app/model
 import { SiteMetadata, SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
 import {first} from "rxjs/operators";
+import {DataManagerService} from "../../services/dataManager/data-manager.service";
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
@@ -53,7 +54,8 @@ export class MapComponent implements OnInit {
 
   private selectedMarker: L.Marker;
 
-  constructor(private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService) {
+  constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService) {
+    dataManager.setMap(this);
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
       Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
@@ -98,7 +100,7 @@ export class MapComponent implements OnInit {
     //   iconUrl: "/assets/marker-icon.png",
     //   shadowUrl: "/assets/marker-shadow.png"
     // });
-    
+
     // const iconRetinaUrl = '/assets/marker-icon-2x.png';
     // const iconUrl = '/assets/marker-icon.png';
     // const shadowUrl = '/assets/marker-shadow.png';
@@ -265,7 +267,7 @@ export class MapComponent implements OnInit {
         + "<br> Lat: " + site.lat + ", Lng: " + site.lng
         + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
         + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
-        
+
         //console.log(site.location);
         let marker = L.marker(site.location);
         //console.log(marker);

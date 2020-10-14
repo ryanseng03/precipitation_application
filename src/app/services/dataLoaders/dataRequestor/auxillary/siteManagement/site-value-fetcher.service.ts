@@ -89,16 +89,18 @@ export class SiteValueFetcherService {
         if(vals.length < 1) {
           resolve(null);
         }
-        let res = vals[0];
-        let data2map: IndexedValues = new Map<number, number>();
-        for(let index in res.value.data) {
-          let nIndex = Number(index);
-          data2map.set(nIndex, res.value.data[index]);
+        else {
+          let res = vals[0];
+          let data2map: IndexedValues = new Map<number, number>();
+          for(let index in res.value.data) {
+            let nIndex = Number(index);
+            data2map.set(nIndex, res.value.data[index]);
+          }
+          let bands: BandData = {
+            rainfall: data2map
+          };
+          resolve(bands);
         }
-        let bands: BandData = {
-          rainfall: data2map
-        };
-        resolve(bands);
       });
     });
   }
@@ -137,6 +139,7 @@ export class SiteValueFetcherService {
 
 
   getSiteValsDate(date: Moment.Moment): Promise<SiteValue[]> {
+    // console.log(date.toISOString());
 
 
     return new Promise((resolve, reject) => {
@@ -175,7 +178,7 @@ export class SiteValueFetcherService {
 
       //wrap data handler to lexically bind to this
       let wrappedResultHandler = (recent: any[]) => {
-        console.log(recent)
+        // console.log(recent)
         let siteData = [];
         let dates = new Set();
         for(let item of recent) {
@@ -183,8 +186,8 @@ export class SiteValueFetcherService {
           let siteValue: SiteValue = this.processor.processValueDocs(item.value);
           siteData.push(siteValue);
         }
-        console.log(dates);
-        console.log(siteData);
+        // console.log(dates);
+        // console.log(siteData);
 
         return siteData;//this.extractLastValues(recent)
       }

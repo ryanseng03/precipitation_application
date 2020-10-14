@@ -8,6 +8,7 @@ import Moment from 'moment';
 import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
 import {Dataset} from "../../models/dataset";
+import moment from 'moment';
 
 
 @Injectable({
@@ -27,7 +28,7 @@ export class DataManagerService {
   //provides initial data and verifies that initialization is complete
   private initPromise: Promise<void>;
 
-  private dataset = null;
+  private dataset: Dataset = null;
   //track and emit currently active data set
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
@@ -84,12 +85,26 @@ export class DataManagerService {
 
   //available movement 1 ahead of base granularity
   granularities = ["daily", "monthly", "yearly"];
-  cacheRange = [1, 3, 5];
+  granularityTranslation = {
+    daily: "days",
+    monthly: "months",
+    yearly: "years"
+  };
+
 
   private getRangeBreakdown(movementInfo: MovementVector): [number, string][] {
+    let cacheRange = [1, 3, 5];
+    //copy here so don't modify the original object if it was null
+    let magnitude = movementInfo.magnitude
     //if null magnitude (moved to a set date using map navigation), just use +/-3 baseGranularity/other granularity
-    if(movementInfo.magnitude == null) {
-
+    if(magnitude == null) {
+      //balance cache range in each direction if no directionality
+      cacheRange = [3, 3, 3];
+      //just set magnitude to a default value, all directions will be the same anyway
+      magnitude = {
+        direction: 1,
+        granularity: movementInfo.baseGranularity
+      }
     }
     let baseI = this.granularities.indexOf(movementInfo.baseGranularity);
     if(baseI < 0 || baseI >= this.granularities.length - 1) {
@@ -97,40 +112,46 @@ export class DataManagerService {
     }
     let info = {
       magnitude: {
-        same: movementInfo.magnitude,
-        opposite: -movementInfo.magnitude
+        same: magnitude.direction,
+        opposite: -magnitude.direction
       },
       granularity: {
-        same: movementInfo.granularityOfMagnitude,
-        opposite: movementInfo.baseGranularity == movementInfo.granularityOfMagnitude ? this.granularities[baseI + 1] : movementInfo.baseGranularity
+        same: this.granularityTranslation[magnitude.granularity],
+        opposite: movementInfo.baseGranularity == magnitude.granularity ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[movementInfo.baseGranularity]
       }
     }
     let toAdd: [number, string][] = [
-      [info.magnitude.same * this.cacheRange[2], info.granularity.same],
-      [info.magnitude.opposite * this.cacheRange[1], info.granularity.same],
-      [info.magnitude.same * this.cacheRange[1], info.granularity.opposite],
-      [info.magnitude.opposite * this.cacheRange[0], info.granularity.opposite]
+      [info.magnitude.same * cacheRange[2], info.granularity.same],
+      [info.magnitude.opposite * cacheRange[1], info.granularity.same],
+      [info.magnitude.same * cacheRange[1], info.granularity.opposite],
+      [info.magnitude.opposite * cacheRange[0], info.granularity.opposite]
     ]
 
     //list of add objects (magnitude, granularity)
     return toAdd;
   }
 
-  
+
   private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
     let breakdown = this.getRangeBreakdown(movementInfo);
-    let dateCopy = null;
+    let dateCopy: Moment.Moment = null;
     let range = [];
     for(let item of breakdown) {
       let v = Math.sign(item[0]);
       let lim = Math.abs(item[0]);
       //need to get magnitude!!!!
       for(let i = 1; i <= lim; i++) {
-        dateCopy = Moment(focus)
-        dateCopy.add(v * i, item[1]);
+        // console.log(focus.toISOString());
+        dateCopy = Moment(focus);
+        // console.log(item[1]);
+        dateCopy = dateCopy.add(v * i, <Moment.unitOfTime.DurationConstructor>item[1]);
+        // console.log(v, i, item[1], dateCopy.toISOString());
+        //verify not out of range
+
         range.push(dateCopy);
-      }    
+      }
     }
+    console.log(range);
     return range;
   }
 
@@ -166,77 +187,88 @@ export class DataManagerService {
   //     }
   //   });
   // }
+  private map: MapComponent;
+  setMap(map: MapComponent) {
+    this.map = map;
+  }
+  private loading: boolean;
+  setLoadingOnMap(loading: boolean) {
+    //only set loading once
+    if(this.loading != loading) {
+      this.loading = loading;
+      this.map.setLoad(loading);
+    }
+  }
 
 
-  //note init calls setFocusedData
-
-  
-
-  lastComplete: boolean = true;
-  focusDataRetreiver: CancellablePromise<InternalDataPack> = null;
-  getData(date: Moment.Moment, map: MapComponent, movementInfo: MovementVector, delay: number = 3000): void {
+  //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
+  focusDataRetreiverCanceller: (reason: string) => void = null;
+  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 3000): void {
+    console.log("called!", date.toISOString());
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
     if(this.throttle) {
       clearTimeout(this.throttle);
     }
-    if(!this.lastComplete) {
-      //don't care about previous data being loaded
-      map.setLoad(false);
-      //cancel the last data retrieval
-      this.focusDataRetreiver.cancel("A new set of data has been requested");
+    if(this.focusDataRetreiverCanceller) {
+      //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
+      this.focusDataRetreiverCanceller("Another date was focused before completion.");
     }
 
     //two different cases where this used (cache hit/miss), set as function
     let setFocusedDataRetreiverHandler = (dataRetreiver) => {
-      this.lastComplete = false;
-      this.focusDataRetreiver = new CancellablePromise((resolve, reject) => {
+      console.log("before");
+      let focusDataRetreiver = new Promise((resolve, reject) => {
+        console.log("focusdataretreiver started!!!");
+        this.focusDataRetreiverCanceller = reject;
+        console.log("here")
         //resolve after cached promise resolves to allow for cancellation
         dataRetreiver.then((data: InternalDataPack) => {
+          console.log("got focus data", data);
           resolve(data);
         });
       });
-      this.focusDataRetreiver.then((data: InternalDataPack) => {
-        //indicate this load completed to prevent multiple calls to map.setLoad(false)
-        this.lastComplete = true;
-        //set map loading to false (got data)
-        //note: should probably change this to a param thing
-        map.setLoad(false);
+      console.log("after");
+      focusDataRetreiver.then((data: InternalDataPack) => {
+        console.log("Got focus data!!!", data);
         //emit the data to the application
         this.setFocusedData(date, data);
+        //only runs if completed (not canceled)
+        this.setLoadingOnMap(false);
+
+        /////////
+        //dates//
+        /////////
+
+        //get additional dates to pull data for for cache
+        //seemed to have been causing a delay in focused date retreival even if cached, so just do additional cached dates after focused date completed
+        //slower cache but more responsive focus date, which is preferable
+        //STILL LOADING CACHE HITS SLOW?????????????????????
+        let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+        //cache the results for each date in cache set
+        for(let date of cacheDates) {
+          let cecheData = this.getDataPackRetreiver(date);
+          this.cache.set(date.toISOString(), cecheData);
+        }
       }, () => {/*cancelled*/});
     };
-
-    map.setLoad(true);
+    //if already loading won't set load again
+    this.setLoadingOnMap(true);
     let isoStr: string = date.toISOString();
     let dataRetreiver: Promise<InternalDataPack> = this.cache.get(isoStr);
-    //NO DONT WANT CACHED PROMISES TO BE CANCELLED BECAUSE CAN STILL BE USED BY OTHER QUERIES, NEED TO ADD A WRAPPER TO ONLY CANCEL HANDLER CODE
     //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
     if(dataRetreiver) {
+      console.log("cache hit!!");
       setFocusedDataRetreiverHandler(dataRetreiver);
     }
-    //set timeout regardless of initial cache hit to delay other cached dates
-    this.throttle = setTimeout(() => {
-      //cache missed, get focus date data
-      if(!dataRetreiver) {
-        dataRetreiver = this.getDataPackRetreiver(date);
-        this.cache.set(date.toISOString(), dataRetreiver);
-        setFocusedDataRetreiverHandler(dataRetreiver);
-      }
+    //cache missed, get focus date data
+    else {
+      this.throttle = setTimeout(() => {
+          dataRetreiver = this.getDataPackRetreiver(date);
+          this.cache.set(date.toISOString(), dataRetreiver);
+          setFocusedDataRetreiverHandler(dataRetreiver);
+      }, delay);
+    }
 
-      /////////
-      //dates//
-      /////////
-
-      //get additional dates to pull data for for cache
-      let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-      //
-      for(let date of cacheDates) {
-        let cecheData = this.getDataPackRetreiver(date);
-        this.cache.set(date.toISOString(), cecheData);
-      }
-      
-
-    }, delay);
 
   }
 
@@ -323,28 +355,28 @@ export class DataManagerService {
 
 
 
+//why is this so hard?
+// class CancellablePromise<T> extends Promise<T> {
+//   private static temp = null;
+//   private reject = null;
+//   constructor(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
+//     super(executor);
+//     console.log((<any>this).PromiseResolve);
+//     this.reject = CancellablePromise.temp;
+//   }
 
-class CancellablePromise<T> extends Promise<T> {
-  private reject = null;
-  constructor(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
-    super((resolve, reject) => {
-      this.reject = reject;
-      return executor(resolve, reject);
-    });
-  }
+//   public cancel(reason: string) {
+//     this.reject(reason);
+//   }
+// }
 
-  public cancel(reason: string) {
-    this.reject(reason);
-  }
-}
-
-interface MovementVector {
+export interface MovementVector {
   magnitude: {
     direction: 1 | -1,
     granularity: string
   } | null
   baseGranularity: string,
-  
+
 }
 
 //update as needed
