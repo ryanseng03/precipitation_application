@@ -239,16 +239,13 @@ export class DataManagerService {
         //dates//
         /////////
 
+        //NOTE THAT THIS LEAVES NO DELAY IF CACHE HIT RETURNS IMMEDIATELY!!! BAD BAD BAD
+
         //get additional dates to pull data for for cache
         //seemed to have been causing a delay in focused date retreival even if cached, so just do additional cached dates after focused date completed
         //slower cache but more responsive focus date, which is preferable
-        //STILL LOADING CACHE HITS SLOW?????????????????????
         let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-        //cache the results for each date in cache set
-        for(let date of cacheDates) {
-          let cecheData = this.getDataPackRetreiver(date);
-          this.cache.set(date.toISOString(), cecheData);
-        }
+        this.cacheDates(date, cacheDates);
       }, () => {/*cancelled*/});
     };
     //if already loading won't set load again
@@ -270,6 +267,35 @@ export class DataManagerService {
     }
 
 
+  }
+
+  //caches set of dates and clears old values from cache
+  //require focusDate to prevent clearing it from the cache
+  private cacheDates(focusDate: Moment.Moment, dates: Moment.Moment[]) {
+    let cachedDates = this.cache.keys();
+    //should be more efficient to delete things from a set than array
+    let cachedDatesSet = new Set(cachedDates);
+    //remove focus date
+    cachedDatesSet.delete(focusDate.toISOString());
+    console.log(cachedDatesSet);
+    for(let date of dates) {
+      let dateString = date.toISOString();
+      //already in cache, just delete from set so not cleared
+      if(cachedDatesSet.has(dateString)) {
+        console.log("hit!!!");
+        //remove from set, anything left over will be removed from cache
+        cachedDatesSet.delete(dateString);
+      }
+      //not in cache, need to retreive data
+      else {
+        let cacheData = this.getDataPackRetreiver(date);
+        this.cache.set(dateString, cacheData);
+      }
+    }
+    //remove old entries that weren't recached (anything still in cachedDatesSet)
+    cachedDatesSet.forEach((date: string) => {
+      this.cache.delete(date);
+    });
   }
 
 

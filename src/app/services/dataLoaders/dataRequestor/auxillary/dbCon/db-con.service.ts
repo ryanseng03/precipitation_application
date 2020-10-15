@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, merge, of } from 'rxjs';
-import { map, retry, catchError, mergeMap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpEvent, HttpResponse } from '@angular/common/http';
+import { Observable, merge, of, Subscription } from 'rxjs';
+import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -41,13 +41,14 @@ export class DbConService {
         headers: head
       };
 
-      let results = this.http.get<ResponseResults>(url, options)
+      let results = this.http.get(url, options)
       .pipe(
         retry(3),
+        take(1),
         catchError((e) => {
           return Observable.throw(e);
         })
-      ).toPromise().then((response: ResponseResults) => {
+      ).toPromise().then((response: any) => {
         return resultHandler(response.result);
       });
 
@@ -55,4 +56,51 @@ export class DbConService {
 
     });
   }
+}
+
+class CancellableRequest<T> {
+  resultSub: Subscription;
+  resultPromise: Promise<ResponseResults>;
+  resolver: (result: any) => void;
+  //interesting syntax (looks like this grabs the type of the prototype function given it's name as the index)
+  then: Promise<T>["then"];
+
+  constructor(url, options, resultHandler, http: HttpClient) {
+    this.resultPromise = new Promise((resolve, reject) => {
+      this.resolver = resolve;
+      let results = http.get(url, options)
+        .pipe(
+          retry(3),
+          take(1),
+          catchError((e) => {
+            return Observable.throw(e);
+          })
+        );
+        this.resultSub = results.subscribe((response: any) => {
+          let res = resultHandler(response.result);
+          resolve(res);
+        });
+      });
+
+
+
+    this.then = this.resultPromise.then((response: ResponseResults) => {
+      return resultHandler(response.result);
+    }).then;
+  }
+
+  toPromise() {
+    return this.resultPromise;
+  }
+
+  cancel(): void {
+    this.resolver(null);
+    this.resultSub.unsubscribe();
+  }
+
+
+}
+
+interface ResponseResults {
+  result: any
 }
