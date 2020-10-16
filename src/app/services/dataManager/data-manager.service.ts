@@ -3,7 +3,7 @@ import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus, Update
 import {Subject, Observable} from "rxjs";
 import {SiteMetadata, SiteValue, SiteInfo} from "../../models/SiteMetadata";
 import {DataLoaderService} from "../dataLoaders/localDataLoader/data-loader.service";
-import {DataRequestorService} from "../dataLoaders/dataRequestor/data-requestor.service";
+import {DataRequestorService, RequestResults} from "../dataLoaders/dataRequestor/data-requestor.service";
 import Moment from 'moment';
 import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
@@ -39,7 +39,9 @@ export class DataManagerService {
     //   primary: {},
     //   focusedData: null
     // };
-    this.header = dataRequestor.getRasterHeader();
+    this.header = dataRequestor.getRasterHeader().then((request: RequestResults) => {
+      return request.toPromise();
+    });
     // this.initPromise = this.initialize();
     //no delay for init data
     //this.getData(this.initDate, 0);
@@ -80,7 +82,7 @@ export class DataManagerService {
   initDate = Moment("2019-12-01T00:00:00.000Z");
   //only store 7 (focus +-3)
   //map by date string to ensure access proper
-  cache = new Map<string, Promise<InternalDataPack>>();
+  cache = new Map<string, CancellableQuery>();
   header: Promise<RasterHeader>;
 
   //available movement 1 ahead of base granularity
@@ -156,37 +158,54 @@ export class DataManagerService {
   }
 
   throttle = null;
-  private getDataPackRetreiver(date: Moment.Moment): Promise<InternalDataPack> {
+
+  // requestResults = {
+
+  // }
+  private getDataPackRetreiver(date: Moment.Moment): CancellableQuery {
+    let rasterCanceller: () => void = null;
+    let siteCanceller: () => void = null;
+    let canceller = () => {
+      if(rasterCanceller) {
+        rasterCanceller();
+      }
+      if(siteCanceller) {
+        siteCanceller();
+      }
+    }
+
     let dataPackRetreiver: Promise<InternalDataPack> = new Promise((resolve, reject) => {
       let dataPack: InternalDataPack = {
         bands: null,
         sites: null,
         metrics: null
       }
-      let rasterLoader = this.dataRequestor.getRastersDate(date);
-      let siteLoader = this.dataRequestor.getSiteValsDate(date);
 
+      let rasterLoader = this.dataRequestor.getRastersDate(date).then((request: RequestResults) => {
+        rasterCanceller = request.cancel.bind(request);
+        return request.toPromise();
+      });
+      let siteLoader = this.dataRequestor.getSiteValsDate(date).then((request: RequestResults) => {
+        siteCanceller = request.cancel.bind(request);
+        return request.toPromise();
+      });
+      //shouldn't have to worry about data bein
       Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
         dataPack.bands = data[0];
         dataPack.sites = data[1];
         resolve(dataPack);
       });
     });
-    return dataPackRetreiver;
+
+    let query: CancellableQuery = {
+      result: dataPackRetreiver,
+      cancel: canceller
+    }
+
+    return query;
   }
 
-  //header stuff part of dataRequestor
 
-  // private getRasterHeader(): Promise<RasterHeader> {
-  //   return new Promise((resolve, reject) => {
-  //     if(this.header) {
-  //       resolve(this.header);
-  //     }
-  //     else {
-  //       this.dataRequestor.
-  //     }
-  //   });
-  // }
   private map: MapComponent;
   setMap(map: MapComponent) {
     this.map = map;
@@ -215,7 +234,7 @@ export class DataManagerService {
     }
 
     //two different cases where this used (cache hit/miss), set as function
-    let setFocusedDataRetreiverHandler = (dataRetreiver) => {
+    let setFocusedDataRetreiverHandler = (dataRetreiver: Promise<InternalDataPack>) => {
       console.log("before");
       let focusDataRetreiver = new Promise((resolve, reject) => {
         console.log("focusdataretreiver started!!!");
@@ -229,7 +248,14 @@ export class DataManagerService {
       });
       console.log("after");
       focusDataRetreiver.then((data: InternalDataPack) => {
-        console.log("Got focus data!!!", data);
+        //bands or sites null if query cancelled, should never actually happen since theres no reason the focused data should be uncached (if moved focus then this should be cancelled and this code shouldn't run)
+        //catch just in case
+        if(data.bands == null || data.sites == null) {
+          //log error to console, and just dont set data, maybe can recover
+          console.error("Focused data query cancelled. This should never happen!");
+          return;
+        }
+        //console.log("Got focus data!!!", data);
         //emit the data to the application
         this.setFocusedData(date, data);
         //only runs if completed (not canceled)
@@ -251,18 +277,18 @@ export class DataManagerService {
     //if already loading won't set load again
     this.setLoadingOnMap(true);
     let isoStr: string = date.toISOString();
-    let dataRetreiver: Promise<InternalDataPack> = this.cache.get(isoStr);
+    let dataRetreiver: CancellableQuery = this.cache.get(isoStr);
     //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
     if(dataRetreiver) {
       console.log("cache hit!!");
-      setFocusedDataRetreiverHandler(dataRetreiver);
+      setFocusedDataRetreiverHandler(dataRetreiver.result);
     }
     //cache missed, get focus date data
     else {
       this.throttle = setTimeout(() => {
           dataRetreiver = this.getDataPackRetreiver(date);
           this.cache.set(date.toISOString(), dataRetreiver);
-          setFocusedDataRetreiverHandler(dataRetreiver);
+          setFocusedDataRetreiverHandler(dataRetreiver.result);
       }, delay);
     }
 
@@ -294,6 +320,8 @@ export class DataManagerService {
     }
     //remove old entries that weren't recached (anything still in cachedDatesSet)
     cachedDatesSet.forEach((date: string) => {
+      //cancel queries before deleting
+      this.cache.get(date).cancel();
       this.cache.delete(date);
     });
   }
@@ -395,6 +423,11 @@ export class DataManagerService {
 //     this.reject(reason);
 //   }
 // }
+
+interface CancellableQuery {
+  result: Promise<InternalDataPack>,
+  cancel: () => void
+}
 
 export interface MovementVector {
   magnitude: {

@@ -22,12 +22,13 @@ export class DbConService {
     });
   }
 
-  query<T>(query: string, resultHandler: (result: any) => T, offset: number = 0): Promise<T> {
+  //at some point may be cleaner to rework this a bit so don't have to wrap RequestResult in a promise, allow for RequestResult to be initialized before request initialized, then if cancelled before initialization just never execute the transfer (keep cancelled variable or something)
+  query(query: string, offset: number = 0): Promise<RequestResults> {
     interface ResponseResults {
       result: any
     }
 
-    return this.initPromise.then(() => {
+    let r =  this.initPromise.then(() => {
       let url = `https://agaveauth.its.hawaii.edu/search/v2/data?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
 
       if(url.length > DbConService.MAX_URI) {
@@ -41,34 +42,14 @@ export class DbConService {
         headers: head
       };
 
-      let results = this.http.get(url, options)
-      .pipe(
-        retry(3),
-        take(1),
-        catchError((e) => {
-          return Observable.throw(e);
-        })
-      ).toPromise().then((response: any) => {
-        return resultHandler(response.result);
-      });
+      let resultPromise = null;
+      let resultSub = null;
+      let resolver = null;
 
-      return results;
-
-    });
-  }
-}
-
-class CancellableRequest<T> {
-  resultSub: Subscription;
-  resultPromise: Promise<ResponseResults>;
-  resolver: (result: any) => void;
-  //interesting syntax (looks like this grabs the type of the prototype function given it's name as the index)
-  then: Promise<T>["then"];
-
-  constructor(url, options, resultHandler, http: HttpClient) {
-    this.resultPromise = new Promise((resolve, reject) => {
-      this.resolver = resolve;
-      let results = http.get(url, options)
+      resultPromise = new Promise((resolve, reject) => {
+        resolver = resolve;
+        console.log(this.http);
+        let results = this.http.get(url, options)
         .pipe(
           retry(3),
           take(1),
@@ -76,31 +57,96 @@ class CancellableRequest<T> {
             return Observable.throw(e);
           })
         );
-        this.resultSub = results.subscribe((response: any) => {
-          let res = resultHandler(response.result);
-          resolve(res);
+        resultSub = results.subscribe((response: any) => {
+          resolve(response);
         });
       });
 
+      // let results = this.http.get(url, options)
+      // .pipe(
+      //   retry(3),
+      //   take(1),
+      //   catchError((e) => {
+      //     return Observable.throw(e);
+      //   })
+      // ).toPromise().then((response: any) => {
+      //   return resultHandler(response.result);
+      // });
+
+      let request = new RequestResults(resultPromise, resolver, resultSub);
+      console.log(request);
+      return request;
+
+    });
+
+    console.log(r);
+
+    return r;
+  }
+}
+
+// class CancellableRequest {
+//   resultSub: Subscription;
+//   resultPromise: Promise<any>;
+//   resolver: (result: any) => void;
+//   //interesting syntax (looks like this grabs the type of the prototype function given it's name as the index)
+//   // then: Promise<any>["then"];
+
+//   //what is the tpye for options? just use any for now, not super important
+//   constructor(url: string, options: any, http: HttpClient) {
+//     console.log(http);
+//     this.resultPromise = new Promise((resolve, reject) => {
+//       this.resolver = resolve;
+//       console.log(http);
+//       let results = http.get(url, options)
+//         .pipe(
+//           retry(3),
+//           take(1),
+//           catchError((e) => {
+//             return Observable.throw(e);
+//           })
+//         );
+//         this.resultSub = results.subscribe((response: any) => {
+//           console.log(response);
+//           let res = response.result;
+//           resolve(res);
+//         });
+//       });
 
 
-    this.then = this.resultPromise.then((response: ResponseResults) => {
-      return resultHandler(response.result);
-    }).then;
+//     // //allow chaining of internal promise by setting internal promise to result of any then calls actually make modified method so have choice)
+//     // this.then = this.resultPromise.then;
+//   }
+
+//   toRequestResult(): RequestResults {
+//     return new RequestResults(this.resultPromise, this.resolver, this.resultSub);
+//   }
+
+
+// }
+
+export class RequestResults {
+  result: Promise<any>;
+  resultSub: Subscription;
+  resolver: (result: any) => void;
+
+  constructor(result: Promise<any>, resolver: (result: any) => void, resultSub: Subscription) {
+    this.result = result;
+    this.resultSub = resultSub;
+    this.resolver = resolver;
   }
 
-  toPromise() {
-    return this.resultPromise;
+  transform(onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any): RequestResults {
+    return new RequestResults(this.result.then(onfulfilled, onrejected), this.resolver, this.resultSub);
   }
 
   cancel(): void {
+    console.log(this);
     this.resolver(null);
     this.resultSub.unsubscribe();
   }
 
-
-}
-
-interface ResponseResults {
-  result: any
+  toPromise(): Promise<any> {
+    return this.result;
+  }
 }

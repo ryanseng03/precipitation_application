@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
-import { DbConService } from "../dbCon/db-con.service";
+import { DbConService, RequestResults } from "../dbCon/db-con.service";
 import { SiteMetadata } from "../../../../../models/SiteMetadata";
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 import { LatLng } from "leaflet";
 import dsconfig from "./DataSetConfig.json";
+
+export {RequestResults} from "../dbCon/db-con.service";
 
 @Injectable({
   providedIn: 'root'
@@ -33,7 +35,13 @@ export class MetadataStoreService {
       return metadata;
     }
 
-    this.siteMeta = dbcon.query<SKNRefMeta>(query, resultHandler);
+    this.siteMeta = dbcon.query(query).then((result: RequestResults) => {
+      return result.toPromise().then((response: any) => {
+        let siteMeta: SKNRefMeta = resultHandler(response.result);
+        console.log(siteMeta);
+        return siteMeta;
+      });
+    });
   }
 
   getMetaBySKN(skn: string): Promise<SiteMetadata> {

@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
-import {SiteValueFetcherService, DateRefValues} from "./auxillary/siteManagement/site-value-fetcher.service";
+import {SiteValueFetcherService, DateRefValues, RequestResults} from "./auxillary/siteManagement/site-value-fetcher.service";
 import {MetadataStoreService, SKNRefMeta} from "./auxillary/siteManagement/metadata-store.service";
 import { SiteValue, SiteMetadata, SiteInfo } from '../../../models/SiteMetadata';
 import Moment from "moment";
 import { RasterData, IndexedValues, BandData, RasterHeader } from '../../../models/RasterData';
+
+export {RequestResults} from "./auxillary/siteManagement/site-value-fetcher.service";
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
 //eventually also routes requests for remote raster data fetching
@@ -19,28 +21,28 @@ export class DataRequestorService {
   //need to be careful how you set up separation between site and raster data, need to keep date consistent
   //
 
-  getRasterHeader(): Promise<RasterHeader> {
+  getRasterHeader(): Promise<RequestResults> {
     return this.siteRetreiver.getRasterHeader();
   }
 
-  getSiteValsDate(date: Moment.Moment): Promise<SiteValue[]> {
+  getSiteValsDate(date: Moment.Moment): Promise<RequestResults> {
     return this.siteRetreiver.getSiteValsDate(date);
   }
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, gpl: string): Promise<SiteValue[]> {
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, gpl: string): Promise<RequestResults> {
     return this.siteRetreiver.getSiteTimeSeries(start, end, gpl);
   }
 
-  getRastersDate(date: Moment.Moment): Promise<BandData> {
+  getRastersDate(date: Moment.Moment): Promise<RequestResults> {
     return this.siteRetreiver.getRastersDate(date);
   }
 
-  //just return values, wait to combine with metadata references until needed to avoid excess storage
-  getInitSiteVals(): Promise<SiteValue[]> {
-    return this.siteRetreiver.getInitValues();
-  }
+  // //just return values, wait to combine with metadata references until needed to avoid excess storage
+  // getInitSiteVals(): Promise<SiteValue[]> {
+  //   return this.siteRetreiver.getInitValues();
+  // }
 
-  getSiteVals(start: string, end: string) {
+  getSiteVals(start: string, end: string): Promise<RequestResults> {
     return this.siteRetreiver.getValueRange(Moment(start), Moment(end));
   }
 
