@@ -48,7 +48,6 @@ export class DbConService {
 
       resultPromise = new Promise((resolve, reject) => {
         resolver = resolve;
-        console.log(this.http);
         let results = this.http.get(url, options)
         .pipe(
           retry(3),
@@ -74,12 +73,12 @@ export class DbConService {
       // });
 
       let request = new RequestResults(resultPromise, resolver, resultSub);
-      console.log(request);
+      //console.log(request);
       return request;
 
     });
 
-    console.log(r);
+    //console.log(r);
 
     return r;
   }
@@ -141,7 +140,6 @@ export class RequestResults {
   }
 
   cancel(): void {
-    console.log(this);
     this.resolver(null);
     this.resultSub.unsubscribe();
   }

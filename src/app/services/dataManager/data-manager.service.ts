@@ -133,7 +133,7 @@ export class DataManagerService {
     return toAdd;
   }
 
-
+  //LIMIT TO ONLY DATES IN DATE RANGE!!!
   private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
     let breakdown = this.getRangeBreakdown(movementInfo);
     let dateCopy: Moment.Moment = null;
@@ -182,10 +182,12 @@ export class DataManagerService {
       }
 
       let rasterLoader = this.dataRequestor.getRastersDate(date).then((request: RequestResults) => {
+        //saving function in isolation from lexical context strips this binding, so need to bind to parent object
         rasterCanceller = request.cancel.bind(request);
         return request.toPromise();
       });
       let siteLoader = this.dataRequestor.getSiteValsDate(date).then((request: RequestResults) => {
+        //saving function in isolation from lexical context strips this binding, so need to bind to parent object
         siteCanceller = request.cancel.bind(request);
         return request.toPromise();
       });
@@ -235,43 +237,26 @@ export class DataManagerService {
 
     //two different cases where this used (cache hit/miss), set as function
     let setFocusedDataRetreiverHandler = (dataRetreiver: Promise<InternalDataPack>) => {
-      console.log("before");
       let focusDataRetreiver = new Promise((resolve, reject) => {
-        console.log("focusdataretreiver started!!!");
         this.focusDataRetreiverCanceller = reject;
-        console.log("here")
         //resolve after cached promise resolves to allow for cancellation
         dataRetreiver.then((data: InternalDataPack) => {
           console.log("got focus data", data);
           resolve(data);
         });
       });
-      console.log("after");
       focusDataRetreiver.then((data: InternalDataPack) => {
         //bands or sites null if query cancelled, should never actually happen since theres no reason the focused data should be uncached (if moved focus then this should be cancelled and this code shouldn't run)
-        //catch just in case
         if(data.bands == null || data.sites == null) {
-          //log error to console, and just dont set data, maybe can recover
-          console.error("Focused data query cancelled. This should never happen!");
-          return;
+          //log error to console, and just dont set data, maybe can recover (will keep "loading" forever to indicate error)
+          console.error("Focused data set cancelled! This should never happen!");
         }
-        //console.log("Got focus data!!!", data);
-        //emit the data to the application
-        this.setFocusedData(date, data);
-        //only runs if completed (not canceled)
-        this.setLoadingOnMap(false);
-
-        /////////
-        //dates//
-        /////////
-
-        //NOTE THAT THIS LEAVES NO DELAY IF CACHE HIT RETURNS IMMEDIATELY!!! BAD BAD BAD
-
-        //get additional dates to pull data for for cache
-        //seemed to have been causing a delay in focused date retreival even if cached, so just do additional cached dates after focused date completed
-        //slower cache but more responsive focus date, which is preferable
-        let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-        this.cacheDates(date, cacheDates);
+        else {
+          //emit the data to the application
+          this.setFocusedData(date, data);
+          //only runs if completed (not canceled)
+          this.setLoadingOnMap(false);
+        }
       }, () => {/*cancelled*/});
     };
     //if already loading won't set load again
@@ -283,16 +268,29 @@ export class DataManagerService {
       console.log("cache hit!!");
       setFocusedDataRetreiverHandler(dataRetreiver.result);
     }
-    //cache missed, get focus date data
-    else {
-      this.throttle = setTimeout(() => {
-          dataRetreiver = this.getDataPackRetreiver(date);
-          this.cache.set(date.toISOString(), dataRetreiver);
-          setFocusedDataRetreiverHandler(dataRetreiver.result);
-      }, delay);
-    }
+    
+    //set timeout regardless of cache hit for cache data
+    this.throttle = setTimeout(() => {
+      //cache missed, get focus date data
+      if(!dataRetreiver) {
+        console.log("cache miss!");
+        dataRetreiver = this.getDataPackRetreiver(date);
+        this.cache.set(date.toISOString(), dataRetreiver);
+        setFocusedDataRetreiverHandler(dataRetreiver.result);
+      }
+
+      /////////
+      //dates//
+      /////////
 
 
+      //get additional dates to pull data for for cache
+      let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+      //cache data for new dates and clear old entries
+      this.cacheDates(date, cacheDates);
+        
+    }, delay);
+  
   }
 
   //caches set of dates and clears old values from cache
@@ -308,7 +306,7 @@ export class DataManagerService {
       let dateString = date.toISOString();
       //already in cache, just delete from set so not cleared
       if(cachedDatesSet.has(dateString)) {
-        console.log("hit!!!");
+        //console.log("hit!!!");
         //remove from set, anything left over will be removed from cache
         cachedDatesSet.delete(dateString);
       }

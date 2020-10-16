@@ -38,7 +38,7 @@ export class MetadataStoreService {
     this.siteMeta = dbcon.query(query).then((result: RequestResults) => {
       return result.toPromise().then((response: any) => {
         let siteMeta: SKNRefMeta = resultHandler(response.result);
-        console.log(siteMeta);
+        //console.log(siteMeta);
         return siteMeta;
       });
     });

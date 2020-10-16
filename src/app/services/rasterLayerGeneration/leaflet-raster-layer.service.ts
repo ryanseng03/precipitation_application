@@ -39,9 +39,9 @@ export class LeafletRasterLayerService {
         this.options.data.values = values;
         if(header != undefined) {
           this.options.data.header = header;
-          //need to clear empty tile cache if changing header
-          this.clearEmptyTileCache();
         }
+        //if empty data set (no data from query) the data positions will change, also just in case data indices shift for some reason
+        this.clearEmptyTileCache();
         this.redraw();
       },
 

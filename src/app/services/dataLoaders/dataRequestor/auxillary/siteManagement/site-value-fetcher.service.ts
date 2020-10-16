@@ -102,21 +102,28 @@ export class SiteValueFetcherService {
           return null;
         }
         let vals: any = response.result;
-        if(vals.length < 1) {
-          return null;
+        
+        //should get exactly one result, if got multiples just use first and log error
+        if(vals.length > 1) {
+          console.error(`Got multiple raster results for date ${date.format("DD-MM-YYYY")}`);
         }
-        else {
+
+        let data2map: IndexedValues = new Map<number, number>();
+        //if no results then just return empty mapping
+        if(vals.length >= 1) {
           let res = vals[0];
-          let data2map: IndexedValues = new Map<number, number>();
           for(let index in res.value.data) {
             let nIndex = Number(index);
             data2map.set(nIndex, res.value.data[index]);
           }
-          let bands: BandData = {
-            rainfall: data2map
-          };
-          return bands;
         }
+        else {
+          console.error(`Could not get raster data for date ${date.format("DD-MM-YYYY")}!`);
+        }
+        let bands: BandData = {
+          rainfall: data2map
+        };
+        return bands;
       });
     });
 
@@ -199,11 +206,11 @@ export class SiteValueFetcherService {
     //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
 
     //wrap data handler to lexically bind to this
-    let wrappedResultHandler = (recent: any[]) => {
+    let wrappedResultHandler = (vals: any[]) => {
       // console.log(recent)
       let siteData = [];
       let dates = new Set();
-      for(let item of recent) {
+      for(let item of vals) {
         dates.add(item.value.date);
         let siteValue: SiteValue = this.processor.processValueDocs(item.value);
         siteData.push(siteValue);
