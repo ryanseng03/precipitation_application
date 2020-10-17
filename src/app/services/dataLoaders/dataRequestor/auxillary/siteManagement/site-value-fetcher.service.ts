@@ -102,7 +102,7 @@ export class SiteValueFetcherService {
           return null;
         }
         let vals: any = response.result;
-        
+
         //should get exactly one result, if got multiples just use first and log error
         if(vals.length > 1) {
           console.error(`Got multiple raster results for date ${date.format("DD-MM-YYYY")}`);
@@ -131,11 +131,11 @@ export class SiteValueFetcherService {
   }
 
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, gpl: string): Promise<RequestResults> {
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): Promise<RequestResults> {
     let startS = start.format("YYYY-MM-DD");
     let endS = end.format("YYYY-MM-DD");
 
-    let query = `{'$and':[{'name':'station_vals'},{'value.date':{$gt:'${startS}'}},{'value.date':{$lt:'${endS}'}},{'value.gpl':${gpl}},{'value.version':'v1.2'}]}`;
+    let query = `{'$and':[{'name':'station_vals'},{'value.date':{$gt:'${startS}'}},{'value.date':{$lt:'${endS}'}},{'value.skn':'${skn}'},{'value.version':'v1.2'}]}`;
     //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
 
     //wrap data handler to lexically bind to this
@@ -148,8 +148,6 @@ export class SiteValueFetcherService {
         let siteValue: SiteValue = this.processor.processValueDocs(item.value);
         siteData.push(siteValue);
       }
-      console.log(dates);
-      console.log(siteData);
 
       return siteData;//this.extractLastValues(recent)
     }

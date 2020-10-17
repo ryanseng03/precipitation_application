@@ -3,7 +3,7 @@ import { ParameterStoreService, ParameterHook } from "./auxillary/parameter-stor
 import { Observable } from 'rxjs';
 import { FocusedData, DataType, Metrics } from "../../services/dataManager/data-manager.service";
 import { RasterData } from 'src/app/models/RasterData';
-import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import { Subject } from "rxjs";
 import { Dataset } from "../../models/dataset";
 
@@ -23,6 +23,7 @@ export class EventParamRegistrarService {
     endDate: "endDate",
     timestep: "timeGranularity",
     dataset: "submittedDataset",
+    selectedSiteTimeSeries: "selectedSiteTimeSeries"
   };
 
   //global handler aux events
@@ -38,6 +39,12 @@ export class EventParamRegistrarService {
   private _datasetSource = new Subject<Dataset>();
 
   private _focusedDataSource = new Subject<FocusedData>();
+
+  private _selectedSiteTimeSeriesSource = new Subject<SiteValue[]>();
+
+  pushSelectedSiteTimeSeries(seriesData: SiteValue[]) {
+    this._selectedSiteTimeSeriesSource.next(seriesData);
+  }
 
   pushSiteSelect(selectedSite: SiteInfo): void {
     this._siteSelectSource.next(selectedSite);
@@ -109,6 +116,9 @@ export class EventParamRegistrarService {
 
     let datasetTag = EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset;
 
+    let timeSeriesTag = EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries;
+
+    ////////////////////
 
     let rasterSub = this.paramService.registerParameter<RasterData>(rasterTag);
     let sitesSub = this.paramService.registerParameter<SiteInfo[]>(sitesTag);
@@ -124,6 +134,10 @@ export class EventParamRegistrarService {
 
     let datasetSub = this.paramService.registerParameter<Dataset>(datasetTag);
 
+    let timeSeriesSub = this.paramService.registerParameter<SiteValue[]>(timeSeriesTag);
+
+    ////////////////////
+
     let siteSelectObserver = this._siteSelectSource.asObservable();
     let filteredSiteObserver = this._filteredSiteSource.asObservable();
 
@@ -132,6 +146,9 @@ export class EventParamRegistrarService {
     let timestepObserver = this._timestepSource.asObservable();
     let focusedDataObserver = this._focusedDataSource.asObservable();
     let datasetObserver = this._datasetSource.asObservable();
+    let timeSeriesObserver = this._selectedSiteTimeSeriesSource.asObservable();
+
+    //////////////////////
 
     focusedDataObserver.subscribe((data: FocusedData) => {
       rasterSub.next(data.data.raster);
@@ -156,8 +173,12 @@ export class EventParamRegistrarService {
       timestepSub.next(data);
     });
 
-    datasetObserver.subscribe((data: any) => {
+    datasetObserver.subscribe((data: Dataset) => {
       datasetSub.next(data);
+    });
+
+    timeSeriesObserver.subscribe((data: SiteValue[]) => {
+      timeSeriesSub.next(data);
     });
 
   }

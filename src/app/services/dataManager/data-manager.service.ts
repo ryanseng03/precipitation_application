@@ -57,6 +57,12 @@ export class DataManagerService {
     });
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
+      let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, site.skn);
+      p.then((request: RequestResults) => {
+        request.toPromise().then((result: SiteValue[]) => {
+          paramService.pushSelectedSiteTimeSeries(result);
+        });
+      });
       this.updateStationTimeSeries()
     });
 
@@ -133,6 +139,7 @@ export class DataManagerService {
     return toAdd;
   }
 
+
   //LIMIT TO ONLY DATES IN DATE RANGE!!!
   private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
     let breakdown = this.getRangeBreakdown(movementInfo);
@@ -149,8 +156,9 @@ export class DataManagerService {
         dateCopy = dateCopy.add(v * i, <Moment.unitOfTime.DurationConstructor>item[1]);
         // console.log(v, i, item[1], dateCopy.toISOString());
         //verify not out of range
-
-        range.push(dateCopy);
+        if(dateCopy.isBetween(this.dataset.startDate, this.dataset.endDate, "day", "[]")) {
+          range.push(dateCopy);
+        }
       }
     }
     console.log(range);
@@ -268,7 +276,7 @@ export class DataManagerService {
       console.log("cache hit!!");
       setFocusedDataRetreiverHandler(dataRetreiver.result);
     }
-    
+
     //set timeout regardless of cache hit for cache data
     this.throttle = setTimeout(() => {
       //cache missed, get focus date data
@@ -288,9 +296,9 @@ export class DataManagerService {
       let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
       //cache data for new dates and clear old entries
       this.cacheDates(date, cacheDates);
-        
+
     }, delay);
-  
+
   }
 
   //caches set of dates and clears old values from cache

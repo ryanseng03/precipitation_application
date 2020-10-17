@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {EventParamRegistrarService} from "src/app/services/inputManager/event-param-registrar.service";
-import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import {trigger, state, style, animate, transition} from "@angular/animations";
 
 @Component({
@@ -27,7 +27,7 @@ export class SiteDataTableComponent implements OnInit {
   site: SiteInfo;
   siteIndex: string[];
 
-  testData;
+  focusedSiteValues: SiteValue[] = [];
 
   state = "collapsed";
   labelL = "Expand";
@@ -36,23 +36,17 @@ export class SiteDataTableComponent implements OnInit {
   constructor(private paramService: EventParamRegistrarService) {
     this.siteIndex = SiteInfo.getFields();
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
+      this.focusedSiteValues = [];
       this.site = site;
     });
 
-    this.createTestData();
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (siteValues: SiteValue[]) => {
+      console.log(siteValues);
+      this.focusedSiteValues = siteValues;
+    })
   }
 
-  createTestData() {
-    this.testData = [];
-    // let current = [];
-    // for(let i = 0; i < 200; i++) {
-    //   if(i % 2 == 0) {
-    //     current = [];
-    //     this.testData.push(current);
-    //   }
-    //   current.push(i.toString());
-    // }
-  }
+
 
   ngOnInit() {
   }

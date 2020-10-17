@@ -57,6 +57,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { MapControlsComponent } from './components/map-controls/map-controls.component';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 @NgModule({
   declarations: [
@@ -112,7 +113,8 @@ import { MapControlsComponent } from './components/map-controls/map-controls.com
     SelectAutocompleteModule,
     MatMenuModule,
     MatToolbarModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatProgressSpinnerModule
   ],
   providers: [],
   bootstrap: [AppComponent]

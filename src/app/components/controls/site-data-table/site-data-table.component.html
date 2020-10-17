@@ -9,7 +9,7 @@
       <td class="field-cell">{{field}}</td>
       <td>{{site[field]}}</td>
     </tr>
-  
+
     <tr>
       <th colspan="2" class="header">
         Rainfall Site Values
@@ -30,20 +30,27 @@
                   </th>
                 </tr>
             </thead>
+            <div *ngIf="focusedSiteValues.length == 0" class="loading">
+              <div class="loading-text">Loading Data</div>
+              <div class="loading-symbol"><mat-spinner [diameter]="50"></mat-spinner></div>
+            </div>
             <tbody>
-              <tr *ngFor="let test of testData">
-                <td *ngFor="let v of test">
-                  {{v}}
+              <tr *ngFor="let value of focusedSiteValues">
+                <td>
+                  {{value.date}}
+                </td>
+                <td>
+                  {{value.value}}mm
                 </td>
               </tr>
             </tbody>
-            
+
           </table>
         </div>
-          
+
       </td>
     </tr>
-  
+
     <tr (click)=changeState()>
       <th colspan="2" class="embeded-cell">
         <div class="selector">
@@ -54,9 +61,9 @@
           </div>
         </div>
       </th>
-  
+
     </tr>
-  
+
   </table>
 </div>
 

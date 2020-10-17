@@ -125,6 +125,7 @@ thead {
 }
 
 
+
 td {
     padding: 5px;
     font-size: 14px;
@@ -150,4 +151,21 @@ td {
 .field-cell {
     background: rgb(56, 117, 194);
     color: white;
+}
+
+.loading {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-text {
+  padding: 10px;
+  font-size: 20px;
+  display: inline-block;
+}
+
+.loading-symbol {
+  padding: 10px;
+  display: inline-block;
 }
