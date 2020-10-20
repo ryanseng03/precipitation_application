@@ -57,6 +57,12 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
       this.generateRowMap(rows);
     });
     this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
+      // if(site === null) {
+      //   if(this.selected !== undefined) {
+      //     this.selected.selected = false;
+      //   }
+      //   this.cdr.detectChanges();
+      // }
       let index = this.siteMap.get(site);
       //can unfiltered elements be selected? if so remove error and just ignore
       if(index === undefined) {

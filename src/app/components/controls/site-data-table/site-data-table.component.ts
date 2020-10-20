@@ -28,24 +28,43 @@ export class SiteDataTableComponent implements OnInit {
   siteIndex: string[];
 
   focusedSiteValues: SiteValue[] = [];
+  filteredFocusedSiteValues: SiteValue[] = [];
+  focusedMonth: string = "";
 
   state = "collapsed";
   labelL = "Expand";
   labelR = "\u25BE";
 
   constructor(private paramService: EventParamRegistrarService) {
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: string) => {
+      console.log(date);
+      this.focusedMonth = date.substring(0, 7);
+      this.setFocusedSiteFilter();
+    });
+
     this.siteIndex = SiteInfo.getFields();
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
       this.focusedSiteValues = [];
+      this.filteredFocusedSiteValues = [];
       this.site = site;
     });
 
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (siteValues: SiteValue[]) => {
-      console.log(siteValues);
+      //let dateFormat = /[0-9]{4}-([0-9]{2})-[0-9]{2}/;
+      //filter by current selected month
       this.focusedSiteValues = siteValues;
-    })
+      this.setFocusedSiteFilter();
+    });
   }
 
+  setFocusedSiteFilter() {
+    console.log(this.focusedMonth);
+    console.log(this.focusedSiteValues[0]);
+    this.filteredFocusedSiteValues = this.focusedSiteValues.filter((site: SiteValue) => {
+      let month = site.date.substring(0, 7);
+      return month == this.focusedMonth;
+    });
+  }
 
 
   ngOnInit() {

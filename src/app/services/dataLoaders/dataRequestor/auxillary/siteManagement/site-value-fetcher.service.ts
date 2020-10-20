@@ -141,13 +141,17 @@ export class SiteValueFetcherService {
     //wrap data handler to lexically bind to this
     let wrappedResultHandler = (recent: any[]) => {
       console.log(recent)
-      let siteData = [];
+      let siteData: SiteValue[] = [];
       let dates = new Set();
       for(let item of recent) {
         dates.add(item.value.date);
         let siteValue: SiteValue = this.processor.processValueDocs(item.value);
         siteData.push(siteValue);
       }
+      //sort by date
+      siteData.sort((a: SiteValue, b: SiteValue) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
 
       return siteData;//this.extractLastValues(recent)
     }
@@ -165,7 +169,7 @@ export class SiteValueFetcherService {
     });
   }
 
-
+  //for now everything by month, note that format will change if doing daily
   getSiteValsDate(date: Moment.Moment): Promise<RequestResults> {
     // console.log(date.toISOString());
 
@@ -198,9 +202,9 @@ export class SiteValueFetcherService {
     // date.date(month);
     // console.log(date.toISOString());
     //for now only daily, use simple format
-    let dayFormat = date.format("YYYY-MM-DD");
+    let formattedDate = date.format("YYYY-MM");
 
-    let query = `{'$and':[{'name':'station_vals'},{'value.date':{$eq:'${dayFormat}'}},{'value.version':'v1.2'}]}`;
+    let query = `{'$and':[{'name':'station_vals_month'},{'value.date':{$eq:'${formattedDate}'}},{'value.version':'v1.1'}]}`;
     //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
 
     //wrap data handler to lexically bind to this

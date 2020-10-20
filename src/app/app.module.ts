@@ -58,6 +58,11 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { MapControlsComponent } from './components/map-controls/map-controls.component';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import { RainfallGraphComponent } from './components/rainfall-graph/rainfall-graph.component';
+import { PlotlyModule } from 'angular-plotly.js';
+import * as PlotlyJS from 'plotly.js/dist/plotly.js';
+
+PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
   declarations: [
@@ -87,7 +92,8 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
     DataViewsComponent,
     FilterPipe,
     NavbarComponent,
-    MapControlsComponent
+    MapControlsComponent,
+    RainfallGraphComponent
   ],
   imports: [
     BrowserModule,
@@ -114,7 +120,8 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
     MatMenuModule,
     MatToolbarModule,
     MatCheckboxModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    PlotlyModule
   ],
   providers: [],
   bootstrap: [AppComponent]

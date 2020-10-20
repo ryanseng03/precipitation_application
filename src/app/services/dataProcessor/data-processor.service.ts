@@ -111,10 +111,11 @@ export class DataProcessorService {
     let value: SiteValue = null;
     //catch type error if doc.$date undefined
     try {
+      //round value to 2 digits
       let props = {
         date: doc.date,
         type: doc.datatype,
-        value: doc.value,
+        value: Math.round(doc.value * 100) / 100,
         skn: doc.skn
       }
       //validate properties not undefined

@@ -39,6 +39,7 @@ export class MapComponent implements OnInit {
   //private R: any = L;
 
   markers: L.Marker[];
+  markerClusterLayer: any;
 
   options: L.MapOptions
   // private drawnItems: L.FeatureGroup;
@@ -142,12 +143,18 @@ export class MapComponent implements OnInit {
 
   focusedBoundary = null
   focusSpatialExtent(extent: string) {
+    // if(this.markerClusterLayer) {
+    //   this.map.removeLayer(this.markerClusterLayer);
+    // }
     this.clearExtent();
     let bounds: L.LatLngBoundsExpression = this.extents[extent];
     this.map.flyToBounds(bounds);
     let boundary = L.rectangle(bounds, {weight: 2, fillOpacity: 0});
     boundary.addTo(this.map);
     this.focusedBoundary = boundary;
+    // if(this.markerClusterLayer) {
+    //   this.map.addLayer(this.markerClusterLayer);
+    // }
   }
 
   clearExtent() {
@@ -244,6 +251,7 @@ export class MapComponent implements OnInit {
 
     let markerMap: Map<SiteInfo, L.Marker> = new Map<SiteInfo, L.Marker>();
     let siteMarkers = R.markerClusterGroup(clusterOptions);
+    this.markerClusterLayer = siteMarkers;
     //generate parameter hooks to update visualizations
 
     //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
@@ -350,7 +358,7 @@ export class MapComponent implements OnInit {
           this.selectedMarker.closePopup();
         }
         this.map.panTo(site.location, {animate: true});
-        console.log(map.panTo);
+        //console.log(map.panTo);
         this.selectedMarker = marker;
         //popup sometimes still closes when moving mouse for some reason, but this helps some
         //moveend isn't always triggered when finished, so use this as a fallback

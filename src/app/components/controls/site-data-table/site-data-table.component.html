@@ -1,4 +1,4 @@
-<div *ngIf="site !== undefined" class="wrapper">
+<div *ngIf="site != undefined" class="wrapper">
   <table class="outer-table">
     <tr>
         <th colspan="2" class="header">
@@ -35,7 +35,7 @@
               <div class="loading-symbol"><mat-spinner [diameter]="50"></mat-spinner></div>
             </div>
             <tbody>
-              <tr *ngFor="let value of focusedSiteValues">
+              <tr *ngFor="let value of filteredFocusedSiteValues">
                 <td>
                   {{value.date}}
                 </td>

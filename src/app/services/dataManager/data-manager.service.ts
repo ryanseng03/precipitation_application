@@ -140,7 +140,6 @@ export class DataManagerService {
   }
 
 
-  //LIMIT TO ONLY DATES IN DATE RANGE!!!
   private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
     let breakdown = this.getRangeBreakdown(movementInfo);
     let dateCopy: Moment.Moment = null;
