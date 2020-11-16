@@ -38,7 +38,7 @@ export class MapComponent implements OnInit {
   };
   //private R: any = L;
 
-  markers: L.Marker[];
+  markers: L.CircleMarker[];
   markerClusterLayer: any;
 
   options: L.MapOptions
@@ -53,7 +53,10 @@ export class MapComponent implements OnInit {
 
   private layerLabelMap: TwoWayLabelMap;
 
-  private selectedMarker: L.Marker;
+  private selectedMarker: L.CircleMarker;
+
+  private oldZoom: number = 7;
+  private markerWeight: number = .2;
 
   constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService) {
     dataManager.setMap(this);
@@ -248,17 +251,35 @@ export class MapComponent implements OnInit {
       //chunkedLoading: true
     };
 
+    this.map.on("zoomend", () => {
+      let zoom = this.map.getZoom()
+      if(zoom < 10) {
+        let scale = this.map.getZoomScale(zoom, this.oldZoom);
+        this.oldZoom = zoom;
+        console.log(scale);
+        console.log(zoom);
+        this.markerWeight *= scale;
+        if(this.markers) {
+          for(let marker of this.markers) {
+            marker.setRadius(marker.getRadius() * scale);
+            marker.setStyle({weight: this.markerWeight});
+          }
+        }
+      }
 
-    let markerMap: Map<SiteInfo, L.Marker> = new Map<SiteInfo, L.Marker>();
-    let siteMarkers = R.markerClusterGroup(clusterOptions);
-    this.markerClusterLayer = siteMarkers;
+
+    })
+
+    let markerMap: Map<SiteInfo, L.CircleMarker> = new Map<SiteInfo, L.CircleMarker>();
+    //let siteMarkers = R.markerClusterGroup(clusterOptions);
+    //this.markerClusterLayer = siteMarkers;
     //generate parameter hooks to update visualizations
 
     //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
     let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
       this.active.data.sites = sites;
 
-      let markers: L.Marker[] = [];
+      let markers: L.CircleMarker[] = [];
 
       let markerLayer = L.layerGroup();
       sites.forEach((site: SiteInfo) => {
@@ -277,7 +298,13 @@ export class MapComponent implements OnInit {
         + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
 
         //console.log(site.location);
-        let marker = L.marker(site.location);
+        let radius = 5;
+        radius += site.value / 50;
+        // if(site.value > 1) {
+        //   radius += Math.log(site.value) / Math.log(1.5);
+        // }
+        radius /= this.map.getZoomScale(10, this.map.getZoom());
+        let marker = L.circleMarker(site.location, {radius: radius});
         //console.log(marker);
         //console.log(siteDetails);
         marker.bindPopup(siteDetails, { autoPan: false, autoClose: false});
@@ -292,15 +319,15 @@ export class MapComponent implements OnInit {
       });
 
       if(this.markers) {
-        siteMarkers.removeLayers(this.markers);
-        map.removeLayer(siteMarkers);
+        //siteMarkers.removeLayers(this.markers);
+        map.removeLayer(markerLayer);
       }
       this.markers = markers;
 
       //console.log(markers);
-      siteMarkers.addLayers(markers);
+      //siteMarkers.addLayers(markers);
       //console.log(siteMarkers);
-      map.addLayer(siteMarkers);
+      map.addLayer(markerLayer);
       //console.log(sites);
       //map.addLayer(markerLayer);
     });
@@ -351,31 +378,31 @@ export class MapComponent implements OnInit {
     });
 
     let selectedSiteHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      let marker: L.Marker = markerMap.get(site);
+      let marker: L.CircleMarker = markerMap.get(site);
 
-      siteMarkers.zoomToShowLayer(marker, () => {
-        if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
-          this.selectedMarker.closePopup();
+      //siteMarkers.zoomToShowLayer(marker, () => {
+      if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
+        this.selectedMarker.closePopup();
+      }
+      this.map.panTo(site.location, {animate: true});
+      //console.log(map.panTo);
+      this.selectedMarker = marker;
+      //popup sometimes still closes when moving mouse for some reason, but this helps some
+      //moveend isn't always triggered when finished, so use this as a fallback
+      setTimeout(() => {
+        if(marker.isPopupOpen && this.selectedMarker === marker) {
+          marker.openPopup();
         }
-        this.map.panTo(site.location, {animate: true});
-        //console.log(map.panTo);
-        this.selectedMarker = marker;
-        //popup sometimes still closes when moving mouse for some reason, but this helps some
-        //moveend isn't always triggered when finished, so use this as a fallback
-        setTimeout(() => {
-          if(marker.isPopupOpen && this.selectedMarker === marker) {
-            marker.openPopup();
-          }
-        }, 300);
-        //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
-        //think something about it already moving interferes with the popup repositioning
-        map.once("moveend", () => {
-          if(marker.isPopupOpen && this.selectedMarker === marker) {
-            marker.openPopup();
-          }
+      }, 300);
+      //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
+      //think something about it already moving interferes with the popup repositioning
+      map.once("moveend", () => {
+        if(marker.isPopupOpen && this.selectedMarker === marker) {
+          marker.openPopup();
+        }
 
-        })
-      });
+      })
+      //});
 
 
     });

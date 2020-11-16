@@ -184,6 +184,12 @@ export class EventParamRegistrarService {
   }
 
 
+  //feasible to create observer here? does it need to be stored outside?
+  registerNew(tag: string) {
+    let sub = this.paramService.registerParameter<RasterData>(tag);
+  }
+
+
 
 
   registerMapHover(map: L.Map) {
