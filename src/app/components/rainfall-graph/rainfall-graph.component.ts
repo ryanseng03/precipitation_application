@@ -25,7 +25,17 @@ export class RainfallGraphComponent implements OnInit {
     layout: {
       width: 900,
       height: 500,
-      title: 'Rainfall Site Data'
+      title: 'Rainfall Site Data',
+      xaxis: {
+        title: {
+          text: 'Date',
+        },
+      },
+      yaxis: {
+        title: {
+          text: 'Rainfall (mm)',
+        }
+      }
     }
   };
 

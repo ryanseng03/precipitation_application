@@ -13,7 +13,7 @@ import "leaflet-groupedlayercontrol";
 import { BandData, IndexedValues, RasterHeader, RasterData } from 'src/app/models/RasterData.js';
 import { SiteMetadata, SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
-import {first} from "rxjs/operators";
+import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
@@ -38,8 +38,8 @@ export class MapComponent implements OnInit {
   };
   //private R: any = L;
 
-  markers: L.CircleMarker[];
-  markerClusterLayer: any;
+  markerInfo: RainfallStationMarkerInfo;
+  // markerClusterLayer: any;
 
   options: L.MapOptions
   // private drawnItems: L.FeatureGroup;
@@ -55,8 +55,7 @@ export class MapComponent implements OnInit {
 
   private selectedMarker: L.CircleMarker;
 
-  private oldZoom: number = 7;
-  private markerWeight: number = .2;
+  
 
   constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService) {
     dataManager.setMap(this);
@@ -80,7 +79,7 @@ export class MapComponent implements OnInit {
       // zoomSnap: 0.01,
       // wheelPxPerZoomLevel: 200,
       minZoom: 6,
-      maxZoom: 20,
+      maxZoom: 18,
       maxBounds: this.extents.bounds
     };
 
@@ -138,6 +137,32 @@ export class MapComponent implements OnInit {
     });
   }
 
+  markerLimits = {
+    radius: {
+      min: 5,
+      max: 20
+    },
+    zoom: 10
+  };
+  zoomPivot = 10;
+  setMarkerData() {
+    let zoom = this.map.getZoom();
+    let scale = this.map.getZoomScale(this.markerInfo.oldZoom, zoom);
+    this.markerInfo.oldZoom = zoom;
+    let limitScale = this.map.getZoomScale(zoom, this.markerLimits.zoom);
+    let scaledRadiusMin = this.markerLimits.radius.min * limitScale;
+    let scaledRadiusMax = this.markerLimits.radius.max * limitScale;
+    if(zoom < this.zoomPivot) {
+      for(let marker of this.markerInfo.markers) {
+        
+        let radius = ;
+        marker.metadata.scaledRadius = 
+      }
+    }
+    else {
+
+    }
+  }
 
 
   invalidateSize() {
@@ -247,39 +272,56 @@ export class MapComponent implements OnInit {
     //   Types: {}
     // };
 
-    let clusterOptions = {
-      //chunkedLoading: true
-    };
-
+    // let clusterOptions = {
+    //   //chunkedLoading: true
+    // };
+    //provides minimum radius at a specific scale
+    let pivotZoom = 10;
+    let minRadiusInfo = [5, 10];
     this.map.on("zoomend", () => {
-      let zoom = this.map.getZoom()
-      if(zoom < 10) {
-        let scale = this.map.getZoomScale(zoom, this.oldZoom);
-        this.oldZoom = zoom;
-        console.log(scale);
-        console.log(zoom);
-        this.markerWeight *= scale;
-        if(this.markers) {
-          for(let marker of this.markers) {
-            marker.setRadius(marker.getRadius() * scale);
-            marker.setStyle({weight: this.markerWeight});
-          }
+      let zoom = this.map.getZoom();
+      console.log(zoom);
+      let scale = this.map.getZoomScale(zoom, this.markerInfo.oldZoom);
+      let minRadiusScale = this.map.getZoomScale(zoom, minRadiusInfo[1]);
+      let minRadius = minRadiusScale * minRadiusInfo[0]
+      this.markerInfo.oldZoom = zoom;
+      console.log(scale);
+      this.markerInfo.weight *= scale;
+      for(let marker of this.markerInfo.markers) {
+        let radius = marker.marker.getRadius();
+        let weight = this.markerInfo.weight;
+        let scaledRadius = marker.metadata.scaledRadius * scale;
+        if(zoom < pivotZoom) {
+          radius = Math.max(scaledRadius, minRadius);
         }
+        else {
+          let pivotScale = this.map.getZoomScale(zoom, pivotZoom)
+          radius *= pivotScale;
+          radius = Math.max(radius, minRadius);
+        }
+        marker.marker.setRadius(radius);
+        marker.marker.setStyle({weight: weight});
+        marker.metadata.scaledRadius = scaledRadius;
       }
-
-
-    })
+    });
 
     let markerMap: Map<SiteInfo, L.CircleMarker> = new Map<SiteInfo, L.CircleMarker>();
     //let siteMarkers = R.markerClusterGroup(clusterOptions);
     //this.markerClusterLayer = siteMarkers;
     //generate parameter hooks to update visualizations
 
+    this.markerInfo = {
+      markers: [],
+      layer: null,
+      oldZoom: 7,
+      weight: .2
+    }
+
     //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
     let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
       this.active.data.sites = sites;
 
-      let markers: L.CircleMarker[] = [];
+      let markers: RainfallStationMarker[] = [];
 
       let markerLayer = L.layerGroup();
       sites.forEach((site: SiteInfo) => {
@@ -314,15 +356,22 @@ export class MapComponent implements OnInit {
         markerMap.set(site, marker);
         //console.log(siteDetails);
         markerLayer.addLayer(marker);
-        markers.push(marker);
+        let stationMarker: RainfallStationMarker = {
+          marker: marker,
+          metadata: {
+            scaledRadius: radius,
+          }
+        }
+        this.markerInfo.markers.push(stationMarker)
 
       });
 
-      if(this.markers) {
+      this.markerInfo.markers = markers;
+      if(this.markerInfo.layer) {
         //siteMarkers.removeLayers(this.markers);
-        map.removeLayer(markerLayer);
+        map.removeLayer(this.markerInfo.layer);
       }
-      this.markers = markers;
+      this.markerInfo.layer = markerLayer;
 
       //console.log(markers);
       //siteMarkers.addLayers(markers);
@@ -525,6 +574,22 @@ export class MapComponent implements OnInit {
   }
 
 
+}
+
+interface RainfallStationMarkerInfo {
+  markers: RainfallStationMarker[],
+  layer: L.LayerGroup,
+  oldZoom: number,
+  weight: number
+}
+
+interface RainfallStationMarker {
+  marker: L.CircleMarker,
+  metadata: MarkerMetadata
+}
+
+interface MarkerMetadata {
+  scaledRadius: number
 }
 
 interface ActiveData {
