@@ -55,7 +55,7 @@ export class MapComponent implements OnInit {
 
   private selectedMarker: L.CircleMarker;
 
-  
+
 
   constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService) {
     dataManager.setMap(this);
@@ -137,32 +137,39 @@ export class MapComponent implements OnInit {
     });
   }
 
-  markerLimits = {
-    radius: {
-      min: 5,
-      max: 20
-    },
-    zoom: 10
-  };
-  zoomPivot = 10;
-  setMarkerData() {
-    let zoom = this.map.getZoom();
-    let scale = this.map.getZoomScale(this.markerInfo.oldZoom, zoom);
-    this.markerInfo.oldZoom = zoom;
-    let limitScale = this.map.getZoomScale(zoom, this.markerLimits.zoom);
-    let scaledRadiusMin = this.markerLimits.radius.min * limitScale;
-    let scaledRadiusMax = this.markerLimits.radius.max * limitScale;
-    if(zoom < this.zoomPivot) {
-      for(let marker of this.markerInfo.markers) {
-        
-        let radius = ;
-        marker.metadata.scaledRadius = 
-      }
-    }
-    else {
+  // markerLimits = {
+  //   radius: {
+  //     min: 5,
+  //     max: 20
+  //   },
+  //   zoom: 10
+  // };
+  // zoomPivot = 10;
+  // setMarkerData() {
+  //   let zoom = this.map.getZoom();
+  //   let scale = this.map.getZoomScale(this.markerInfo.oldZoom, zoom);
+  //   this.markerInfo.oldZoom = zoom;
+  //   let limitScale = this.map.getZoomScale(zoom, this.markerLimits.zoom);
+  //   let scaledRadiusMin = this.markerLimits.radius.min * limitScale;
+  //   let scaledRadiusMax = this.markerLimits.radius.max * limitScale;
+  //   if(zoom < this.zoomPivot) {
+  //     for(let marker of this.markerInfo.markers) {
+  //       marker.metadata.scaledRadius *= scale;
+  //       let radius = marker.metadata.scaledRadius;
+  //       marker.marker.setRadius(radius);
+  //       this.markerInfo.weight *= scale;
+  //       let weight = this.markerInfo.weight;
+  //       marker.marker.setStyle({weight: weight});
+  //     }
+  //   }
+  //   else {
+  //     for(let marker of this.markerInfo.markers) {
 
-    }
-  }
+  //       let radius = ;
+  //       marker.metadata.scaledRadius *= scale;
+  //     }
+  //   }
+  // }
 
 
   invalidateSize() {
@@ -235,6 +242,7 @@ export class MapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
+    this.initMarkerInfo();
 
     // setInterval(() => {
     //   map.invalidateSize();
@@ -279,104 +287,46 @@ export class MapComponent implements OnInit {
     let pivotZoom = 10;
     let minRadiusInfo = [5, 10];
     this.map.on("zoomend", () => {
-      let zoom = this.map.getZoom();
-      console.log(zoom);
-      let scale = this.map.getZoomScale(zoom, this.markerInfo.oldZoom);
-      let minRadiusScale = this.map.getZoomScale(zoom, minRadiusInfo[1]);
-      let minRadius = minRadiusScale * minRadiusInfo[0]
-      this.markerInfo.oldZoom = zoom;
-      console.log(scale);
-      this.markerInfo.weight *= scale;
-      for(let marker of this.markerInfo.markers) {
-        let radius = marker.marker.getRadius();
-        let weight = this.markerInfo.weight;
-        let scaledRadius = marker.metadata.scaledRadius * scale;
-        if(zoom < pivotZoom) {
-          radius = Math.max(scaledRadius, minRadius);
-        }
-        else {
-          let pivotScale = this.map.getZoomScale(zoom, pivotZoom)
-          radius *= pivotScale;
-          radius = Math.max(radius, minRadius);
-        }
-        marker.marker.setRadius(radius);
-        marker.marker.setStyle({weight: weight});
-        marker.metadata.scaledRadius = scaledRadius;
-      }
+      // let zoom = this.map.getZoom();
+      // console.log(zoom);
+      // let scale = this.map.getZoomScale(zoom, this.markerInfo.oldZoom);
+      // let minRadiusScale = this.map.getZoomScale(zoom, minRadiusInfo[1]);
+      // let minRadius = minRadiusScale * minRadiusInfo[0]
+      // this.markerInfo.oldZoom = zoom;
+      // console.log(scale);
+      // this.markerInfo.weight *= scale;
+      // for(let marker of this.markerInfo.markers) {
+      //   let radius = marker.marker.getRadius();
+      //   let weight = this.markerInfo.weight;
+      //   let scaledRadius = marker.metadata.scaledRadius * scale;
+      //   if(zoom < pivotZoom) {
+      //     radius = Math.max(scaledRadius, minRadius);
+      //   }
+      //   else {
+      //     let pivotScale = this.map.getZoomScale(zoom, pivotZoom)
+      //     radius *= pivotScale;
+      //     radius = Math.max(radius, minRadius);
+      //   }
+      //   marker.marker.setRadius(radius);
+      //   marker.marker.setStyle({weight: weight});
+      //   marker.metadata.scaledRadius = scaledRadius;
+      // }
+      this.updateMarkers();
     });
 
-    let markerMap: Map<SiteInfo, L.CircleMarker> = new Map<SiteInfo, L.CircleMarker>();
+    //let markerMap: Map<SiteInfo, L.CircleMarker> = new Map<SiteInfo, L.CircleMarker>();
     //let siteMarkers = R.markerClusterGroup(clusterOptions);
     //this.markerClusterLayer = siteMarkers;
     //generate parameter hooks to update visualizations
 
-    this.markerInfo = {
-      markers: [],
-      layer: null,
-      oldZoom: 7,
-      weight: .2
-    }
 
     //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
     let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
       this.active.data.sites = sites;
 
-      let markers: RainfallStationMarker[] = [];
+      /////!!!!>..
 
-      let markerLayer = L.layerGroup();
-      sites.forEach((site: SiteInfo) => {
-        // //troubleshooting markers not appearing
-        // if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
-        // || site.location.lng < this.options.maxBounds[0][1] || site.location.lng > this.options.maxBounds[1][1]) {
-        //   console.log("OOB!", site.location.lat, site.location.lng);
-        // }
-        //let polyMarker = L.circle([site.location.lat, site.location.lng], {radius: (site.value + 1) * 1000});
-        //polyMarkerLayer.addLayer(polyMarker);
-
-        let siteDetails: string = "Name: " + site.name
-        + "<br> Network: " + site.network
-        + "<br> Lat: " + site.lat + ", Lng: " + site.lng
-        + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
-        + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
-
-        //console.log(site.location);
-        let radius = 5;
-        radius += site.value / 50;
-        // if(site.value > 1) {
-        //   radius += Math.log(site.value) / Math.log(1.5);
-        // }
-        radius /= this.map.getZoomScale(10, this.map.getZoom());
-        let marker = L.circleMarker(site.location, {radius: radius});
-        //console.log(marker);
-        //console.log(siteDetails);
-        marker.bindPopup(siteDetails, { autoPan: false, autoClose: false});
-        marker.on("click", () => {
-          this.paramService.pushSiteSelect(site);
-        });
-        markerMap.set(site, marker);
-        //console.log(siteDetails);
-        markerLayer.addLayer(marker);
-        let stationMarker: RainfallStationMarker = {
-          marker: marker,
-          metadata: {
-            scaledRadius: radius,
-          }
-        }
-        this.markerInfo.markers.push(stationMarker)
-
-      });
-
-      this.markerInfo.markers = markers;
-      if(this.markerInfo.layer) {
-        //siteMarkers.removeLayers(this.markers);
-        map.removeLayer(this.markerInfo.layer);
-      }
-      this.markerInfo.layer = markerLayer;
-
-      //console.log(markers);
-      //siteMarkers.addLayers(markers);
-      //console.log(siteMarkers);
-      map.addLayer(markerLayer);
+      this.constructMarkerLayerPopulateMarkerData(sites);
       //console.log(sites);
       //map.addLayer(markerLayer);
     });
@@ -427,7 +377,7 @@ export class MapComponent implements OnInit {
     });
 
     let selectedSiteHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      let marker: L.CircleMarker = markerMap.get(site);
+      let marker: L.CircleMarker = this.markerInfo.markerMap.get(site);
 
       //siteMarkers.zoomToShowLayer(marker, () => {
       if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
@@ -574,13 +524,128 @@ export class MapComponent implements OnInit {
   }
 
 
+  initMarkerInfo() {
+    this.markerInfo = {
+      markers: [],
+      layer: null,
+      pivotZoom: 10,
+      weightToRadiusFactor: 0.05,
+      markerMap: new Map<SiteInfo, L.CircleMarker>()
+    }
+  }
+
+  constructMarkerLayerPopulateMarkerData(sites: SiteInfo[]): void {
+    let markers: RainfallStationMarker[] = [];
+    this.markerInfo.markerMap.clear();
+
+    let markerLayer = L.layerGroup();
+    sites.forEach((site: SiteInfo) => {
+      // //troubleshooting markers not appearing
+      // if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
+      // || site.location.lng < this.options.maxBounds[0][1] || site.location.lng > this.options.maxBounds[1][1]) {
+      //   console.log("OOB!", site.location.lat, site.location.lng);
+      // }
+      //let polyMarker = L.circle([site.location.lat, site.location.lng], {radius: (site.value + 1) * 1000});
+      //polyMarkerLayer.addLayer(polyMarker);
+      let radius = this.getMarkerRadiusAtPivot(site);
+
+      let marker = L.circleMarker(site.location, {radius: radius});
+
+      let siteDetails = this.getMarkerPopupText(site);
+      marker.bindPopup(siteDetails, { autoPan: false, autoClose: false});
+      marker.on("click", () => {
+        this.paramService.pushSiteSelect(site);
+      });
+      this.markerInfo.markerMap.set(site, marker);
+      //console.log(siteDetails);
+      markerLayer.addLayer(marker);
+      let stationMarker: RainfallStationMarker = {
+        marker: marker,
+        metadata: {
+          pivotRadius: radius
+        }
+      }
+      this.markerInfo.markers.push(stationMarker)
+
+    });
+
+    //adjust markers
+    this.updateMarkers();
+
+    this.markerInfo.markers = markers;
+
+    if(this.markerInfo.layer) {
+      //siteMarkers.removeLayers(this.markers);
+      this.map.removeLayer(this.markerInfo.layer);
+    }
+    this.markerInfo.layer = markerLayer;
+
+    //console.log(markers);
+    //siteMarkers.addLayers(markers);
+    //console.log(siteMarkers);
+    this.map.addLayer(markerLayer);
+  }
+
+  getMarkerPopupText(site: SiteInfo): string {
+    let siteDetails: string = "Name: " + site.name
+    + "<br> Network: " + site.network
+    + "<br> Lat: " + site.lat + ", Lng: " + site.lng
+    + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
+    + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
+    return siteDetails;
+  }
+
+  updateMarkers(): void {
+    let zoom = this.map.getZoom();
+    let markers = this.markerInfo.markers;
+    if(zoom < this.markerInfo.pivotZoom) {
+      for(let marker of markers) {
+        this.setScaledMarkerRadius(marker);
+        this.setMarkerWeight(marker);
+      }
+    }
+    else {
+      for(let marker of markers) {
+        this.setMarkerWeight(marker);
+      }
+    }
+  }
+
+
+  getMarkerRadiusAtPivot(site: SiteInfo): number {
+    let min = 5;
+    let max = 20;
+    let radius = site.value / 50;
+    radius = Math.max(radius, min);
+    radius = Math.min(radius, max);
+    return radius;
+    // if(site.value > 1) {
+    //   radius += Math.log(site.value) / Math.log(1.5);
+    // }
+
+  }
+
+  setScaledMarkerRadius(marker: RainfallStationMarker): void {
+    let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, this.map.getZoom());
+    let radius = marker.metadata.pivotRadius * scale;
+    marker.marker.setRadius(radius);
+  }
+  //for now just set boundaries on size at pivot, have radius not change if above pivot zoom
+
+  setMarkerWeight(marker: RainfallStationMarker): void {
+    //set weight to 5% of radius
+    let weight = marker.marker.getRadius() * this.markerInfo.weightToRadiusFactor;
+    marker.marker.setStyle({weight: weight});
+  }
 }
 
+//weight 5% radius?
 interface RainfallStationMarkerInfo {
   markers: RainfallStationMarker[],
   layer: L.LayerGroup,
-  oldZoom: number,
-  weight: number
+  pivotZoom: number,
+  weightToRadiusFactor: number,
+  markerMap: Map<SiteInfo, L.CircleMarker>
 }
 
 interface RainfallStationMarker {
@@ -588,8 +653,9 @@ interface RainfallStationMarker {
   metadata: MarkerMetadata
 }
 
+//scale everything from pivot radius to prevent rounding issues and reduce complexity
 interface MarkerMetadata {
-  scaledRadius: number
+  pivotRadius: number
 }
 
 interface ActiveData {
