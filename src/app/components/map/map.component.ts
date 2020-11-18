@@ -529,7 +529,7 @@ export class MapComponent implements OnInit {
       markers: [],
       layer: null,
       pivotZoom: 10,
-      weightToRadiusFactor: 0.05,
+      weightToRadiusFactor: 0.2,
       markerMap: new Map<SiteInfo, L.CircleMarker>()
     }
   }
@@ -549,7 +549,12 @@ export class MapComponent implements OnInit {
       //polyMarkerLayer.addLayer(polyMarker);
       let radius = this.getMarkerRadiusAtPivot(site);
 
-      let marker = L.circleMarker(site.location, {radius: radius});
+      let marker = L.circleMarker(site.location, {
+        opacity: 1,
+        fillOpacity: .5,
+        color: "black",
+        fillColor: "#175db6"
+      });
 
       let siteDetails = this.getMarkerPopupText(site);
       marker.bindPopup(siteDetails, { autoPan: false, autoClose: false});
@@ -565,14 +570,13 @@ export class MapComponent implements OnInit {
           pivotRadius: radius
         }
       }
-      this.markerInfo.markers.push(stationMarker)
-
+      markers.push(stationMarker);
     });
+
+    this.markerInfo.markers = markers;
 
     //adjust markers
     this.updateMarkers();
-
-    this.markerInfo.markers = markers;
 
     if(this.markerInfo.layer) {
       //siteMarkers.removeLayers(this.markers);
@@ -597,6 +601,7 @@ export class MapComponent implements OnInit {
 
   updateMarkers(): void {
     let zoom = this.map.getZoom();
+    console.log(zoom);
     let markers = this.markerInfo.markers;
     if(zoom < this.markerInfo.pivotZoom) {
       for(let marker of markers) {
@@ -606,6 +611,7 @@ export class MapComponent implements OnInit {
     }
     else {
       for(let marker of markers) {
+        this.setStaticMarkerRadius(marker);
         this.setMarkerWeight(marker);
       }
     }
@@ -614,9 +620,9 @@ export class MapComponent implements OnInit {
 
   getMarkerRadiusAtPivot(site: SiteInfo): number {
     let min = 5;
-    let max = 20;
-    let radius = site.value / 50;
-    radius = Math.max(radius, min);
+    let max = 30;
+    let radius = min + site.value / 75;
+    //radius = Math.max(radius, min);
     radius = Math.min(radius, max);
     return radius;
     // if(site.value > 1) {
@@ -625,16 +631,36 @@ export class MapComponent implements OnInit {
 
   }
 
+  setStaticMarkerRadius(marker: RainfallStationMarker) {
+    let zoom = this.map.getZoom();
+    let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, zoom);
+    let radius = marker.metadata.pivotRadius;
+    let scaledRadius = radius * scale;
+    //console.log(scaledRadius);
+    if(scaledRadius < 0.5) {
+      let minScaledRad = 0.5 * (1/scale);
+      marker.marker.setRadius(minScaledRad);
+    }
+    else {
+      marker.marker.setRadius(radius);
+    }
+  }
+
   setScaledMarkerRadius(marker: RainfallStationMarker): void {
-    let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, this.map.getZoom());
+    let scale = this.map.getZoomScale(this.map.getZoom(), this.markerInfo.pivotZoom);
+    //console.log(scale);
     let radius = marker.metadata.pivotRadius * scale;
+    //console.log(radius);
     marker.marker.setRadius(radius);
   }
   //for now just set boundaries on size at pivot, have radius not change if above pivot zoom
 
+  //should make this global, will look better if consistent
   setMarkerWeight(marker: RainfallStationMarker): void {
     //set weight to 5% of radius
     let weight = marker.marker.getRadius() * this.markerInfo.weightToRadiusFactor;
+    let max = 2;
+    weight = Math.min(weight, max);
     marker.marker.setStyle({weight: weight});
   }
 }
