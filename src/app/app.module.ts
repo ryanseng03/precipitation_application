@@ -61,6 +61,8 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import { RainfallGraphComponent } from './components/rainfall-graph/rainfall-graph.component';
 import { PlotlyModule } from 'angular-plotly.js';
 import * as PlotlyJS from 'plotly.js/dist/plotly.js';
+import { LeafletOpacitySliderComponent } from './components/leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
+import { LeafletColorScaleComponent } from './components/leaflet-controls/leaflet-color-scale/leaflet-color-scale.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -93,7 +95,9 @@ PlotlyModule.plotlyjs = PlotlyJS;
     FilterPipe,
     NavbarComponent,
     MapControlsComponent,
-    RainfallGraphComponent
+    RainfallGraphComponent,
+    LeafletOpacitySliderComponent,
+    LeafletColorScaleComponent
   ],
   imports: [
     BrowserModule,

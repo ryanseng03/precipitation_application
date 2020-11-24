@@ -15,9 +15,11 @@ import { SiteMetadata, SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
 import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
+import { LeafletOpacitySliderComponent } from '../leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
+let CC: any = L.Control;
 
 @Component({
   selector: 'app-map',
@@ -26,7 +28,8 @@ let C: any = L.control;
 })
 export class MapComponent implements OnInit {
 
-  @ViewChild("map") mapElement: ElementRef;
+  @ViewChild("mapElement") mapElement: ElementRef;
+  @ViewChild("layerController") layerController: LeafletOpacitySliderComponent;
 
   readonly extents: {[county: string]: L.LatLngBoundsExpression} = {
     ka: [ [ 21.819, -159.816 ], [ 22.269, -159.25125 ] ],
@@ -39,12 +42,14 @@ export class MapComponent implements OnInit {
   //private R: any = L;
 
   markerInfo: RainfallStationMarkerInfo;
+
+  colorScheme: ColorScale;
   // markerClusterLayer: any;
 
   options: L.MapOptions
   // private drawnItems: L.FeatureGroup;
   // private drawOptions: any;
-  private map: L.Map;
+  map: L.Map;
   private baseLayers: any;
   private active: ActiveData;
   private dataLayers: {
@@ -198,19 +203,24 @@ export class MapComponent implements OnInit {
     }
   }
 
-
+  //apparently you can't get opacity from the layer???
+  //0.75 default opacity
+  opacity: number = 0.75;
   setOpacity(opacity: number) {
     let layer: L.GridLayer = this.dataLayers[this.active.band];
     if(layer) {
+      this.opacity = opacity;
       layer.setOpacity(opacity);
     }
+  }
+
+  getOpacity(): number {
+    return this.opacity;
   }
 
   layerReady(): boolean {
     return this.dataLayers[this.active.band] != undefined;
   }
-
-  rasterOptions: RasterOptions
 
   setColorScheme(scheme: string) {
     let layer: any = this.dataLayers[this.active.band];
@@ -227,8 +237,9 @@ export class MapComponent implements OnInit {
         }
       }
       layer.setColorScale(colorScheme);
+      this.colorScheme = colorScheme;
     }
-
+    
   }
 
   //spin seems to already have an internal counter, neat
@@ -242,6 +253,44 @@ export class MapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
+    this.active = {
+      data: {
+        sites: null,
+        raster: null,
+        date: null
+      },
+      band: "rainfall",
+    };
+
+    // CC.Watermark = CC.extend({
+    //     onAdd: function(map) {
+    //       let control = L.DomUtil.create('div');
+    //       control.innerHTML = '<mat-slider min="0" max="100" step="1" value="1"></mat-slider>';
+    //       //control.innerHTML = "<div style='width:10px;height:10px;background-color:white;'></div>";
+    //       control.style.width = "100px";
+    //       control.style.height = "100px";
+    //       control.style.backgroundColor = "red";
+    //       return control;
+    //     },
+    
+    //     onRemove: function(map) {
+    //         // Nothing to do here
+    //     }
+    // });
+    
+    // C.watermark = function(opts) {
+    //   return new CC.Watermark(opts);
+    // }
+    // setTimeout(() => {
+    //   console.log(map);
+    //   console.log(map._controlCorners);
+    //   new CC.Watermark({ position: 'bottomright' }).addTo(map);
+    // }, 2000);
+   
+
+
+
+
     this.initMarkerInfo();
 
     // setInterval(() => {
@@ -262,18 +311,11 @@ export class MapComponent implements OnInit {
 
     let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
     //let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
+    this.colorScheme = colorScale;
 
 
 
-
-    this.active = {
-      data: {
-        sites: null,
-        raster: null,
-        date: null
-      },
-      band: "rainfall",
-    };
+    
 
 
     // let layerGroups = {
@@ -324,15 +366,12 @@ export class MapComponent implements OnInit {
     let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
       this.active.data.sites = sites;
 
-      /////!!!!>..
-
       this.constructMarkerLayerPopulateMarkerData(sites);
-      //console.log(sites);
-      //map.addLayer(markerLayer);
     });
 
-    let lc = C.layers(this.baseLayers);
-    lc.addTo(map);
+    // let lc = C.layers(this.baseLayers);
+    // lc.addTo(map);
+    this.layerController.addLayers(this.baseLayers);
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
 
@@ -340,7 +379,7 @@ export class MapComponent implements OnInit {
       let bands = raster.getBands();
       let header = raster.getHeader();
       for(let band in bands) {
-        this.rasterOptions = {
+        let rasterOptions: RasterOptions = {
           cacheEmpty: true,
           colorScale: colorScale,
           data: {
@@ -348,15 +387,16 @@ export class MapComponent implements OnInit {
             values: bands[band]
           }
         };
-        let rasterLayer = R.gridLayer.RasterLayer(this.rasterOptions);
+        let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
         //layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
         this.dataLayers[band] = rasterLayer;
+        rasterLayer.setOpacity(this.opacity);
       }
       //add rainfall layer to map as default
       map.addLayer(this.dataLayers["rainfall"]);
 
       //for now at least only one layer, make sure to replace if multiple
-      lc.addOverlay(this.dataLayers["rainfall"], "Rainfall");
+      this.layerController.addOverlay(this.dataLayers["rainfall"], "Rainfall Map");
 
       //install hover handler (requires raster to be set to work)
       let hoverTag = this.paramService.registerMapHover(map);
@@ -447,11 +487,13 @@ export class MapComponent implements OnInit {
 
 
   setBaseLayerHandlers() {
-    this.map.on('overlayadd', (e: L.LayersControlEvent) => {
-      //set layer to type any
-      //let layer: any = e.layer;
-      this.active.band = e.name.toLowerCase();
-    });
+    //can use this if using multiple bands in the future, for now only one so don't worry about changing it (should always be 'rainfall')
+    //note that is using this you need to make the band overlays exclusive and ignore the rainfall station overlay
+    // this.map.on('overlayadd', (e: L.LayersControlEvent) => {
+    //   //set layer to type any
+    //   //let layer: any = e.layer;
+    //   this.active.band = e.name.toLowerCase();
+    // });
   }
 
 
@@ -482,7 +524,8 @@ export class MapComponent implements OnInit {
 
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
-
+        console.log(this.active);
+        console.log(data);
 
         let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
@@ -529,7 +572,8 @@ export class MapComponent implements OnInit {
       markers: [],
       layer: null,
       pivotZoom: 10,
-      weightToRadiusFactor: 0.2,
+      weightToMinRadiusFactor: 0.2,
+      minRadiusAtPivot: 0,
       markerMap: new Map<SiteInfo, L.CircleMarker>()
     }
   }
@@ -539,6 +583,7 @@ export class MapComponent implements OnInit {
     this.markerInfo.markerMap.clear();
 
     let markerLayer = L.layerGroup();
+    let minRadiusAtPivot = Number.POSITIVE_INFINITY;
     sites.forEach((site: SiteInfo) => {
       // //troubleshooting markers not appearing
       // if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
@@ -548,7 +593,9 @@ export class MapComponent implements OnInit {
       //let polyMarker = L.circle([site.location.lat, site.location.lng], {radius: (site.value + 1) * 1000});
       //polyMarkerLayer.addLayer(polyMarker);
       let radius = this.getMarkerRadiusAtPivot(site);
-
+      if(radius < minRadiusAtPivot) {
+        minRadiusAtPivot = radius;
+      }
       let marker = L.circleMarker(site.location, {
         opacity: 1,
         fillOpacity: .5,
@@ -572,6 +619,7 @@ export class MapComponent implements OnInit {
       }
       markers.push(stationMarker);
     });
+    this.markerInfo.minRadiusAtPivot = minRadiusAtPivot;
 
     this.markerInfo.markers = markers;
 
@@ -581,12 +629,14 @@ export class MapComponent implements OnInit {
     if(this.markerInfo.layer) {
       //siteMarkers.removeLayers(this.markers);
       this.map.removeLayer(this.markerInfo.layer);
+      this.layerController.removeLayer(this.markerInfo.layer);
     }
     this.markerInfo.layer = markerLayer;
 
     //console.log(markers);
     //siteMarkers.addLayers(markers);
     //console.log(siteMarkers);
+    this.layerController.addOverlay(markerLayer, "Rainfall Stations");
     this.map.addLayer(markerLayer);
   }
 
@@ -604,24 +654,36 @@ export class MapComponent implements OnInit {
     console.log(zoom);
     let markers = this.markerInfo.markers;
     if(zoom < this.markerInfo.pivotZoom) {
+      let weight = this.getWeightScaledRadius();
       for(let marker of markers) {
         this.setScaledMarkerRadius(marker);
-        this.setMarkerWeight(marker);
+        marker.marker.setStyle({weight: weight});
       }
     }
     else {
+      let weight = this.getWeightStaticRadius();
       for(let marker of markers) {
         this.setStaticMarkerRadius(marker);
-        this.setMarkerWeight(marker);
+        marker.marker.setStyle({weight: weight});
       }
     }
   }
 
+  getWeightStaticRadius(): number {
+    let radius = this.getStaticRadius(this.markerInfo.minRadiusAtPivot);
+    let weight = this.markerInfo.weightToMinRadiusFactor * radius;
+    return weight;
+  }
+  getWeightScaledRadius(): number {
+    let radius = this.getScaledRadius(this.markerInfo.minRadiusAtPivot);
+    let weight = this.markerInfo.weightToMinRadiusFactor * radius;
+    return weight;
+  }
 
   getMarkerRadiusAtPivot(site: SiteInfo): number {
     let min = 5;
     let max = 30;
-    let radius = min + site.value / 75;
+    let radius = min + site.value / 50;
     //radius = Math.max(radius, min);
     radius = Math.min(radius, max);
     return radius;
@@ -634,34 +696,47 @@ export class MapComponent implements OnInit {
   setStaticMarkerRadius(marker: RainfallStationMarker) {
     let zoom = this.map.getZoom();
     let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, zoom);
-    let radius = marker.metadata.pivotRadius;
-    let scaledRadius = radius * scale;
-    //console.log(scaledRadius);
-    if(scaledRadius < 0.5) {
-      let minScaledRad = 0.5 * (1/scale);
-      marker.marker.setRadius(minScaledRad);
+    let radiusAtPivot = marker.metadata.pivotRadius;
+    let radius = this.getStaticRadius(radiusAtPivot);
+    marker.marker.setRadius(radius);
+  }
+  getStaticRadius(radiusAtPivot: number) {
+    let zoom = this.map.getZoom();
+    let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, zoom);
+    let scaledRadius = radiusAtPivot * scale;
+    let radius = 0;
+    //note this is diferent from marker info var with same name
+    let minRadiusAtPivot = 0.1
+    if(scaledRadius < minRadiusAtPivot) {
+      radius = minRadiusAtPivot / scale;
     }
     else {
-      marker.marker.setRadius(radius);
+      radius = radiusAtPivot;
     }
+    return radius;
   }
 
   setScaledMarkerRadius(marker: RainfallStationMarker): void {
-    let scale = this.map.getZoomScale(this.map.getZoom(), this.markerInfo.pivotZoom);
-    //console.log(scale);
-    let radius = marker.metadata.pivotRadius * scale;
+    let radius = this.getScaledRadius(marker.metadata.pivotRadius);
     //console.log(radius);
     marker.marker.setRadius(radius);
   }
+  getScaledRadius(radiusAtPivot: number): number {
+    let scale = this.map.getZoomScale(this.map.getZoom(), this.markerInfo.pivotZoom);
+    //console.log(scale);
+    let radius = radiusAtPivot * scale;
+    return radius;
+  }
+
   //for now just set boundaries on size at pivot, have radius not change if above pivot zoom
 
   //should make this global, will look better if consistent
   setMarkerWeight(marker: RainfallStationMarker): void {
     //set weight to 5% of radius
-    let weight = marker.marker.getRadius() * this.markerInfo.weightToRadiusFactor;
+    let weight = marker.marker.getRadius() * this.markerInfo.weightToMinRadiusFactor;
     let max = 2;
     weight = Math.min(weight, max);
-    marker.marker.setStyle({weight: weight});
+    marker.marker.setStyle({weight: 1});
   }
 }
 
@@ -670,7 +745,8 @@ interface RainfallStationMarkerInfo {
   markers: RainfallStationMarker[],
   layer: L.LayerGroup,
   pivotZoom: number,
-  weightToRadiusFactor: number,
+  weightToMinRadiusFactor: number,
+  minRadiusAtPivot: number,
   markerMap: Map<SiteInfo, L.CircleMarker>
 }
 
@@ -722,4 +798,9 @@ class TwoWayLabelMap {
   getName(label: string) {
     return this.labelToNameMap[label];
   }
+
 }
+
+
+
+

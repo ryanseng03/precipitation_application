@@ -26,7 +26,11 @@ export interface Color {
       let value: number;
       let i: number;
       for(i = 0, value = 0; i < numColors; i++, value += interval) {
-        this.colors.push(colorFunct(value));
+        let color = colorFunct(value);
+        for(let channel in color) {
+          color[channel] = Math.round(color[channel]);
+        }
+        this.colors.push(color);
       }
     }
   
@@ -57,6 +61,24 @@ export interface Color {
       let color = this.colors[index];
   
       return color;
+    }
+
+    getRange(): [number, number] {
+      return this.range;
+    }
+
+    getColors(): Color[] {
+      return this.colors;
+    }
+
+    getColorsHex(): string[] {
+      return this.colors.map((color: Color) => {
+        let r = color.r.toString(16).padStart(2, "0");
+        let g = color.g.toString(16).padStart(2, "0");
+        let b = color.b.toString(16).padStart(2, "0");
+        let cstring = `#${r}${g}${b}`;
+        return cstring;
+      });
     }
   }
   

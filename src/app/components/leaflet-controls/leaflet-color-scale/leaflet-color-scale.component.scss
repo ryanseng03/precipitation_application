@@ -1,0 +1,51 @@
+#legend {
+    width: 80px;
+    border-radius: 10px;
+    background-color: rgba($color: #FFFFFF, $alpha: 0.75);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.title-container {
+    height: 40px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.unit-container {
+    height: 30px;
+    font-size: 11px;
+}
+
+.scale-container {
+    display: flex;
+    // background-color: purple;
+    width: 100%;
+    height: 137px;
+    padding-left: 10px;
+}
+
+.numeric-markers {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-left: 0px;
+}
+
+.tick-marks {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 2px;
+}
+
+.colors {
+    width: 25px;
+    height: 120px;
+}
+
+.label-buffer {
+    display: flex;
+    align-items: center;
+}

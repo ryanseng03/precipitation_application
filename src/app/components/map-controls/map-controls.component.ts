@@ -30,4 +30,8 @@ export class MapControlsComponent implements OnInit {
     this.map.setOpacity(event.value);
   }
 
+  getOpacity() {
+    return this.map.getOpacity();
+  }
+
 }

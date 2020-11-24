@@ -1,4 +1,15 @@
-<div #map leaflet class="map"
+<div #mapElement leaflet class="map"
     [leafletOptions]="options"
     (leafletMapReady)="onMapReady($event)">
 </div>
+<app-leaflet-opacity-slider #layerController
+    [map]="map"
+    (opacity)="setOpacity($event)"
+    (colorScheme)="setColorScheme($event)"
+    [mapGetOpacity]="getOpacity.bind(this)"
+    [mapLayerReady]="layerReady.bind(this)"
+></app-leaflet-opacity-slider>
+<app-leaflet-color-scale
+    [map]="map"
+    [colorScale]="colorScheme"
+></app-leaflet-color-scale>
