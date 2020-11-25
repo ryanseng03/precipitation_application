@@ -79,7 +79,7 @@ export class MapComponent implements OnInit {
     this.options = {
       layers: this.baseLayers.Satellite,
       zoom: 7,
-      center: L.latLng(20.5, -157.917480),
+      center: L.latLng(20.559, -157.242),
       attributionControl: false,
       // zoomSnap: 0.01,
       // wheelPxPerZoomLevel: 200,
@@ -239,7 +239,7 @@ export class MapComponent implements OnInit {
       layer.setColorScale(colorScheme);
       this.colorScheme = colorScheme;
     }
-    
+
   }
 
   //spin seems to already have an internal counter, neat
@@ -272,12 +272,12 @@ export class MapComponent implements OnInit {
     //       control.style.backgroundColor = "red";
     //       return control;
     //     },
-    
+
     //     onRemove: function(map) {
     //         // Nothing to do here
     //     }
     // });
-    
+
     // C.watermark = function(opts) {
     //   return new CC.Watermark(opts);
     // }
@@ -286,7 +286,7 @@ export class MapComponent implements OnInit {
     //   console.log(map._controlCorners);
     //   new CC.Watermark({ position: 'bottomright' }).addTo(map);
     // }, 2000);
-   
+
 
 
 
@@ -315,7 +315,7 @@ export class MapComponent implements OnInit {
 
 
 
-    
+
 
 
     // let layerGroups = {
