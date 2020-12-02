@@ -27,7 +27,7 @@ export class LeafletOpacitySliderComponent implements OnInit {
   //
   @Input() set map(map: Map) {
     if(map) {
-      console.log(map);
+      //console.log(map);
       this._map = map;
       let LayerControl = <any>Control.Layers.extend({
         onAdd: function() {
