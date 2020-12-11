@@ -29,8 +29,8 @@ export class DataRequestorService {
     return this.siteRetreiver.getSiteValsDate(date);
   }
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, gpl: string): Promise<RequestResults> {
-    return this.siteRetreiver.getSiteTimeSeries(start, end, gpl);
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): Promise<RequestResults> {
+    return this.siteRetreiver.getSiteTimeSeries(start, end, skn);
   }
 
   getRastersDate(date: Moment.Moment): Promise<RequestResults> {
