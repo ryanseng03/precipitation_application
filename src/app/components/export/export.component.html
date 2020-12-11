@@ -3,11 +3,11 @@
     <div class="form-component">
       <mat-form-field>
         <mat-label>
-          {{options.spatialExtent.name}}
+          {{controls.spatialExtent.name}}
         </mat-label>
         <mat-select disableOptionCentering
-          [formControl]="options.spatialExtent.control">
-          <ng-container *ngFor="let selector of options.spatialExtent.values">
+          [formControl]="controls.spatialExtent.control">
+          <ng-container *ngFor="let selector of controls.spatialExtent.values">
             <mat-option [value]="selector.value">{{selector.display}}</mat-option>
           </ng-container>
 
@@ -16,30 +16,50 @@
     </div>
 
 
+    <h3>Select what you would like to download</h3>
 
+    <div required [formArrayName]="selectorGroup" [class.invalid]="!selectorGroup.valid">
+      <div *ngFor="let selector of controls.includeTypes.selectors">
+        <div class="form-component">
+          <mat-checkbox [formControl]="selector.control">
+            {{selector.label}}
+          </mat-checkbox>
+          <mat-icon class="info-icon" [inline]="true" [matTooltip]="selector.info">info</mat-icon>
+        </div>
+      </div>
+    </div>
+    
+
+    <!-- Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata   -->
 
     <div class="form-component">
-      <mat-checkbox [formControl]="options.includeRaster.control">
-        {{options.includeRaster.label}}
+      <mat-checkbox
+      [formControl]=""
+      [disabled]="true"
+      matTooltip="The download package is too large to be downloaded directly. Please enter an email address and a download link will be sent to you when ready."
+      [matTooltipDisabled]="false">
+        Send download package to email
       </mat-checkbox>
+      <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
     </div>
 
+    
+    <mat-form-field *ngIf="true" class="example-full-width">
+      <mat-label>Email Address</mat-label>
+      <input required type="email" matInput value="" [formControl]="email">
+    </mat-form-field>
 
-    <div class="form-component">
-      <mat-checkbox [formControl]="options.includeStations.control">
-        {{options.includeStations.label}}
-      </mat-checkbox>
-    </div>
+
 
 
     <div class="form-component">
       <mat-form-field>
         <mat-label>
-          {{options.timePeriod.name}}
+          {{controls.timePeriod.name}}
         </mat-label>
         <mat-select disableOptionCentering
-          [formControl]="options.timePeriod.control">
-          <ng-container *ngFor="let selector of options.timePeriod.values">
+          [formControl]="controls.timePeriod.control">
+          <ng-container *ngFor="let selector of controls.timePeriod.values">
             <mat-option [value]="selector.value">{{selector.display}}</mat-option>
           </ng-container>
 
@@ -48,7 +68,7 @@
     </div>
 
     <div class="submit-button-container">
-      <button [disabled]="!valid" mat-raised-button type="submit" color="accent">Export</button>
+      <button [disabled]="exportForm.invalid" mat-raised-button type="submit" color="accent">Export</button>
     </div>
   </form>
 </div>
