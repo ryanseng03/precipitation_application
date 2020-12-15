@@ -15,43 +15,6 @@
       </mat-form-field>
     </div>
 
-
-    <h3>Select what you would like to download</h3>
-
-    <div required [formArrayName]="selectorGroup" [class.invalid]="!selectorGroup.valid">
-      <div *ngFor="let selector of controls.includeTypes.selectors">
-        <div class="form-component">
-          <mat-checkbox [formControl]="selector.control">
-            {{selector.label}}
-          </mat-checkbox>
-          <mat-icon class="info-icon" [inline]="true" [matTooltip]="selector.info">info</mat-icon>
-        </div>
-      </div>
-    </div>
-    
-
-    <!-- Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata   -->
-
-    <div class="form-component">
-      <mat-checkbox
-      [formControl]=""
-      [disabled]="true"
-      matTooltip="The download package is too large to be downloaded directly. Please enter an email address and a download link will be sent to you when ready."
-      [matTooltipDisabled]="false">
-        Send download package to email
-      </mat-checkbox>
-      <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
-    </div>
-
-    
-    <mat-form-field *ngIf="true" class="example-full-width">
-      <mat-label>Email Address</mat-label>
-      <input required type="email" matInput value="" [formControl]="email">
-    </mat-form-field>
-
-
-
-
     <div class="form-component">
       <mat-form-field>
         <mat-label>
@@ -66,6 +29,58 @@
         </mat-select>
       </mat-form-field>
     </div>
+
+
+    <h4 [ngClass]="{'error': !controls.includeTypes.control.valid}">Select what you would like to download *</h4>
+
+    <div class="form-component">
+      <mat-checkbox [formControl]="controls.selectAll.control">
+        {{controls.selectAll.label}}
+      </mat-checkbox>
+    </div>
+
+
+    <div [formArrayName]="controls.includeTypes.control">
+      <div *ngFor="let selector of controls.includeTypes.selectors">
+        <div class="form-component">
+          <mat-checkbox [formControl]="selector.control">
+            {{selector.label}}
+          </mat-checkbox>
+          <mat-icon class="info-icon" [inline]="true" [matTooltip]="selector.info">info</mat-icon>
+        </div>
+      </div>
+      <mat-error *ngIf="!controls.includeTypes.control.valid">Please select at least one item to export.</mat-error>
+    </div>
+    
+
+    <!-- Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata   -->
+
+    <div class="spacer"></div>
+
+    <div class="form-component">
+      <mat-checkbox
+        [formControl]="controls.useEmail.control"
+        matTooltip="The download package is too large to be downloaded directly. Please enter an email address and a download link will be sent to you when ready."
+        [matTooltipDisabled]="!controls.useEmail.control.disabled">
+        Send download package to email
+      </mat-checkbox>
+      <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
+    </div>
+
+    
+    <mat-form-field *ngIf="controls.useEmail.control.value" class="example-full-width">
+      <mat-label>Email Address</mat-label>
+      <input required matInput [formControl]="controls.email.control">
+      <mat-error *ngIf="!controls.email.control.valid">Please enter a valid email address.</mat-error>
+    </mat-form-field>
+
+
+    <div class="spacer"></div>
+
+    <!-- <footer>* Required</footer>
+
+    <div class="spacer"></div> -->
+    
 
     <div class="submit-button-container">
       <button [disabled]="exportForm.invalid" mat-raised-button type="submit" color="accent">Export</button>

@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { FormControl, FormGroup, Validators, FormArray, AbstractControl } from '@angular/forms';
+import { FormControl, FormGroup, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MapComponent } from '../map/map.component';
+import { control } from 'leaflet';
 
 @Component({
   selector: 'app-export',
@@ -13,10 +14,6 @@ export class ExportComponent implements OnInit, OnDestroy {
 
   exportForm: FormGroup;
 
-  valid = true;
-
-  email = new FormControl("", [Validators.email]);
-  selectorGroup: FormArray;
 
   //will any of these things change based on type (i.e. not rainfall)?
   controls = {
@@ -54,6 +51,8 @@ export class ExportComponent implements OnInit, OnDestroy {
       default: "range"
     },
     includeTypes: {
+      debounce: false,
+      control: null,
       selectors: [
         {
           control: null,
@@ -92,38 +91,91 @@ export class ExportComponent implements OnInit, OnDestroy {
           info: ""
         }
       ]
+    },
+    selectAll: {
+      control: null,
+      label: "Select All",
+      debounce: false
+    },
+    useEmail: {
+      control: null,
+      saveValue: false
+    },
+    email: {
+      control: null
     }
   }
 
   //Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata
 
   constructor() {
+    this.controls.spatialExtent. control = new FormControl("st");
+    this.controls.timePeriod. control = new FormControl("range");
+    this.controls.email.control = new FormControl("", Validators.email);
+
+    let selectAllControl = new FormControl(true);
+    this.controls.selectAll.control = selectAllControl;
+    
+    this.controls.useEmail.control = new FormControl(false);
 
     let formGroup: {[field: string]: AbstractControl} = {};
-    let selectorGroup: FormControl[] = []; 
+    let selectorControls: FormControl[] = []; 
     
     for(let selector of this.controls.includeTypes.selectors) {
       let control = new FormControl(true);
-      selectorGroup.push(control);
+      selectorControls.push(control);
       selector.control = control;
     }
-    this.selectorGroup = new FormArray(selectorGroup);
-    formGroup["email"] = this.email;
-    formGroup["includeTypes"] = this.selectorGroup;
+    let selectorGroup = new FormArray(selectorControls, this.validateRequiredFormArr.bind(this))
+    this.controls.includeTypes.control = selectorGroup;
+
+
+    for(let label in this.controls) {
+      console.log(label, this.controls[label].control);
+      formGroup[label] = this.controls[label].control;
+    }
     this.exportForm = new FormGroup(formGroup);
+
+
+    selectorGroup.valueChanges.subscribe((values: boolean[]) => {
+      let allSelected = values.every(Boolean);
+      //only change if modified by user (debounce if changed as a result of other control changes)
+      if(!this.controls.includeTypes.debounce) { 
+        this.controls.selectAll.debounce = true;
+        selectAllControl.setValue(allSelected)
+      }
+      else {
+        this.controls.includeTypes.debounce = false;
+      }
+      this.controls.selectAll.label = allSelected ? "Deselect All" : "Select All";
+
+      this.checkSetRequireEmail();
+    });
+
+    //need to change what this does based on whats selected
+    selectAllControl.valueChanges.subscribe((value: boolean) => {
+      //only change if modified by user (debounce if changed as a result of other control changes)
+      if(!this.controls.selectAll.debounce) {
+        let len = this.controls.includeTypes.control.value.length;
+        let values = Array(len).fill(value);
+        this.controls.includeTypes.debounce = true;
+        this.controls.includeTypes.control.setValue(values);
+      }
+      else {
+        this.controls.selectAll.debounce = false;
+      }
+    });
   }
 
   ngOnInit() {
-    this.validateForm();
-    setTimeout(() => {
-      console.log(this.map);
-    }, 1000);
 
-    this.map.focusSpatialExtent("st");
+    this.map.focusSpatialExtent(this.controls.spatialExtent.control.value);
 
     this.controls.spatialExtent.control.valueChanges.subscribe((value: string) => {
       this.map.focusSpatialExtent(value);
     });
+
+    this.checkSetRequireEmail();
 
     // this.options.includeStations.control.valueChanges.subscribe((value: boolean) => {
     //   if(!this.options.includeRaster.control.value && !value) {
@@ -154,4 +206,54 @@ export class ExportComponent implements OnInit, OnDestroy {
     //send form data to service, generate package or create notification that the download package will be sent to email when ready
   }
 
+
+  //form validators/helpers
+  validateRequiredFormArr(group: FormArray): null | ValidationErrors {
+    return this.someSelected(group) ? null : {error: "At least one option must be selected."}
+  }
+
+  
+  someSelected(group: FormArray): boolean {
+    return group.value.some(Boolean);
+  }
+
+  allSelected(group: FormArray): boolean {
+    return group.value.every(Boolean);
+  }
+
+  checkSetRequireEmail() {
+    //TEMP FOR TESTING, CHANGE THIS TO CHECK IF EMAIL REQUIRED BASED ON PACKAGE SIZE
+    let requireEmail = false;
+    this.setRequireEmail(requireEmail);
+  }
+
+  //check if download package requires email
+  setRequireEmail(require: boolean) {
+    this.controls.useEmail.saveValue = this.controls.useEmail.control.value;
+    if(require) {
+      this.controls.useEmail.control.setValue(true);
+      this.controls.useEmail.control.disable();
+    }
+    else {
+      this.controls.useEmail.control.setValue(this.controls.useEmail.saveValue);
+      this.controls.useEmail.control.enable();
+    }
+
+  }
+
+  // //note these are for form arrays since doing type conversions with multitypes is weird and overloading doesn't work as necessary for this
+  // countSelected(group: FormArray): number {
+  //   let selected = 0;
+  //   for(let control of group.controls) {
+  //     if(control.value) {
+  //       selected++;
+  //     }
+  //   }
+  //   return selected;
+  // }
+
+
 }
+
+
+
