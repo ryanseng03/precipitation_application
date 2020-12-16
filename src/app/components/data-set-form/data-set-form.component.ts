@@ -12,10 +12,9 @@ import {Dataset, SetType, FillType} from "../../models/dataset";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataSetFormComponent implements OnInit, AfterViewInit {
-  //local tz for current date set (UTC for hardcoded dates)
 
 
-  //!!!SHOULD MAKE ALL DB TIME ZONES HST NORMALIZED TO UTC, THEN MAKE ALL DATES IN APP UTC BACKEND, LOCAL FOR USER (TAKE OUT Z AND REMOVE TIMEZONE SPEC)
+  //!!!SHOULD MAKE ALL TIME ZONES HST
 
 
   private static readonly GLOBAL_MAX = Moment();
@@ -147,11 +146,11 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
       this.dataset.fill = null
     }
     //this stuff is sketchy at best, should refactor form and types to align
-    else if(fill.includes("filled")) {
-      this.dataset.fill = "full";
-    }
     else if(fill.includes("partial")) {
       this.dataset.fill = "partial";
+    }
+    else if(fill.includes("filled")) {
+      this.dataset.fill = "full";
     }
     else {
       this.dataset.fill = "none";

@@ -1,7 +1,8 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MapComponent } from '../map/map.component';
-import { control } from 'leaflet';
+import {ExportUnimplementedComponent} from "../../dialogs/export-unimplemented/export-unimplemented.component";
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-export',
@@ -13,6 +14,8 @@ export class ExportComponent implements OnInit, OnDestroy {
   @Input() map: MapComponent;
 
   exportForm: FormGroup;
+
+  //WEIRD [OBJECT OBJECT] ERROR, ExpressionChangedAfterItHasBeenCheckedError ON CHECK EMAIL, AND NEED TO REMOVE EMAIL CONTROL FROM FORM VALIDATION WHEN NOT SELECTED
 
 
   //will any of these things change based on type (i.e. not rainfall)?
@@ -58,35 +61,35 @@ export class ExportComponent implements OnInit, OnDestroy {
           control: null,
           default: true,
           label: "Include Raster Data",
-          info: ""
+          info: "Continuous rainfall map for the selected spatial extent at 250m resolution. Provided as a GeoTIFF."
         },
         {
           control: null,
           default: true,
           label: "Include Station Data",
-          info: ""
+          info: "Metadata and values for the rainfall stations used to collect data"
         },
         {
           control: null,
-          default: true,
+          default: false,
           label: "Include Anomaly Map",
           info: "The ratio of the observed value to the mean monthly value at the same location"
         },
         {
           control: null,
-          default: true,
+          default: false,
           label: "Include Standard Error Map",
           info: ""
         },
         {
           control: null,
-          default: true,
+          default: false,
           label: "Include LOOCV Error Metrics",
           info: "Leave one out cross-validation metrics."
         },
         {
           control: null,
-          default: true,
+          default: false,
           label: "Include Metadata",
           info: ""
         }
@@ -108,7 +111,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 
   //Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata
 
-  constructor() {
+  constructor(public dialog: MatDialog) {
     this.controls.spatialExtent. control = new FormControl("st");
     this.controls.timePeriod. control = new FormControl("range");
     this.controls.email.control = new FormControl("", Validators.email);
@@ -122,7 +125,7 @@ export class ExportComponent implements OnInit, OnDestroy {
     let selectorControls: FormControl[] = []; 
     
     for(let selector of this.controls.includeTypes.selectors) {
-      let control = new FormControl(true);
+      let control = new FormControl(selector.default);
       selectorControls.push(control);
       selector.control = control;
     }
@@ -202,7 +205,8 @@ export class ExportComponent implements OnInit, OnDestroy {
   validateForm() {
   }
 
-  onSubmit(e: any) {
+  onSubmit(e: any): void {
+    this.openUnimplementedDialog();
     //send form data to service, generate package or create notification that the download package will be sent to email when ready
   }
 
@@ -252,6 +256,18 @@ export class ExportComponent implements OnInit, OnDestroy {
   //   return selected;
   // }
 
+
+  openUnimplementedDialog(): void {
+    const dialogRef = this.dialog.open(ExportUnimplementedComponent, {
+      width: '250px',
+      data: null
+    });
+
+    // dialogRef.afterClosed().subscribe(result => {
+    //   console.log('The dialog was closed');
+    //   this.animal = result;
+    // });
+  }
 
 }
 

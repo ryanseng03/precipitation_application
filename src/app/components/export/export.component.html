@@ -1,3 +1,7 @@
+<p class="error">
+  Data exporting is not currently available. Coming soon!
+</p>
+
 <div class="form-container">
   <form [formGroup]="exportForm" (ngSubmit)="onSubmit($event)">
     <div class="form-component">
@@ -51,7 +55,7 @@
       </div>
       <mat-error *ngIf="!controls.includeTypes.control.valid">Please select at least one item to export.</mat-error>
     </div>
-    
+
 
     <!-- Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata   -->
 

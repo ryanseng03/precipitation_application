@@ -224,20 +224,33 @@ export class MapComponent implements OnInit {
 
   setColorScheme(scheme: string) {
     let layer: any = this.dataLayers[this.active.band];
+
+    let setColorScheme = (colorScheme: ColorScale) => {
+      layer.setColorScale(colorScheme);
+      this.colorScheme = colorScheme;
+    }
+
     if(layer) {
       let colorScheme: ColorScale;
       switch(scheme) {
         case "mono": {
           colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
+          setColorScheme(colorScheme);
           break;
         }
         case "rainbow": {
           colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
+          setColorScheme(colorScheme);
+          break;
+        }
+        case "taccTest": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
+            setColorScheme(colorScale);
+          });
           break;
         }
       }
-      layer.setColorScale(colorScheme);
-      this.colorScheme = colorScheme;
+      
     }
 
   }
