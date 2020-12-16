@@ -1,4 +1,8 @@
 <div class="main-container">
+  <p class="title">
+    Select The Dataset You Would Like to View.
+  </p>
+
   <div class="control">
     <app-date-selector
       label="Start Date"
@@ -20,7 +24,13 @@
   </div>
   <div class="control">
 
+
   </div>
+
+
+
+
+
   <div class="control">
     <app-data-set-interval-selector
       (setTimestep)="setTimestep($event)"
@@ -31,6 +41,38 @@
   </div>
 
 
+  <!-- <h3>Raster Data</h3>
+  <h3>Station Data</h3>
+
+  <mat-form-field>
+    <mat-label>Interval</mat-label>
+    <mat-select disableOptionCentering="true" (selectionChange)="valueSet($event, 'timeGranularity')" [(value)]="state.timeGranularity">
+      <mat-option #timeGranularityOptions *ngFor="let set of formValues.timeGranularity" [value]="set">
+        {{set | displayValue}}
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <mat-label>Data Set Type</mat-label>
+    <mat-select disableOptionCentering="true" (selectionChange)="valueSet($event, 'setType')" [(value)]="state.setType">
+      <mat-option #setTypeOptions *ngFor="let set of formValues.setType" [value]="set">
+        {{set | displayValue:"dateRange"}}
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <mat-label>Fill Type</mat-label>
+    <mat-select disableOptionCentering="true" (selectionChange)="valueSet($event, 'fill')" [(value)]="state.fill">
+      <mat-option #fillOptions *ngFor="let set of formValues.fill" [value]="set">
+        {{set | displayValue}}
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field> -->
 
 
 

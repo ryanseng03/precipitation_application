@@ -38,13 +38,13 @@ export class DatasetInfoComponent implements OnInit {
   }
 
   genDSStr(): string {
-    console.log(this.dataset.endDate.format("MMM DD, YYYY"));
+    //console.log(this.dataset.endDate.format("MMM DD, YYYY"));
     let timestep = this.capFirst(this.dataset.timestep);
     let type = this.capFirst(this.dataset.type);
     let fill = this.fillStr(this.dataset.fill);
     let start = this.startStr(this.dataset.startDate, this.dataset.timestep);
     let end = this.endStr(this.dataset.endDate, this.dataset.timestep);
-    
+
     return `${timestep} ${fill} ${type}, ${start} - ${end}`;
   }
 

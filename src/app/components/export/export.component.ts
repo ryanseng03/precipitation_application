@@ -1,6 +1,8 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators, FormArray, AbstractControl } from '@angular/forms';
 import { MapComponent } from '../map/map.component';
+import {ExportUnimplementedComponent} from "../../dialogs/export-unimplemented/export-unimplemented.component";
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-export',
@@ -97,11 +99,11 @@ export class ExportComponent implements OnInit, OnDestroy {
 
   //Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata
 
-  constructor() {
+  constructor(public dialog: MatDialog) {
 
     let formGroup: {[field: string]: AbstractControl} = {};
-    let selectorGroup: FormControl[] = []; 
-    
+    let selectorGroup: FormControl[] = [];
+
     for(let selector of this.controls.includeTypes.selectors) {
       let control = new FormControl(true);
       selectorGroup.push(control);
@@ -150,8 +152,21 @@ export class ExportComponent implements OnInit, OnDestroy {
   validateForm() {
   }
 
-  onSubmit(e: any) {
+  onSubmit(e: any): void {
+    this.openUnimplementedDialog();
     //send form data to service, generate package or create notification that the download package will be sent to email when ready
+  }
+
+  openUnimplementedDialog(): void {
+    const dialogRef = this.dialog.open(ExportUnimplementedComponent, {
+      width: '250px',
+      data: null
+    });
+
+    // dialogRef.afterClosed().subscribe(result => {
+    //   console.log('The dialog was closed');
+    //   this.animal = result;
+    // });
   }
 
 }

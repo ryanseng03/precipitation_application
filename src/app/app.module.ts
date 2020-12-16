@@ -64,6 +64,9 @@ import * as PlotlyJS from 'plotly.js/dist/plotly.js';
 import { LeafletOpacitySliderComponent } from './components/leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
 import { LeafletColorScaleComponent } from './components/leaflet-controls/leaflet-color-scale/leaflet-color-scale.component';
 
+import {MatDialogModule} from '@angular/material/dialog';
+import { ExportUnimplementedComponent } from './dialogs/export-unimplemented/export-unimplemented.component';
+
 PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
@@ -97,7 +100,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MapControlsComponent,
     RainfallGraphComponent,
     LeafletOpacitySliderComponent,
-    LeafletColorScaleComponent
+    LeafletColorScaleComponent,
+    ExportUnimplementedComponent
   ],
   imports: [
     BrowserModule,
@@ -125,7 +129,11 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatToolbarModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
-    PlotlyModule
+    PlotlyModule,
+    MatDialogModule
+  ],
+  entryComponents: [
+    ExportUnimplementedComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

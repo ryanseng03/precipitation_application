@@ -1,3 +1,7 @@
+<p class="error">
+  Data exporting is not currently available. Coming soon!
+</p>
+
 <div class="form-container">
   <form [formGroup]="exportForm" (ngSubmit)="onSubmit($event)">
     <div class="form-component">
@@ -28,7 +32,7 @@
         </div>
       </div>
     </div>
-    
+
 
     <!-- Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata   -->
 
@@ -43,7 +47,7 @@
       <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
     </div>
 
-    
+
     <mat-form-field *ngIf="true" class="example-full-width">
       <mat-label>Email Address</mat-label>
       <input required type="email" matInput value="" [formControl]="email">
