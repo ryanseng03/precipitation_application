@@ -139,8 +139,7 @@ export class ExportComponent implements OnInit, OnDestroy {
     }
     this.exportForm = new FormGroup(formGroup);
 
-
-    selectorGroup.valueChanges.subscribe((values: boolean[]) => {
+    let updateAllSelected = (values: boolean[]) => {
       let allSelected = values.every(Boolean);
       //only change if modified by user (debounce if changed as a result of other control changes)
       if(!this.controls.includeTypes.debounce) { 
@@ -151,7 +150,10 @@ export class ExportComponent implements OnInit, OnDestroy {
         this.controls.includeTypes.debounce = false;
       }
       this.controls.selectAll.label = allSelected ? "Deselect All" : "Select All";
+    };
 
+    selectorGroup.valueChanges.subscribe((values: boolean[]) => {
+      updateAllSelected(values);
       this.checkSetRequireEmail();
     });
 
@@ -168,6 +170,8 @@ export class ExportComponent implements OnInit, OnDestroy {
         this.controls.selectAll.debounce = false;
       }
     });
+
+    updateAllSelected(selectorGroup.value);
   }
 
   ngOnInit() {
