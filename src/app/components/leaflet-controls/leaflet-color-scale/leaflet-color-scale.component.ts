@@ -48,6 +48,10 @@ export class LeafletColorScaleComponent implements OnInit {
       let interval = intervals[i] + intervalSize;
       intervals.push(interval);
     }
+    for(let i = 0; i < parts; i++) {
+      //round 2 decimal points
+      intervals[i] = Math.round(intervals[i]);
+    }
     //reverse since populated from top to bottom
     this.intervals = intervals.reverse().map((value: number) => {
       return value.toString();

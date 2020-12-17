@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormControl, FormGroup, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MapComponent } from '../map/map.component';
 import {ExportUnimplementedComponent} from "../../dialogs/export-unimplemented/export-unimplemented.component";
@@ -111,10 +111,10 @@ export class ExportComponent implements OnInit, OnDestroy {
 
   //Rainfall maps, anomaly maps, standard error maps, station data, and LOOCV error metrics, metadata
 
-  constructor(public dialog: MatDialog) {
+  constructor(public dialog: MatDialog, private changeDetector: ChangeDetectorRef) {
     this.controls.spatialExtent. control = new FormControl("st");
     this.controls.timePeriod. control = new FormControl("range");
-    this.controls.email.control = new FormControl("", Validators.email);
+    this.controls.email.control = new FormControl("");
 
     let selectAllControl = new FormControl(true);
     this.controls.selectAll.control = selectAllControl;
@@ -134,17 +134,20 @@ export class ExportComponent implements OnInit, OnDestroy {
 
 
     for(let label in this.controls) {
-      console.log(label, this.controls[label].control);
       formGroup[label] = this.controls[label].control;
     }
     this.exportForm = new FormGroup(formGroup);
 
+    
+  }
+
+  ngOnInit() {
     let updateAllSelected = (values: boolean[]) => {
       let allSelected = values.every(Boolean);
       //only change if modified by user (debounce if changed as a result of other control changes)
       if(!this.controls.includeTypes.debounce) { 
         this.controls.selectAll.debounce = true;
-        selectAllControl.setValue(allSelected)
+        this.controls.selectAll.control.setValue(allSelected)
       }
       else {
         this.controls.includeTypes.debounce = false;
@@ -152,13 +155,12 @@ export class ExportComponent implements OnInit, OnDestroy {
       this.controls.selectAll.label = allSelected ? "Deselect All" : "Select All";
     };
 
-    selectorGroup.valueChanges.subscribe((values: boolean[]) => {
+    this.controls.includeTypes.control.valueChanges.subscribe((values: boolean[]) => {
       updateAllSelected(values);
-      this.checkSetRequireEmail();
     });
 
     //need to change what this does based on whats selected
-    selectAllControl.valueChanges.subscribe((value: boolean) => {
+    this.controls.selectAll.control.valueChanges.subscribe((value: boolean) => {
       //only change if modified by user (debounce if changed as a result of other control changes)
       if(!this.controls.selectAll.debounce) {
         let len = this.controls.includeTypes.control.value.length;
@@ -171,10 +173,19 @@ export class ExportComponent implements OnInit, OnDestroy {
       }
     });
 
-    updateAllSelected(selectorGroup.value);
-  }
+    this.controls.useEmail.control.valueChanges.subscribe((value: boolean) => {
+      let emailControl: AbstractControl = this.controls.email.control;
+      if(value) {
+        emailControl.setValidators(Validators.email);
+      }
+      else {
+        emailControl.clearValidators();
+      }
+      emailControl.updateValueAndValidity();
+      this.changeDetector.detectChanges();
+    });
 
-  ngOnInit() {
+    updateAllSelected(this.controls.includeTypes.control.value);
 
     this.map.focusSpatialExtent(this.controls.spatialExtent.control.value);
 

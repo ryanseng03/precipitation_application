@@ -222,31 +222,91 @@ export class MapComponent implements OnInit {
     return this.dataLayers[this.active.band] != undefined;
   }
 
+  //use to prevent race conditions for xml loaded schemes
+  colorSchemeType: string;
   setColorScheme(scheme: string) {
     let layer: any = this.dataLayers[this.active.band];
-
-    let setColorScheme = (colorScheme: ColorScale) => {
-      layer.setColorScale(colorScheme);
-      this.colorScheme = colorScheme;
-    }
-
     if(layer) {
+      //set the selected scheme type for validation on cb
+      this.colorSchemeType = scheme;
+
+      let activateColorScheme = (colorScheme: ColorScale) => {
+        //verify that the currently selected color scheme type matches this function to prevent race conditions on xml loaded schemes (in case another scheme is selected before load finished)
+        if(this.colorSchemeType == scheme) {
+          layer.setColorScale(colorScheme);
+          this.colorScheme = colorScheme;
+          //update marker colors
+          for(let marker of this.markerInfo.markers) {
+            let color = colorScheme.getColor(marker.metadata.value);
+            let hex = chroma([color.r, color.g, color.b]).hex();
+            marker.marker.setStyle({
+              fillColor: hex
+            });
+          }
+        }
+      }
+
       let colorScheme: ColorScale;
       switch(scheme) {
         case "mono": {
           colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
-          setColorScheme(colorScheme);
+          activateColorScheme(colorScheme);
           break;
         }
         case "rainbow": {
           colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
-          setColorScheme(colorScheme);
+          activateColorScheme(colorScheme);
           break;
         }
-        case "taccTest": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
-            setColorScheme(colorScale);
+        case "tacc1": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/1-3wbgy.xml", true).then((colorScale: ColorScale) => {
+            activateColorScheme(colorScale);
           });
+          break;
+        }
+        case "tacc2": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
+            activateColorScheme(colorScale);
+          });
+          break;
+        }
+        case "tacc3": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/4-3wbgy.xml", true).then((colorScale: ColorScale) => {
+            activateColorScheme(colorScale);
+          });
+          break;
+        }
+        case "tacc4": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/13-4w_grphgrnl.xml").then((colorScale: ColorScale) => {
+            activateColorScheme(colorScale);
+          });
+          break;
+        }
+        case "tacc5": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/17-5wdkcool.xml").then((colorScale: ColorScale) => {
+            activateColorScheme(colorScale);
+          });
+          break;
+        }
+        case "tacc6": {
+          this.colors.getColorSchemeFromXML("/assets/colorschemes/18-5w_coolcrisp2.xml").then((colorScale: ColorScale) => {
+            activateColorScheme(colorScale);
+          });
+          break;
+        }
+        case "turbo": {
+          colorScheme = this.colors.getTurboColorScale();
+          activateColorScheme(colorScheme);
+          break;
+        }
+        case "usgs": {
+          colorScheme = this.colors.getUSGSColorScale();
+          activateColorScheme(colorScheme);
+          break;
+        }
+        case "viridus": {
+          colorScheme = this.colors.getViridusColorScale();
+          activateColorScheme(colorScheme);
           break;
         }
       }
@@ -537,8 +597,8 @@ export class MapComponent implements OnInit {
 
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
-        console.log(this.active);
-        console.log(data);
+        // console.log(this.active);
+        // console.log(data);
 
         let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
@@ -585,7 +645,7 @@ export class MapComponent implements OnInit {
       markers: [],
       layer: null,
       pivotZoom: 10,
-      weightToMinRadiusFactor: 0.2,
+      weightToMinRadiusFactor: 0.4,
       minRadiusAtPivot: 0,
       markerMap: new Map<SiteInfo, L.CircleMarker>()
     }
@@ -609,11 +669,13 @@ export class MapComponent implements OnInit {
       if(radius < minRadiusAtPivot) {
         minRadiusAtPivot = radius;
       }
+      let fill = this.colorScheme.getColor(site.value);
+      let hexFill = chroma([fill.r, fill.g, fill.b]).hex();
       let marker = L.circleMarker(site.location, {
         opacity: 1,
-        fillOpacity: .5,
+        fillOpacity: 1,
         color: "black",
-        fillColor: "#175db6"
+        fillColor: hexFill
       });
 
       let siteDetails = this.getMarkerPopupText(site);
@@ -627,7 +689,8 @@ export class MapComponent implements OnInit {
       let stationMarker: RainfallStationMarker = {
         marker: marker,
         metadata: {
-          pivotRadius: radius
+          pivotRadius: radius,
+          value: site.value
         }
       }
       markers.push(stationMarker);
@@ -664,7 +727,7 @@ export class MapComponent implements OnInit {
 
   updateMarkers(): void {
     let zoom = this.map.getZoom();
-    console.log(zoom);
+    // console.log(zoom);
     let markers = this.markerInfo.markers;
     if(zoom < this.markerInfo.pivotZoom) {
       let weight = this.getWeightScaledRadius();
@@ -770,7 +833,8 @@ interface RainfallStationMarker {
 
 //scale everything from pivot radius to prevent rounding issues and reduce complexity
 interface MarkerMetadata {
-  pivotRadius: number
+  pivotRadius: number,
+  value: number
 }
 
 interface ActiveData {

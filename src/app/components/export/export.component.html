@@ -34,26 +34,29 @@
       </mat-form-field>
     </div>
 
-
-    <h4 [ngClass]="{'error': !controls.includeTypes.control.valid}">Select what you would like to download *</h4>
-
     <div class="form-component">
-      <mat-checkbox [formControl]="controls.selectAll.control">
-        {{controls.selectAll.label}}
-      </mat-checkbox>
-    </div>
 
+    
+      <h4 [ngClass]="{'error': !controls.includeTypes.control.valid}">Select what you would like to download *</h4>
 
-    <div [formArrayName]="controls.includeTypes.control">
-      <div *ngFor="let selector of controls.includeTypes.selectors">
-        <div class="form-component">
-          <mat-checkbox [formControl]="selector.control">
-            {{selector.label}}
-          </mat-checkbox>
-          <mat-icon class="info-icon" [inline]="true" [matTooltip]="selector.info">info</mat-icon>
-        </div>
+      <div class="form-component">
+        <mat-checkbox [formControl]="controls.selectAll.control">
+          {{controls.selectAll.label}}
+        </mat-checkbox>
       </div>
-      <mat-error *ngIf="!controls.includeTypes.control.valid">Please select at least one item to export.</mat-error>
+
+
+      <div class="form-component">
+        <div *ngFor="let selector of controls.includeTypes.selectors">
+          <div class="form-component">
+            <mat-checkbox [formControl]="selector.control">
+              {{selector.label}}
+            </mat-checkbox>
+            <mat-icon class="info-icon" [inline]="true" [matTooltip]="selector.info">info</mat-icon>
+          </div>
+        </div>
+        <mat-error *ngIf="!controls.includeTypes.control.valid">Please select at least one item to export.</mat-error>
+      </div>
     </div>
 
 
@@ -71,12 +74,13 @@
       <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
     </div>
 
-    
-    <mat-form-field *ngIf="controls.useEmail.control.value" class="example-full-width">
-      <mat-label>Email Address</mat-label>
-      <input required matInput [formControl]="controls.email.control">
-      <mat-error *ngIf="!controls.email.control.valid">Please enter a valid email address.</mat-error>
-    </mat-form-field>
+    <div class="form-component">
+      <mat-form-field *ngIf="controls.useEmail.control.value" class="example-full-width">
+        <mat-label>Email Address</mat-label>
+        <input required matInput [formControl]="controls.email.control">
+        <mat-error *ngIf="!controls.email.control.valid">Please enter a valid email address.</mat-error>
+      </mat-form-field>
+    </div>
 
 
     <div class="spacer"></div>
