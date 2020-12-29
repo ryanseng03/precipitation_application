@@ -3,6 +3,21 @@
     Select The Dataset You Would Like to View.
   </p>
 
+  <!-- should create config json for this stuff to make it easy to update -->
+
+  <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
+
+  <!-- what type of data (rainfall, etc) -->
+  <mat-form-field>
+    <mat-label>Data Set</mat-label>
+    <mat-select disableOptionCentering="true">
+      <mat-option>
+        rainfall
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field>
+
   <div class="control">
     <app-date-selector
       label="Start Date"
@@ -27,8 +42,48 @@
 
   </div>
 
+  <p class="title">
+    Raster Data
+  </p>
+
+  <mat-form-field>
+    <mat-label>Interval</mat-label>
+    <mat-select disableOptionCentering="true">
+      <mat-option>
+        rainfall
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label></mat-label>
+    <mat-select disableOptionCentering="true">
+      <mat-option>
+        rainfall
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field>
 
 
+  <p class="title">
+    Station Data
+  </p>
+
+  <mat-form-field>
+    <mat-label>Fill Type</mat-label>
+    <mat-select disableOptionCentering="true">
+      <mat-option>
+        rainfall
+      </mat-option>
+      <mat-option></mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <br>
+  <hr>
+  <br>
 
 
   <div class="control">
