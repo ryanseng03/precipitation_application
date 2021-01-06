@@ -5,26 +5,32 @@ export interface DatasetConfig {
     datasets: any[]
 }
 
-let config: DatasetConfig = {
+let config: any = {
     initialSetIndex: 0,
-    datasets: [
-        {
-            general: {
-                type: "rainfall",
-                range: {
-                    start: "1990-01-01",
-                    end: "2019-12-31"
-                }
+    //categorized by type
+    datasets: {
+        rainfall: [{
+            range: {
+                start: "1990-01-01",
+                end: "2019-12-31"
             },
-            raster: {
-                timesteps: ["monthly"],
-                methods: ["new"]
-            },
-            station: {
-                //hidden property (no user choice)
-                timestepsAvailable: ["monthly", "daily"],
-                fillTypes: ["filled", "partial", "unfilled"]
-            }
-        }
-    ]
+            timesteps: ["monthly"],
+            methods: ["new"],
+            timestepsAvailable: ["monthly", "daily"],
+            fillTypes: ["filled", "partial", "unfilled"]
+        }]
+    }
+}
+
+let selectors = [];
+
+//generate discreet sets
+for(let dataset of config.datasets) {
+    let base = {
+
+    }
+}
+
+function getDatasets(): string[] {
+    return 
 }

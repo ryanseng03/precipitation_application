@@ -66,6 +66,7 @@ import { LeafletColorScaleComponent } from './components/leaflet-controls/leafle
 
 import {MatDialogModule} from '@angular/material/dialog';
 import { ExportUnimplementedComponent } from './dialogs/export-unimplemented/export-unimplemented.component';
+import { UploadCustomColorSchemeComponent } from './dialogs/upload-custom-color-scheme/upload-custom-color-scheme.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -101,7 +102,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     RainfallGraphComponent,
     LeafletOpacitySliderComponent,
     LeafletColorScaleComponent,
-    ExportUnimplementedComponent
+    ExportUnimplementedComponent,
+    UploadCustomColorSchemeComponent
   ],
   imports: [
     BrowserModule,
@@ -133,7 +135,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatDialogModule
   ],
   entryComponents: [
-    ExportUnimplementedComponent
+    ExportUnimplementedComponent,
+    UploadCustomColorSchemeComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

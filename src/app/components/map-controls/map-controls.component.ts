@@ -18,7 +18,7 @@ export class MapControlsComponent implements OnInit {
 
   ngOnInit() {
     this.schemeControl.valueChanges.subscribe((scheme: string) => {
-      this.map.setColorScheme(scheme);
+      //this.map.setColorScheme(scheme);
     });
     // this.opacityControl.valueChanges.subscribe((opacity: number) => {
     //   console.log(opacity);

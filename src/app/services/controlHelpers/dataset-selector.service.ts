@@ -62,8 +62,8 @@ config: any = {
                 }
               }
             },
-            controls
-            timesteps: ["monthly"],
+            // controls
+            // timesteps: ["monthly"],
             methods: ["new"],
             timestepsAvailable: ["monthly", "daily"],
             fillTypes: ["filled", "partial", "unfilled"]
@@ -98,14 +98,37 @@ config: any = {
 //"display" options are logically first, and any data with same tag shares any dataset selection properties with same export tag, so have "bound" flag to indicate implicit carryover
 //use any selected display data to seed export data if not bound
 //e.g. for fill type have it unbound (user can select multiples for export), but seed export by having selected display fill type initially selected
+
+//export data implicitly has a toggle control
 class Dataset {
+  subclass: string
+  label: string;
+  info: string;
   //sets of tags of items that are valid for these categories
-  display: Set<DisplayTag>;
-  export: Set<ExportTag>;
+  displayOpts: DisplayItemOptions;
+  exportOpts: ExportItemOptions;
   //
 
   dateRange: DateRange;
 
+  constructor(subclass: string, label: string, displayOpts: DisplayItemOptions, exportOpts: ExportItemOptions, dateRange: DateRange, info: string) {
+
+  }
+
+  //bind 
+
+}
+
+class DatasetGroup {
+  classification: string;
+
+}
+
+interface DisplayItemOptions {
+  [tag: string]: AbstractControlData[]
+}
+interface ExportItemOptions {
+  [tag: string]: AbstractControlData[]
 }
 
 //typings for specific tags to indicate availability of data for display and export

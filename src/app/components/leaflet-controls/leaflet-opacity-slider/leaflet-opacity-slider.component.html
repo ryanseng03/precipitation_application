@@ -16,14 +16,26 @@
       <mat-select disableOptionCentering
         [formControl]="schemeControl"
         [disabled]="!layerReady()">
-        <mat-option value="mono">Monochromatic</mat-option>
-        <mat-option value="usgs">USGS</mat-option>
-        <mat-option value="viridus">Viridis</mat-option>
-        <mat-option value="turbo">Turbo</mat-option>
-        <mat-option value="tacc3">TACC 3-wave</mat-option>
-        <mat-option value="tacc4">TACC 4-wave</mat-option>
-        <mat-option value="tacc5">TACC 5-wave</mat-option>
+        <div id="color-control-tiles">
+          <mat-option *ngFor="let scheme of baseColorSchemes | keyvalue" [value]="scheme.key">{{scheme.value}}</mat-option>
+          <div *ngFor="let scheme of customColorSchemes | keyvalue">
+            <mat-option [value]="scheme.key">
+              <div class="custom-select">
+                <span>
+                  {{scheme.value.name}}
+                </span>
+                <span></span>
+                <span class="delete-button" (click)="removeCustomColorScheme(scheme.key)">
+                  <mat-icon>clear</mat-icon>
+                </span>
+              </div>
+            </mat-option>
+        </div>
         
+          
+        </div>
+        
+        <mat-option value="custom">Upload Custom</mat-option>
       </mat-select>
     </mat-form-field>
   </div>

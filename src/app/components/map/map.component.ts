@@ -13,6 +13,7 @@ import "leaflet-groupedlayercontrol";
 import { BandData, IndexedValues, RasterHeader, RasterData } from 'src/app/models/RasterData.js';
 import { SiteMetadata, SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
+import "leaflet-easyprint";
 import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
 import { LeafletOpacitySliderComponent } from '../leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
@@ -20,6 +21,7 @@ import { LeafletOpacitySliderComponent } from '../leaflet-controls/leaflet-opaci
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
 let CC: any = L.Control;
+let LExt: any = L;
 
 @Component({
   selector: 'app-map',
@@ -224,92 +226,96 @@ export class MapComponent implements OnInit {
 
   //use to prevent race conditions for xml loaded schemes
   colorSchemeType: string;
-  setColorScheme(scheme: string) {
+  setColorScheme(colorScheme: ColorScale) {
     let layer: any = this.dataLayers[this.active.band];
     if(layer) {
-      //set the selected scheme type for validation on cb
-      this.colorSchemeType = scheme;
 
-      let activateColorScheme = (colorScheme: ColorScale) => {
-        //verify that the currently selected color scheme type matches this function to prevent race conditions on xml loaded schemes (in case another scheme is selected before load finished)
-        if(this.colorSchemeType == scheme) {
-          layer.setColorScale(colorScheme);
-          this.colorScheme = colorScheme;
-          //update marker colors
-          for(let marker of this.markerInfo.markers) {
-            let color = colorScheme.getColor(marker.metadata.value);
-            let hex = chroma([color.r, color.g, color.b]).hex();
-            marker.marker.setStyle({
-              fillColor: hex
-            });
-          }
-        }
+      // //set the selected scheme type for validation on cb
+      // this.colorSchemeType = scheme;
+
+
+      layer.setColorScale(colorScheme);
+      this.colorScheme = colorScheme;
+      //update marker colors
+      for(let marker of this.markerInfo.markers) {
+        let color = colorScheme.getColor(marker.metadata.value);
+        let hex = chroma([color.r, color.g, color.b]).hex();
+        marker.marker.setStyle({
+          fillColor: hex
+        });
       }
 
-      let colorScheme: ColorScale;
-      switch(scheme) {
-        case "mono": {
-          colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
-          activateColorScheme(colorScheme);
-          break;
-        }
-        case "rainbow": {
-          colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
-          activateColorScheme(colorScheme);
-          break;
-        }
-        case "tacc1": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/1-3wbgy.xml", true).then((colorScale: ColorScale) => {
-            activateColorScheme(colorScale);
-          });
-          break;
-        }
-        case "tacc2": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
-            activateColorScheme(colorScale);
-          });
-          break;
-        }
-        case "tacc3": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/4-3wbgy.xml", true).then((colorScale: ColorScale) => {
-            activateColorScheme(colorScale);
-          });
-          break;
-        }
-        case "tacc4": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/13-4w_grphgrnl.xml").then((colorScale: ColorScale) => {
-            activateColorScheme(colorScale);
-          });
-          break;
-        }
-        case "tacc5": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/17-5wdkcool.xml").then((colorScale: ColorScale) => {
-            activateColorScheme(colorScale);
-          });
-          break;
-        }
-        case "tacc6": {
-          this.colors.getColorSchemeFromXML("/assets/colorschemes/18-5w_coolcrisp2.xml").then((colorScale: ColorScale) => {
-            activateColorScheme(colorScale);
-          });
-          break;
-        }
-        case "turbo": {
-          colorScheme = this.colors.getTurboColorScale();
-          activateColorScheme(colorScheme);
-          break;
-        }
-        case "usgs": {
-          colorScheme = this.colors.getUSGSColorScale();
-          activateColorScheme(colorScheme);
-          break;
-        }
-        case "viridus": {
-          colorScheme = this.colors.getViridusColorScale();
-          activateColorScheme(colorScheme);
-          break;
-        }
-      }
+
+      // let getColorSchemeFromAssetFile = (fname: string, reverse?: boolean): Promise<ColorScale> => {
+      //   return this.colors.loadXMLDataFromAssetFile(fname).then((data: string) => {
+      //     return this.colors.getColorSchemeFromXML(data, reverse);
+      //   });
+      // }
+
+      // let colorScheme: ColorScale;
+      // switch(scheme) {
+      //   case "mono": {
+      //     colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
+      //     activateColorScheme(colorScheme);
+      //     break;
+      //   }
+      //   case "rainbow": {
+      //     colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
+      //     activateColorScheme(colorScheme);
+      //     break;
+      //   }
+      //   case "tacc1": {
+      //     getColorSchemeFromAssetFile("/assets/colorschemes/1-3wbgy.xml", true).then((colorScale: ColorScale) => {
+      //       activateColorScheme(colorScale);
+      //     });
+      //     break;
+      //   }
+      //   case "tacc2": {
+      //     getColorSchemeFromAssetFile("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
+      //       activateColorScheme(colorScale);
+      //     });
+      //     break;
+      //   }
+      //   case "tacc3": {
+      //     getColorSchemeFromAssetFile("/assets/colorschemes/4-3wbgy.xml", true).then((colorScale: ColorScale) => {
+      //       activateColorScheme(colorScale);
+      //     });
+      //     break;
+      //   }
+      //   case "tacc4": {
+      //     getColorSchemeFromAssetFile("/assets/colorschemes/13-4w_grphgrnl.xml").then((colorScale: ColorScale) => {
+      //       activateColorScheme(colorScale);
+      //     });
+      //     break;
+      //   }
+      //   case "tacc5": {
+      //     getColorSchemeFromAssetFile("/assets/colorschemes/17-5wdkcool.xml").then((colorScale: ColorScale) => {
+      //       activateColorScheme(colorScale);
+      //     });
+      //     break;
+      //   }
+      //   case "tacc6": {
+      //     getColorSchemeFromAssetFile("/assets/colorschemes/18-5w_coolcrisp2.xml").then((colorScale: ColorScale) => {
+      //       activateColorScheme(colorScale);
+      //     });
+      //     break;
+      //   }
+      //   case "turbo": {
+      //     colorScheme = this.colors.getTurboColorScale();
+      //     activateColorScheme(colorScheme);
+      //     break;
+      //   }
+      //   case "usgs": {
+      //     colorScheme = this.colors.getUSGSColorScale();
+      //     activateColorScheme(colorScheme);
+      //     break;
+      //   }
+      //   case "viridus": {
+      //     colorScheme = this.colors.getViridusColorScale();
+      //     activateColorScheme(colorScheme);
+      //     break;
+      //   }
+      // }
       
     }
 
@@ -326,6 +332,19 @@ export class MapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
+    //note A4Portrait and A4Landscape options for sizes don't seem to always load tiles outside view properly, so only allow current view for now
+    LExt.easyPrint({
+      title: "Export Map",
+      position: "topleft",
+      sizeModes: ["Current"],
+      exportOnly: true,
+      hideControlContainer: false,
+      filename: "HCDP_map",
+      hideClasses: ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-easyPrint"]
+    }).addTo(map);
+
+
+
     this.active = {
       data: {
         sites: null,

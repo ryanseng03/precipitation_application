@@ -3,6 +3,7 @@ import * as chroma from "chroma-js";
 import {Color, ColorScale} from "../../models/colorScale";
 import xml2js from "xml2js";
 import { HttpClient } from '@angular/common/http';
+import { exception } from 'console';
 
 
 @Injectable({
@@ -59,7 +60,13 @@ export class ColorGeneratorService {
     return new ColorScale(getColor, range, parts);
   }
 
-  getColorSchemeFromXML(xmlFile: string, reverse: boolean = false): Promise<any> {
+  getColorSchemeFromAssetFile(xmlFile: string, reverse: boolean = false): Promise<XMLColorSchemeData> {
+    return this.http.get(xmlFile, { responseType: "text" }).toPromise().then((data: string) => {
+      return this.getColorSchemeFromXML(data, reverse);
+    });
+  }
+
+  getColorSchemeFromXML(xmlData: string, reverse: boolean = false): Promise<XMLColorSchemeData> {
 
     let parts = 450;
     let range: [number, number] = [0, 650];
@@ -67,40 +74,63 @@ export class ColorGeneratorService {
 
     //chroma.scale(['yellow', 'lightgreen', '008ae5']).domain([0,0.25,1]);
 
-    return this.http.get(xmlFile, { responseType: "text" }).toPromise().then((data: string) => {
-      return new Promise((resolve, reject) => {
-        parser.parseString(data, (err, result) => {
-          let points = result.ColorMaps.ColorMap[0].Point;
-          console.log(points);
-          let colors = [];
-          let domain = [];
-          let span = range[1] - range[0];
-          //parse points
-          for(let point of points) {
-            let x = reverse ? 1 - parseFloat(point.$.x) : parseFloat(point.$.x);
-            x = x * span + range[0]
-            let r = parseFloat(point.$.r) * 255;
-            let g = parseFloat(point.$.g) * 255;
-            let b = parseFloat(point.$.b) * 255;
-            let color = [r, g, b]
-            colors.push(color);
-            domain.push(x);
-          }
-          let colorScaleF = chroma.scale(colors).domain(domain);
+    
+    return new Promise((resolve, reject) => {
+      parser.parseString(xmlData, (err, result) => {
+        let colorScale = null;
+        let name = null;
+        if(err) {
+          reject(err);
+        }
+        else {
+          try {
+            let colorMap = result.ColorMaps.ColorMap[0]
+            //get name if property exists, otherwise leave as null
+            if(colorMap.$ && colorMap.$.name) {
+              name = colorMap.$.name;
+            }
+            
+            //console.log(name);
+            let points = colorMap.Point;
+            //console.log(points);
+            let colors = [];
+            let domain = [];
+            let span = range[1] - range[0];
+            //parse points
+            for(let point of points) {
+              let x = reverse ? 1 - parseFloat(point.$.x) : parseFloat(point.$.x);
+              x = x * span + range[0]
+              let r = parseFloat(point.$.r) * 255;
+              let g = parseFloat(point.$.g) * 255;
+              let b = parseFloat(point.$.b) * 255;
+              let color = [r, g, b]
+              colors.push(color);
+              domain.push(x);
+            }
+            let colorScaleF = chroma.scale(colors).domain(domain);
 
-          let getColor = (value: number) => {
-            //value = Math.pow(value, 1);
-            let color = colorScaleF(value);
-            return {
-              r: color._rgb[0],
-              g: color._rgb[1],
-              b: color._rgb[2],
-              a: color._rgb[3] * 255
-            };
-          }
+            let getColor = (value: number) => {
+              //value = Math.pow(value, 1);
+              let color = colorScaleF(value);
+              return {
+                r: color._rgb[0],
+                g: color._rgb[1],
+                b: color._rgb[2],
+                a: color._rgb[3] * 255
+              };
+            }
 
-          let colorScale = new ColorScale(getColor, range, parts);
-          resolve(colorScale);
+            colorScale = new ColorScale(getColor, range, parts);
+          }
+          //if an error is thrown then error in 
+          catch(e) {
+            reject(e);
+          }
+        }
+
+        resolve({
+          name: name,
+          colors: colorScale
         });
       });
     });
@@ -199,4 +229,11 @@ export class ColorGeneratorService {
   }
 
     
+}
+
+
+
+export interface XMLColorSchemeData {
+  name: string;
+  colors: ColorScale;
 }

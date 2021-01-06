@@ -51,6 +51,7 @@
     "leaflet": "^1.5.1",
     "leaflet-defaulticon-compatibility": "^0.1.1",
     "leaflet-draw": "^1.0.4",
+    "leaflet-easyprint": "^2.1.9",
     "leaflet-groupedlayercontrol": "^0.6.1",
     "leaflet-spin": "^1.1.2",
     "leaflet.markercluster": "^1.4.1",

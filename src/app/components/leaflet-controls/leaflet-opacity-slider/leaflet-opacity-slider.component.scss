@@ -23,4 +23,18 @@
     #color-control .mat-form-field-infix {
         width: 100px;
     }
+    #color-control-tiles span.mat-option-text {
+        overflow: visible;
+    }
+}
+
+.custom-select {
+    display: flex;
+    justify-content: space-between;
+}
+
+
+
+.delete-button {
+    width: 10px;
 }

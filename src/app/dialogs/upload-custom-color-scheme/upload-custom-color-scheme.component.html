@@ -1,0 +1,38 @@
+
+<div>
+  <div *ngIf="!error;else errorMessage">
+    <h4>
+      Upload a Custom Color Scheme.
+    </h4>
+    <form>
+      <div class="form-field">
+        <mat-checkbox [formControl]="reverseScheme">Reverse Color Scheme</mat-checkbox>
+        <mat-icon [inline]="true" matTooltip="If selected the color scheme will be inverted (low values will use the high side of the defined color map and vice versa).">info</mat-icon>
+        <br>
+        <mat-checkbox [formControl]="useCustomName">Use Custom Name</mat-checkbox>
+        <mat-icon [inline]="true" matTooltip="Display name to be used. If selected, provide a custom name to be used, otherwise use name specified in color scheme's xml. If this is not selected and no name is found or the name is already taken, a default name will be assigned automatically.">info</mat-icon>
+      </div>
+      <div class="form-field">
+        <mat-form-field *ngIf="useCustomName.value">
+          <mat-label>Color Scheme Name</mat-label>
+          <input matInput [formControl]="customName">
+          <mat-error *ngIf="!customName.valid">Name is already taken, please use something else.</mat-error>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <input type="file" accept="text/xml" (change)="handleFileInput($event.target.files)">
+      </div>
+      <button mat-raised-button color="primary" [disabled]="!validateForm()" (click)="submit()">submit</button>
+    </form>
+  </div>
+  <ng-template #errorMessage>
+    <div>
+      <p>
+        There was an error uploading or parsing the custom color scheme. Please verify that the format is valid.
+      </p>
+      <!-- need to add guide on how to create a valid scheme, provide a template -->
+      <button mat-raised-button color="primary" (click)="close()">close</button>
+    </div>
+  </ng-template>
+</div>
+
