@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {FormControl} from '@angular/forms';
-import { Moment } from 'moment';
+import moment, { Moment } from 'moment';
 
 @Injectable({
   providedIn: 'root'
@@ -84,6 +84,136 @@ config: any = {
       return Object.keys(this.config);
   }
 }
+
+//don't give date option for vis, 
+
+//classifications of vis items --- map, station/value items
+//value items have timeseries data attached - this is not part of the selected dataset but will be options for generating time series vis
+
+//what else, vis time granularities total (order of granularity), export time granularities, time granularities per i
+
+/*
+need general info (applicable to any data class)
+- classification (readonly)
+- date range (readonly)
+- subclasses (readonly)
+-- subrange (readonly)
+-- vis included items (readonly)
+-- export included items (readonly)
+- subclass precedence
+*/
+
+//note vis items have to be well defined for later use
+
+class SelectedSetInfo {
+
+  t = {
+    classification: "rainfall",
+    dateRange: {
+      min: moment("2012-01"),
+      max: moment("2019-12")
+    },
+    subsets: [{
+      subclassification: "new",
+      range: {
+        min: moment("2012-01"),
+        max: moment("2019-12")
+      },
+      visItems: {
+        options: [{
+          
+        }],
+        map: {
+          options: [
+            {
+              type: "select",
+              tag: "granularity",
+              values: ["monthly"]
+            }
+          ]
+        },
+        stations: {
+          options: {
+
+          }
+        }
+      },
+      exportItems: {
+
+      }
+    },
+    {
+      subclassification: "legacy",
+      visItems: {
+        map: {
+          min: moment("2012-01"),
+          max: moment("2019-12")
+        },
+        stations: null
+      },
+      exportItems
+    }]
+  }
+
+
+
+  //length should be one less than date list
+  datasets: Dataset[];
+  dates: Moment[];
+
+  getDatasetForDate(date: Moment) {
+
+  }
+
+  getDatasetsForDateRange
+  
+}
+
+
+class Granularity {
+  name: string;
+  precedence: number;
+
+  constructor(name: string, precedence: number) {
+    this.name = name;
+    this.precedence = precedence;
+  }
+
+
+}
+
+class VisItemPack {
+  mainGranularity: string
+  items
+}
+
+class ExportItemPack {
+
+}
+
+abstract class DataItem {
+  value: string
+}
+
+abstract class VisItem extends DataItem {
+
+}
+
+class ValueItem extends VisItem {
+  timeSeriesGranularities: string[];
+
+}
+
+class MapItem extends VisItem {
+
+}
+
+//what is needed for generating request? (identifying resource)
+class ExportItem extends DataItem {
+
+}
+
+
 
 //separate export info and display info
 //store information on what items are available for display and export, and how to retrieve the data
