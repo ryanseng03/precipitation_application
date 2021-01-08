@@ -85,7 +85,7 @@ config: any = {
   }
 }
 
-//don't give date option for vis, 
+//don't give date option for vis,
 
 //classifications of vis items --- map, station/value items
 //value items have timeseries data attached - this is not part of the selected dataset but will be options for generating time series vis
@@ -115,13 +115,14 @@ class SelectedSetInfo {
     },
     subsets: [{
       subclassification: "new",
+      precedence: 0,
       range: {
         min: moment("2012-01"),
         max: moment("2019-12")
       },
       visItems: {
         options: [{
-          
+
         }],
         map: {
           options: [
@@ -144,6 +145,7 @@ class SelectedSetInfo {
     },
     {
       subclassification: "legacy",
+      precedence: 1,
       visItems: {
         map: {
           min: moment("2012-01"),
@@ -151,7 +153,7 @@ class SelectedSetInfo {
         },
         stations: null
       },
-      exportItems
+      exportItems: {}
     }]
   }
 
@@ -166,7 +168,7 @@ class SelectedSetInfo {
   }
 
   getDatasetsForDateRange
-  
+
 }
 
 
@@ -245,7 +247,7 @@ class Dataset {
 
   }
 
-  //bind 
+  //bind
 
 }
 

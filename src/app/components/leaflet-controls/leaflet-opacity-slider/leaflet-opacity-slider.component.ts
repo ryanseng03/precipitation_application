@@ -71,23 +71,23 @@ export class LeafletOpacitySliderComponent implements OnInit {
           setTimeout(() => {
             this.expand();
           }, 0);
-            
+
           });
         },
         _addContainer: function() {
-          let elements = this._container.getElementsByClassName('leaflet-control-layers-list');  
+          let elements = this._container.getElementsByClassName('leaflet-control-layers-list');
           let controlContainer = DomUtil.create("div", "", elements[0]);
           return controlContainer;
         }
       });
       this.control = new LayerControl(this.layers).addTo(map);
     }
-   
+
   }
   get map(): Map {
     return this._map
   }
-  
+
   constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService) {
     this.opacity = new EventEmitter<number>();
     this.colorScheme = new EventEmitter<ColorScale>();
@@ -122,6 +122,15 @@ export class LeafletOpacitySliderComponent implements OnInit {
         let valueF = scheme == "custom" ? (result: [string, ColorScale]) => {return result[0];} : () => {return scheme;}
         chain.addNode(valueF, cancellablePromise);
         cancellablePromise.then((colorSchemeData: [string, ColorScale]) => {
+          let tag = colorSchemeData[0];
+          //tag is the currently active scheme value, if the value was set to something else while processing reset to this now (adn debounce)
+          //also handles setting to new value for custom uploads
+          //handles cases where reverted to last valid while this item (upchain) was processing
+          //if upchain valid item the value will be reset to that item when its processing is complete
+          if(this.schemeControl.value != tag) {
+            this.debounce = true;
+            this.schemeControl.setValue(tag);
+          }
           let colorScheme = colorSchemeData[1];
           console.log(scheme, colorScheme);
           this.colorScheme.emit(colorScheme);
@@ -129,8 +138,8 @@ export class LeafletOpacitySliderComponent implements OnInit {
         .catch((reason: {cancelled: boolean, reason: any}) => {
           //if not cancelled came back invalid, revert control to last valid value
           if(!reason.cancelled) {
-            //debounce value change
-            this.debounce = true;
+            //dont debounce, want to add to chain in case other items still in process (this should be added to the chain)
+            //this.debounce = true;
             let reversionValue = chain.getLastValidValue();
             //no valid value, revert to defualt, should be impossible
             if(reversionValue === null) {
@@ -163,7 +172,7 @@ export class LeafletOpacitySliderComponent implements OnInit {
 
   addLayers(layers: Layer) {
     this.layers = layers;
-    
+
   }
 
   addOverlay(overlay: Layer, name: string) {
@@ -174,7 +183,7 @@ export class LeafletOpacitySliderComponent implements OnInit {
     this.control.removeLayer(layer);
   }
 
-
+  //returns tag that references the color scheme and the ColorScale object
   getCustomColorScheme(): Promise<[string, ColorScale]> {
     return new Promise((resolve, reject) => {
       let dialogRef = this.dialog.open(UploadCustomColorSchemeComponent, {
@@ -189,9 +198,6 @@ export class LeafletOpacitySliderComponent implements OnInit {
           this.forbiddenNames.add(name);
           this.customColorSchemes[tag] = data;
           console.log(name);
-          //set value of dropdown to new item
-          this.debounce = true;
-          this.schemeControl.setValue(tag);
           resolve([tag, colorScheme]);
         }
         else {
@@ -199,7 +205,7 @@ export class LeafletOpacitySliderComponent implements OnInit {
         }
       });
     });
-    
+
   }
 
   getColorScheme(scheme: string): Promise<[string, ColorScale]> {
@@ -291,7 +297,7 @@ export class LeafletOpacitySliderComponent implements OnInit {
         p = Promise.resolve(res);
       }
     }
-    
+
     return p;
   }
 
@@ -333,7 +339,7 @@ class CancellablePromise<T> {
         }
       });
     });
-    
+
 
     //then uses "this.constructor", so need to use bind to keep it as a standard promise, otherwise will create an instance of CancellablePromise
     this.then = this.wrappedPromise.then.bind(this.wrappedPromise);
@@ -425,5 +431,5 @@ class RevertableCancellationChainNode {
     this.previous = null;
   }
 
-  
+
 }
