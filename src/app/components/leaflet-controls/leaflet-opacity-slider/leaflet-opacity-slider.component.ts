@@ -197,8 +197,8 @@ export class LeafletOpacitySliderComponent implements OnInit {
           let tag = this.helper.generateTag();
           this.forbiddenNames.add(name);
           this.customColorSchemes[tag] = data;
-          console.log(name);
-          resolve([tag, colorScheme]);
+          let res: [string, ColorScale] = [tag, colorScheme];
+          resolve(res);
         }
         else {
           reject();
@@ -220,63 +220,73 @@ export class LeafletOpacitySliderComponent implements OnInit {
     switch(scheme) {
       case "mono": {
         let colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
-        p = Promise.resolve([scheme, colorScheme]);
+        let data: [string, ColorScale] = [scheme, colorScheme]
+        p = Promise.resolve(data);
         break;
       }
       case "rainbow": {
         let colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
-        p = Promise.resolve([scheme, colorScheme]);
+        let data: [string, ColorScale] = [scheme, colorScheme]
+        p = Promise.resolve(data);
         break;
       }
       case "turbo": {
         let colorScheme = this.colors.getTurboColorScale();
-        p = Promise.resolve([scheme, colorScheme]);
+        let data: [string, ColorScale] = [scheme, colorScheme]
+        p = Promise.resolve(data);
         break;
       }
       case "usgs": {
         let colorScheme = this.colors.getUSGSColorScale();
-        p = Promise.resolve([scheme, colorScheme]);
+        let data: [string, ColorScale] = [scheme, colorScheme]
+        p = Promise.resolve(data);
         break;
       }
       case "viridus": {
         let colorScheme = this.colors.getViridusColorScale();
-        p = Promise.resolve([scheme, colorScheme]);
+        let data: [string, ColorScale] = [scheme, colorScheme]
+        p = Promise.resolve(data);
         break;
       }
       case "tacc1": {
         p = getColorSchemeFromAssetFile("/assets/colorschemes/1-3wbgy.xml", true).then((colorScale: ColorScale) => {
-          return [scheme, colorScale];
+          let data: [string, ColorScale] = [scheme, colorScale];
+          return data;
         });
         break;
       }
       case "tacc2": {
         p = getColorSchemeFromAssetFile("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
-          return [scheme, colorScale];
+          let data: [string, ColorScale] = [scheme, colorScale];
+          return data;
         });
         break;
       }
       case "tacc3": {
         p = getColorSchemeFromAssetFile("/assets/colorschemes/4-3wbgy.xml", true).then((colorScale: ColorScale) => {
-          return [scheme, colorScale];
+          let data: [string, ColorScale] = [scheme, colorScale];
+          return data;
         });
         break;
       }
       case "tacc4": {
         p = getColorSchemeFromAssetFile("/assets/colorschemes/13-4w_grphgrnl.xml").then((colorScale: ColorScale) => {
-          return [scheme, colorScale];
+          let data: [string, ColorScale] = [scheme, colorScale];
+          return data;
         });
         break;
       }
       case "tacc5": {
         p = getColorSchemeFromAssetFile("/assets/colorschemes/17-5wdkcool.xml").then((colorScale: ColorScale) => {
-          return [scheme, colorScale];
+          let data: [string, ColorScale] = [scheme, colorScale];
+          return data;
         });
         break;
       }
       case "tacc6": {
         p = getColorSchemeFromAssetFile("/assets/colorschemes/18-5w_coolcrisp2.xml").then((colorScale: ColorScale) => {
-          let res: [string, ColorScale] = [scheme, colorScale];
-          return res;
+          let data: [string, ColorScale] = [scheme, colorScale];
+          return data;
         });
         break;
       }
@@ -293,8 +303,8 @@ export class LeafletOpacitySliderComponent implements OnInit {
         if(colorScheme === undefined) {
           p = this.getColorScheme(this.defaultScheme);
         }
-        let res: [string, ColorScale] = [scheme, colorScheme];
-        p = Promise.resolve(res);
+        let data: [string, ColorScale] = [scheme, colorScheme];
+        p = Promise.resolve(data);
       }
     }
 
