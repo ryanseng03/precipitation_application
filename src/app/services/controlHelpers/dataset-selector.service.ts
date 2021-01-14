@@ -105,7 +105,85 @@ need general info (applicable to any data class)
 
 //note vis items have to be well defined for later use
 
+//have export things be completely separate, allow a set to be made with multiple classes of data
+
+//in time series vis have export current vis data options, including single station
+
+//initial view will be just for vis data, after selecting set immediately swap to tables/time series view, maybe include link to export screen in this view
+
+//export form, set of configurable objects
+
+//note that map and station data may have different ranges
+//map data necessarily constrained by station data but not other way around (cant have map data without station data)
+//so global range is map range
+//station specific range only good for 
+//what about export, are the export files being constrained
+//lets not worry about this for now, for now constrain time series data to the specified subset (otherwise theres a question of "why can't I see the station in the other subsets?" if stations aren't displayed)
+//but want to grab data somehow... export will have to incorporate this
+//!!
+//will stations have active ranges??? -- yes
+//actually, just use active range anotation in station metadata
+
+//NOTE timeseries granularity is just the time between steps, the range of the set is separate (and should be a minimum of the next granularity up)
+
+//remember these are all example data right now
+
+//ACTUALLY, STORE ALL "TIMESERIES" INFO IN STATION METADATA, ALL THE RANGES AND WHATNOT ARE SPECIFIC TO THE STATION, AND ALL DATA IS ISOLATED TO A SINGLE STATION, HAVE IT BE PART OF THAT (ALSO CAN HAVE STATIONS WITH DIFFERENT AVAILABLE GRANULARITIES THAT WAY)
+
+class Dataset_tt {
+  dataset = {
+    classification: "rainfall",
+    subclasses: [{
+      range: {
+        min: moment("2012-01"),
+        max: moment("2019-12")
+      },
+      granularity: "",
+      map: {},
+      stations: {
+        timeseries: ["monthly", "daily"],
+        //options are things that may change between data sets, set of values referenced by assigned tag
+        //note need to add this tag annotation to the dataset format
+        //this will store whatever was selected during data set selection for these options
+        options: {
+          fill: "partial"
+        }
+      }
+    }]
+  }
+
+  export = {
+    rainfall: {
+
+    },
+    
+  }
+
+  getTimeseriesGranularities(date: Moment) {
+    let subset = this.getInfoOnDate(date);
+    return subset.stations.timeseries;
+  }
+
+  getInfoOnDate(date: Moment) {
+    let subclasses = this.dataset.subclasses;
+    let firstSubclass = null;
+    for(let subclass of subclasses) {
+      //check if date in range
+      if(date.isBetween(subclass.range.min, subclass.range.max)) {
+        firstSubclass = subclass;
+        break;
+      }
+    }
+    return firstSubclass;
+  }
+}
+
+
 class SelectedSetInfo {
+
+  
+  //what things have selections for vis?
+  //options (variable between sets), granularity, classification, precedence
 
   t = {
     classification: "rainfall",
@@ -113,48 +191,48 @@ class SelectedSetInfo {
       min: moment("2012-01"),
       max: moment("2019-12")
     },
-    subsets: [{
-      subclassification: "new",
-      precedence: 0,
-      range: {
-        min: moment("2012-01"),
-        max: moment("2019-12")
-      },
-      visItems: {
-        options: [{
-
-        }],
-        map: {
-          options: [
-            {
-              type: "select",
-              tag: "granularity",
-              values: ["monthly"]
-            }
-          ]
-        },
-        stations: {
-          options: {
-
-          }
-        }
-      },
-      exportItems: {
-
-      }
-    },
-    {
-      subclassification: "legacy",
-      precedence: 1,
-      visItems: {
-        map: {
+    subsets: [
+      {
+        subclassification: "new",
+        precedence: 0,
+        range: {
           min: moment("2012-01"),
           max: moment("2019-12")
         },
-        stations: null
+        visItems: {
+          granularities: ["monthly"],
+          options: [],
+          map: {
+            options: []
+          },
+          stations: {
+            timeseries: ["monthly", "daily"],
+            options: [
+              {
+                type: "select",
+                label: "Fill Type",
+                values: {
+                  "unfilled": "Unfilled",
+                  "partial": "Partial Filled",
+                  "filled": "Filled"
+                }
+              }
+            ]
+          }
+        },
       },
-      exportItems: {}
-    }]
+      {
+        subclassification: "legacy",
+        precedence: 1,
+        visItems: {
+          map: {
+            min: moment("2012-01"),
+            max: moment("2019-12")
+          },
+          stations: null
+        },
+      }
+    ]
   }
 
 
