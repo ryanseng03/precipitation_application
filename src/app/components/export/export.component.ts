@@ -13,6 +13,8 @@ export class ExportComponent implements OnInit, OnDestroy {
 
   @Input() map: MapComponent;
 
+  itemTest: Set<any> = new Set(["a", "b", "c"]);
+
   exportForm: FormGroup;
 
   //WEIRD [OBJECT OBJECT] ERROR, ExpressionChangedAfterItHasBeenCheckedError ON CHECK EMAIL, AND NEED TO REMOVE EMAIL CONTROL FROM FORM VALIDATION WHEN NOT SELECTED
@@ -282,6 +284,21 @@ export class ExportComponent implements OnInit, OnDestroy {
     //   console.log('The dialog was closed');
     //   this.animal = result;
     // });
+  }
+
+
+  removeItem(item: any) {
+    this.itemTest.delete(item);
+  }
+
+  t = 0;
+  openAddItemDialog(): void {
+    // const dialogRef = this.dialog.open(ExportUnimplementedComponent, {
+    //   width: '250px',
+    //   data: null
+    // });
+
+    this.itemTest.add(this.t++)
   }
 
 }

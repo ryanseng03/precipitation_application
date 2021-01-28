@@ -8,7 +8,6 @@ export class RasterData {
     };
 
     constructor(header: RasterHeader) {
-
         this.data = {
             header: header,
             data: {}
