@@ -3,6 +3,7 @@ import { FormControl, FormGroup, Validators, FormArray, AbstractControl, Validat
 import { MapComponent } from '../map/map.component';
 import {ExportUnimplementedComponent} from "../../dialogs/export-unimplemented/export-unimplemented.component";
 import { MatDialog } from '@angular/material/dialog';
+import {ExportAddItemComponent} from "../../dialogs/export-add-item/export-add-item.component"
 
 @Component({
   selector: 'app-export',
@@ -120,12 +121,12 @@ export class ExportComponent implements OnInit, OnDestroy {
 
     let selectAllControl = new FormControl(true);
     this.controls.selectAll.control = selectAllControl;
-    
+
     this.controls.useEmail.control = new FormControl(false);
 
     let formGroup: {[field: string]: AbstractControl} = {};
-    let selectorControls: FormControl[] = []; 
-    
+    let selectorControls: FormControl[] = [];
+
     for(let selector of this.controls.includeTypes.selectors) {
       let control = new FormControl(selector.default);
       selectorControls.push(control);
@@ -140,14 +141,14 @@ export class ExportComponent implements OnInit, OnDestroy {
     }
     this.exportForm = new FormGroup(formGroup);
 
-    
+
   }
 
   ngOnInit() {
     let updateAllSelected = (values: boolean[]) => {
       let allSelected = values.every(Boolean);
       //only change if modified by user (debounce if changed as a result of other control changes)
-      if(!this.controls.includeTypes.debounce) { 
+      if(!this.controls.includeTypes.debounce) {
         this.controls.selectAll.debounce = true;
         this.controls.selectAll.control.setValue(allSelected)
       }
@@ -233,7 +234,7 @@ export class ExportComponent implements OnInit, OnDestroy {
     return this.someSelected(group) ? null : {error: "At least one option must be selected."}
   }
 
-  
+
   someSelected(group: FormArray): boolean {
     return group.value.some(Boolean);
   }
@@ -293,12 +294,17 @@ export class ExportComponent implements OnInit, OnDestroy {
 
   t = 0;
   openAddItemDialog(): void {
-    // const dialogRef = this.dialog.open(ExportUnimplementedComponent, {
-    //   width: '250px',
-    //   data: null
-    // });
+    const dialogRef = this.dialog.open(ExportAddItemComponent, {
+      width: '250px',
+      data: null
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if(result) {
+        this.itemTest.add(this.t++);
+      }
 
-    this.itemTest.add(this.t++)
+    });
+
   }
 
 }
