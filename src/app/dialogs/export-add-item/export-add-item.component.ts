@@ -43,3 +43,23 @@ abstract interface ResourceInfo {
 interface RasterInfo extends ResourceInfo {
 
 }
+
+interface StationInfo extends ResourceInfo {
+
+}
+
+interface AnomalyInfo extends ResourceInfo {
+
+}
+
+interface StandardErrorInfo extends ResourceInfo {
+
+}
+
+interface LOOCVErrorInfo extends ResourceInfo {
+
+}
+
+interface MetadataInfo extends ResourceInfo {
+
+}
