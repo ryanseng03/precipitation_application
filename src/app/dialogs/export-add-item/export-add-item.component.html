@@ -1,1 +1,16 @@
-<app-date-selector></app-date-selector>
+
+<div>
+    <div>
+        <div *ngIf="getKeys(datasets).length == 1; else listClassifications">
+            Dataset type: {{getKeys(datasets)[0]}}
+        </div>
+        <ng-template #listClassifications>
+
+        </ng-template>
+    </div>
+    <div *ngIf="item.datasetInfo.classification">
+
+    </div>
+</div>
+
+<!-- <app-date-selector></app-date-selector> -->
