@@ -78,12 +78,32 @@ export class SiteValueFetcherService {
 
   getRastersDate(date: Moment.Moment): Promise<RequestResults> {
 
+    //TEMPORARY VALUES TO BE USED UNTIL MORE STABLE DATASET PRODUCED
+    let tempKey = {
+      "header_id": "hawaii_statewide_250m",
+      "classification": "rainfall",
+      "subclassification": "new",
+      "units": "mm",
+      "period": "month"
+    };
+    let doc_name = "hcdp_raster";
+    let version = "0.1";
+    let dateStr = date.format("YYYY-MM");
+    let query = `{'$and':[{'name':'${doc_name}'},{'value.date':'${dateStr}'},{'value.version':'${version}'}`;
+    
+    for(let value in tempKey) {
+      query += `,{'value.key.${value}':'${tempKey[value]}'}`
+    }
+    query += `]}`;
+
+    console.log(query);
+
     //right now have month and year as fields, should change this to date?
 
-    let year = date.year();
-    let month = date.month();
+    // let year = date.year();
+    // let month = date.month();
 
-    let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'raster'},{'value.year':${year}},{'value.month':${month}}]}`;
+    //let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'raster'},{'value.year':${year}},{'value.month':${month}}]}`;
 
     //   `{'$and':
     //   [
