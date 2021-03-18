@@ -1,0 +1,28 @@
+.map {
+    height: 500px;
+    width: 500px;
+    background-color: hotpink;
+}
+
+::ng-deep .filter-toggle-selector {
+    display: block;
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+    
+}
+
+::ng-deep .filter-toggle-selector:focus {
+    outline: none;
+}
+
+::ng-deep .filter-popup-text {
+    display: block;
+  
+}
+
+::ng-deep .filter-popup-spacer {
+    height: 10px;
+}

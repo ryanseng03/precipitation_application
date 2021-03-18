@@ -1,3 +1,23 @@
+
+
+<div>
+  <div *ngIf="view == 'basic'; else advancedView">
+
+  </div>
+  <ng-template #advancedView>
+    <mat-checkbox [formControl]="formData.advanced.invert.control">
+      {{formData.advanced.invert.label}}
+    </mat-checkbox>
+    <mat-icon class="info-icon" [inline]="true" [matTooltip]="formData.advanced.invert.description">info</mat-icon>
+  </ng-template>
+  <div>
+
+  </div>
+</div>
+
+
+
+
 <!--
 <mat-form-field>
   <mat-label>
@@ -10,7 +30,7 @@
   </mat-select>
 </mat-form-field> -->
 
-<div class="main-container dark-theme">
+<!-- <div class="main-container dark-theme">
   <div class="label-container">
     Rainfall Station Filters
   </div>
@@ -88,7 +108,7 @@
     </mat-menu>
   </div>
 
-</div>
+</div> -->
 
 
 

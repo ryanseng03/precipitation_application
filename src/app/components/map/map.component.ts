@@ -48,7 +48,7 @@ export class MapComponent implements OnInit {
   colorScheme: ColorScale;
   // markerClusterLayer: any;
 
-  options: L.MapOptions
+  options: L.MapOptions;
   // private drawnItems: L.FeatureGroup;
   // private drawOptions: any;
   map: L.Map;
@@ -244,78 +244,6 @@ export class MapComponent implements OnInit {
           fillColor: hex
         });
       }
-
-
-      // let getColorSchemeFromAssetFile = (fname: string, reverse?: boolean): Promise<ColorScale> => {
-      //   return this.colors.loadXMLDataFromAssetFile(fname).then((data: string) => {
-      //     return this.colors.getColorSchemeFromXML(data, reverse);
-      //   });
-      // }
-
-      // let colorScheme: ColorScale;
-      // switch(scheme) {
-      //   case "mono": {
-      //     colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
-      //     activateColorScheme(colorScheme);
-      //     break;
-      //   }
-      //   case "rainbow": {
-      //     colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
-      //     activateColorScheme(colorScheme);
-      //     break;
-      //   }
-      //   case "tacc1": {
-      //     getColorSchemeFromAssetFile("/assets/colorschemes/1-3wbgy.xml", true).then((colorScale: ColorScale) => {
-      //       activateColorScheme(colorScale);
-      //     });
-      //     break;
-      //   }
-      //   case "tacc2": {
-      //     getColorSchemeFromAssetFile("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
-      //       activateColorScheme(colorScale);
-      //     });
-      //     break;
-      //   }
-      //   case "tacc3": {
-      //     getColorSchemeFromAssetFile("/assets/colorschemes/4-3wbgy.xml", true).then((colorScale: ColorScale) => {
-      //       activateColorScheme(colorScale);
-      //     });
-      //     break;
-      //   }
-      //   case "tacc4": {
-      //     getColorSchemeFromAssetFile("/assets/colorschemes/13-4w_grphgrnl.xml").then((colorScale: ColorScale) => {
-      //       activateColorScheme(colorScale);
-      //     });
-      //     break;
-      //   }
-      //   case "tacc5": {
-      //     getColorSchemeFromAssetFile("/assets/colorschemes/17-5wdkcool.xml").then((colorScale: ColorScale) => {
-      //       activateColorScheme(colorScale);
-      //     });
-      //     break;
-      //   }
-      //   case "tacc6": {
-      //     getColorSchemeFromAssetFile("/assets/colorschemes/18-5w_coolcrisp2.xml").then((colorScale: ColorScale) => {
-      //       activateColorScheme(colorScale);
-      //     });
-      //     break;
-      //   }
-      //   case "turbo": {
-      //     colorScheme = this.colors.getTurboColorScale();
-      //     activateColorScheme(colorScheme);
-      //     break;
-      //   }
-      //   case "usgs": {
-      //     colorScheme = this.colors.getUSGSColorScale();
-      //     activateColorScheme(colorScheme);
-      //     break;
-      //   }
-      //   case "viridus": {
-      //     colorScheme = this.colors.getViridusColorScale();
-      //     activateColorScheme(colorScheme);
-      //     break;
-      //   }
-      // }
       
     }
 
@@ -353,32 +281,6 @@ export class MapComponent implements OnInit {
       },
       band: "rainfall",
     };
-
-    // CC.Watermark = CC.extend({
-    //     onAdd: function(map) {
-    //       let control = L.DomUtil.create('div');
-    //       control.innerHTML = '<mat-slider min="0" max="100" step="1" value="1"></mat-slider>';
-    //       //control.innerHTML = "<div style='width:10px;height:10px;background-color:white;'></div>";
-    //       control.style.width = "100px";
-    //       control.style.height = "100px";
-    //       control.style.backgroundColor = "red";
-    //       return control;
-    //     },
-
-    //     onRemove: function(map) {
-    //         // Nothing to do here
-    //     }
-    // });
-
-    // C.watermark = function(opts) {
-    //   return new CC.Watermark(opts);
-    // }
-    // setTimeout(() => {
-    //   console.log(map);
-    //   console.log(map._controlCorners);
-    //   new CC.Watermark({ position: 'bottomright' }).addTo(map);
-    // }, 2000);
-
 
 
 
@@ -421,37 +323,11 @@ export class MapComponent implements OnInit {
     let pivotZoom = 10;
     let minRadiusInfo = [5, 10];
     this.map.on("zoomend", () => {
-      // let zoom = this.map.getZoom();
-      // console.log(zoom);
-      // let scale = this.map.getZoomScale(zoom, this.markerInfo.oldZoom);
-      // let minRadiusScale = this.map.getZoomScale(zoom, minRadiusInfo[1]);
-      // let minRadius = minRadiusScale * minRadiusInfo[0]
-      // this.markerInfo.oldZoom = zoom;
-      // console.log(scale);
-      // this.markerInfo.weight *= scale;
-      // for(let marker of this.markerInfo.markers) {
-      //   let radius = marker.marker.getRadius();
-      //   let weight = this.markerInfo.weight;
-      //   let scaledRadius = marker.metadata.scaledRadius * scale;
-      //   if(zoom < pivotZoom) {
-      //     radius = Math.max(scaledRadius, minRadius);
-      //   }
-      //   else {
-      //     let pivotScale = this.map.getZoomScale(zoom, pivotZoom)
-      //     radius *= pivotScale;
-      //     radius = Math.max(radius, minRadius);
-      //   }
-      //   marker.marker.setRadius(radius);
-      //   marker.marker.setStyle({weight: weight});
-      //   marker.metadata.scaledRadius = scaledRadius;
-      // }
+
       this.updateMarkers();
     });
 
-    //let markerMap: Map<SiteInfo, L.CircleMarker> = new Map<SiteInfo, L.CircleMarker>();
-    //let siteMarkers = R.markerClusterGroup(clusterOptions);
-    //this.markerClusterLayer = siteMarkers;
-    //generate parameter hooks to update visualizations
+
 
 
     //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
@@ -543,27 +419,6 @@ export class MapComponent implements OnInit {
     });
 
 
-    // C.RemoveAll = L.Control.extend(
-    //   {
-    //       options:
-    //       {
-    //           position: 'topright',
-    //       },
-    //       onAdd: function (map) {
-    //           var controlDiv = L.DomUtil.create('div', 'leaflet-draw-toolbar leaflet-bar');
-
-    //           var controlUI = L.DomUtil.create('app-navbar', "", controlDiv);
-    //           controlUI.title = 'Remove All Polygons';
-    //           return controlDiv;
-    //       }
-    //   });
-    //   var removeAllControl = new C.RemoveAll();
-    //   map.addControl(removeAllControl);
-
-    // let layerGroupControlOptions = {
-    //   exclusiveGroups: ["Types"],
-    //   groupCheckboxes: true
-    // };
 
 
 

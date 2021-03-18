@@ -1,8 +1,6 @@
 <div class="main-container">
-  <div #topbar class="topbar-container">
-    <!-- <div [ngClass]="topbar.offsetWidth > 1000 ? 'dataset-info-container-half' : 'dataset-info-container-full'">
-      <app-dataset-info></app-dataset-info>
-    </div> -->
+  <!-- <div #topbar class="topbar-container">
+    
     <div class="filter-container">
 
       <app-site-filter></app-site-filter>
@@ -11,7 +9,7 @@
     <div #p1 class="dataset-info-container">
 
     </div>
-  </div>
+  </div> -->
 
 
 
@@ -27,7 +25,8 @@
 
 
     <div #viewContainer class="view-container">
-      <div #p2 class="dataset-info-container">
+      <app-site-filter></app-site-filter>
+      <!-- <div #p2 class="dataset-info-container">
         <div #dsInfo>
           <app-dataset-info [map]="map" class="dataset-info"></app-dataset-info>
           <div class="menu-button-container">
@@ -44,7 +43,6 @@
           <mat-nav-list class="sidenav">
             <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
             <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
-            <!-- <a mat-list-item (click)="viewNavClick('controls')">Map Controls</a> -->
             <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
           </mat-nav-list>
         </mat-sidenav>
@@ -62,14 +60,12 @@
             <app-export [map]="map"></app-export>
           </div>
 
-          <!-- <div *ngSwitchCase="'controls'">
-            <app-map-controls [map]="map"></app-map-controls>
-          </div> -->
+  
         </div>
 
 
       </mat-sidenav-container>
-    </div>
+    </div> -->
 
 
 

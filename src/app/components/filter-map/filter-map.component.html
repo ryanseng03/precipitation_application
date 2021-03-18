@@ -1,0 +1,14 @@
+<div #mapElement leaflet class="map"
+  leafletDraw
+  [leafletOptions]="leafletOptions"
+  [leafletDrawOptions]="leafletDrawOptions"
+  (leafletMapReady)="onMapReady($event)"
+  (leafletDrawCreated)="createDrawnFilter($event)"
+  (leafletDrawEdited)="editDrawnFilter($event)"
+  (leafletDrawDeleted)="deleteDrawnFilter($event)">
+</div>
+
+<div class="map">
+
+</div>
+

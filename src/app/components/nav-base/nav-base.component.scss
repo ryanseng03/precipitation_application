@@ -1,0 +1,81 @@
+
+.nav-tile-container {
+    width: 100%;
+    height: 100%;
+}
+
+
+.nav-sub-tile {
+    height: 100%;
+    width: 100%;
+    padding: 4px;
+    padding-top: 20px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.nav-sub-tile:hover {
+    border-style: solid;
+    border-width: 2px;
+}
+
+
+
+
+.data-nav-trigger {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    text-orientation: upright;
+    writing-mode: vertical-lr;
+    padding: 0px;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+}
+
+p {
+    margin: 0;
+    padding: 0px; 
+}
+
+.nav-container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.selected {
+    background-color: #175db6;
+    color: white;
+}
+
+.sidebar-nav {
+    width: 100%;
+}
+
+
+.app-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.component-container {
+    height: 100%;
+    flex-grow: 1;
+}
+
+.vis-container {
+    height: 100%;
+    width: 100%;
+    background-color: gray;
+}
+
+.export-container {
+    height: 100%;
+    width: 100%;
+    background-color: green;
+}

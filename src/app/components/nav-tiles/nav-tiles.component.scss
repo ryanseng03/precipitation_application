@@ -1,0 +1,26 @@
+.nav-tile {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+
+
+.nav-tile:hover {
+    border-style: solid;
+    border-width: 5px;
+}
+
+.nav-tile-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.selected {
+    background-color: #175db6;
+    color: white;
+}
