@@ -68,6 +68,10 @@ import {MatDialogModule} from '@angular/material/dialog';
 import { ExportUnimplementedComponent } from './dialogs/export-unimplemented/export-unimplemented.component';
 import { UploadCustomColorSchemeComponent } from './dialogs/upload-custom-color-scheme/upload-custom-color-scheme.component';
 import { ExportAddItemComponent } from './dialogs/export-add-item/export-add-item.component';
+import { ExportInterfaceComponent } from './components/export-interface/export-interface.component';
+import { FilterMapComponent } from './components/filter-map/filter-map.component';
+import { NavBaseComponent } from './components/nav-base/nav-base.component';
+import { NavTilesComponent } from './components/nav-tiles/nav-tiles.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -105,7 +109,11 @@ PlotlyModule.plotlyjs = PlotlyJS;
     LeafletColorScaleComponent,
     ExportUnimplementedComponent,
     UploadCustomColorSchemeComponent,
-    ExportAddItemComponent
+    ExportAddItemComponent,
+    ExportInterfaceComponent,
+    FilterMapComponent,
+    NavBaseComponent,
+    NavTilesComponent
   ],
   imports: [
     BrowserModule,

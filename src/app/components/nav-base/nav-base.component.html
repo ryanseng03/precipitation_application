@@ -1,0 +1,33 @@
+
+<div class="app-container">
+  <div class="nav-container" [@navSize]="getNavState()" (mouseenter)="changeNavExpand(false)" (mouseleave)="changeNavExpand(true)">
+    <div *ngIf="getNavExpanded(); else collapsedNav" class="nav-tile-container">
+      <app-nav-tiles [(component)]="component"></app-nav-tiles>
+    </div>
+
+    <ng-template #collapsedNav>
+      <div class="data-nav-trigger">
+        <div class="nav-sub-tile" [@selectColor]="component == 'vis' ? 'selected' : 'deselected'" (click)="selectComponent('vis')">
+          Visualize Data
+        </div>
+        <div class="nav-sub-tile" [@selectColor]="component == 'export' ? 'selected' : 'deselected'" (click)="selectComponent('export')">
+          Export Data
+        </div>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="component-container">
+    <div *ngIf="component == 'vis'" class="vis-container">
+      <app-vis></app-vis>
+    </div>
+    <div *ngIf="component == 'export'" class="export-container">
+      <app-export-interface></app-export-interface>
+    </div>
+  </div>
+</div>
+
+  
+
+
+

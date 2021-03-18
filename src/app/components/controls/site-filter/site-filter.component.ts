@@ -47,6 +47,73 @@ interface ValueSelector {
 })
 export class SiteFilterComponent implements OnInit {
 
+
+  ///////////////////////////////////////////////////
+
+  formData = {
+    advanced: {
+      invert: {
+        label: "Invert Filter",
+        description: "If this is selected any sensor stations matching the filter will be excluded.",
+        control: new FormControl(false)
+      }
+    }
+    
+  };
+
+  view: string = "basic2";
+
+  basicFilterOpts: any[] = [{
+    property: "Spatial Extent",
+    descriptions: "The county of coverage for the filter",
+    values: [""]
+  }]
+
+  spatialBounds = {
+    
+  }
+
+
+
+  constructor() {
+    
+  }
+
+  ngOnInit() {
+
+  }
+
+
+
+
+
+
+  //////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   siteInfo: {
     filteredSites: SiteInfo[];
     sites: SiteInfo[];
@@ -85,165 +152,163 @@ export class SiteFilterComponent implements OnInit {
 
 
 
-  constructor(private paramService: EventParamRegistrarService, private cdRef: ChangeDetectorRef) {
+  // constructor(private paramService: EventParamRegistrarService, private cdRef: ChangeDetectorRef) {
 
-    this.siteInfo = {
-     filteredSites: null,
-     sites: null
-    };
+  //   this.siteInfo = {
+  //    filteredSites: null,
+  //    sites: null
+  //   };
 
-    //information tracking for the three controls (type, field, values)
-    this.options = {
-      filterType: {
-        name: "Type",
-        disabled: false,
-        control: null,
-        default: "include",
-        values: [{
-          display: "Include",
-          value: "include",
-          include: true
-        }, {
-          display: "Exclude",
-          value: "exclude",
-          include: true
-        }],
-      },
-      filterFields: {
-        name: "Property",
-        disabled: false,
-        control: null,
-        default: "",
-        values: SiteInfo.getFields().map((field: string) => {
-          //names should be translated when mappings created
-          let selector: ValueSelector = {
-            display: field,
-            value: field,
-            include: true
-          }
-          return selector;
-        })
-      },
-      filterValues: {
-        name: "Values",
-        disabled: false,
-        values: null
-      }
-    }
+  //   //information tracking for the three controls (type, field, values)
+  //   this.options = {
+  //     filterType: {
+  //       name: "Type",
+  //       disabled: false,
+  //       control: null,
+  //       default: "include",
+  //       values: [{
+  //         display: "Include",
+  //         value: "include",
+  //         include: true
+  //       }, {
+  //         display: "Exclude",
+  //         value: "exclude",
+  //         include: true
+  //       }],
+  //     },
+  //     filterFields: {
+  //       name: "Property",
+  //       disabled: false,
+  //       control: null,
+  //       default: "",
+  //       values: SiteInfo.getFields().map((field: string) => {
+  //         //names should be translated when mappings created
+  //         let selector: ValueSelector = {
+  //           display: field,
+  //           value: field,
+  //           include: true
+  //         }
+  //         return selector;
+  //       })
+  //     },
+  //     filterValues: {
+  //       name: "Values",
+  //       disabled: false,
+  //       values: null
+  //     }
+  //   }
 
-    let controls: {[item: string]: FormControl} = {};
-    for(let item of ["filterType", "filterFields"]) {
-      let control = new FormControl(this.options[item].default);
-      controls[item] = control;
-      this.options[item].control = control;
-    }
-    this.filterForm = new FormGroup(controls);
+  //   let controls: {[item: string]: FormControl} = {};
+  //   for(let item of ["filterType", "filterFields"]) {
+  //     let control = new FormControl(this.options[item].default);
+  //     controls[item] = control;
+  //     this.options[item].control = control;
+  //   }
+  //   this.filterForm = new FormGroup(controls);
 
-    //create a filter value manager with the field control, complete set of fields, and field control type mapping
-    this.options.filterValues.values = new FilterValuesManager(this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
+  //   //create a filter value manager with the field control, complete set of fields, and field control type mapping
+  //   this.options.filterValues.values = new FilterValuesManager(this.options.filterFields.control, SiteInfo.getFields(), this.filterTypes)
 
-    //parameter hook for rainfall stations coming into application
-    let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
-      //populate the values manager with the set of site info
-      this.options.filterValues.values.populate(sites);
-      //trigger change detection to update controls
-      cdRef.detectChanges();
+  //   //parameter hook for rainfall stations coming into application
+  //   let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
+  //     //populate the values manager with the set of site info
+  //     this.options.filterValues.values.populate(sites);
+  //     //trigger change detection to update controls
+  //     cdRef.detectChanges();
 
-      this.siteInfo.sites = sites;
-      this.filterSites(sites, this.filters);
-    });
-  }
-
-  //apply filter to sites and emit
-  filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
-    //filter set of sites using siteFilter function
-    let filtered = sites.filter(this.siteFilter(filters));
-    this.siteInfo.filteredSites = filtered;
-    //push the filtered sites to the parameter service
-    this.paramService.pushSiteFilter(filtered);
-    return filtered;
-  }
-
-  //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
-  siteFilter(filters: Filter[]) {
-    //return function for checking if site matches the set of filters
-    return (site: SiteInfo): boolean => {
-      //run the site through each filter and return false if it doesn;t match any of them
-      for(let filter of filters) {
-        if(!filter.filter(site)) {
-          return false;
-        }
-      }
-      //matches all filters, return true
-      return true;
-    }
-
-  }
-
-
-  // clearFilterFields() {
-  //   this.options.filterValues.control.setValue("");
-  //   this.options.filterFields.control.setValue("");
+  //     this.siteInfo.sites = sites;
+  //     this.filterSites(sites, this.filters);
+  //   });
   // }
 
-  ngOnInit() {
+  // //apply filter to sites and emit
+  // filterSites(sites: SiteInfo[], filters: Filter[]): SiteInfo[] {
+  //   //filter set of sites using siteFilter function
+  //   let filtered = sites.filter(this.siteFilter(filters));
+  //   this.siteInfo.filteredSites = filtered;
+  //   //push the filtered sites to the parameter service
+  //   this.paramService.pushSiteFilter(filtered);
+  //   return filtered;
+  // }
 
-  }
+  // //allow caller to specify filters to allow for only filter subset to be run when new filter applied (rather than redoing the whole thing)
+  // siteFilter(filters: Filter[]) {
+  //   //return function for checking if site matches the set of filters
+  //   return (site: SiteInfo): boolean => {
+  //     //run the site through each filter and return false if it doesn;t match any of them
+  //     for(let filter of filters) {
+  //       if(!filter.filter(site)) {
+  //         return false;
+  //       }
+  //     }
+  //     //matches all filters, return true
+  //     return true;
+  //   }
 
-  //check if filter is complete by checking if any values have been selected
-  filterIncomplete(): boolean {
-    let values = this.options.filterValues.values.getOutputValues();
-    //console.log(values);
-    return values == null || values.length == 0;
-  }
+  // }
 
 
-  //submit selected values to create filter
-  onSubmit(e) {
-    //get selected field and type values from controls
-    let field = this.options.filterFields.control.value;
-    let type = this.options.filterType.control.value;
-    //remove field from list, should only have one for each
-    for(let selector of this.options.filterFields.values) {
-      //find matching selector and set include to false
-      if(selector.value == field) {
-        selector.include = false;
-        break;
-      }
-    }
-    //create filter from the set values object
-    let filter: Filter = this.options.filterValues.values.createFilter(type);
-    this.filters.push(filter);
-    //reset field value
-    this.options.filterFields.control.setValue("");
-    //run filtered sites through newly constructed filter
-    this.filterSites(this.siteInfo.filteredSites, [filter]);
-  }
+  // // clearFilterFields() {
+  // //   this.options.filterValues.control.setValue("");
+  // //   this.options.filterFields.control.setValue("");
+  // // }
 
-  //delete one of the filters
-  deleteFilter(e: MouseEvent, i: number) {
-    e.stopPropagation();
-    e.preventDefault();
+ 
 
-    let filter = this.filters[i];
-    //find field selector and set to include
-    for(let selector of this.options.filterFields.values) {
-      if(selector.value == filter.field) {
-        selector.include = true;
-        break;
-      }
-    }
-    //remove filter from set of filters
-    this.filters.splice(i, 1);
-    //need to redo filters over full set of sites
-    this.filterSites(this.siteInfo.sites, this.filters);
-  }
+  // //check if filter is complete by checking if any values have been selected
+  // filterIncomplete(): boolean {
+  //   let values = this.options.filterValues.values.getOutputValues();
+  //   //console.log(values);
+  //   return values == null || values.length == 0;
+  // }
 
-  //prevent menu from closing on clicking menu item by stopping click event
-  menuClick(e: MouseEvent) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
+
+  // //submit selected values to create filter
+  // onSubmit(e) {
+  //   //get selected field and type values from controls
+  //   let field = this.options.filterFields.control.value;
+  //   let type = this.options.filterType.control.value;
+  //   //remove field from list, should only have one for each
+  //   for(let selector of this.options.filterFields.values) {
+  //     //find matching selector and set include to false
+  //     if(selector.value == field) {
+  //       selector.include = false;
+  //       break;
+  //     }
+  //   }
+  //   //create filter from the set values object
+  //   let filter: Filter = this.options.filterValues.values.createFilter(type);
+  //   this.filters.push(filter);
+  //   //reset field value
+  //   this.options.filterFields.control.setValue("");
+  //   //run filtered sites through newly constructed filter
+  //   this.filterSites(this.siteInfo.filteredSites, [filter]);
+  // }
+
+  // //delete one of the filters
+  // deleteFilter(e: MouseEvent, i: number) {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+
+  //   let filter = this.filters[i];
+  //   //find field selector and set to include
+  //   for(let selector of this.options.filterFields.values) {
+  //     if(selector.value == filter.field) {
+  //       selector.include = true;
+  //       break;
+  //     }
+  //   }
+  //   //remove filter from set of filters
+  //   this.filters.splice(i, 1);
+  //   //need to redo filters over full set of sites
+  //   this.filterSites(this.siteInfo.sites, this.filters);
+  // }
+
+  // //prevent menu from closing on clicking menu item by stopping click event
+  // menuClick(e: MouseEvent) {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+  // }
 }
 
 class FilterValuesManager {
