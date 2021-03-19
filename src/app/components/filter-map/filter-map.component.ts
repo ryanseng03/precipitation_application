@@ -3,6 +3,7 @@ import { Component, OnInit, Output, Input, EventEmitter } from '@angular/core';
 import * as L from "leaflet";
 //import * as D from "leaflet-draw";
 import { SiteMetadata } from 'src/app/models/SiteMetadata';
+import { InternalPointsService } from "../../services/geospatial/internal-points.service";
 
 
 interface StationMetadata {
@@ -33,7 +34,7 @@ export class FilterMapComponent implements OnInit {
     //this._stations = stations;
     //reevaluate groups
     //this.updateDrawnFilter();
-    
+
 
   }
   @Input() selectorMode = "popup";
@@ -44,7 +45,7 @@ export class FilterMapComponent implements OnInit {
 
   map: L.Map;
 
-  
+
 
   colors = {
     //default color, looks nice
@@ -62,9 +63,9 @@ export class FilterMapComponent implements OnInit {
 
   selectedStations: L.FeatureGroup = L.featureGroup();
   deselectedStations: L.FeatureGroup = L.featureGroup();
-  
 
-  constructor() {
+
+  constructor(private ips: InternalPointsService) {
 
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
@@ -108,6 +109,9 @@ export class FilterMapComponent implements OnInit {
       test: "test",
       test2: "test"
     });
+
+    this.ips.haversineDistance(L.latLng(19.843500937878932, -157.78418841637298), L.latLng(18.69997758027129, -158.99559673987704));
+
   }
 
 
@@ -123,6 +127,9 @@ export class FilterMapComponent implements OnInit {
       case "circle": {
         let bounds: L.LatLngBounds = drawnLayer.layer.getBounds();
         console.log(bounds);
+
+
+
         break;
       }
       case "rectangle": {
@@ -166,16 +173,16 @@ export class FilterMapComponent implements OnInit {
     });
   }
 
-  
+
 
 
   addPointToMap(location: L.LatLng, metadata: any) {
     let marker = L.circleMarker(location);
-    
+
     //need select all, deselect all, replace exclude with invert selection
     //default everything to selecte
     let selected = true;
-    
+
 
     let popup = L.DomUtil.create("div");
 
@@ -210,7 +217,7 @@ export class FilterMapComponent implements OnInit {
 
     let toggleSelected = () => {
       //toggle select
-      selected = !selected; 
+      selected = !selected;
       setStyle();
     }
 
@@ -226,7 +233,7 @@ export class FilterMapComponent implements OnInit {
 
     L.DomEvent.addListener(toggleSelector, "click", () => {
       toggleSelected();
-    });    
+    });
 
     setStyle();
 
