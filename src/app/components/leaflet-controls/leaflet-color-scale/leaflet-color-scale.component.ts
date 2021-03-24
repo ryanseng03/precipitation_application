@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import {Map, Control, DomUtil, DomEvent} from 'leaflet';
+import {Map, Control, DomUtil, DomEvent, ControlPosition} from 'leaflet';
 import { ColorScale } from 'src/app/models/colorScale';
 import { strictEqual } from 'assert';
 
@@ -19,20 +19,18 @@ export class LeafletColorScaleComponent implements OnInit {
   
 
   @Input() colorScale: ColorScale;
+  @Input() position: ControlPosition = "bottomright";
   @Input() set map(map: Map) {
     if(map) {
       this._map = map;
       let Legend = Control.extend({
         onAdd: function () {
           let control = DomUtil.get("legend");
-          console.log(control);
           return control;
         }
       });
-      this.control = new Legend({position: "bottomright"}).addTo(map);
+      this.control = new Legend({position: this.position}).addTo(map);
     }
-
-    
   }
 
   constructor() { }

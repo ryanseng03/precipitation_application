@@ -1,0 +1,49 @@
+<div cdkDropListGroup>
+  <div class="example-container">
+
+    <div
+      cdkDropList
+      [cdkDropListData]="all"
+      class="example-list"
+      (cdkDropListDropped)="moveToGroup($event)"
+      [cdkDropListEnterPredicate]="noReturnPredicate">
+      <div
+        class="example-box"
+        *ngFor="let number of all"
+        [cdkDragData]="number"
+        cdkDrag>{{number}}</div>
+    </div>
+  </div>
+
+  <div class="example-container">
+
+    <div
+      cdkDropList
+      [cdkDropListData]="even"
+      class="example-list"
+      (cdkDropListDropped)="moveToGroup($event)"
+      [cdkDropListEnterPredicate]="evenPredicate">
+      <div
+        class="example-box"
+        *ngFor="let number of even"
+        cdkDrag
+        [cdkDragData]="number">{{number}}</div>
+    </div>
+  </div>
+
+  <div class="example-container">
+
+    <div
+      cdkDropList
+      [cdkDropListData]="odd"
+      class="example-list"
+      (cdkDropListDropped)="moveToGroup($event)"
+      [cdkDropListEnterPredicate]="oddPredicate">
+      <div
+        class="example-box"
+        *ngFor="let number of odd"
+        cdkDrag
+        [cdkDragData]="number">{{number}}</div>
+    </div>
+  </div>
+</div>

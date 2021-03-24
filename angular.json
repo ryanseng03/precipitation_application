@@ -40,8 +40,7 @@
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "src/app/themes/mat-theme.sass"
             ],
-            "scripts": [
-            ],
+            "scripts": [],
             "es5BrowserSupport": true
           },
           "configurations": {

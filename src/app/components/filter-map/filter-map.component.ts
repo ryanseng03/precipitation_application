@@ -4,14 +4,53 @@ import * as L from "leaflet";
 //import * as D from "leaflet-draw";
 import { SiteMetadata } from 'src/app/models/SiteMetadata';
 import { InternalPointsService } from "../../services/geospatial/internal-points.service";
+import { StationFilteringService, FilteredStations, StationMetadata, Filter } from "../../services/filters/station-filtering.service";
+import { AnimationStyleMetadata } from '@angular/animations';
+import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 
 
-interface StationMetadata {
-  name: string,
-  id: string,
-  location: L.LatLng,
-  add: {[prop: string]: string}
+let T = L.Control.extend({
+  onAdd: function(map) {
+    let imgSource = "assets/arrows/nautical.svg"
+    let container = L.DomUtil.create("div")
+    container.style.width = "100px";
+    container.style.height = "100px";
+    container.style.backgroundColor = "rgba(211, 211, 211, 0.5)";
+    container.style.borderRadius = "10px";
+    //container.style.opacity = "50%";
+    let img = L.DomUtil.create("img", null, container);
+    img.setAttribute("src", imgSource);
+    img.style.width = "calc(100% - 6px)";
+    img.style.height = "calc(100% - 6px)";
+    img.style.padding = "3px";
+    img.style.opacity = "80%";
+    return container;
+  }
+});
+
+//only need to check markers not already in shapes
+//not true because layer could be deleted
+
+//isnt it easier just to pass in the filter defs?
+
+interface LayerInfo {
+  type: "circle" | "rectangle" | "polygon",
+  filter: Filter
 }
+
+//marker info
+
+//just on click check state match
+//move all of the filter logic to a service
+
+
+interface StationFilterInfo {
+  metadata: StationMetadata,
+  inFilter: boolean
+}
+
+
+
 
 
 @Component({
@@ -20,23 +59,33 @@ interface StationMetadata {
   styleUrls: ['./filter-map.component.scss']
 })
 export class FilterMapComponent implements OnInit {
+  //reference marker by metadata object so when filters change can relate already created markers
+  private metadataToMarker: Map<StationMetadata, StationMarker>;
+  //reference info on layer by layer
+  private drawnFilters: Map<L.Layer, LayerInfo>;
 
   private _stations: SiteMetadata[];
+  roseOptions: RoseControlOptions = {
+    image: "assets/arrows/nautical.svg",
+    position: "bottomleft"
+  };
+
+
+  //!!!MAKE SELECT ON MAP FILTER AN ID FILTER
 
   @Output() filteredStations: EventEmitter<SiteMetadata[]> = new EventEmitter<SiteMetadata[]>();
   //station metadata has to have geospatial properties (lat, lng), and some sort of id, other than that can have anything or nothing
   //use standard fields for anything you need
   //update to StationMetadata and be more generic
-  @Input() set stations(stations: {
-      station: StationMetadata,
-      selected: boolean
-    }[]) {
-    //this._stations = stations;
-    //reevaluate groups
-    //this.updateDrawnFilter();
+  @Input() set stations(stations: StationMetadata[]) {
+    for(let station of stations) {
 
-
+    }
   }
+  // @Input() set filters(filters: Filter[]) {
+  //   this.applyFilters(filters);
+  // }
+
   @Input() selectorMode = "popup";
   @Input() StationMetadataMetadata: any;
   //@Input()
@@ -47,11 +96,7 @@ export class FilterMapComponent implements OnInit {
 
 
 
-  colors = {
-    //default color, looks nice
-    selected: "#3388ff",
-    deselected: "#757575"
-  }
+  
 
   leafletOptions: L.MapOptions;
   leafletDrawOptions: any;
@@ -65,7 +110,16 @@ export class FilterMapComponent implements OnInit {
   deselectedStations: L.FeatureGroup = L.featureGroup();
 
 
-  constructor(private ips: InternalPointsService) {
+  //set of ids that have been toggled
+  toggledStations: Set<string> = new Set<string>();
+  mapSelectFilter: Filter = (metadata: StationMetadata) => {
+    return false;
+  }
+  //should only have map select filter if state changes from state after all other filters
+  //this should be the last thing to be evaluated, if it's the same remove it so it gets affected by changed to other filters again
+
+
+  constructor(private ips: InternalPointsService, private filterService: StationFilteringService) {
 
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
@@ -103,14 +157,35 @@ export class FilterMapComponent implements OnInit {
   onMapReady(map: L.Map) {
     this.map = map;
     this.drawnItems.addTo(map);
-    L.control.scale({position: 'bottomleft'}).addTo(map);
+    L.control.scale({position: "bottomleft"}).addTo(map);
+    //(<any>L).control.rose('rose', {position: "bottomright", icon: "nautical", iSize: "medium", opacity: 0.8}).addTo(map);
 
-    this.addPointToMap(L.latLng(20.559, -157.242), {
-      test: "test",
-      test2: "test"
+    //new T({position: "bottomleft"}).addTo(map);
+
+    let filterObs = this.filterService.getFilteredStationsObserver();
+
+    filterObs.subscribe((stations: FilteredStations) => {
+      let handleStation = (station: StationMetadata, selected: boolean) => {
+        let marker = this.metadataToMarker.get(station);
+        //if havent created marker add marker
+        if(!marker) {
+          marker = new StationMarker(station, () => {
+            //on click toggle station filter, this handler will handle toggling state in marker
+            this.filterService.stationToggle(station);
+          }, this.selectorMode, selected);
+          this.metadataToMarker.set(station, marker);
+        }
+        //set marker state
+        marker.setSelect(selected);
+      }
+
+      for(let station of stations.included) {
+        handleStation(station, true);
+      }
+      for(let station of stations.excluded) {
+        handleStation(station, false);
+      }
     });
-
-    this.ips.haversineDistance(L.latLng(19.843500937878932, -157.78418841637298), L.latLng(18.69997758027129, -158.99559673987704));
 
   }
 
@@ -118,78 +193,102 @@ export class FilterMapComponent implements OnInit {
   //need to have input for state of station (enabled/disabled) since can be disabled from outside
   //track state in marker data, marker data sets in selectedStationsMap, any enabled markers in map are final set
 
-  selectedStationsMap: Map<L.Layer, {internalStations: {marker: L.CircleMarker, station: SiteMetadata}[], layerType: string}>;
-  markerData: Map<L.CircleMarker, {}>
+  // selectedStationsMap: Map<L.Layer, {internalStations: {marker: L.CircleMarker, station: SiteMetadata}[], layerType: string}>;
+  // markerData: Map<L.CircleMarker, {}>
 
   createDrawnFilter(drawnLayer: any) {
+    let type = drawnLayer.layerType;
+    let filterF = (station: StationMetadata): boolean => {
+      //if for some reason the layer type is not one of the handleable cases just match everything (don't filter anything)
+      let internal: boolean = true;
+      switch(type) {
+        case "circle": {
+          let bounds: L.LatLngBounds = drawnLayer.layer.getBounds();
+          internal = this.ips.pointInsideCircle(bounds, station.location);
+          break;
+        }
+        case "rectangle": {
+          let bounds: L.LatLngBounds = drawnLayer.layer.getBounds();
+          internal = this.ips.pointInsideRectangle(bounds, station.location);
+          break;
+        }
+        case "polygon": {
+          let geojson = drawnLayer.layer.toGeoJSON();
+          internal = this.ips.pointInsideGeojson(geojson, station.location);
+          break;
+        }
+      }
+      return internal;
+    };
+
+    let filter = this.filterService.addFilter(filterF, "or");
     let layer = drawnLayer.layer;
-    switch(drawnLayer.layerType) {
-      case "circle": {
-        let bounds: L.LatLngBounds = drawnLayer.layer.getBounds();
-        console.log(bounds);
+    this.drawnFilters.set(layer, {
+      type: type,
+      filter: filter
+    });
+  }
+
+  //need layer type in layer info map
+  editDrawnFilter(editedLayers: any) {
+    //how to handle? just delete layer and readd, need to have reference to layer type
+    editedLayers.layers.eachLayer((layer: L.Layer) => {
+      let layerInfo = this.drawnFilters.get(layer);
+      this.filterService.removeFilter(layerInfo.filter);
+      this.createDrawnFilter({
+        layer: layer,
+        layerType: layerInfo.type
+      });
+    });
+  }
+
+ 
+  deleteDrawnFilter(deletedLayers: any) {
+    console.log(deletedLayers);
+    deletedLayers.layers.eachLayer((layer: L.Layer) => {
+      let layerInfo = this.drawnFilters.get(layer);
+      this.filterService.removeFilter(layerInfo.filter);
+    });
+  }
+
+}
 
 
 
-        break;
-      }
-      case "rectangle": {
-        let bounds: L.LatLngBounds = drawnLayer.layer.getBounds();
-        console.log(bounds);
-        break;
-      }
-      case "polygon": {
-        let geojson = drawnLayer.layer.toGeoJSON();
-        console.log(geojson);
-        break;
-      }
+class StationMarker {
+  selected: boolean;
+  station: StationMetadata;
+  selectorMode: string;
+  toggleSelector: HTMLElement;
+
+  styles = {
+    //default color, looks nice
+    selected: {
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 0.5
+    },
+    deselected: {
+      color: "#757575",
+      fillColor: "#757575",
+      fillOpacity: 0.5
     }
   }
 
-  editDrawnFilter(editedLayers: any) {
-    editedLayers.layers.eachLayer((layer: L.Layer) => {
-      let hasLayer = this.drawnItems.hasLayer(layer);
-      console.log(hasLayer);
-    });
-  }
+  marker: L.CircleMarker;
 
-  getLayer
+  constructor(station: StationMetadata, onClick: () => void, selectorMode: string, selected: boolean) {
+    this.station = station;
+    this.selectorMode = selectorMode;
+    this.marker = L.circleMarker(station.location);
+    this.marker.on("click", onClick);
 
-  updateDrawnFilter(e: any) {
-    console.log(e);
-    console.log(e.layerType)
-    this.drawnItems.eachLayer((layer: any) => {
-      console.log(layer.layerType);
-    });
-    //console.log(this.drawnItems);
-    let geojson = this.drawnItems.toGeoJSON();
-    console.log(geojson);
-  }
-
-  deleteDrawnFilter(deletedLayers: any) {
-    deletedLayers.layers.eachLayer((layer: L.Layer) => {
-      // let hasLayer = this.drawnItems.hasLayer(layer);
-      // console.log(hasLayer);
-      this.selectedStationsMap.delete(layer);
-    });
-  }
-
-
-
-
-  addPointToMap(location: L.LatLng, metadata: any) {
-    let marker = L.circleMarker(location);
-
-    //need select all, deselect all, replace exclude with invert selection
-    //default everything to selecte
-    let selected = true;
-
-
+    //create popup
     let popup = L.DomUtil.create("div");
-
     let text = L.DomUtil.create("div", "filter-popup-text", popup);
     let parts = [];
-    for(let item in metadata) {
-      let part = `${item}: ${metadata[item]}`;
+    for(let item in station) {
+      let part = `${item}: ${station[item]}`;
       parts.push(part);
     }
     let data = parts.join("<br>");
@@ -197,48 +296,46 @@ export class FilterMapComponent implements OnInit {
 
     L.DomUtil.create("div", "filter-popup-spacer", popup);
 
-    let toggleSelector = L.DomUtil.create("button", "filter-toggle-selector", popup);
+    this.toggleSelector = L.DomUtil.create("button", "filter-toggle-selector", popup);
 
-    let setStyle = () => {
-      let color = this.colors.selected;
-      if(!selected) {
-        toggleSelector.innerHTML = "Add Station";
-        color = this.colors.deselected;
-      }
-      else {
-        toggleSelector.innerHTML = "Remove Station";
-      }
-      marker.setStyle({
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.5
-      });
-    }
-
-    let toggleSelected = () => {
-      //toggle select
-      selected = !selected;
-      setStyle();
-    }
-
-    marker.on("click", () => {
-      if(this.selectorMode == "click") {
+    this.marker.on("click", () => {
+      if(selectorMode == "popup") {
         //immediately close popup if in click mode
         setTimeout(() => {
-          marker.closePopup();
+          this.marker.closePopup();
         }, 0);
-        toggleSelected();
+        onClick();
       }
     });
 
-    L.DomEvent.addListener(toggleSelector, "click", () => {
-      toggleSelected();
-    });
+    L.DomEvent.addListener(this.toggleSelector, "click", onClick);
 
-    setStyle();
+    this.setSelect(selected);
 
-    marker.bindPopup(popup);
-    marker.addTo(this.map);
+    this.marker.bindPopup(popup);
   }
 
+
+  toggle() {
+    this.setSelect(!this.selected);
+  }
+
+  setSelect(selected: boolean) {
+    this.selected = selected;
+    this.toggleSelector.innerHTML = selected ? "Remove Station" : "Add Station";
+    let style = selected ? this.styles.selected : this.styles.deselected;
+    this.marker.setStyle(style)
+  }
+
+  addTo(map: L.Map) {
+    this.marker.addTo(map);
+  }
+
+  removeFrom(map: L.Map) {
+    this.marker.removeFrom(map);
+  }
 }
+
+
+
+

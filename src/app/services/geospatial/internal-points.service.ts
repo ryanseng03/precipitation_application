@@ -32,10 +32,8 @@ export class InternalPointsService {
   //haversine formula
   haversineDistance(coord1: L.LatLng, coord2: L.LatLng): number {
     let lat_avg = (coord1.lat + coord2.lat) / 2
-    console.log(lat_avg);
 
     let r = this.earthRadiusAtLat(lat_avg);
-    console.log(r / 1000);
 
     //lambda and phi are in radians
     let lambda_1 = this.deg2rad(coord1.lng);
@@ -57,7 +55,7 @@ export class InternalPointsService {
 
     let rooth = Math.sqrt(h);
     let d = 2 * r * Math.asin(rooth);
-    console.log(d);
+    
     return d;
   }
 
@@ -76,62 +74,152 @@ export class InternalPointsService {
     return rectangle.contains(point);
   }
 
-  pointInsideGeojson(geojson: any, point: L.LatLng) {
-    console.log(geojson);
-  }
-
-
-
-  private getInternalIndices(geojsonObjects: any, backgroundIndices?: number[]): number[] {
-      let indices = [];
-
-      geojsonObjects.features.forEach((feature) => {
-        //if not a feature return
-        if(feature.type.toLowerCase() != "feature") {
-          return;
-        }
-        let geoType = feature.geometry.type.toLowerCase();
-        switch(geoType) {
-          case "polygon": {
-            let coordinates = feature.geometry.coordinates;
-            indices = indices.concat(this.getPolygonInternalIndices(coordinates, backgroundIndices));
-            break;
+  pointInsideGeojson(geojson: any, point: L.LatLng): boolean {
+    let internal = false;
+    //geojson can be null in some cases on recursion
+    if(geojson) {
+      /*
+      A GeoJSON object represents a Geometry, Feature, or collection of Features.
+      Types must be part of the non-extensible set:
+      FeatureCollection, Feature, Point, LineString, MultiPoint, Polygon, MultiLineString, MultiPolygon, and GeometryCollection
+      */
+      //must be a closed shape so only handle Polygons and MultiPolygons as base geometries
+      //non-geometry types, FeatureCollection and Feature, can be handled recursively, as can GeometryCollections
+      switch(geojson.type) {
+        //feature types
+        case "FeatureCollection": {
+          /*
+          A GeoJSON object with the type "FeatureCollection" is a
+          FeatureCollection object.  A FeatureCollection object has a member
+          with the name "features".  The value of "features" is a JSON array.
+          Each element of the array is a Feature object as defined above.  It
+          is possible for this array to be empty.
+          */
+          //everything should be features, can just handle recursively
+          for(let feature of geojson.features) {
+            //if point in any of the features set internal to true
+            if(this.pointInsideGeojson(feature, point)) {
+              internal = true;
+              break;
+            }
           }
-          case "multipolygon": {
-            let coordinates = feature.geometry.coordinates;
-            coordinates.forEach((polygon) => {
-              indices = indices.concat(this.getPolygonInternalIndices(polygon, backgroundIndices));
-            });
-            break;
-          }
+          break;
         }
-      });
+        case "Feature": {
+          /*
+          A Feature object has a member with the name "geometry".  The value
+          of the geometry member SHALL be either a Geometry object as
+          defined above or, in the case that the Feature is unlocated, a
+          JSON null value.
+          */
+          //can handle geometry recursively, remember to catch null (return false if geojson null)
+          internal = this.pointInsideGeojson(geojson.geometry, point);
+          break;
+        }
+        //geometry types
+        case "GeometryCollection": {
+          /*
+          A GeoJSON object with type "GeometryCollection" is a Geometry object. 
+          A GeometryCollection has a member with the name "geometries". 
+          The value of "geometries" is an array.  Each element of this array is a
+          GeoJSON Geometry object.  It is possible for this array to be empty.
+          */
 
-      return indices;
+          for(let geometry of geojson.geometries) {
+            //if internal to any of the geometries in the collection then mark as internal
+            if(this.pointInsideGeojson(geometry, point)) {
+              internal = true;
+              break;
+            }
+          }
+
+          break
+        }
+        case "Polygon": {
+          /*
+          For type "Polygon", the "coordinates" member MUST be an array of
+          linear ring coordinate arrays.
+
+          For Polygons with more than one of these rings, the first MUST be
+          the exterior ring, and any others MUST be interior rings.  The
+          exterior ring bounds the surface, and the interior rings (if
+          present) bound holes within the surface.
+          */
+          let coords = geojson.coordinates;
+          internal = this.isInternal(coords, point);
+          break;
+        }
+        case "MultiPolygon": {
+          /*
+          For type "MultiPolygon", the "coordinates" member is an array of
+          Polygon coordinate arrays.
+          */
+          for(let coords of geojson.coordinates) {
+            //if internal to one then internal to the multipolygon
+            if(this.isInternal(coords, point)) {
+              internal = true;
+              break;
+            }
+          }
+          break;
+        }
+        //any other geometry types are not closed polygons, just return false
+      }
+  
     }
+    return internal;
+  }
 
 
   //I believe the set of segments is defined as a[i] -> b[i]
 
   //can specify origin if 0, 0 is in range, not necessary for cover being used (0,0 not in range)
-  private isInternal(a: any[], b: any[], point: any, origin: any = { x: 0, y: 0 }): boolean {
-    //raycasting algorithm, point is internal if intersects an odd number of edges
-    let internal = false;
-    for(let i = 0; i < a.length; i++) {
-      //segments intersect iff endpoints of each segment are on opposite sides of the other segment
-      //check if angle formed is counterclockwise to determine which side endpoints fall on
-      if(this.ccw(a[i], origin, point) != this.ccw(b[i], origin, point) && this.ccw(a[i], b[i], origin) != this.ccw(a[i], b[i], point)) {
-        internal = !internal
-      }
+  private isInternal(rings: number[][][], point: L.LatLng, origin: L.LatLng = L.latLng(0, 0)): boolean {
+    /*
+    A linear ring is a closed LineString with four or more positions.
 
+    The first and last positions are equivalent, and they MUST contain
+    identical values; their representation SHOULD also be identical.
+
+    A linear ring is the boundary of a surface or the boundary of a
+    hole in a surface.
+
+    A linear ring MUST follow the right-hand rule with respect to the
+    area it bounds, i.e., exterior rings are counterclockwise, and
+    holes are clockwise.
+    */
+
+    //raycasting algorithm, point is internal if intersects an odd number of edges
+    let internal = false
+    for(let ring of rings) {
+      //segments are ring[i] -> ring[i + 1], last point in ring is equal to first
+      for(let i = 0; i < ring.length - 1; i++) {
+        /*
+        A position is an array of numbers.  There MUST be two or more
+        elements.  The first two elements are longitude and latitude, or
+        easting and northing, precisely in that order and using decimal
+        numbers.  Altitude or elevation MAY be included as an optional third
+        element.
+        */
+        let c1 = ring[i];
+        let c2 = ring[i + 1]
+        let p1 = L.latLng(c1[1], c1[0]);
+        let p2 = L.latLng(c2[1], c2[0]);
+
+        if(this.ccw(p1, origin, point) != this.ccw(p2, origin, point) && this.ccw(p1, p2, origin) != this.ccw(p1, p2, point)) {
+          internal = !internal
+        }
+      }
     }
+
     return internal;
   }
 
   //determinant formula yields twice the signed area of triangle formed by 3 points
   //counterclockwise if negative, clockwise if positive, collinear if 0
-  private ccw(p1, p2, p3): boolean {
+  private ccw(p1: L.LatLng, p2: L.LatLng, p3: L.LatLng): boolean {
     //if on line counts, both will be 0, probably need to add special value (maybe return -1, 0, or 1)
-    return ((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) > 0;
+    //lng is x, lat is y
+    return ((p2.lng - p1.lng) * (p3.lat - p1.lat) - (p3.lng - p1.lng) * (p2.lat - p1.lat)) > 0;
   }
 }

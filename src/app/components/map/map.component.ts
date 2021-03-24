@@ -17,6 +17,7 @@ import "leaflet-easyprint";
 import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
 import { LeafletOpacitySliderComponent } from '../leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
+import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
@@ -46,6 +47,8 @@ export class MapComponent implements OnInit {
   markerInfo: RainfallStationMarkerInfo;
 
   colorScheme: ColorScale;
+
+  roseOptions: RoseControlOptions;
   // markerClusterLayer: any;
 
   options: L.MapOptions;
@@ -88,6 +91,11 @@ export class MapComponent implements OnInit {
       minZoom: 6,
       maxZoom: 18,
       maxBounds: this.extents.bounds
+    };
+
+    this.roseOptions = {
+      image: "assets/arrows/nautical.svg",
+      position: "bottomleft"
     };
 
     // this.drawnItems = new L.FeatureGroup;

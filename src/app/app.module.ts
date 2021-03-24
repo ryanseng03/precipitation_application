@@ -72,6 +72,11 @@ import { ExportInterfaceComponent } from './components/export-interface/export-i
 import { FilterMapComponent } from './components/filter-map/filter-map.component';
 import { NavBaseComponent } from './components/nav-base/nav-base.component';
 import { NavTilesComponent } from './components/nav-tiles/nav-tiles.component';
+import { LeafletCompassRoseComponent } from './components/leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
+import { StationFilterInterfaceComponent } from './components/station-filter-interface/station-filter-interface.component';
+import { StationPropertyFiltersComponent } from './components/station-property-filters/station-property-filters.component';
+
+import {DragDropModule} from '@angular/cdk/drag-drop';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -113,7 +118,10 @@ PlotlyModule.plotlyjs = PlotlyJS;
     ExportInterfaceComponent,
     FilterMapComponent,
     NavBaseComponent,
-    NavTilesComponent
+    NavTilesComponent,
+    LeafletCompassRoseComponent,
+    StationFilterInterfaceComponent,
+    StationPropertyFiltersComponent
   ],
   imports: [
     BrowserModule,
@@ -142,7 +150,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatCheckboxModule,
     MatProgressSpinnerModule,
     PlotlyModule,
-    MatDialogModule
+    MatDialogModule,
+    DragDropModule
   ],
   entryComponents: [
     ExportUnimplementedComponent,
