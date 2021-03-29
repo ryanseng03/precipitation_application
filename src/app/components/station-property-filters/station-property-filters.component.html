@@ -1,49 +1,96 @@
-<div cdkDropListGroup>
-  <div class="example-container">
 
-    <div
-      cdkDropList
-      [cdkDropListData]="all"
-      class="example-list"
-      (cdkDropListDropped)="moveToGroup($event)"
-      [cdkDropListEnterPredicate]="noReturnPredicate">
-      <div
-        class="example-box"
-        *ngFor="let number of all"
-        [cdkDragData]="number"
-        cdkDrag>{{number}}</div>
+<div class="container">
+  <div cdkDropListGroup>
+    <div *ngFor="let group of orGroups">
+      <div class="or-group-container">
+        <div class="or-group">
+          <div class="filter-list">
+            <div
+              cdkDropList
+              [cdkDropListData]="group.filters"
+              (cdkDropListDropped)="group.moveFilter($event)"
+              [cdkDropListEnterPredicate]="group.predicate()"
+              (cdkDropListExited)="testMove()">
+              <div
+                class="filter"
+                *ngFor="let filter of group.filters"
+                [cdkDragData]="filter"
+                cdkDrag>
+                <div class="filter-control-container">
+                  <div class="filter-control">
+                    <mat-form-field>
+                      <mat-label>Property</mat-label>
+                      <mat-select [formControl]="filter.controls.propertyControl">
+                        <mat-option *ngFor="let property of filter.getProperties()" [value]="property">{{property.label}}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <div *ngIf="filter.propertySet()" class="filter-control">
+                    <mat-select-autocomplete
+                      ngDefaultControl
+                      [placeholder]="'Select Values'"
+                      [options]="filter.getValues()"
+                      [multiple]="true"
+                      [formControl]="filter.controls.valueControl">
+                      Values
+                    </mat-select-autocomplete>
+                  </div>
+
+                  <div *ngIf="filter.propertySet()" class="filter-control">
+                    <mat-checkbox [formControl]="filter.controls.invertControl" [disabled]="filter.invertControlLocked()">Invert Filter</mat-checkbox>
+                  </div>
+                  <!-- need logic for checking range or discreet, this is for discreet -->
+
+
+
+                  <!-- <mat-select [formControl]="filter.controls.valueControl">
+
+                    <mat-option *ngFor="let value of filter.getValues()" [value]="value">{{value}}</mat-option>
+                  </mat-select> -->
+
+                </div>
+
+                <button (click)="group.removeFilter(filter)" mat-icon-button class="delete-button" [disabled]="group.filters.length < 2">
+                  <mat-icon>clear</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="add-filter-container">
+              <button mat-button class="add-filter-button" (click)="group.addFilter()" [disabled]="!group.allFiltersHaveProperty()">
+                <mat-icon class="add-filter-icon">add</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="or-delete-container">
+          <button (click)="removeOrGroup(group)" mat-icon-button class="delete-button" [disabled]="orGroups.length < 2">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="example-container">
-
-    <div
-      cdkDropList
-      [cdkDropListData]="even"
-      class="example-list"
-      (cdkDropListDropped)="moveToGroup($event)"
-      [cdkDropListEnterPredicate]="evenPredicate">
-      <div
-        class="example-box"
-        *ngFor="let number of even"
-        cdkDrag
-        [cdkDragData]="number">{{number}}</div>
-    </div>
+  <div class="add-group-container">
+    <button mat-icon-button (click)="addOrGroup()" [disabled]="!orGroupsAtLeastOne()">
+      <mat-icon>add</mat-icon>
+    </button>
   </div>
 
-  <div class="example-container">
-
-    <div
-      cdkDropList
-      [cdkDropListData]="odd"
-      class="example-list"
-      (cdkDropListDropped)="moveToGroup($event)"
-      [cdkDropListEnterPredicate]="oddPredicate">
-      <div
-        class="example-box"
-        *ngFor="let number of odd"
-        cdkDrag
-        [cdkDragData]="number">{{number}}</div>
-    </div>
-  </div>
 </div>
+
+
+
+  <!-- <div *ngFor="let item of itemTest">
+    <div class="placeholder"></div>
+    <button mat-icon-button (click)="removeItem(item)">
+      <mat-icon>remove_circle</mat-icon>
+
+    </button>
+  </div>
+  <button mat-icon-button (click)="openAddItemDialog()">
+    <mat-icon>add_circle</mat-icon>
+  </button> -->

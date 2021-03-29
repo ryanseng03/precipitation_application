@@ -16,6 +16,7 @@ export class MetadataStoreService {
   private siteMeta: Promise<SKNRefMeta>;
 
   constructor(private dbcon: DbConService, private processor: DataProcessorService) {
+    console.log("fetch!");
     let query = "{$and:[{'name':'station_metadata'},{value.version:'v1.3'}]}";
     //query = `{'name':'${dsconfig.metaDocName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {
@@ -65,6 +66,7 @@ export class MetadataStoreService {
       return metadata;
     });
   }
+
 
 
 

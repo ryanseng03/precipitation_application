@@ -16,9 +16,9 @@ export class SiteValue {
             skn: value.skn
         }
     }
-    
+
     get type(): string {
-        return this.val.type; 
+        return this.val.type;
     }
 
     get value(): number {
@@ -36,8 +36,8 @@ export class SiteValue {
 
 //should add other properties to this
 export class SiteMetadata {
-    private meta: SiteMetadataFields;
-    
+    meta: SiteMetadataFields;
+
     constructor(metadata: SiteMetadataFields, nodata: string) {
         this.meta = JSON.parse(JSON.stringify(metadata));
         for(let field in this.meta) {
@@ -199,7 +199,7 @@ export class SiteInfo {
     }
 
     get type(): string {
-        return this.info.type; 
+        return this.info.type;
     }
 
     get value(): number {
