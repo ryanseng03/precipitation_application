@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DataInfoComponent } from './data-info.component';
+import { HeaderControlComponent } from './header-control.component';
 
-describe('DataInfoComponent', () => {
-  let component: DataInfoComponent;
-  let fixture: ComponentFixture<DataInfoComponent>;
+describe('HeaderControlComponent', () => {
+  let component: HeaderControlComponent;
+  let fixture: ComponentFixture<HeaderControlComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DataInfoComponent ]
+      declarations: [ HeaderControlComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DataInfoComponent);
+    fixture = TestBed.createComponent(HeaderControlComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

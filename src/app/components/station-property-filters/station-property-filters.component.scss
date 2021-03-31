@@ -1,5 +1,5 @@
 
-.or-group-container {
+.filter-group-container {
   background-color: rgba(255, 165, 0, 0.8);
   border-radius: 5px;
   width: fit-content;
@@ -8,7 +8,7 @@
   margin: 15px;
 }
 
-.or-group {
+.filter-group {
   padding: 15px 0 15px 15px;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .filter {
-  padding: 20px 10px;
+  padding: 10px 10px;
   border-bottom: solid 1px #ccc;
   display: flex;
   flex-direction: row;
@@ -52,12 +52,12 @@
 .filter-control-container {
   display: flex;
   flex-direction: row;
+  align-items: flex-end;
+  height: 70px;
 }
 
 .filter-control {
-  padding: 10px;
-  align-items: center;
-  justify-content: center;
+  padding-right: 20px;
 }
 
 .add-filter-container {
@@ -107,6 +107,16 @@
   float: right;
 }
 
-.or-delete-container {
+.group-delete-container {
   padding: 2px;
 }
+
+
+.multi-select-shift {
+  transform: translateY(calc(0.09375em + 1px)); 
+}
+
+.invert-shift {
+  transform: translateY(-1.25em); 
+}
+

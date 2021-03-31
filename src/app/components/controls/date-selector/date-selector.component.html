@@ -1,5 +1,4 @@
 <div>
-
   <mat-form-field>
     <mat-label>{{label}}</mat-label>
 
@@ -18,27 +17,6 @@
     </mat-datepicker>
     <mat-error>Invalid Date</mat-error>
   </mat-form-field>
-
-<!--
-
-
-  <mat-form-field>
-    <mat-label>End Date</mat-label>
-
-    <input matInput
-      #startDateInput
-      [formControl]="endDateControl"
-      [matDatepicker]="endDatePicker"
-      [min]="dateConfig.min"
-      [max]="dateConfig.gmax">
-
-    <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
-    <mat-datepicker #endDatePicker
-      (monthSelected)="monthSelectHandler($event, endDatePicker, endDateControl)"
-      startView={{getDefaultView()}}>
-    </mat-datepicker>
-    <mat-error>Invalid Date</mat-error>
-  </mat-form-field> -->
 </div>
 
 

@@ -12,7 +12,7 @@ export class LeafletCompassRoseComponent implements OnInit {
 
   @Input() set map(map: Map) {
     if(map) {
-      let Legend = Control.extend({
+      let Rose = Control.extend({
         initialize: function(options: RoseControlOptions) {
          
           if(!options.style) {
@@ -24,15 +24,13 @@ export class LeafletCompassRoseComponent implements OnInit {
           let control = DomUtil.get("rose-container");
           for(let style in this.options.style) {
             control.style[style] = this.options.style[style];
-            console.log(this.options);
-            console.log(control.style.width);
           }
           let img = DomUtil.get("rose");
           img.setAttribute("src", this.options.image);
           return control;
         }
       });
-      new Legend(this.options).addTo(map);
+      new Rose(this.options).addTo(map);
     }
   }
 

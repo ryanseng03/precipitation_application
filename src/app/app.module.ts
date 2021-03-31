@@ -39,7 +39,6 @@ import { SiteAvailabilityTableComponent } from './components/controls/site-avail
 import { DataSetFormComponent } from './components/data-set-form/data-set-form.component'
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatListModule} from '@angular/material/list';
-import { DataInfoComponent } from './components/data-info/data-info.component';
 import { DateFocusComponent } from './components/controls/date-focus/date-focus.component';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import { DatasetInfoComponent } from './components/controls/dataset-info/dataset-info.component';
@@ -77,6 +76,7 @@ import { StationFilterInterfaceComponent } from './components/station-filter-int
 import { StationPropertyFiltersComponent } from './components/station-property-filters/station-property-filters.component';
 
 import {DragDropModule} from '@angular/cdk/drag-drop';
+import { HeaderControlComponent } from './components/leaflet-controls/header-control/header-control.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -101,7 +101,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     SiteDataTableComponent,
     SiteAvailabilityTableComponent,
     DataSetFormComponent,
-    DataInfoComponent,
     DateFocusComponent,
     DatasetInfoComponent,
     ExportComponent,
@@ -121,7 +120,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     NavTilesComponent,
     LeafletCompassRoseComponent,
     StationFilterInterfaceComponent,
-    StationPropertyFiltersComponent
+    StationPropertyFiltersComponent,
+    HeaderControlComponent
   ],
   imports: [
     BrowserModule,

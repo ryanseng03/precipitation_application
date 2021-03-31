@@ -127,6 +127,11 @@ form /deep/ .mat-form-field-flex {
   color: white;
 }
 
+form {
+  display: inline-block;
+  padding: 0 10px 0 10px;
+}
+
 .label-container {
   display: inline-block;
   padding: 10px;

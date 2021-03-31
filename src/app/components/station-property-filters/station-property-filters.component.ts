@@ -17,7 +17,7 @@ export class StationPropertyFiltersComponent implements OnInit {
 
   stations: StationMetadata[];
 
-  orGroups: OrGroupData[] = [];
+  filterGroups: FilterGroupData[] = [];
 
   //should be replaced with metadata descriptor
   //should add special field for value in objects
@@ -40,6 +40,8 @@ export class StationPropertyFiltersComponent implements OnInit {
 
     //TEMP--------------------------------------------------------------
 
+    let propertySet: Property[] = [];
+
     //note this is going to change
     metaService.getMetaBySKNs(null).then((metadataRef: SKNRefMeta) => {
       let properties = Object.keys(metadataRef[Object.keys(metadataRef)[0]].meta);
@@ -48,10 +50,11 @@ export class StationPropertyFiltersComponent implements OnInit {
         let metadata = metadataRef[skn];
         let stationForm: StationMetadata = {
           id: skn,
-          location: L.latLng(metadata.lat, metadata.lng),
+          location: L.latLng(metadata.lat, metadata.lng, metadata.elevation),
           name: metadata.name,
           add: {}
         }
+        console.log(stationForm.location.alt);
         for(let prop of properties) {
           //wow this is sketch
           if(!["lat", "lng", "skn", "name"].includes(prop)) {
@@ -73,29 +76,31 @@ export class StationPropertyFiltersComponent implements OnInit {
       console.log(this.stations);
 
       filterService.setStations(this.stations);
+
+      for(let prop of this.propertyTypes.discreet) {
+        propertySet.push(new DiscreetPropertyData(prop, prop, ["test", "test2"]));
+      }
+      for(let prop of this.propertyTypes.range) {
+        propertySet.push(new RangePropertyData(prop, prop, [1, 2]));
+      }
     });
 
-    let propertySet: Property[] = [];
-    for(let prop of this.propertyTypes.discreet) {
-      propertySet.push(new DiscreetPropertyData(prop, prop, ["test", "test2"]));
-    }
-    for(let prop of this.propertyTypes.range) {
-      propertySet.push(new RangePropertyData(prop, prop, [1, 2]));
-    }
+    
+    
     this.propertyData = new PropertyData(propertySet);
 
     //------------------------------------------------------------------
 
     //add initial or group
-    this.addOrGroup();
+    this.addFilterGroup();
 
   }
 
 
-  orGroupsAtLeastOne() : boolean{
+  filterGroupsAtLeastOne() : boolean{
     let allAtLeastOne = true;
-    for(let orGroup of this.orGroups) {
-      if(!orGroup.hasOneFilter()) {
+    for(let filterGroup of this.filterGroups) {
+      if(!filterGroup.hasOneFilter()) {
         allAtLeastOne = false;
         break;
       }
@@ -104,19 +109,17 @@ export class StationPropertyFiltersComponent implements OnInit {
   }
 
 
-  addOrGroup() {
+  addFilterGroup() {
     let groupLabel = `group_${this.groupCount++}`;
-    let group = new OrGroupData(this.propertyData, groupLabel);
-    //add initial filter
-    group.addFilter();
-    this.orGroups.push(group);
+    let group = new FilterGroupData(this.propertyData, groupLabel);
+    this.filterGroups.push(group);
   }
 
-  removeOrGroup(group: OrGroupData) {
+  removeFilterGroup(group: FilterGroupData) {
     group.cleanup();
-    let groupIndex = this.orGroups.indexOf(group);
+    let groupIndex = this.filterGroups.indexOf(group);
     if(groupIndex >= 0) {
-      this.orGroups.splice(groupIndex, 1);
+      this.filterGroups.splice(groupIndex, 1);
     }
   }
 
@@ -127,15 +130,23 @@ export class StationPropertyFiltersComponent implements OnInit {
 
 }
 
-class OrGroupData {
+class FilterGroupData {
   groupLabel: string;
   propertyData: PropertyData;
-  filters: FilterFormData[];
+  private filters: FilterFormData[];
 
   constructor(propertyData: PropertyData, label: string) {
     this.propertyData = propertyData;
     this.groupLabel = label;
     this.filters = [];
+  }
+
+  getFilters(): FilterFormData[] {
+    //should always have at least one filter
+    if(this.filters.length < 1) {
+      this.addFilter();
+    }
+    return this.filters;
   }
 
   hasOneFilter(): boolean {
@@ -192,22 +203,34 @@ class OrGroupData {
   predicate(): (item: CdkDrag<FilterFormData>) => boolean {
     //need to bind function to context so use return function bound to this
     let _predicate = (item: CdkDrag<FilterFormData>) => {
+
+     
+
       let predicate = true;
       let filter = item.data;
       let selectedProperty = filter.getSelectedProperty();
       //if property hasn't been selected yet then allow transition
       if(selectedProperty) {
         let type = selectedProperty.type;
-        //if range then can go anywhere, only limit discreet
-        if(type == "discreet") {
-          //check if current set of filters contains a filter with the same property
-          for(let otherFilter of this.filters) {
-            let otherProperty = otherFilter.getSelectedProperty();
-            if(otherProperty && otherProperty.name == selectedProperty.name) {
-              predicate = false;
-              break;
-            }
+        //groups are AND, no reason to have something in two ranges right?
+        //though there is a reason to allow in one range AND NOT in another range
+        // //if range then can go anywhere, only limit discreet
+        // if(type == "discreet") {
+
+        //check if current set of filters contains a filter with the same property
+        for(let otherFilter of this.filters) {
+          let otherProperty = otherFilter.getSelectedProperty();
+          if(otherProperty && otherProperty.name == selectedProperty.name) {
+            predicate = false;
+            break;
           }
+        }
+        //}
+      }
+      //can only have one item without a property at a time, so dont allow transfer of propertyless item into this group if there's already one
+      else {
+        if(!this.allFiltersHaveProperty()) {
+          predicate = false;
         }
       }
       return predicate;
@@ -380,6 +403,8 @@ abstract class Property {
   type: PropertyType;
   label: string;
   values: any;
+  states: StateInstance[]
+
 
   constructor(type: PropertyType, name: string, label: string, values: any) {
     this.type = type;

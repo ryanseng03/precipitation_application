@@ -171,7 +171,7 @@ export class DateFocusComponent implements OnInit {
       millisecond:0
     });
     date.utcOffset(0);
-    this.broadcast(date, movementInfo);
+    //this.broadcast(date, movementInfo);
   }
 
   broadcast(date: Moment.Moment, movementInfo: MovementVector) {

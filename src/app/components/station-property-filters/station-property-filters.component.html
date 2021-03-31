@@ -1,19 +1,18 @@
 
 <div class="container">
   <div cdkDropListGroup>
-    <div *ngFor="let group of orGroups">
-      <div class="or-group-container">
-        <div class="or-group">
+    <div *ngFor="let group of filterGroups">
+      <div class="filter-group-container">
+        <div class="filter-group">
           <div class="filter-list">
             <div
               cdkDropList
-              [cdkDropListData]="group.filters"
+              [cdkDropListData]="group.getFilters()"
               (cdkDropListDropped)="group.moveFilter($event)"
-              [cdkDropListEnterPredicate]="group.predicate()"
-              (cdkDropListExited)="testMove()">
+              [cdkDropListEnterPredicate]="group.predicate()">
               <div
                 class="filter"
-                *ngFor="let filter of group.filters"
+                *ngFor="let filter of group.getFilters()"
                 [cdkDragData]="filter"
                 cdkDrag>
                 <div class="filter-control-container">
@@ -26,7 +25,7 @@
                     </mat-form-field>
                   </div>
 
-                  <div *ngIf="filter.propertySet()" class="filter-control">
+                  <div *ngIf="filter.propertySet()" class="filter-control multi-select-shift">
                     <mat-select-autocomplete
                       ngDefaultControl
                       [placeholder]="'Select Values'"
@@ -37,7 +36,7 @@
                     </mat-select-autocomplete>
                   </div>
 
-                  <div *ngIf="filter.propertySet()" class="filter-control">
+                  <div *ngIf="filter.propertySet()" class="filter-control invert-shift">
                     <mat-checkbox [formControl]="filter.controls.invertControl" [disabled]="filter.invertControlLocked()">Invert Filter</mat-checkbox>
                   </div>
                   <!-- need logic for checking range or discreet, this is for discreet -->
@@ -51,7 +50,7 @@
 
                 </div>
 
-                <button (click)="group.removeFilter(filter)" mat-icon-button class="delete-button" [disabled]="group.filters.length < 2">
+                <button (click)="group.removeFilter(filter)" mat-icon-button class="delete-button" [disabled]="group.getFilters().length < 2">
                   <mat-icon>clear</mat-icon>
                 </button>
               </div>
@@ -65,8 +64,8 @@
           </div>
         </div>
 
-        <div class="or-delete-container">
-          <button (click)="removeOrGroup(group)" mat-icon-button class="delete-button" [disabled]="orGroups.length < 2">
+        <div class="group-delete-container">
+          <button (click)="removeFilterGroup(group)" mat-icon-button class="delete-button" [disabled]="filterGroups.length < 2">
             <mat-icon>clear</mat-icon>
           </button>
         </div>
@@ -75,7 +74,7 @@
   </div>
 
   <div class="add-group-container">
-    <button mat-icon-button (click)="addOrGroup()" [disabled]="!orGroupsAtLeastOne()">
+    <button mat-icon-button (click)="addFilterGroup()" [disabled]="!filterGroupsAtLeastOne()">
       <mat-icon>add</mat-icon>
     </button>
   </div>

@@ -1,0 +1,19 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-property-container {
+    height: 100%;
+    overflow-y: auto;
+    background-color: red;
+}
+
+.filter-map-container {
+    height: 100%;
+    width: 100%;
+}

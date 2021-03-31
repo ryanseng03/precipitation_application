@@ -26,11 +26,11 @@ export class DatasetInfoComponent implements OnInit {
   constructor(private paramRegistrar: EventParamRegistrarService) {
     this.datasetStr = this.genDSStr();
 
-    paramRegistrar.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
-      this.dataset = dataset;
-      console.log(dataset);
-      this.datasetStr = this.genDSStr();
-    });
+    // paramRegistrar.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+    //   this.dataset = dataset;
+    //   console.log(dataset);
+    //   this.datasetStr = this.genDSStr();
+    // });
   }
 
 
