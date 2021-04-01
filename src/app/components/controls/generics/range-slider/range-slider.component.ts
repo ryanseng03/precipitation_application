@@ -33,20 +33,25 @@ export class RangeSliderComponent implements OnInit {
 
   private _range: [number, number];
 
+  sliderControlData: TwoSidedSlider;
   @Input() set range(range: [number, number]) {
     this._range = range;
-    //set max in class
+    if(this.sliderControlData) {
+      this.sliderControlData.setRange(range);
+    }
   };
   @Input() intervals: number = 0;
   // @Input() width: number = 500;
   @Input() control: FormControl;
 
-  trackWidth: number;
-  intervalsWidth: number;
-  expandPX = 4;
-  sliderWidth: number;
-  trackLockOffset: number;
 
+  intervalsWidth: number;
+  expandPX: number;
+
+  inputControls: {
+    left: FormControl,
+    right: FormControl
+  };
 
 
 
@@ -56,173 +61,90 @@ export class RangeSliderComponent implements OnInit {
     // this.upper = new Subject<number>();
   }
 
-  sliderOptions: {
-    lower: SliderInfo
-    upper: SliderInfo
-  }
-
   ngOnInit() {
+    this.expandPX = 4;
+    let sliderWidth = 6;
+    let trackLockOffset = 2;
+    let trackWidth = 100;
 
-    this.sliderWidth = 6;
+    let sliderControlData = new TwoSidedSlider(this.sliderL.nativeElement, this.sliderR.nativeElement, sliderWidth, trackWidth, trackLockOffset, this._range);
+    this.sliderControlData = sliderControlData;
 
-    this.trackLockOffset = 2;
+    let leftVal = sliderControlData.getValue("left");
+    let rightVal = sliderControlData.getValue("right");
 
-    //shifted 5px on each side so width for evaluative purposes is -10
-    this.trackWidth = this.track.nativeElement.offsetWidth - this.trackLockOffset * 2;
-    //let sliderRange = [this.sliderL.nativeElement.offsetLeft, this.sliderR.nativeElement.offsetLeft + this.trackWidth];
+    //form controls should be linked!!!!
 
-    this.sliderOptions = {
-      lower: {
-        getPXOffFromValue: (value: number): number => {
-          let valOffset = value - this.min;
-          let range = this.max - this.min;
-          let ratio = valOffset / range;
-          let pxOffset = this.trackWidth * ratio;
-          //round to nearest pixel
-          pxOffset = Math.round(pxOffset);
-          return pxOffset;
-        },
-        getValueFromPXOff: (offset: number): number => {
-          let ratio = offset / this.trackWidth;
-          let diff = this.max - this.min;
-          let valOffset = diff * ratio;
-          let value = this.min + valOffset;
-          //round value to two decimal places (if want something more precise they can type it)
-          value = Math.round(value * 100) / 100;
-          return value;
-        },
-        getLowerBound: () => {
-          return this.trackLockOffset - this.sliderWidth;
-        },
-        getUpperBound: () => {
-          return this.sliderR.nativeElement.offsetLeft - this.sliderWidth;
-        },
-        updateValue: (pxOffset: number) => {
-          //adjust pixel offset by track lock offset and shift to right edge of slider
-          let adjsustedPXOffset = pxOffset + 2 + this.sliderWidth;
-          let value = this.getValueFromPXOff(adjsustedPXOffset);
-          this.sliderOptions.lower.formControl.setValue(value);
-          this.control.setValue({
-            min: value,
-            max: this.control.value.max
-          });
-          //this.lower.next(this.getValueFromPXOff(pxOffset));
-        },
-        formControl: new FormControl(this.control.value.min, {updateOn: "blur"})
-      },
-      upper: {
-        getPXOffFromValue: (value: number): number => {
-          let valOffset = value - this.min;
-          let range = this.max - this.min;
-          let ratio = valOffset / range;
-          let pxOffset = this.trackWidth * ratio;
-          //round to nearest pixel
-          pxOffset = Math.round(pxOffset);
-          return pxOffset;
-        },
-        getValueFromPXOff: (offset: number): number => {
-          let ratio = offset / this.trackWidth;
-          let diff = this.max - this.min;
-          let valOffset = diff * ratio;
-          let value = this.min + valOffset;
-          //round value to two decimal places (if want something more precise they can type it)
-          value = Math.round(value * 100) / 100;
-          return value;
-        },
-        getLowerBound: () => {
-          return this.sliderL.nativeElement.offsetLeft + this.sliderWidth;
-        },
-        getUpperBound: () => {
-          return this.trackWidth - this.trackLockOffset;
-        },
-        updateValue: (pxOffset: number) => {
-          //adjust pixel offset by track lock offset
-          let adjsustedPXOffset = pxOffset + 2;
-          let value = this.sliderOptions.upper.getValueFromPXOff(adjsustedPXOffset);
-          this.sliderOptions.upper.formControl.setValue(value);
-          this.control.setValue({
-            min: this.control.value.min,
-            max: value
-          });
-          //this.upper.next(value);
-        },
-        formControl: new FormControl(this.control.value.max, {updateOn: "blur"})
-      }
+    this.inputControls = {
+      left: new FormControl(leftVal),
+      right: new FormControl(rightVal)
+    };
 
-    }
-    let pxOffset = this.getPXOffFromValue(this.control.value.min);
-    this.sliderL.nativeElement.style.left = pxOffset + "px";
-    pxOffset = this.getPXOffFromValue(this.control.value.max);
-    this.sliderR.nativeElement.style.left = pxOffset + "px";
+    //value observers
+    let lObs = sliderControlData.getValueObservable("left");
+    let rObs = sliderControlData.getValueObservable("right");
 
-    let lastValidL = this.min;
-    let reboundL = false;
-    this.sliderOptions.lower.formControl.valueChanges.subscribe((value: string) => {
-      if(!reboundL) {
+    
+    let userInput = true;
+    //when slider changes value update input controls
+    lObs.subscribe((value: number) => {
+      //not user input, don't run validation/slider update in input control listener
+      userInput = false;
+      this.inputControls.left.setValue(value);
+    });
+    rObs.subscribe((value: number) => {
+      //not user input, don't run validation/slider update in input control listener
+      userInput = false;
+      this.inputControls.right.setValue(value);
+    });
+
+
+    let lastValidL = leftVal;
+    
+    this.inputControls.left.valueChanges.subscribe((value: string) => {
+      //only run for user input
+      if(userInput) {
         let numval = Number.parseFloat(value);
         //if cant parse to a number set to the last valid value that was set
         if(Number.isNaN(numval)) {
           numval = lastValidL;
         }
 
-        //left side shouldn't surpass right side
-        let upper = this.sliderOptions.upper.formControl.value;
-        if(numval > upper) {
-          numval = upper;
-        }
-        //make sure not to excede lower bound
-        if(numval < this.min) {
-          numval = this.min;
-        }
         //set last valid value for reversion on invalid input
         lastValidL = numval;
-        //make sure no rebound when setting value
-        reboundL = true;
-        //set form value to mutated value
-        this.sliderOptions.lower.formControl.setValue(numval);
 
-        //set position of slider to match value
-        let pxOffset = this.getPXOffFromValue(numval);
-        this.sliderL.nativeElement.style.left = pxOffset + "px";
+        //make sure no rebound when setting value
+        userInput = false;
+
+        //update slider to new value (will also update this control to post validation value)
+        sliderControlData.updateSlider("left", "val", numval);
       }
       else {
-        reboundL = false;
+        userInput = true;
       }
-
     });
-    let lastValidR = this.max;
-    let reboundR = false;
-    this.sliderOptions.upper.formControl.valueChanges.subscribe((value: any) => {
-      if(!reboundR) {
+
+    let lastValidR = rightVal;
+    this.inputControls.right.valueChanges.subscribe((value: any) => {
+      //only run for user input
+      if(userInput) {
         let numval = Number.parseFloat(value);
         //if cant parse to a number set to the last valid value that was set
         if(Number.isNaN(numval)) {
           numval = lastValidR;
         }
 
-        //right side shouldn't be lower than left side
-        let lower = this.sliderOptions.lower.formControl.value;
-        if(numval < lower) {
-          numval = lower;
-        }
-        //make sure not to exceed upper ound
-        if(numval > this.max) {
-          numval = this.max;
-        }
-        //set last valud value for reversion on invalid input
+        //set last valid value for reversion on invalid input
         lastValidR = numval;
 
         //make sure no rebound when setting value
-        reboundR = true;
-        //set form value to the mutated value
-        this.sliderOptions.upper.formControl.setValue(numval);
+        userInput = false;
 
-        //set position of slider to match value
-        let pxOffset = this.getPXOffFromValue(numval);
-        this.sliderR.nativeElement.style.left = pxOffset + "px";
+        //update slider to new value (will also update this control to post validation value)
+        sliderControlData.updateSlider("right", "val", numval);
       }
       else {
-        reboundR = false;
+        userInput = true;
       }
     });
 
@@ -283,6 +205,8 @@ export class RangeSliderComponent implements OnInit {
       slider.style.transform = "translateX(-" + this.expandPX / 2 + "px)";
       let cursorDefault = document.body.style.cursor;
       document.body.style.cursor = "grabbing";
+
+
       let movFunct = getMovFunct(e);
       window.addEventListener("mousemove", movFunct);
 
@@ -297,6 +221,7 @@ export class RangeSliderComponent implements OnInit {
         slider.style.top = slider.offsetTop + this.expandPX / 2 + "px";
         slider.style.transform = transDefault;
         document.body.style.cursor = cursorDefault;
+        
         window.removeEventListener("mousemove", movFunct);
         window.removeEventListener("mouseup", mupFunct);
       }
@@ -342,6 +267,15 @@ class TwoSidedSlider {
         element: rightElement
       }
     }
+
+    //initialize sliders
+    this.updateSlider("left", "val", min);
+    this.updateSlider("right", "val", max);
+  }
+
+  getValue(side: "left" | "right"): number {
+    let value = this.data[side].control.value;
+    return value;
   }
 
   getValueObservable(side: "left" | "right"): Observable<number> {
