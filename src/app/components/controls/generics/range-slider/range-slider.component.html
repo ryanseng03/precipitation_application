@@ -1,24 +1,21 @@
 <div class="container">
   <div class="input-container">
-    <mat-form-field [style.width]="'50px'" [style.color]="'white'">
+    <mat-form-field [style.width]="'50px'">
       <mat-label>Min Value</mat-label>
       <input [formControl]="sliderOptions.lower.formControl" matInput>
     </mat-form-field>
   </div>
   <div class="slider-container">
     <div #track class="track">
-      <div #sliderL class="left-slider"></div>
-      <div #sliderR class="right-slider">
-          <!-- <div #popup class="popup">
-            <span #popupText class="popuptext">P</span>
-          </div> -->
+      <div #sliderL class="slider left-slider"></div>
+      <div #sliderR class="slider right-slider">
       </div>
       <div #segFill class="seg-fill"></div>
     </div>
   </div>
 
   <div class="input-container">
-    <mat-form-field [style.width]="'50px'" [style.color]="'white'">
+    <mat-form-field [style.width]="'50px'">
       <mat-label>Max Value</mat-label>
       <input [formControl]="sliderOptions.upper.formControl" matInput>
     </mat-form-field>

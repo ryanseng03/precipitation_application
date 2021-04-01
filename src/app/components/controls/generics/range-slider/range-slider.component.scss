@@ -1,6 +1,6 @@
 .seg-fill {
     position: absolute;
-    background-color: slategray;
+    background-color: purple;
     height: 8px;
     z-index: 0;
 }
@@ -16,7 +16,7 @@
 .slider-container {
     // background-color: lavender;
     height: 40px;
-    width: 150px;
+    width: 120px;
     position: relative;
     display: inline-flex;
     justify-content: center;
@@ -37,154 +37,144 @@
     background-color: lightgrey;
 }
 
-.circle-slider {
-    position: absolute;
-    left: -8px;
-    top: -2px;
-    width: 14px;
-    height: 14px;
-    border-radius: 100%;
-    background-color: rgb(56, 117, 194);
+// .circle-slider {
+//     position: absolute;
+//     left: -8px;
+//     top: -2px;
+//     width: 14px;
+//     height: 14px;
+//     border-radius: 100%;
+//     background-color: rgb(56, 117, 194);
+// }
+
+// .circle-slider:hover {
+//     cursor: -webkit-grab;
+//     background-color: rgb(43, 86, 140);
+// }
+
+// .circle-slider:active {
+//     cursor: -webkit-grabbing;
+// }
+
+.slider {
+  border-color: rgba(0, 0, 0, .5);
+  background-color: red;
+  width: 6px;
+  height: 16px;
+  top: -6px;
 }
 
-.circle-slider:hover {
-    cursor: -webkit-grab;
-    background-color: rgb(43, 86, 140);
+.slider:hover {
+  cursor: -webkit-grab;
+  background-color: rgb(173, 164, 192);
 }
 
-.circle-slider:active {
-    cursor: -webkit-grabbing;
+.slider:active {
+  cursor: -webkit-grabbing;
+  background-color: rgb(173, 164, 192);
 }
 
 .left-slider {
     position: absolute;
-    left: -5px;
-    top: -5px;
-    width: 10px;
-    height: 14px;
+    left: -4px;
     border-radius: 100% 0 0 100%;
-    border-right: 2px solid;
-    border-color: rgba(0, 0, 0, .5);
-    background-color: white;
+    border-right: 1px solid;
     z-index: 1;
-}
-
-.left-slider:hover {
-    cursor: -webkit-grab;
-    background-color: rgb(173, 164, 192);
-}
-
-.left-slider:active {
-    cursor: -webkit-grabbing;
-    background-color: rgb(173, 164, 192);
 }
 
 .right-slider {
     position: absolute;
-    left: 0px;
-    top: -5px;
-    width: 10px;
-    height: 14px;
+    left: 2px;
     border-radius: 0 100% 100% 0;
-    border-left: 2px solid;
-    background-color: white;
-    border-color: rgba(0, 0, 0, .5);
+    border-left: 1px solid;
     z-index: 2;
 }
 
-.right-slider:hover {
-    cursor: -webkit-grab;
-    background-color: rgb(173, 164, 192);
-}
-
-.right-slider:active {
-    cursor: -webkit-grabbing;
-    background-color: rgb(173, 164, 192);
-}
 
 
-/* Popup container */
-.popup {
-    visibility: hidden;
-    position: relative;
-    display: inline-block;
-    left: -50%;
-    top: calc(-100% - 20px);
-}
 
-/* The actual popup (appears on top) */
-.popuptext {
-    background-color: slategray;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 8px;
-    position: absolute;
-    z-index: 1;
+// /* Popup container */
+// .popup {
+//     visibility: hidden;
+//     position: relative;
+//     display: inline-block;
+//     left: -50%;
+//     top: calc(-100% - 20px);
+// }
 
-    left: calc(50% - 5px);
-}
+// /* The actual popup (appears on top) */
+// .popuptext {
+//     background-color: slategray;
+//     color: #fff;
+//     text-align: center;
+//     border-radius: 6px;
+//     padding: 8px;
+//     position: absolute;
+//     z-index: 1;
 
-/* Popup arrow */
-.popuptext::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: slategray transparent transparent transparent;
-}
+//     left: calc(50% - 5px);
+// }
 
-/* Toggle this class when clicking on the popup container (hide and show the popup) */
-.show {
-    -webkit-animation: fadeIn 1s forwards;
-    animation: fadeIn 1s forwards;
-}
+// /* Popup arrow */
+// .popuptext::after {
+//     content: "";
+//     position: absolute;
+//     top: 100%;
+//     left: 50%;
+//     margin-left: -5px;
+//     border-width: 5px;
+//     border-style: solid;
+//     border-color: slategray transparent transparent transparent;
+// }
 
-.hide {
-    -webkit-animation: fadeOut 1s forwards;
-    animation: fadeOut 1s forwards;
-}
+// /* Toggle this class when clicking on the popup container (hide and show the popup) */
+// .show {
+//     -webkit-animation: fadeIn 1s forwards;
+//     animation: fadeIn 1s forwards;
+// }
 
-/* Add animation (fade in the popup) */
-@-webkit-keyframes fadeIn {
-    0% {
-        opacity: 0;
-        visibility: visible !important;
-    }
-    100% {
-        opacity: 1;
-    }
-}
+// .hide {
+//     -webkit-animation: fadeOut 1s forwards;
+//     animation: fadeOut 1s forwards;
+// }
 
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-        visibility: visible !important;
-    }
-    100% {
-        opacity: 1;
-    }
-}
+// /* Add animation (fade in the popup) */
+// @-webkit-keyframes fadeIn {
+//     0% {
+//         opacity: 0;
+//         visibility: visible !important;
+//     }
+//     100% {
+//         opacity: 1;
+//     }
+// }
 
-@-webkit-keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-        visibility: hidden !important;
-    }
-}
+// @keyframes fadeIn {
+//     0% {
+//         opacity: 0;
+//         visibility: visible !important;
+//     }
+//     100% {
+//         opacity: 1;
+//     }
+// }
 
-@keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-        visibility: hidden !important;
-    }
-}
+// @-webkit-keyframes fadeOut {
+//     0% {
+//         opacity: 1;
+//     }
+//     100% {
+//         opacity: 0;
+//         visibility: hidden !important;
+//     }
+// }
+
+// @keyframes fadeOut {
+//     0% {
+//         opacity: 1;
+//     }
+//     100% {
+//         opacity: 0;
+//         visibility: hidden !important;
+//     }
+// }

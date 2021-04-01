@@ -25,16 +25,29 @@
                     </mat-form-field>
                   </div>
 
-                  <div *ngIf="filter.propertySet()" class="filter-control multi-select-shift">
-                    <mat-select-autocomplete
-                      ngDefaultControl
-                      [placeholder]="'Select Values'"
-                      [options]="filter.getValues()"
-                      [multiple]="true"
-                      [formControl]="filter.controls.valueControl">
-                      Values
-                    </mat-select-autocomplete>
+                  <div *ngIf="filter.propertySet()" class="filter-control">
+                    <div *ngIf="filter.getSelectedProperty().type == 'discreet'; else rangeControl" class="multi-select-shift">
+                      <mat-select-autocomplete
+                        ngDefaultControl
+                        [placeholder]="'Select Values'"
+                        [options]="filter.getValues()"
+                        [multiple]="true"
+                        [formControl]="filter.controls.valueControl">
+                        Values
+                      </mat-select-autocomplete>
+                    </div>
+                    <ng-template #rangeControl>
+                      <app-range-slider
+                        class="range-slider"
+                        (mousedown)="stopEvent($event)"
+                        [control]="filter.controls.valueControl"
+                        [min]="filter.getValues()[0]"
+                        [max]="filter.getValues()[1]">
+                      </app-range-slider>
+                    </ng-template>
                   </div>
+
+
 
                   <div *ngIf="filter.propertySet()" class="filter-control invert-shift">
                     <mat-checkbox [formControl]="filter.controls.invertControl" [disabled]="filter.invertControlLocked()">Invert Filter</mat-checkbox>
@@ -49,10 +62,12 @@
                   </mat-select> -->
 
                 </div>
+                <div class="delete-button" >
+                  <button (click)="group.removeFilter(filter)" mat-icon-button [disabled]="group.getFilters().length < 2">
+                    <mat-icon>clear</mat-icon>
+                  </button>
+                </div>
 
-                <button (click)="group.removeFilter(filter)" mat-icon-button class="delete-button" [disabled]="group.getFilters().length < 2">
-                  <mat-icon>clear</mat-icon>
-                </button>
               </div>
             </div>
 
@@ -73,9 +88,12 @@
     </div>
   </div>
 
-  <div class="add-group-container">
+  <div class="manage-groups-container">
     <button mat-icon-button (click)="addFilterGroup()" [disabled]="!filterGroupsAtLeastOne()">
       <mat-icon>add</mat-icon>
+    </button>
+    <button mat-button class="clear-filters-button" (click)="clearFilters()" [disabled]="!atLeastOneFilter()">
+      Clear Filters
     </button>
   </div>
 

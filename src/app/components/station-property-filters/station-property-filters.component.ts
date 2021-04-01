@@ -21,6 +21,7 @@ export class StationPropertyFiltersComponent implements OnInit {
 
   //should be replaced with metadata descriptor
   //should add special field for value in objects
+  //should replace elevation with alt_m or something like that
   propertyTypes = {
     discreet: ["skn", "name", "observer", "network", "island", "nceiID", "nwsID", "scanID", "smartNodeRfID"],
     range: ["elevation", "lat", "lng"]
@@ -29,8 +30,13 @@ export class StationPropertyFiltersComponent implements OnInit {
   availableProperties: Set<string>;
   propertyData: PropertyData;
 
-  testMove() {
-    console.log("exit!");
+  // testMove() {
+  //   console.log("exit!");
+  // }
+
+  stopEvent(e) {
+    //e.preventDefault();
+    e.stopPropagation();
   }
 
 
@@ -77,16 +83,16 @@ export class StationPropertyFiltersComponent implements OnInit {
 
       filterService.setStations(this.stations);
 
-      for(let prop of this.propertyTypes.discreet) {
-        propertySet.push(new DiscreetPropertyData(prop, prop, ["test", "test2"]));
-      }
-      for(let prop of this.propertyTypes.range) {
-        propertySet.push(new RangePropertyData(prop, prop, [1, 2]));
-      }
+
     });
 
-    
-    
+    for(let prop of this.propertyTypes.discreet) {
+      propertySet.push(new DiscreetPropertyData(prop, prop, ["test", "test2"]));
+    }
+    for(let prop of this.propertyTypes.range) {
+      propertySet.push(new RangePropertyData(prop, prop, [1, 2]));
+    }
+
     this.propertyData = new PropertyData(propertySet);
 
     //------------------------------------------------------------------
@@ -97,7 +103,7 @@ export class StationPropertyFiltersComponent implements OnInit {
   }
 
 
-  filterGroupsAtLeastOne() : boolean{
+  filterGroupsAtLeastOne() : boolean {
     let allAtLeastOne = true;
     for(let filterGroup of this.filterGroups) {
       if(!filterGroup.hasOneFilter()) {
@@ -109,13 +115,13 @@ export class StationPropertyFiltersComponent implements OnInit {
   }
 
 
-  addFilterGroup() {
+  addFilterGroup(): void {
     let groupLabel = `group_${this.groupCount++}`;
     let group = new FilterGroupData(this.propertyData, groupLabel);
     this.filterGroups.push(group);
   }
 
-  removeFilterGroup(group: FilterGroupData) {
+  removeFilterGroup(group: FilterGroupData): void {
     group.cleanup();
     let groupIndex = this.filterGroups.indexOf(group);
     if(groupIndex >= 0) {
@@ -124,6 +130,33 @@ export class StationPropertyFiltersComponent implements OnInit {
   }
 
   ngOnInit() {
+  }
+
+  //remove all filters
+  clearFilters(): void {
+    for(let group of this.filterGroups) {
+      group.cleanup();
+    }
+    //do this instead of using removeFilterGroup so no need to do array deletion for each element
+    this.filterGroups = [];
+    //add init filter group
+    this.addFilterGroup();
+  }
+
+  atLeastOneFilter(): boolean {
+    let atLeastOne = false;
+    //if multiple groups then can clear
+    if(this.filterGroups.length > 1) {
+      atLeastOne = true;
+    }
+    //if only one group check if there are any defined filters in the group
+    else if(this.filterGroups.length == 1) {
+      let group = this.filterGroups[0];
+      if(group.hasOneFilter()) {
+        atLeastOne = true;
+      }
+    }
+    return atLeastOne;
   }
 
 
@@ -204,7 +237,7 @@ class FilterGroupData {
     //need to bind function to context so use return function bound to this
     let _predicate = (item: CdkDrag<FilterFormData>) => {
 
-     
+
 
       let predicate = true;
       let filter = item.data;
