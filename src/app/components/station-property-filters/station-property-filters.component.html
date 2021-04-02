@@ -41,8 +41,7 @@
                         class="range-slider"
                         (mousedown)="stopEvent($event)"
                         [control]="filter.controls.valueControl"
-                        [min]="filter.getValues()[0]"
-                        [max]="filter.getValues()[1]">
+                        [range]="[filter.getValues()[0], filter.getValues()[1]]">
                       </app-range-slider>
                     </ng-template>
                   </div>
@@ -62,7 +61,7 @@
                   </mat-select> -->
 
                 </div>
-                <div class="delete-button" >
+                <div class="delete-button">
                   <button (click)="group.removeFilter(filter)" mat-icon-button [disabled]="group.getFilters().length < 2">
                     <mat-icon>clear</mat-icon>
                   </button>

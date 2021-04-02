@@ -96,7 +96,7 @@ export class FilterMapComponent implements OnInit {
 
 
 
-  
+
 
   leafletOptions: L.MapOptions;
   leafletDrawOptions: any;
@@ -242,7 +242,7 @@ export class FilterMapComponent implements OnInit {
     });
   }
 
- 
+
   deleteDrawnFilter(deletedLayers: any) {
     console.log(deletedLayers);
     deletedLayers.layers.eachLayer((layer: L.Layer) => {

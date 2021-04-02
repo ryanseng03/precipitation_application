@@ -82,7 +82,7 @@
 
 
       <div class="form-component">
-        <app-range-slider *ngIf="options.filterValues.values.getControlType() == 'range'" [control]="options.filterValues.values.getControl()" [min]="options.filterValues.values.getInputValues().min" [max]="options.filterValues.values.getInputValues().max"></app-range-slider>
+        <app-range-slider *ngIf="options.filterValues.values.getControlType() == 'range'" [control]="options.filterValues.values.getControl()" [range]="[options.filterValues.values.getInputValues().min, options.filterValues.values.getInputValues().max]"></app-range-slider>
       </div>
 
       <div class="submit-button-container">

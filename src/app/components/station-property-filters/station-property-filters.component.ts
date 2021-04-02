@@ -60,7 +60,7 @@ export class StationPropertyFiltersComponent implements OnInit {
           name: metadata.name,
           add: {}
         }
-        console.log(stationForm.location.alt);
+        //console.log(stationForm.location.alt);
         for(let prop of properties) {
           //wow this is sketch
           if(!["lat", "lng", "skn", "name"].includes(prop)) {
