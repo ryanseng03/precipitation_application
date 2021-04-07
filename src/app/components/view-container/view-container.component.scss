@@ -1,0 +1,43 @@
+.container {
+    width: 100%;
+    height: 100%;
+    background-color: hotpink;
+    display: flex;
+    flex-flow: row;
+}
+
+.view-nav {
+    height: 100%;
+    width: 30px;
+    display: flex;
+    flex-flow: column wrap;
+    background-color: green;
+}
+
+.nav-tile {
+    background-color: yellow;
+    width: 100%;
+    border-width: 1px;
+    border-style: solid;
+    flex-grow: 1;
+}
+
+.nav-tile:hover {
+    cursor: pointer;
+    background-color: purple;
+    border-width: 2px;
+}
+
+
+.view-component {
+    min-height: 100%;
+    width: 100%;
+    border-width: 1px;
+    border-style: solid;
+    background-color: blue;
+}
+
+.view-container {
+    overflow-y: scroll;
+    flex-grow: 1;
+}

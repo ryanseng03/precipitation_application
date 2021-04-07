@@ -1,7 +1,7 @@
 .seg-fill {
     position: absolute;
-    background-color: purple;
-    height: 8px;
+    background-color: #175db6;
+    height: 4px;
     z-index: 0;
 }
 
@@ -16,7 +16,7 @@
 .slider-container {
     // background-color: lavender;
     height: 40px;
-    width: 120px;
+    width: 130px;
     position: relative;
     display: inline-flex;
     justify-content: center;
@@ -58,20 +58,20 @@
 
 .slider {
   border-color: rgba(0, 0, 0, .5);
-  background-color: red;
-  width: 6px;
+  background-color: #9BBAE3;
+  width: 8px;
   height: 16px;
   top: -6px;
 }
 
 .slider:hover {
   cursor: -webkit-grab;
-  background-color: rgb(173, 164, 192);
+  background-color: #175db6;
 }
 
 .slider:active {
   cursor: -webkit-grabbing;
-  background-color: rgb(173, 164, 192);
+  background-color: #175db6;
 }
 
 .left-slider {

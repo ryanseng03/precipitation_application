@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Map, DomUtil, Control } from "leaflet";
+import { Moment } from 'moment';
 
 @Component({
   selector: 'app-header-control',
@@ -7,6 +8,9 @@ import { Map, DomUtil, Control } from "leaflet";
   styleUrls: ['./header-control.component.scss']
 })
 export class HeaderControlComponent implements OnInit {
+
+  @Input() dataset: string;
+  @Input() date: string;
 
   @Input() set map(map: Map) {
     if(map) {
@@ -21,7 +25,12 @@ export class HeaderControlComponent implements OnInit {
       // console.log(header);
       // console.log(header.getPosition());
       let control = DomUtil.get("header-control");
-      map.getContainer().appendChild(control);
+      let mapContainer = map.getContainer();
+      console.log(mapContainer);
+      let controlContainer = mapContainer.getElementsByClassName("leaflet-control-container");
+      console.log(controlContainer[0]);
+      controlContainer[0].appendChild(control);
+      //map.getContainer().appendChild(control);
     }
   }
 

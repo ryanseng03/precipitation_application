@@ -3,6 +3,7 @@ import { Subject, BehaviorSubject, Observable } from "rxjs";
 import { UtilityService } from "../../../../services/utility/utility.service";
 import { FormControl } from '@angular/forms';
 import { element } from '@angular/core/src/render3';
+import { max } from 'rxjs/operators';
 
 
 interface SideComponents {
@@ -11,6 +12,8 @@ interface SideComponents {
   lastValidValue: number
 }
 
+// background-image: linear-gradient(0deg, #598dd1, #3875c2);
+// background-image: linear-gradient(0deg, #3875c2, #175db6);
 
 @Component({
   selector: 'app-range-slider',
@@ -31,21 +34,21 @@ export class RangeSliderComponent implements OnInit {
 
   private _range: [number, number];
 
-  sliderControlData: TwoSidedSlider;
+  sliderController: TwoSidedSlider;
   @Input() set range(range: [number, number]) {
     this._range = range;
-    if(this.sliderControlData) {
-      this.sliderControlData.setRange(range);
+    if(this.sliderController) {
+      this.sliderController.setRange(range);
     }
   };
   @Input() control: FormControl;
 
+  expandScale: number;
 
-  expandPX: number;
-
-  sideData: {
+  sliderComponents: {
     left: SideComponents,
-    right: SideComponents
+    right: SideComponents,
+    fill: HTMLElement
   };
 
   userInput: boolean = true;
@@ -57,8 +60,8 @@ export class RangeSliderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.expandPX = 4;
-    let sliderWidth = 6;
+    this.expandScale = 1.3;
+    let sliderWidth = 8;
     let trackLockOffset = 2;
     let trackWidth = 100;
 
@@ -66,10 +69,10 @@ export class RangeSliderComponent implements OnInit {
     let max = this._range[1];
 
     //initialize value at min and max
-    let sliderControlData = new TwoSidedSlider(min, max, sliderWidth, trackWidth, trackLockOffset, this._range);
-    this.sliderControlData = sliderControlData;
+    let sliderController = new TwoSidedSlider(min, max, sliderWidth, trackWidth, trackLockOffset, this._range);
+    this.sliderController = sliderController;
 
-    this.sideData = {
+    this.sliderComponents = {
       left: {
         control: new FormControl(min, {updateOn: "blur"}),
         element: this.sliderL.nativeElement,
@@ -79,11 +82,15 @@ export class RangeSliderComponent implements OnInit {
         control: new FormControl(max, {updateOn: "blur"}),
         element: this.sliderR.nativeElement,
         lastValidValue: max
-      }
+      },
+      fill: this.segFill.nativeElement
     };
 
+    this.sliderComponents.left.element.style.transformOrigin = "center right";
+    this.sliderComponents.right.element.style.transformOrigin = "center left";
 
-
+    this.updateFromSliderData("left", sliderController.getData("left"));
+    this.updateFromSliderData("right", sliderController.getData("right"));
 
     this.setupSliderEvents("left");
     this.setupSliderEvents("right");
@@ -94,15 +101,15 @@ export class RangeSliderComponent implements OnInit {
   handleInputChange(side: SliderSide, value: string): void {
     //only run for user input
     if(this.userInput) {
-      let sideData = this.sideData[side];
+      let sliderData = this.sliderComponents[side];
       let numval = Number.parseFloat(value);
       //if cant parse to a number set to the last valid value that was set
       if(Number.isNaN(numval)) {
-        numval = sideData.lastValidValue;
+        numval = sliderData.lastValidValue;
       }
 
       //update slider to new value (will also update this control to post validation value)
-      let data = this.sliderControlData.updateSlider(side, "val", numval);
+      let data = this.sliderController.updateSlider(side, "val", numval);
       //set everything from the verified values (handles debounce, etc)
       this.updateFromSliderData(side, data);
     }
@@ -115,49 +122,48 @@ export class RangeSliderComponent implements OnInit {
   updateFromSliderData(side: SliderSide, data: SliderData) {
     //not user input, prevent bounce
     this.userInput = false;
-    let sideData = this.sideData[side];
+    let sliderData = this.sliderComponents[side];
     //set last valid value to the current value from the slider data
-    sideData.lastValidValue = data.value;
-    sideData.control.setValue(data.value);
-    sideData.element.style.left = data.left + "px";
+    sliderData.lastValidValue = data.value;
+    sliderData.control.setValue(data.value);
+    sliderData.element.style.left = data.left + "px";
+    this.updateFillSeg();
   }
 
   expandSlider(element: HTMLElement) {
-    element.style.width = element.clientWidth + this.expandPX + "px";
-    element.style.height = element.clientHeight + this.expandPX + "px";
-    element.style.top = element.offsetTop - this.expandPX / 2 + "px";
-    element.style.transform = "translateX(-" + this.expandPX / 2 + "px)";
+    element.style.transform = `scale(${this.expandScale})`;
   }
 
   contractSlider(element: HTMLElement) {
-    element.style.width = element.clientWidth - this.expandPX + "px";
-    element.style.height = element.clientHeight - this.expandPX + "px";
-    element.style.top = element.offsetTop + this.expandPX / 2 + "px";
     element.style.transform = "";
   }
 
 
   updateFillSeg() {
-    this.segFill.nativeElement.style.left = this.sliderL.nativeElement.offsetLeft;
-    this.segFill.nativeElement.style.width = this.sliderR.nativeElement.offsetLeft - this.sliderL.nativeElement.offsetLeft;
+    let fillData = this.sliderController.getFillSegData();
+    this.sliderComponents.fill.style.left = fillData.left + "px";
+    this.sliderComponents.fill.style.width = fillData.width + "px";
   }
 
-  setupSliderEvents(side: SliderSide) {
+  setupSliderEvents(side: SliderSide): void {
 
-    this.sideData[side].control.valueChanges.subscribe((value: any) => {
+    this.sliderComponents[side].control.valueChanges.subscribe((value: any) => {
       this.handleInputChange(side, value);
     });
 
-    let element = this.sideData[side].element;
+    let element = this.sliderComponents[side].element;
 
+    let lastX: number;
     element.addEventListener("mousedown", (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
 
+      lastX = e.clientX;
+
       this.expandSlider(element);
       document.body.style.cursor = "grabbing";
 
-      let lastX: number;
+      
       let movFunct = (e: MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
@@ -165,7 +171,8 @@ export class RangeSliderComponent implements OnInit {
         let x = e.clientX;
         let deltaX = x - lastX;
         lastX = x;
-        let data = this.sliderControlData.updateSlider(side, "move", deltaX);
+        let data = this.sliderController.updateSlider(side, "move", deltaX);
+        //console.log(data);
         this.updateFromSliderData(side, data);
       }
       window.addEventListener("mousemove", movFunct);
@@ -192,7 +199,6 @@ class TwoSidedSlider {
     left: Slider,
     right: Slider
   }
-
 
   constructor(leftInitValue: number, rightInitValue: number, sliderWidth: number, trackWidth: number, trackLockOffset: number, valueRange: [number, number]) {
     let leftSlider = new LeftSlider(leftInitValue, sliderWidth, trackWidth, trackLockOffset, valueRange);
@@ -229,6 +235,20 @@ class TwoSidedSlider {
     }
     return data;
   }
+
+  getFillSegData(): FillData {
+    let left = this.data.left.getValueEdge();
+    let width = this.data.right.getValueEdge() - left;
+    let data: FillData = {
+      left: left,
+      width: width
+    }
+    return data;
+  }
+
+  getData(side: SliderSide): SliderData {
+    return this.data[side].getData();
+  }
 }
 
 //provides computations for slider position, bounds, and values
@@ -242,8 +262,9 @@ abstract class Slider {
   protected valRange: [number, number];
 
   constructor(initValue: number, sliderWidth: number, trackWidth: number, trackLockOffset: number, valueRange: [number, number]) {
+    this.trackWidth = trackWidth;
     this.sliderWidth = sliderWidth;
-    this.trackLockWidth = trackWidth - trackLockOffset;
+    this.trackLockWidth = trackWidth - (trackLockOffset * 2);
     this.trackLockOffset = trackLockOffset;
     this.valRange = valueRange;
     this.value = initValue;
@@ -261,13 +282,16 @@ abstract class Slider {
   getData(): SliderData {
     return {
       value: this.value,
-      left: this.left
+      left: this.left,
+      valueEdge: this.left + this.getEdgeOffset()
     };
   }
 
 
   moveSlider(positionOffset: number): SliderData {
+    //console.log(this.left, positionOffset);
     let newLeft = this.left + positionOffset;
+    //console.log(newLeft);
     //this handles all the rounding and updates and whatnot
     this.setLeft(newLeft);
     return this.getData();
@@ -276,8 +300,8 @@ abstract class Slider {
   //are we doing intervals?
 
   setLeft(offset: number): SliderData {
-    let minLeft = this.getLowerBound();
-    let maxLeft = this.getUpperBound();
+    let minLeft = this.getLowerBoundLeft();
+    let maxLeft = this.getUpperBoundLeft();
     if(offset < minLeft) {
       this.left = minLeft;
     }
@@ -292,8 +316,8 @@ abstract class Slider {
   }
 
   setValue(value: number): SliderData {
-    let min = this.valRange[0];
-    let max = this.valRange[1];
+    let min = this.getLowerBoundValue();
+    let max = this.getUpperBoundValue();
     if(value < min) {
       this.value = min;
     }
@@ -319,20 +343,21 @@ abstract class Slider {
     let valOffset = this.value - min;
     let range = max - min;
     let ratio = valOffset / range;
-    let pxOffset = this.trackLockWidth * ratio;
+    let left = this.trackLockWidth * ratio;
     //add the track lock offset and the edge offset
-    pxOffset += this.trackLockOffset + this.getEdgeOffset();
+    left += this.trackLockOffset - this.getEdgeOffset();
     //round to nearest pixel
-    pxOffset = Math.round(pxOffset);
-    this.left = pxOffset;
-    return pxOffset;
+    left = Math.round(left);
+    this.left = left;
+    return left;
   }
 
   protected updateValue(): number {
+    let valueEdge = this.getValueEdge();
+    //adjust to track lock
+    valueEdge -= this.trackLockOffset;
     let min = this.valRange[0];
     let max = this.valRange[1];
-    //need to subtract the offset to the edge to get value position
-    let valueEdge = this.left - this.getEdgeOffset();
     let ratio = valueEdge / this.trackLockWidth;
     let diff = max - min;
     let valOffset = diff * ratio;
@@ -344,16 +369,29 @@ abstract class Slider {
   }
 
   //default just the ends of the track
-  protected getLowerBound(): number {
-    return this.trackLockOffset + this.getEdgeOffset();
+  protected getLowerBoundLeft(): number {
+    return this.trackLockOffset - this.getEdgeOffset();
   }
 
-  protected getUpperBound() {
-    return this.trackWidth - this.trackLockOffset + this.getEdgeOffset();
+  protected getUpperBoundLeft() {
+    return this.trackWidth - this.trackLockOffset - this.getEdgeOffset();
+  }
+
+  //default just the ends of range
+  protected getLowerBoundValue(): number {
+    return this.valRange[0];
+  }
+
+  protected getUpperBoundValue() {
+    return this.valRange[1];
+  }
+
+  getValueEdge() {
+    return this.getLeft() + this.getEdgeOffset();
   }
 
   //pixel shift from left edge of slider to position edge
-  protected abstract getEdgeOffset(): number;
+  abstract getEdgeOffset(): number;
 }
 
 class LeftSlider extends Slider {
@@ -368,19 +406,30 @@ class LeftSlider extends Slider {
     this.rightBound = rightBound;
   }
 
-  protected getEdgeOffset(): number {
-    return -this.sliderWidth;
+  getEdgeOffset(): number {
+    return this.sliderWidth;
   }
 
 
-  getUpperBound() {
+  getUpperBoundLeft(): number {
     let upperBound: number;
     if(this.rightBound) {
-      upperBound = this.rightBound.getLeft() - this.getEdgeOffset();
+      upperBound = this.rightBound.getLeft() + this.rightBound.getEdgeOffset() - this.getEdgeOffset();
     }
     else {
       //if right boundary has not been set just use default upper bound check
-      upperBound = super.getUpperBound();
+      upperBound = super.getUpperBoundLeft();
+    }
+    return upperBound;
+  }
+
+  protected getUpperBoundValue(): number {
+    let upperBound: number;
+    if(this.rightBound) {
+      upperBound = this.rightBound.getValue();
+    }
+    else {
+      upperBound = super.getUpperBoundValue();
     }
     return upperBound;
   }
@@ -398,18 +447,29 @@ class RightSlider extends Slider {
     this.leftBound = leftBound;
   }
 
-  protected getEdgeOffset(): number {
+  getEdgeOffset(): number {
     //left side is the value edge, no shift
     return 0;
   }
 
-  getLowerBound(): number {
+  getLowerBoundLeft(): number {
     let lowerBound: number;
     if(this.leftBound) {
-      lowerBound = this.leftBound.getLeft() + this.getEdgeOffset();
+      lowerBound = this.leftBound.getLeft() + this.leftBound.getEdgeOffset() - this.getEdgeOffset();
     }
     else {
-      lowerBound = super.getLowerBound();
+      lowerBound = super.getLowerBoundLeft();
+    }
+    return lowerBound;
+  }
+
+  protected getLowerBoundValue(): number {
+    let lowerBound: number;
+    if(this.leftBound) {
+      lowerBound = this.leftBound.getValue();
+    }
+    else {
+      lowerBound = super.getLowerBoundValue();
     }
     return lowerBound;
   }
@@ -417,6 +477,13 @@ class RightSlider extends Slider {
 }
 
 interface SliderData {
-  value: number;
-  left: number;
+  value: number,
+  left: number,
+  valueEdge: number
 }
+
+interface FillData {
+  left: number,
+  width: number
+}
+

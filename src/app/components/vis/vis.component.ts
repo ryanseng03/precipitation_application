@@ -56,16 +56,17 @@ export class VisComponent implements OnInit, AfterViewInit {
 
   @HostListener('window:resize', ['$event'])
   checkMoveInfo() {
-    let parent: HTMLElement;
-    if(this.viewContainer.nativeElement.offsetWidth < 500) {
-      parent = this.p1.nativeElement;
-    }
-    else {
-      parent = this.p2.nativeElement;
-    }
-    if(this.dsInfo.nativeElement.parentElement != parent) {
-      this.moveChild(this.dsInfo.nativeElement, parent);
-    }
+    this.map.invalidateSize();
+    // let parent: HTMLElement;
+    // if(this.viewContainer.nativeElement.offsetWidth < 500) {
+    //   parent = this.p1.nativeElement;
+    // }
+    // else {
+    //   parent = this.p2.nativeElement;
+    // }
+    // if(this.dsInfo.nativeElement.parentElement != parent) {
+    //   this.moveChild(this.dsInfo.nativeElement, parent);
+    // }
   }
 
   moveChild(child, parent) {

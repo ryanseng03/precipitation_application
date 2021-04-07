@@ -1,5 +1,5 @@
 import { setStyles } from '@angular/animations/browser/src/util';
-import { Component, OnInit, Output, Input, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, Input, EventEmitter, HostListener } from '@angular/core';
 import * as L from "leaflet";
 //import * as D from "leaflet-draw";
 import { SiteMetadata } from 'src/app/models/SiteMetadata';
@@ -118,6 +118,7 @@ export class FilterMapComponent implements OnInit {
   //should only have map select filter if state changes from state after all other filters
   //this should be the last thing to be evaluated, if it's the same remove it so it gets affected by changed to other filters again
 
+  
 
   constructor(private ips: InternalPointsService, private filterService: StationFilteringService) {
 
@@ -155,6 +156,11 @@ export class FilterMapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
+    //temporary workaround, because map is sized by parent it does not size properly initially
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 1000);
+    //map.once("moveend zoomend", () => {console.log("!");map.invalidateSize()});
     this.map = map;
     this.drawnItems.addTo(map);
     L.control.scale({position: "bottomleft"}).addTo(map);
@@ -187,6 +193,11 @@ export class FilterMapComponent implements OnInit {
       }
     });
 
+  }
+
+  @HostListener('window:resize', ['$event'])
+  resizeMap() {
+    this.map.invalidateSize();
   }
 
 

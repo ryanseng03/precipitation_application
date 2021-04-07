@@ -77,6 +77,7 @@ import { StationPropertyFiltersComponent } from './components/station-property-f
 
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import { HeaderControlComponent } from './components/leaflet-controls/header-control/header-control.component';
+import { ViewContainerComponent } from './components/view-container/view-container.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -121,7 +122,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     LeafletCompassRoseComponent,
     StationFilterInterfaceComponent,
     StationPropertyFiltersComponent,
-    HeaderControlComponent
+    HeaderControlComponent,
+    ViewContainerComponent
   ],
   imports: [
     BrowserModule,

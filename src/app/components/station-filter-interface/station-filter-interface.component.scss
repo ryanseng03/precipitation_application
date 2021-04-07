@@ -5,17 +5,16 @@
     height: 100%;
     align-items: center;
     justify-content: center;
-    background-color: purple;
 }
 
 .filter-property-container {
     height: 100%;
     width: fit-content;
     overflow-y: auto;
-    background-color: red;
 }
 
 .filter-map-container {
     height: 100%;
     flex-grow: 1;
+    background-color: green;
 }
