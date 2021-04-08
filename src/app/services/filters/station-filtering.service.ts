@@ -106,7 +106,21 @@ export class StationFilteringService {
   }
 
   private update() {
-    this.outerGroup
+    let included = [];
+    let excluded = [];
+    for(let station of this.stations) {
+      if(this.groupData.wrapper.filter(station)) {
+        included.push(station);
+      }
+      else {
+        excluded.push(station);
+      }
+    }
+    //what about toggles?
+    this.filteredStations.next({
+      included: included,
+      excluded: excluded
+    });
   }
 }
 
