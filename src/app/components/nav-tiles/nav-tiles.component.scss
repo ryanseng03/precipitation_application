@@ -4,14 +4,27 @@
     padding: 20px;
     box-sizing: border-box;
     cursor: pointer;
+    position: relative;
 }
 
 
 
 .nav-tile:hover {
-    border-style: solid;
-    border-width: 5px;
+    // border-style: solid;
+    // border-width: 5px;
+    box-shadow: 5px -5px inset, -1px 1px inset;
 }
+
+//semi-transparent color overlay on hover
+// .nav-tile:hover:after {
+//   content:"\A";
+//   width:100%;
+//   height:100%;
+//   background:rgba(23, 93, 182, 0.2);
+//   position: absolute;
+//   left: 0;
+//   top: 0;
+// }
 
 .nav-tile-container {
     display: flex;

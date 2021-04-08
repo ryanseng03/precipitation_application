@@ -1,31 +1,21 @@
-<div class="main-container">
-  <!-- <div #topbar class="topbar-container">
-    
-    <div class="filter-container">
-
-      <app-site-filter></app-site-filter>
-
-    </div>
-    <div #p1 class="dataset-info-container">
-
-    </div>
-  </div> -->
 
 
 
-  <div class="data-container">
 
-    <div #mapContainer class="map-container" [ngStyle]="{'width': mapWidth}">
-      <app-map #map class="map"></app-map>
-    </div>
+<div #container class="data-container">
 
-    <div #dragBar [ngStyle]="{'width': resizeBarWidth}" (touchstart)="startResize($event, true)" (mousedown)="startResize($event, false)" class="resize-bar">
-      <div class="line"></div>
-    </div>
+  <div #mapContainer class="map-container" [ngStyle]="{'width': mapWidth}">
+    <app-map #map class="map"></app-map>
+  </div>
 
-    <app-view-container class="view-container"></app-view-container>
-    
-      
+  <div #dragbar [ngStyle]="{'width': resizeBarWidth}" (touchstart)="startResize($event, true)" (mousedown)="startResize($event, false)" class="resize-bar">
+    <div class="line"></div>
+  </div>
+
+  <app-view-container class="view-container"></app-view-container>
+</div>
+
+
       <!-- <app-site-filter></app-site-filter>
       <div #p2 class="dataset-info-container">
         <div #dsInfo>
@@ -61,17 +51,16 @@
             <app-export [map]="map"></app-export>
           </div>
 
-  
+
         </div>
 
 
       </mat-sidenav-container> -->
-    
 
 
 
-  </div>
-</div>
+
+
 
 
 

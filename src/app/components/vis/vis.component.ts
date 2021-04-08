@@ -9,8 +9,9 @@ import { MapComponent } from '../map/map.component';
 })
 export class VisComponent implements OnInit, AfterViewInit {
 
+  @ViewChild("container") container: ElementRef;
   @ViewChild("mapContainer") mapContainer: ElementRef;
-  @ViewChild("dragBar") dragBar: ElementRef;
+  @ViewChild("dragbar") dragbar: ElementRef;
   @ViewChild("viewNav") viewNav: MatSidenav;
 
   @ViewChild("p1") p1: ElementRef;
@@ -33,8 +34,14 @@ export class VisComponent implements OnInit, AfterViewInit {
     this.dragState = {
       lastEvent: null,
       moveHandler: (event: MouseEvent) => {
-        let dx = event.x - this.dragState.lastEvent.x;
-        this.mapWidth = this.mapContainer.nativeElement.offsetWidth + dx + "px";
+        let dragbar: HTMLElement = this.dragbar.nativeElement;
+        let mapContainer: HTMLElement = this.mapContainer.nativeElement;
+        //offset to midpoint of dragbar
+        let dragbarOffset = dragbar.clientWidth / 2;
+        let left = mapContainer.getBoundingClientRect().left;
+        let x = event.clientX - left - dragbarOffset;
+        x = Math.max(0, x);
+        this.mapWidth = x + "px";
         this.checkMoveInfo();
         this.dragState.lastEvent = event;
 
@@ -105,7 +112,7 @@ export class VisComponent implements OnInit, AfterViewInit {
       }
 
       map.invalidateSize();
-      
+
       dragState.lastEvent = null;
       return false;
     }

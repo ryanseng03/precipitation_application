@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Output, Input, OnChanges } from '@angular/core';
+import { Component, OnInit, ViewChild, Output, Input, OnChanges, ElementRef, EventEmitter } from '@angular/core';
 import { Subject, BehaviorSubject, Observable } from "rxjs";
 import { UtilityService } from "../../../../services/utility/utility.service";
 import { FormControl } from '@angular/forms';
@@ -22,12 +22,12 @@ interface SideComponents {
 })
 export class RangeSliderComponent implements OnInit {
 
-  @ViewChild("sliderR") sliderR;
-  @ViewChild("sliderL") sliderL;
-  @ViewChild("track") track;
-  @ViewChild("segFill") segFill;
-  @ViewChild("popup") popup;
-  @ViewChild("popupText") popupText;
+  @ViewChild("sliderR") sliderR: ElementRef;
+  @ViewChild("sliderL") sliderL: ElementRef;
+  @ViewChild("track") track: ElementRef;
+  @ViewChild("segFill") segFill: ElementRef;
+  @ViewChild("popup") popup: ElementRef;
+  @ViewChild("popupText") popupText: ElementRef;
 
   // @Output() lower: Subject<number>;
   // @Output() upper: Subject<number>;
@@ -43,6 +43,8 @@ export class RangeSliderComponent implements OnInit {
   };
   @Input() control: FormControl;
 
+  //@Output() values: EventEmitter<[number, number]>
+
   expandScale: number;
 
   sliderComponents: {
@@ -52,6 +54,7 @@ export class RangeSliderComponent implements OnInit {
   };
 
   userInput: boolean = true;
+  sliderWidth: number;
 
 
   constructor(private util: UtilityService) {
@@ -64,6 +67,8 @@ export class RangeSliderComponent implements OnInit {
     let sliderWidth = 8;
     let trackLockOffset = 2;
     let trackWidth = 100;
+
+    this.sliderWidth = sliderWidth;
 
     let min = this._range[0];
     let max = this._range[1];
@@ -89,11 +94,13 @@ export class RangeSliderComponent implements OnInit {
     this.sliderComponents.left.element.style.transformOrigin = "center right";
     this.sliderComponents.right.element.style.transformOrigin = "center left";
 
+    this.setupSliderEvents("left");
+    this.setupSliderEvents("right");
+
     this.updateFromSliderData("left", sliderController.getData("left"));
     this.updateFromSliderData("right", sliderController.getData("right"));
 
-    this.setupSliderEvents("left");
-    this.setupSliderEvents("right");
+
 
   }
 
@@ -128,6 +135,9 @@ export class RangeSliderComponent implements OnInit {
     sliderData.control.setValue(data.value);
     sliderData.element.style.left = data.left + "px";
     this.updateFillSeg();
+    let valueRange = this.sliderController.getRange();
+    //set control value
+    this.control.setValue(valueRange);
   }
 
   expandSlider(element: HTMLElement) {
@@ -153,25 +163,30 @@ export class RangeSliderComponent implements OnInit {
 
     let element = this.sliderComponents[side].element;
 
-    let lastX: number;
+    //let lastX: number;
     element.addEventListener("mousedown", (e: MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
+      //don't prevent mousedown event propogation only drag (so focus properly taken off of fields)
+      // e.stopPropagation();
+      //e.preventDefault();
 
-      lastX = e.clientX;
+      //lastX = e.clientX;
 
       this.expandSlider(element);
       document.body.style.cursor = "grabbing";
 
-      
       let movFunct = (e: MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
 
-        let x = e.clientX;
-        let deltaX = x - lastX;
-        lastX = x;
-        let data = this.sliderController.updateSlider(side, "move", deltaX);
+        let track: HTMLElement = this.track.nativeElement;
+        //offset to midpoint of slider
+        let sliderOffset = this.sliderWidth / 2;
+        //convert from viewport coords to slider by subtracting left client bound of track, and offset to center of slider
+        let x = e.clientX - track.getBoundingClientRect().left - sliderOffset;
+        //let deltaX = x - lastX;
+        //lastX = x;
+        //just set the slider left position to the computed position, the slider logic will handle bounding
+        let data = this.sliderController.updateSlider(side, "left", x);
         //console.log(data);
         this.updateFromSliderData(side, data);
       }
@@ -248,6 +263,14 @@ class TwoSidedSlider {
 
   getData(side: SliderSide): SliderData {
     return this.data[side].getData();
+  }
+
+  getRange(): [number, number] {
+    let range: [number, number];
+    let lower = this.data.left.getValue();
+    let upper = this.data.right.getValue();
+    range = [lower, upper];
+    return range;
   }
 }
 
@@ -338,32 +361,53 @@ abstract class Slider {
   }
 
   protected updateLeft(): number {
-    let min = this.valRange[0];
-    let max = this.valRange[1];
-    let valOffset = this.value - min;
-    let range = max - min;
-    let ratio = valOffset / range;
-    let left = this.trackLockWidth * ratio;
-    //add the track lock offset and the edge offset
-    left += this.trackLockOffset - this.getEdgeOffset();
-    //round to nearest pixel
-    left = Math.round(left);
+    let left: number;
+    //fast compute at boundaries (also prevents rounding issues)
+    if(this.value == this.getLowerBoundValue()) {
+      left = this.getLowerBoundLeft();
+    }
+    else if(this.value == this.getUpperBoundValue()) {
+      left = this.getUpperBoundLeft();
+    }
+    else {
+      let min = this.valRange[0];
+      let max = this.valRange[1];
+      let valOffset = this.value - min;
+      let range = max - min;
+      let ratio = valOffset / range;
+      left = this.trackLockWidth * ratio;
+      //add the track lock offset and the edge offset
+      left += this.trackLockOffset - this.getEdgeOffset();
+      //round to nearest pixel
+      left = Math.round(left);
+    }
     this.left = left;
     return left;
   }
 
   protected updateValue(): number {
-    let valueEdge = this.getValueEdge();
-    //adjust to track lock
-    valueEdge -= this.trackLockOffset;
-    let min = this.valRange[0];
-    let max = this.valRange[1];
-    let ratio = valueEdge / this.trackLockWidth;
-    let diff = max - min;
-    let valOffset = diff * ratio;
-    let value = min + valOffset;
-    //round value to two decimal places (if want something more precise they can type it)
-    value = Math.round(value * 100) / 100;
+    let value: number;
+    //fast compute at boundaries (also prevents rounding issues)
+    if(this.left == this.getLowerBoundLeft()) {
+      value = this.getLowerBoundValue();
+    }
+    else if(this.left == this.getUpperBoundLeft()) {
+      value = this.getUpperBoundValue();
+    }
+    else {
+      let valueEdge = this.getValueEdge();
+      //adjust to track lock
+      valueEdge -= this.trackLockOffset;
+      let min = this.valRange[0];
+      let max = this.valRange[1];
+      let ratio = valueEdge / this.trackLockWidth;
+      let diff = max - min;
+      let valOffset = diff * ratio;
+      value = min + valOffset;
+      //round value to two decimal places (if want something more precise they can type it)
+      value = Math.round(value * 100) / 100;
+    }
+
     this.value = value;
     return value;
   }

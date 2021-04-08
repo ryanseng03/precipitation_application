@@ -1,9 +1,20 @@
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-view-container',
   templateUrl: './view-container.component.html',
-  styleUrls: ['./view-container.component.scss']
+  styleUrls: ['./view-container.component.scss'],
+  animations: [trigger("selectColor", [
+    state("selected", style({
+      backgroundColor: "#175db6",
+      color: "white"
+  })),
+    state("deselected", style({})),
+    transition("selected <=> deselected", [
+      animate("0.4s")
+    ])
+  ])]
 })
 export class ViewContainerComponent implements OnInit {
 
@@ -21,7 +32,8 @@ export class ViewContainerComponent implements OnInit {
   scrollTimeoutHandle: NodeJS.Timer;
   lastScrollPos: number;
   scrollTimeout: number = 100;
-  navOrder:HTMLElement[];
+  navInfo: NavData[];
+  activeTileRef: NavData;
 
   constructor() {
     this.scrollTimeoutHandle = null;
@@ -33,22 +45,35 @@ export class ViewContainerComponent implements OnInit {
       table: this.tableComponent,
       timeSeries: this.timeSeriesComponent
     };
-    let containerElement: HTMLElement = this.viewContainer.nativeElement; 
+    let containerElement: HTMLElement = this.viewContainer.nativeElement;
     this.lastScrollPos = containerElement.scrollTop;
-    this.navOrder = [this.formComponent.nativeElement, this.tableComponent.nativeElement, this.timeSeriesComponent.nativeElement];
+    this.navInfo = [{
+      label: "Dataset",
+      element: this.formComponent.nativeElement
+    },
+    {
+      label: "Stations",
+      element: this.tableComponent.nativeElement
+    },
+    {
+      label: "Time Series",
+      element: this.timeSeriesComponent.nativeElement
+    }];
+    this.activeTileRef = this.navInfo[0];
 
   }
 
-  goToComponent(component: HTMLElement) {
-    console.log(component);
+  goToNav(nav: NavData) {
+    let component = nav.element;
     let top = component.offsetTop;
-    console.log(top);
-    let containerElement: HTMLElement = this.viewContainer.nativeElement; 
+    let containerElement: HTMLElement = this.viewContainer.nativeElement;
     containerElement.scroll({
       top: top,
       left: 0,
       behavior: "smooth"
     });
+    //set active nav ref
+    this.activeTileRef = nav;
   }
 
   containerScroll(e: Event): void {
@@ -62,19 +87,18 @@ export class ViewContainerComponent implements OnInit {
       if(scrollDelta < 0) {
         let divsBetween = this.betweenDivs();
         if(divsBetween) {
-          this.goToComponent(divsBetween.upper);
+          this.goToNav(divsBetween.upper);
         }
       }
       //scrolling down
       else if(scrollDelta > 0) {
         let divsBetween = this.betweenDivs();
         if(divsBetween) {
-          this.goToComponent(divsBetween.lower);
+          this.goToNav(divsBetween.lower);
         }
       }
-      console.log(containerElement.scrollTop);
     }, this.scrollTimeout);
-    
+
   }
 
   //check if view container between component divs
@@ -85,8 +109,9 @@ export class ViewContainerComponent implements OnInit {
     let containerLower = containerUpper + containerElement.clientHeight;
     let upper = 0;
     //length -1 because don't have to do last element (has to be inside last element if none in others)
-    for(let i = 0; i < this.navOrder.length - 1; i++) {
-      let element = this.navOrder[i];
+    for(let i = 0; i < this.navInfo.length - 1; i++) {
+      let data = this.navInfo[i];
+      let element = data.element;
       //is the container within this element, stradling lower boundary, or outside
       let alignment: ElementAlignment = "none";
       let height = element.clientHeight;
@@ -110,8 +135,8 @@ export class ViewContainerComponent implements OnInit {
       //stradling lower boundary, set between and break
       else if(alignment == "over") {
         between = {
-          upper: element,
-          lower: this.navOrder[i + 1]
+          upper: data,
+          lower: this.navInfo[i + 1]
         }
         break;
       }
@@ -127,6 +152,11 @@ export class ViewContainerComponent implements OnInit {
 type ElementAlignment = "within" | "over" | "none";
 
 interface DivsBetween {
-  upper: HTMLElement,
-  lower: HTMLElement
+  upper: NavData,
+  lower: NavData
+}
+
+interface NavData {
+  label: string,
+  element: HTMLElement,
 }

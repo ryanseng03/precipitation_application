@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { FilterOptions, StationFilteringService, StationMetadata } from 'src/app/services/filters/station-filtering.service';
+import { PropertyType, PropertyFilterOptions, StationFilteringService, StationMetadata } from 'src/app/services/filters/station-filtering.service';
 import {CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag} from '@angular/cdk/drag-drop';
 import { MetadataStoreService, SKNRefMeta } from 'src/app/services/dataLoaders/dataRequestor/auxillary/siteManagement/metadata-store.service';
 // import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 // import { SiteInfo } from 'src/app/models/SiteMetadata';
 import * as L from "leaflet";
 import { FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-station-property-filters',
@@ -205,12 +206,11 @@ class FilterGroupData {
   }
 
   addFilter(): void {
-    let filter = new FilterFormData(this.propertyData);
+    let filter = new FilterFormData(this.propertyData, this.groupLabel);
     this.filters.push(filter);
   }
 
   moveFilter(event: CdkDragDrop<FilterFormData[]>): void {
-    console.log(event);
     if(event.previousContainer == event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     }
@@ -282,11 +282,12 @@ class FilterFormData {
     valueControl: FormControl,
     invertControl: FormControl
   };
+  private subs: Subscription[];
   private propertyData: PropertyData;
   private invertState: StateInstance;
   private setProperty: Property;
 
-  constructor(propertyData: PropertyData) {
+  constructor(propertyData: PropertyData, group: string) {
     this.controls = {
       propertyControl: new FormControl(null),
       valueControl: new FormControl(null),
@@ -295,7 +296,7 @@ class FilterFormData {
     this.propertyData = propertyData;
     this.invertState = null;
 
-    this.controls.propertyControl.valueChanges.subscribe((value: Property) => {
+    let propertySub = this.controls.propertyControl.valueChanges.subscribe((value: Property) => {
       //cleanup filter with previous property
       this.cleanup();
       this.setProperty = value;
@@ -319,7 +320,7 @@ class FilterFormData {
       this.controls.valueControl.setValue([]);
     });
 
-    this.controls.invertControl.valueChanges.subscribe((value: boolean) => {
+    let valueSub = this.controls.invertControl.valueChanges.subscribe((value: boolean) => {
       //if not null then state has been set, remove state from property since not used anymore
       if(this.invertState) {
         this.setProperty.removeState(this.invertState);
@@ -329,12 +330,25 @@ class FilterFormData {
       this.setProperty.addState(this.invertState);
 
       //NEED TO OUTPUT TO FILTER
+
+      let type = this.setProperty.type
+      let filterData = {
+        groupTag: group,
+        type: type,
+        inverted: this.invertState,
+        values: this.controls.valueControl.value
+      };
     });
 
-    this.controls.valueControl.valueChanges.subscribe((value: any[]) => {
+    this.controls.valueControl.valueChanges.subscribe((value: any) => {
       //what is the type for value?
+      console.log(value);
       //OUTPUT TO FILTER
+      let type = this.setProperty.type
     });
+
+    //track subscriptions so can unsubscribe on cleanup
+    this.subs = [propertySub, valueSub];
   }
 
   //need full properties, this is probably useless
@@ -392,6 +406,9 @@ class FilterFormData {
   cleanup() {
     if(this.setProperty && this.invertState !== null) {
       this.setProperty.removeState(this.invertState);
+    }
+    for(let sub of this.subs) {
+      sub.unsubscribe();
     }
     //ALSO NEED TO REMOVE FILTER FROM FILTER SERVICE
   }
@@ -534,4 +551,3 @@ class RangePropertyData extends Property {
 }
 
 type StateInstance = "normal" | "inverted";
-type PropertyType = "discreet" | "range";

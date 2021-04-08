@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { stat } from 'fs';
 import { Observable, Subject } from 'rxjs';
 
 
@@ -22,18 +23,37 @@ export class StationFilteringService {
 
   //duplicate property default to or, else default and
   //first show properties, then create rest of interface once chosen
-  
-  filterLayerMap
+
+
 
   //filteredStations: Subject<>;
   //set of filtered stations before appling
-  preFilteredStations: Set<StationMetadata>
-  toggledStations: Set<StationMetadata>
+  preFilteredStations: Set<StationMetadata>;
+  toggledStations: Set<StationMetadata>;
 
-  stations: StationMetadata[]
+  stations: StationMetadata[];
+
+
+  //NOTE THAT THE OUTER OR GROUP DOES NOT WORK WELL FOR GEOGRAPHIC FILTERS (or for shapes, and for others)
+  //shouldn't have to worry too much about the interface (it'll just get convoluted if you add more)
+  //create extra outer and group for geographic map filters
+
+  groupData: {
+    wrapper: FilterGroup<StationMetadata>,
+    geographicGroup: FilterGroup<StationMetadata>,
+    propertyGroup: FilterGroup<StationMetadata>,
+
+  }
+
+  propertyOuterGroupType: FilterType;
+  propertyInnerGroupType: FilterType;
+
+
 
   constructor() {
     this.filteredStations = new Subject<FilteredStations>();
+    this.propertyOuterGroupType = "or";
+    this.propertyInnerGroupType = "and";
   }
 
   stationToggle(station: StationMetadata) {
@@ -45,32 +65,34 @@ export class StationFilteringService {
     }
   }
 
-  //how to handle delete filters, list of filters have each maintain list of stations that match it
+  addPropertyFilter(filterF: FilterF) {
 
-  //any stations in toggled station are in an opposite state from current, if the state of the station switches otherwise remove from toggled list (no longer bound to manual flip)
-  addFilter(filter: Filter, type: "and" | "or"): Filter {
-    return new Filter();
-    // for(let station of this.stations) {
-    //   //filter keeps station
-    //   if(filter(station)) {
-    //     //if wasnt already in set of prefiltered stations add it and delete from toggled stations if there (value changed, so not toggled anymore)
-    //     if(!this.preFilteredStations.has(station)) {
-    //       this.preFilteredStations.add(station);
-    //       this.toggledStations.delete(station);
-    //     }
-    //   }
-    //   //filter removed station
-    //   else {
-    //     //if in set of prefiltered stations remove it and delete from toggled stations if there (value changed, so not toggled anymore)
-    //     if(this.preFilteredStations.has(station)) {
-    //       this.preFilteredStations.delete(station);
-    //       this.toggledStations.delete(station);
-    //     }
-    //   }
-    // }
   }
 
-  removeFilter(filter: Filter) {
+  addPropertyFilter(options: PropertyFilterOptions) {
+    let filterF = (station: StationMetadata) => {
+      let filterProp = options.property;
+      let val = station[filterProp];
+      if(val === undefined) {
+        val = station.add[filterProp]
+      }
+      if(options.type == "discreet") {
+
+      }
+    }
+  }
+
+
+  //return tag to reference group for abstraction
+  addPropertyGroup(): string {
+    let group = this.groupData.propertyGroup.addGroup(this.propertyInnerGroupType);
+  }
+
+  addGeographicFilter() {
+    this.groupData.geographicGroup.addFilter();
+  }
+
+  removeFilter(filter: Filter<StationMetadata>) {
 
   }
 
@@ -78,20 +100,128 @@ export class StationFilteringService {
   setStations(stations: StationMetadata[]) {
 
   }
-  
+
   getFilteredStationsObserver(): Observable<FilteredStations> {
     return this.filteredStations.asObservable();
   }
+
+  private update() {
+    this.outerGroup
+  }
 }
 
-export class Filter {
+//let's not worry about layers and stuff for now
+abstract class FilterBase<T> {
+  abstract filter(item: T): boolean;
+}
+
+
+class FilterGroup<T> extends FilterBase<T> {
+  type: FilterType
+  filters: FilterBase<T>[]
+
+  constructor(type: FilterType) {
+    super();
+    this.type = type;
+  }
+
+  setType(type: FilterType) {
+    this.type = type;
+  }
+
+  addGroup(type: FilterType, position?: number): FilterGroup<T> {
+    let group = new FilterGroup<T>(type);
+    this.add(group, position);
+    return group;
+  }
+
+  addFilter(filterF: (item: T) => boolean, position?: number): Filter<T> {
+    let filter = new Filter<T>(filterF);
+    this.add(filter, position);
+    return filter;
+  }
+
+  private add(filter: FilterBase<T>, position?: number) {
+    let insertPos = position;
+    if(position === undefined || position > this.filters.length) {
+      insertPos = this.filters.length;
+    }
+    else if(position < 0) {
+      insertPos = 0;
+    }
+    this.filters.splice(insertPos, 0, filter);
+  }
+
+  filter(item: T): boolean {
+    let match: boolean;
+
+    if(this.type == "or") {
+      match = false;
+      for(let filter of this.filters) {
+        match = filter.filter(item);
+        //if a match was found then break (only one has to match for 'or' type)
+        if(match) {
+          break;
+        }
+      }
+    }
+    else {
+      match = true;
+      for(let filter of this.filters) {
+        match = filter.filter(item);
+        //if filter did not match break (all have to match for 'and' type)
+        if(!match) {
+          break;
+        }
+      }
+    }
+    return match;
+  }
+}
+
+export class Filter<T> extends FilterBase<T> {
+  filter: (item: T) => boolean;
+
+  constructor(filterF: (item: T) => boolean) {
+    super();
+    this.filter = filterF;
+
+  }
+}
+
+type FilterF = (station: StationMetadata) => boolean;
+
+// export interface FilterData {
+//   function: (station: StationMetadata) => boolean,
+//   inverted: boolean
+// }
+
+export abstract class PropertyFilterOptions {
+  readonly property: string;
+  readonly inverted: boolean;
+  readonly type: PropertyType;
+  readonly values: any;
+
+  constructor(property: string, values: any, inverted: boolean, type: PropertyType) {
+    this.property = property;
+    this.inverted = inverted;
+    this.type = type;
+    this.values = values;
+  }
+
 
 }
 
-export interface FilterOptions {
-  group: string,
-  function: (station: StationMetadata) => boolean,
-  inverted: boolean
+export class DiscreetFilterOptions extends PropertyFilterOptions {
+  constructor(property: string, values: string[], inverted: boolean) {
+    super(property, values, inverted, "discreet");
+  }
+}
+
+export class RangeFilterOptions extends PropertyFilterOptions {
+  constructor(property: string, range: [number, number], inverted: boolean) {
+    super(property, range, inverted, "range");
+  }
 }
 
 export interface FilteredStations {
@@ -105,5 +235,8 @@ export interface StationMetadata {
   location: L.LatLng,
   add: {[prop: string]: string}
 }
+
+type FilterType = "and" | "or";
+export type PropertyType = "discreet" | "range";
 
 //type Filter = (metadta: StationMetadata) => boolean;

@@ -11,14 +11,8 @@
     </div>
   </div>
   <div class="view-nav">
-    <div class="nav-tile" (click)="goToComponent(formComponent)">
-      a
-    </div>
-    <div class="nav-tile" (click)="goToComponent(tableComponent)">
-      b
-    </div>
-    <div class="nav-tile" (click)="goToComponent(timeSeriesComponent)">
-      c
+    <div *ngFor="let nav of navInfo" class="nav-tile" [@selectColor]="nav == activeTileRef ? 'selected' : 'deselected'" (click)="goToNav(nav)">
+      {{nav.label}}
     </div>
   </div>
 </div>

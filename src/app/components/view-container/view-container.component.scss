@@ -1,7 +1,6 @@
 .container {
     width: 100%;
     height: 100%;
-    background-color: hotpink;
     display: flex;
     flex-flow: row;
 }
@@ -11,21 +10,26 @@
     width: 30px;
     display: flex;
     flex-flow: column wrap;
-    background-color: green;
+    text-orientation: upright;
+    writing-mode: vertical-lr;
+
+    font-weight: 500;
 }
 
 .nav-tile {
-    background-color: yellow;
     width: 100%;
-    border-width: 1px;
-    border-style: solid;
     flex-grow: 1;
+    padding-top: 20px;
+    padding-left: 4px;
 }
 
 .nav-tile:hover {
     cursor: pointer;
-    background-color: purple;
-    border-width: 2px;
+    box-shadow: 2px -2px inset, -1px 1px inset;
+}
+
+.nav-tile-selected {
+  background-color: #175db6;
 }
 
 
@@ -34,10 +38,18 @@
     width: 100%;
     border-width: 1px;
     border-style: solid;
-    background-color: blue;
+    background-color: hotpink;
 }
 
 .view-container {
-    overflow-y: scroll;
-    flex-grow: 1;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  flex-grow: 1;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.view-container::-webkit-scrollbar {
+  display: none;
 }

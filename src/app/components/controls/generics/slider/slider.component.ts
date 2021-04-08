@@ -35,11 +35,12 @@ export class SliderComponent implements OnInit {
         //console.log(e);
         e.stopPropagation();
         e.preventDefault();
+
         let deltaX = e.clientX - mouseInit.clientX;
         if(this.intervals > 0) {
           deltaX = this.roundToInterval(deltaX, this.intervalsWidth);
         }
-        
+
         let newSliderPos = Math.round(initPos + deltaX);
         //lock to range
         if(newSliderPos < this.leftRange[0]) {
@@ -52,8 +53,8 @@ export class SliderComponent implements OnInit {
         this.slider.nativeElement.style.left = newSliderPos + "px";
       }
     }
-    
-    
+
+
     this.slider.nativeElement.addEventListener("mousedown", (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
@@ -80,7 +81,7 @@ export class SliderComponent implements OnInit {
       window.addEventListener("mouseup", mupFunct);
     });
 
-    
+
   }
 
 
