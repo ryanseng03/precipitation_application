@@ -4,29 +4,11 @@ import * as L from "leaflet";
 //import * as D from "leaflet-draw";
 import { SiteMetadata } from 'src/app/models/SiteMetadata';
 import { InternalPointsService } from "../../services/geospatial/internal-points.service";
-import { StationFilteringService, FilteredStations, StationMetadata, Filter } from "../../services/filters/station-filtering.service";
+import { StationFilteringService, FilteredStations, StationMetadata, Filter, FilterBase, FilterGroup } from "../../services/filters/station-filtering.service";
 import { AnimationStyleMetadata } from '@angular/animations';
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 
 
-let T = L.Control.extend({
-  onAdd: function(map) {
-    let imgSource = "assets/arrows/nautical.svg"
-    let container = L.DomUtil.create("div")
-    container.style.width = "100px";
-    container.style.height = "100px";
-    container.style.backgroundColor = "rgba(211, 211, 211, 0.5)";
-    container.style.borderRadius = "10px";
-    //container.style.opacity = "50%";
-    let img = L.DomUtil.create("img", null, container);
-    img.setAttribute("src", imgSource);
-    img.style.width = "calc(100% - 6px)";
-    img.style.height = "calc(100% - 6px)";
-    img.style.padding = "3px";
-    img.style.opacity = "80%";
-    return container;
-  }
-});
 
 //only need to check markers not already in shapes
 //not true because layer could be deleted
@@ -35,7 +17,7 @@ let T = L.Control.extend({
 
 interface LayerInfo {
   type: "circle" | "rectangle" | "polygon",
-  filter: Filter
+  //filter: Filter
 }
 
 //marker info
@@ -48,7 +30,6 @@ interface StationFilterInfo {
   metadata: StationMetadata,
   inFilter: boolean
 }
-
 
 
 
@@ -112,13 +93,16 @@ export class FilterMapComponent implements OnInit {
 
   //set of ids that have been toggled
   toggledStations: Set<string> = new Set<string>();
-  mapSelectFilter: Filter = (metadata: StationMetadata) => {
-    return false;
-  }
+  // mapSelectFilter: filterf = (metadata: StationMetadata) => {
+  //   return false;
+  // }
+
+  private filterGroup: FilterGroup<StationMetadata>;
+
   //should only have map select filter if state changes from state after all other filters
   //this should be the last thing to be evaluated, if it's the same remove it so it gets affected by changed to other filters again
 
-  
+
 
   constructor(private ips: InternalPointsService, private filterService: StationFilteringService) {
 
@@ -150,6 +134,10 @@ export class FilterMapComponent implements OnInit {
         featureGroup: this.drawnItems
       }
     }
+
+    filterService.getFilteredStationsObserver().subscribe((stations: FilteredStations) => {
+      //check flipped stations and remove any that
+    });
   }
 
   ngOnInit() {
@@ -177,7 +165,7 @@ export class FilterMapComponent implements OnInit {
         if(!marker) {
           marker = new StationMarker(station, () => {
             //on click toggle station filter, this handler will handle toggling state in marker
-            this.filterService.stationToggle(station);
+            //this.filterService.stationToggle(station);
           }, this.selectorMode, selected);
           this.metadataToMarker.set(station, marker);
         }
@@ -232,12 +220,12 @@ export class FilterMapComponent implements OnInit {
       return internal;
     };
 
-    let filter = this.filterService.addFilter(filterF, "or");
-    let layer = drawnLayer.layer;
-    this.drawnFilters.set(layer, {
-      type: type,
-      filter: filter
-    });
+    // let filter = this.filterService.addFilter(filterF, "or");
+    // let layer = drawnLayer.layer;
+    // this.drawnFilters.set(layer, {
+    //   type: type,
+    //   filter: filter
+    // });
   }
 
   //need layer type in layer info map
@@ -245,7 +233,7 @@ export class FilterMapComponent implements OnInit {
     //how to handle? just delete layer and readd, need to have reference to layer type
     editedLayers.layers.eachLayer((layer: L.Layer) => {
       let layerInfo = this.drawnFilters.get(layer);
-      this.filterService.removeFilter(layerInfo.filter);
+     // this.filterService.removeFilter(layerInfo.filter);
       this.createDrawnFilter({
         layer: layer,
         layerType: layerInfo.type
@@ -258,7 +246,7 @@ export class FilterMapComponent implements OnInit {
     console.log(deletedLayers);
     deletedLayers.layers.eachLayer((layer: L.Layer) => {
       let layerInfo = this.drawnFilters.get(layer);
-      this.filterService.removeFilter(layerInfo.filter);
+      //this.filterService.removeFilter(layerInfo.filter);
     });
   }
 

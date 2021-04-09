@@ -35,6 +35,10 @@ export class ViewContainerComponent implements OnInit {
   navInfo: NavData[];
   activeTileRef: NavData;
 
+  scrollbarWidthThrottle: NodeJS.Timer;
+  scrollbarWidthPause: boolean = false;
+  scrollbarWidth: string;
+
   constructor() {
     this.scrollTimeoutHandle = null;
   }
@@ -60,6 +64,25 @@ export class ViewContainerComponent implements OnInit {
       element: this.timeSeriesComponent.nativeElement
     }];
     this.activeTileRef = this.navInfo[0];
+
+  }
+
+  getScrollBarWidth(element: HTMLElement): string {
+    let scrollbarWidth: string;
+    //weird workaround for ExpressionChangedAfterItHasBeenCheckedError in dev (also potentially good for performance in prod for changing scrollbars)
+    if(this.scrollbarWidthPause) {
+      scrollbarWidth = this.scrollbarWidth;
+    }
+    else {
+      this.scrollbarWidthPause = true;
+      let throttle = 10;
+      setTimeout(() => {
+        this.scrollbarWidthPause = false;
+      }, throttle);
+      scrollbarWidth = element.offsetWidth - element.clientWidth + "px";
+      this.scrollbarWidth = scrollbarWidth;
+    }
+    return scrollbarWidth;
 
   }
 

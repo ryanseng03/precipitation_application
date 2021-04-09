@@ -14,44 +14,25 @@ export class VisComponent implements OnInit, AfterViewInit {
   @ViewChild("dragbar") dragbar: ElementRef;
   @ViewChild("viewNav") viewNav: MatSidenav;
 
-  @ViewChild("p1") p1: ElementRef;
-  @ViewChild("p2") p2: ElementRef;
-  @ViewChild("dsInfo", {read: ElementRef}) dsInfo: ElementRef;
 
   @ViewChild("map") map: MapComponent;
 
   @ViewChild("viewContainer") viewContainer: ElementRef;
 
-  resizeBarWidth: string = "10px";
-  mapWidth: string = "calc(50% - 10px)";
-  viewWidth: string = "50%";
 
-  dragState: DragState;
+  mapWidth: string = "calc(50% - 10px)";
+
+  //dragState: DragState;
 
   view: string = "select";
 
   constructor() {
-    this.dragState = {
-      lastEvent: null,
-      moveHandler: (event: MouseEvent) => {
-        let dragbar: HTMLElement = this.dragbar.nativeElement;
-        let mapContainer: HTMLElement = this.mapContainer.nativeElement;
-        //offset to midpoint of dragbar
-        let dragbarOffset = dragbar.clientWidth / 2;
-        let left = mapContainer.getBoundingClientRect().left;
-        let x = event.clientX - left - dragbarOffset;
-        x = Math.max(0, x);
-        this.mapWidth = x + "px";
-        this.checkMoveInfo();
-        this.dragState.lastEvent = event;
-
-        return false;
-      }
-    }
   }
 
   ngAfterViewInit() {
-    this.checkMoveInfo();
+    setTimeout(() => {
+      this.checkMoveInfo();
+    }, 1000);
   }
 
   ngOnInit() {
@@ -60,6 +41,11 @@ export class VisComponent implements OnInit, AfterViewInit {
     //   this.moveInfo();
     // }, 2000);
   }
+
+
+
+
+
 
   @HostListener('window:resize', ['$event'])
   checkMoveInfo() {
@@ -81,46 +67,51 @@ export class VisComponent implements OnInit, AfterViewInit {
     parent.appendChild(child);
   }
 
-  startResize(event: MouseEvent, touch: boolean): boolean {
-    this.dragState.lastEvent = event;
+  startResize(touch: boolean): boolean {
+
+    let moveHandler = (event: MouseEvent) => {
+      let dragbar: HTMLElement = this.dragbar.nativeElement;
+      let mapContainer: HTMLElement = this.mapContainer.nativeElement;
+      //offset to midpoint of dragbar
+      let dragbarOffset = dragbar.clientWidth / 2;
+      let left = mapContainer.getBoundingClientRect().left;
+      let x = event.clientX - left - dragbarOffset;
+      x = Math.max(0, x);
+      this.mapWidth = x + "px";
+      this.checkMoveInfo();
+
+      return false;
+    }
+
+    let stopResize = () => {
+      if(touch) {
+        document.removeEventListener("touchmove", moveHandler);
+        document.removeEventListener("touchend", stopResize);
+      }
+      else {
+        document.removeEventListener("mousemove", moveHandler);
+        document.removeEventListener("mouseup", stopResize);
+      }
+
+      this.map.invalidateSize();
+
+      return false;
+    }
+
     if(touch) {
-      document.addEventListener("touchmove", this.dragState.moveHandler)
-      document.addEventListener("touchend", this.stopResize(touch));
+      document.addEventListener("touchmove", moveHandler)
+      document.addEventListener("touchend", stopResize);
     }
     else {
-      document.addEventListener("mousemove", this.dragState.moveHandler)
-      document.addEventListener("mouseup", this.stopResize(touch));
+      document.addEventListener("mousemove", moveHandler)
+      document.addEventListener("mouseup", stopResize);
     }
 
     //stops default and propogation, equivalent of calling preventDefault and stopPropagation
     return false;
   }
 
-  //curry stop resize function to include dragState from component context
-  stopResize(touch: boolean) {
-    let dragState = this.dragState;
-    let checkState = this.checkMoveInfo.bind(this);
-    let map = this.map;
-    return function(event: MouseEvent): boolean {
-      if(touch) {
-        document.removeEventListener("touchmove", dragState.moveHandler);
-        document.removeEventListener("touchend", this);
-      }
-      else {
-        document.removeEventListener("mousemove", dragState.moveHandler);
-        document.removeEventListener("mouseup", this);
-      }
 
-      map.invalidateSize();
-
-      dragState.lastEvent = null;
-      return false;
-    }
-  }
-
-  resize(event: any) {
-    // console.log("drag");
-  }
 
   getMapWidth() {
 

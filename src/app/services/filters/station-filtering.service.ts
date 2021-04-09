@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { stat } from 'fs';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 
 
@@ -9,7 +9,7 @@ import { Observable, Subject } from 'rxjs';
 })
 export class StationFilteringService {
 
-  private filteredStations: Subject<FilteredStations>;
+  private filteredStations: BehaviorSubject<FilteredStations>;
 
   //can add filter prioritizations later, for now have a default behavior
   //to be included must pass through all filters
@@ -28,8 +28,8 @@ export class StationFilteringService {
 
   //filteredStations: Subject<>;
   //set of filtered stations before appling
-  preFilteredStations: Set<StationMetadata>;
-  toggledStations: Set<StationMetadata>;
+  // preFilteredStations: Set<StationMetadata>;
+  // toggledStations: Set<StationMetadata>;
 
   stations: StationMetadata[];
 
@@ -38,78 +38,81 @@ export class StationFilteringService {
   //shouldn't have to worry too much about the interface (it'll just get convoluted if you add more)
   //create extra outer and group for geographic map filters
 
-  groupData: {
-    wrapper: FilterGroup<StationMetadata>,
-    geographicGroup: FilterGroup<StationMetadata>,
-    propertyGroup: FilterGroup<StationMetadata>,
-
-  }
-
-  propertyOuterGroupType: FilterType;
-  propertyInnerGroupType: FilterType;
-
-
+  private group: FilterGroup<StationMetadata>;
 
   constructor() {
-    this.filteredStations = new Subject<FilteredStations>();
-    this.propertyOuterGroupType = "or";
-    this.propertyInnerGroupType = "and";
+    this.filteredStations = new BehaviorSubject<FilteredStations>({
+      included: [],
+      excluded: []
+    });
+    this.group = new FilterGroup<StationMetadata>("and");
   }
 
-  stationToggle(station: StationMetadata) {
-    if(this.toggledStations.has(station)) {
-      this.toggledStations.delete(station);
+  //what's the best way to handle this? for now just have everyone pass in what they want filtered
+  setStations(stations: StationMetadata[]) {
+    this.stations = stations;
+    this.update();
+  }
+
+  // stationToggle(station: StationMetadata) {
+  //   if(this.toggledStations.has(station)) {
+  //     this.toggledStations.delete(station);
+  //   }
+  //   else {
+  //     this.toggledStations.add(station);
+  //   }
+  // }
+
+  getBaseGroup(): FilterGroup<StationMetadata> {
+    return this.group;
+  }
+
+
+  //helper funct
+  createPropertyFilter(options: PropertyFilterOptions): Filter<StationMetadata> {
+    let filterF: (station: StationMetadata) => boolean;
+    let filterProp = options.property;
+    if(options.type == "discreet") {
+      filterF = (station: StationMetadata) => {
+        let match = false;
+        let castOpts: DiscreetFilterOptions = options;
+        let val = station[filterProp];
+        if(val === undefined) {
+          val = station.add[filterProp];
+        }
+        if(castOpts.values.includes(val) && !options.inverted) {
+          match = true;
+        }
+        return match;
+      }
     }
     else {
-      this.toggledStations.add(station);
-    }
-  }
-
-  addPropertyFilter(filterF: FilterF) {
-
-  }
-
-  addPropertyFilter(options: PropertyFilterOptions) {
-    let filterF = (station: StationMetadata) => {
-      let filterProp = options.property;
-      let val = station[filterProp];
-      if(val === undefined) {
-        val = station.add[filterProp]
-      }
-      if(options.type == "discreet") {
-
+      filterF = (station: StationMetadata) => {
+        let match = false;
+        let castOpts: DiscreetFilterOptions = options;
+        let val = station[filterProp];
+        if(val === undefined) {
+          val = station.add[filterProp];
+        }
+        //has to be inclusive at both ends because range capped at max value (should put a note of this in descriptor when added)
+        if(val >= castOpts.values[0] && val <= castOpts.values[1] && !options.inverted) {
+          match = true;
+        }
+        return match;
       }
     }
-  }
-
-
-  //return tag to reference group for abstraction
-  addPropertyGroup(): string {
-    let group = this.groupData.propertyGroup.addGroup(this.propertyInnerGroupType);
-  }
-
-  addGeographicFilter() {
-    this.groupData.geographicGroup.addFilter();
-  }
-
-  removeFilter(filter: Filter<StationMetadata>) {
-
-  }
-
-  //getting the filtered stations observer then calling this will trigger an initial list to be pushed with current filters
-  setStations(stations: StationMetadata[]) {
-
+    return new Filter<StationMetadata>(filterF);
   }
 
   getFilteredStationsObserver(): Observable<FilteredStations> {
     return this.filteredStations.asObservable();
   }
 
-  private update() {
+  update() {
     let included = [];
     let excluded = [];
     for(let station of this.stations) {
-      if(this.groupData.wrapper.filter(station)) {
+      if(this.group.filter(station)) {
         included.push(station);
       }
       else {
@@ -124,19 +127,23 @@ export class StationFilteringService {
   }
 }
 
+
+
 //let's not worry about layers and stuff for now
-abstract class FilterBase<T> {
+//in the future if need efficiency can add change triggers that only go to higher layers for updates rather than redoing everything
+export abstract class FilterBase<T> {
   abstract filter(item: T): boolean;
 }
 
 
-class FilterGroup<T> extends FilterBase<T> {
+export class FilterGroup<T> extends FilterBase<T> {
   type: FilterType
-  filters: FilterBase<T>[]
+  private filters: FilterBase<T>[]
 
   constructor(type: FilterType) {
     super();
     this.type = type;
+    this.filters = [];
   }
 
   setType(type: FilterType) {
@@ -145,17 +152,17 @@ class FilterGroup<T> extends FilterBase<T> {
 
   addGroup(type: FilterType, position?: number): FilterGroup<T> {
     let group = new FilterGroup<T>(type);
-    this.add(group, position);
+    this.addFilter(group, position);
     return group;
   }
 
-  addFilter(filterF: (item: T) => boolean, position?: number): Filter<T> {
+  addFilterF(filterF: (item: T) => boolean, position?: number): Filter<T> {
     let filter = new Filter<T>(filterF);
-    this.add(filter, position);
+    this.addFilter(filter, position);
     return filter;
   }
 
-  private add(filter: FilterBase<T>, position?: number) {
+  addFilter(filter: FilterBase<T>, position?: number) {
     let insertPos = position;
     if(position === undefined || position > this.filters.length) {
       insertPos = this.filters.length;
@@ -166,11 +173,20 @@ class FilterGroup<T> extends FilterBase<T> {
     this.filters.splice(insertPos, 0, filter);
   }
 
+  removeFilter(filter: FilterBase<T>): boolean {
+    let success = false;
+    let i = this.filters.indexOf(filter);
+    if(i >= 0) {
+      this.filters.splice(i, 1);
+    }
+    return success;
+  }
+
   filter(item: T): boolean {
     let match: boolean;
 
     if(this.type == "or") {
-      match = false;
+      match = true;
       for(let filter of this.filters) {
         match = filter.filter(item);
         //if a match was found then break (only one has to match for 'or' type)
@@ -203,8 +219,6 @@ export class Filter<T> extends FilterBase<T> {
   }
 }
 
-type FilterF = (station: StationMetadata) => boolean;
-
 // export interface FilterData {
 //   function: (station: StationMetadata) => boolean,
 //   inverted: boolean
@@ -227,12 +241,14 @@ export abstract class PropertyFilterOptions {
 }
 
 export class DiscreetFilterOptions extends PropertyFilterOptions {
+  readonly values: string[];
   constructor(property: string, values: string[], inverted: boolean) {
     super(property, values, inverted, "discreet");
   }
 }
 
 export class RangeFilterOptions extends PropertyFilterOptions {
+  readonly values: [number, number]
   constructor(property: string, range: [number, number], inverted: boolean) {
     super(property, range, inverted, "range");
   }
@@ -250,7 +266,7 @@ export interface StationMetadata {
   add: {[prop: string]: string}
 }
 
-type FilterType = "and" | "or";
+export type FilterType = "and" | "or";
 export type PropertyType = "discreet" | "range";
 
 //type Filter = (metadta: StationMetadata) => boolean;

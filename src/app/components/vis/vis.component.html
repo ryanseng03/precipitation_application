@@ -5,65 +5,14 @@
 <div #container class="data-container">
 
   <div #mapContainer class="map-container" [ngStyle]="{'width': mapWidth}">
-    <app-map #map class="map"></app-map>
+    <app-map #map></app-map>
   </div>
 
-  <div #dragbar [ngStyle]="{'width': resizeBarWidth}" (touchstart)="startResize($event, true)" (mousedown)="startResize($event, false)" class="resize-bar">
+  <div #dragbar (touchstart)="startResize(true)" (mousedown)="startResize(false)" class="resize-bar">
     <div class="line"></div>
   </div>
+  <div class="view-container">
+    <app-view-container></app-view-container>
+  </div>
 
-  <app-view-container class="view-container"></app-view-container>
 </div>
-
-
-      <!-- <app-site-filter></app-site-filter>
-      <div #p2 class="dataset-info-container">
-        <div #dsInfo>
-          <app-dataset-info [map]="map" class="dataset-info"></app-dataset-info>
-          <div class="menu-button-container">
-            <button (click)="viewNav.toggle()" mat-icon-button><mat-icon>menu</mat-icon></button>
-          </div>
-
-        </div>
-
-      </div>
-
-      <mat-sidenav-container class="inner-view-container" [ngSwitch]="view">
-
-        <mat-sidenav #viewNav position="end" mode="over" hasBackdrop="true">
-          <mat-nav-list class="sidenav">
-            <a mat-list-item (click)="viewNavClick('select')">Select Data Set</a>
-            <a mat-list-item (click)="viewNavClick('tables')">View Data</a>
-            <a mat-list-item (click)="viewNavClick('export')">Export Data</a>
-          </mat-nav-list>
-        </mat-sidenav>
-
-        <div class="view-padding">
-          <div *ngSwitchCase="'select'">
-            <app-data-set-form></app-data-set-form>
-          </div>
-
-          <div *ngSwitchCase="'tables'" >
-            <app-data-views></app-data-views>
-          </div>
-
-          <div *ngSwitchCase="'export'">
-            <app-export [map]="map"></app-export>
-          </div>
-
-
-        </div>
-
-
-      </mat-sidenav-container> -->
-
-
-
-
-
-
-
-
-
-
-

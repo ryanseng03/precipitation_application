@@ -60,12 +60,13 @@ p {
     flex-direction: row;
     width: 100%;
     height: 100%;
-    //overflow: hidden;
+
 }
 
 .component-container {
-    height: 100%;
-    flex-grow: 1;
+  height: 100%;
+  flex-grow: 1;
+  min-width: 0;
 }
 
 .vis-container {

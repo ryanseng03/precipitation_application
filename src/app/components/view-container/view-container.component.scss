@@ -2,7 +2,7 @@
     width: 100%;
     height: 100%;
     display: flex;
-    flex-flow: row;
+    flex-flow: row nowrap;
 }
 
 .view-nav {
@@ -12,8 +12,8 @@
     flex-flow: column wrap;
     text-orientation: upright;
     writing-mode: vertical-lr;
-
     font-weight: 500;
+    float: right;
 }
 
 .nav-tile {
@@ -35,21 +35,40 @@
 
 .view-component {
     min-height: 100%;
+    height: 1000px;
     width: 100%;
     border-width: 1px;
     border-style: solid;
-    background-color: hotpink;
+}
+
+.scroll-hide {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .view-container {
   overflow-y: scroll;
-  overflow-x: hidden;
-  flex-grow: 1;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  overflow-x: scroll;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  //min-width: 0;
+  // -ms-overflow-style: none;  /* IE and Edge */
+  // scrollbar-width: none;  /* Firefox */
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.view-container::-webkit-scrollbar {
-  display: none;
+// /* Hide scrollbar for Chrome, Safari and Opera */
+// .view-container::-webkit-scrollbar {
+//   display: none;
+// }
+
+
+.view-component-wrapper {
+  width: 300px;
+  height: fit-content;
+  min-width: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
 }
