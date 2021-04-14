@@ -95,7 +95,6 @@ export class DataViewsComponent implements OnInit {
       let values: string = this.filterControl.value;
       let filteredStations = this.unfilteredStations;
       let field = this.fieldControl.value;
-      console.log(values, field);
       if(values.length > 0 && field) {
         filteredStations = this.unfilteredStations.filter((station: SiteInfo) => {
           let value = station[field];
@@ -103,7 +102,6 @@ export class DataViewsComponent implements OnInit {
           return inFilter;
         });
       }
-      console.log(filteredStations);
       this.paramService.pushSiteFilter(filteredStations);
     }
 
@@ -133,7 +131,6 @@ export class DataViewsComponent implements OnInit {
 
 
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (stations: SiteInfo[]) => {
-      console.log(stations);
       this.loading = false;
       this.stations = stations
     });

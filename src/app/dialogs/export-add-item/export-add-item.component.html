@@ -146,13 +146,13 @@
 
     
     
-
-    <button mat-button (click)="cancel()">
-        Cancel
-    </button>
-    <button class="add-file-button" mat-button color="primary" [disabled]="!filesSelected()" (click)="submit()">
+    <button mat-button color="primary" [disabled]="!filesSelected()" (click)="submit()">
         Add Files
     </button>
+    <button class="cancel-button" mat-button (click)="cancel()">
+        Cancel
+    </button>
+    
 </div>
 
 <!-- <app-date-selector></app-date-selector> -->
