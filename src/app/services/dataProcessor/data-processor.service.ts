@@ -118,6 +118,7 @@ export class DataProcessorService {
         value: Math.round(doc.value * 100) / 100,
         skn: doc.skn
       }
+
       //validate properties not undefined
       if(this.verifyAssignedPropertiesNotUndefined(props)) {
         value = new SiteValue(props);

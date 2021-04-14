@@ -7,9 +7,8 @@
     width: 100%;
 }
 
-.test {
-    height: 110%;
-    width: 110%;
-    background-color: red;
-    z-index: -10000;
+
+
+::ng-deep .leaflet-control-scale-line {
+    font-size: 15px;
 }

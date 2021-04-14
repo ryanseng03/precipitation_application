@@ -1,4 +1,38 @@
 .container {
     height: 100%;
     width: 100%;
+    padding-top: 20px;
+    padding-left: 50px;
+    overflow-y: auto;
+}
+
+.export-item {
+    display: inline-block;
+    padding: 20px;
+}
+
+.text-block {
+    padding-right: 30px;
+    display: inline-block;
+}
+
+h4 {
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.item-tile {
+    position: relative;
+    width: 100%;
+    height: fit-content;
+}
+
+.control-container {
+    width: 80%;
+}
+
+.button-container {
+    position: absolute;
+    right: 0;
+    bottom: 20px;
 }

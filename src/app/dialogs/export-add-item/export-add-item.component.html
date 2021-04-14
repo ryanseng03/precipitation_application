@@ -1,16 +1,158 @@
 
-<div>
-    <div>
-        <div *ngIf="getKeys(datasets).length == 1; else listClassifications">
-            Dataset type: {{getKeys(datasets)[0]}}
+<div class="container">
+    <div class="form-body">
+      
+      
+        <!-- should create config json for this stuff to make it easy to update -->
+      
+        <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
+      
+        <!-- what type of data (rainfall, etc) -->
+        <div class="control-group">
+          <div class="control">
+            <mat-form-field>
+              <mat-label>Data Type</mat-label>
+              <mat-select 
+                disableOptionCentering="true"
+                [formControl]="dataset.datatype.control">
+                <mat-option [value]="dataset.datatype.value">
+                  {{dataset.datatype.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        
+          <div class="control">
+            <mat-form-field>
+              <mat-label>Time Period</mat-label>
+              <mat-select 
+                disableOptionCentering="true"
+                [formControl]="dataset.timestep.control">
+                <mat-option *ngFor="let timestep of dataset.timestep.options" [value]="timestep.value">
+                  {{timestep.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        
+          <div class="control" *ngIf="dataset.advanced.control.value">
+            <mat-form-field>
+              <mat-label>Data Tier</mat-label>
+              <mat-select 
+                disableOptionCentering="true"
+                [formControl]="dataset.advanced.tier.control">
+                <mat-option [value]="dataset.advanced.tier.value">
+                  {{dataset.advanced.tier.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        
+          <div class="control">
+            <h4>
+                Date Range
+            </h4>
+            <div>
+            <app-date-selector
+                label="Start Date"
+                [min]="dataset.dates.range[0]"
+                [max]="dataset.dates.selected[1]"
+                [timestep]="dataset.timestep.control.value"
+                [initDate]="dataset.dates.selected[0]"
+                (dateChange)="setDate(0, $event)"
+                [readonly]="false">
+            </app-date-selector>
+            <app-date-selector
+                label="End Date"
+                [min]="dataset.dates.selected[0]"
+                [max]="dataset.dates.range[1]"
+                [timestep]="dataset.timestep.control.value"
+                [initDate]="dataset.dates.selected[1]"
+                (dateChange)="setDate(1, $event)"
+                [readonly]="false">
+            </app-date-selector>
+            </div>
+            
+          </div>
         </div>
-        <ng-template #listClassifications>
+    
+        <div class="spacer"></div>
+      
+        <!-- remember that all of this stuff needs to be genericized -->
+        <div class="control-group">
+          <h3>
+            Data Maps
+          </h3>
+          <div class="control-subgroup">
+            <h4>
+                Available Files
+            </h4>
+            <ng-container *ngFor="let rasterFile of rasterFileTags">
+                <div class="file-tile" *ngIf="rasterFiles[rasterFile].valid">
+                    <div>
+                        {{rasterFiles[rasterFile].label}}
+                        <mat-checkbox class="checkbox"
+                            [formControl]="rasterFiles[rasterFile].control"
+                            [disabled]="rasterFiles[rasterFile].disabled">
+                        </mat-checkbox>
+                    </div>
+                </div>
+            </ng-container>
+          </div>
+    
 
-        </ng-template>
-    </div>
-    <div *ngIf="item.datasetInfo.classification">
+          <div class="spacer"></div>
+        </div>
+    
+        
+        
+        <div class="control-group">
+          <h3>
+            Data Stations
+          </h3>
+          <div class="control-subgroup">
+            <h4>
+                Available Files
+            </h4>
+            <ng-container *ngFor="let stationFile of stationFileTags">
+                <div class="file-tile" *ngIf="stationFiles[stationFile].valid">
+                    <div>
+                        {{stationFiles[stationFile].label}}
+                        <mat-checkbox class="checkbox"
+                            [formControl]="stationFiles[stationFile].control"
+                            [disabled]="stationFiles[stationFile].disabled">
+                        </mat-checkbox>
+                    </div>
+                </div>
+            </ng-container>
+          </div>
+          <div class="spacer"></div>
+            
+        </div>
+    
+        <div class="control-group">
+          <div class="control">
+            <mat-checkbox
+              [formControl]="dataset.advanced.control">
+              Show Advanced
+            </mat-checkbox>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
 
-    </div>
+
+   
+
+    
+    
+
+    <button mat-button (click)="cancel()">
+        Cancel
+    </button>
+    <button class="add-file-button" mat-button color="primary" [disabled]="!filesSelected()" (click)="submit()">
+        Add Files
+    </button>
 </div>
 
 <!-- <app-date-selector></app-date-selector> -->

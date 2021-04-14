@@ -56,20 +56,23 @@ export class DataManagerService {
       this.updateStationTimeSeries()
     });
     //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, site.skn);
-      p.then((request: RequestResults) => {
-        request.toPromise().then((result: SiteValue[]) => {
-          paramService.pushSelectedSiteTimeSeries(result);
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+      if(station) {
+        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, station.skn);
+        p.then((request: RequestResults) => {
+          request.toPromise().then((result: SiteValue[]) => {
+            paramService.pushSelectedSiteTimeSeries(result);
+          });
         });
-      });
-      this.updateStationTimeSeries()
+        this.updateStationTimeSeries();
+      }
+      
     });
 
   }
 
   updateStationTimeSeries() {
-    console.log("!!!!");
+    //console.log("!!!!");
   }
 
   //store single raster data object and swap out bands
@@ -103,7 +106,7 @@ export class DataManagerService {
   private getRangeBreakdown(movementInfo: MovementVector): [number, string][] {
     let cacheRange = [1, 3, 5];
     //copy here so don't modify the original object if it was null
-    let magnitude = movementInfo.magnitude
+    let magnitude = movementInfo;
     //if null magnitude (moved to a set date using map navigation), just use +/-3 baseGranularity/other granularity
     if(magnitude == null) {
       //balance cache range in each direction if no directionality
@@ -111,10 +114,10 @@ export class DataManagerService {
       //just set magnitude to a default value, all directions will be the same anyway
       magnitude = {
         direction: 1,
-        granularity: movementInfo.baseGranularity
+        granularity: this.dataset.timestep
       }
     }
-    let baseI = this.granularities.indexOf(movementInfo.baseGranularity);
+    let baseI = this.granularities.indexOf(this.dataset.timestep);
     if(baseI < 0 || baseI >= this.granularities.length - 1) {
       throw new Error("Invalid base granularity.");
     }
@@ -125,7 +128,7 @@ export class DataManagerService {
       },
       granularity: {
         same: this.granularityTranslation[magnitude.granularity],
-        opposite: movementInfo.baseGranularity == magnitude.granularity ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[movementInfo.baseGranularity]
+        opposite: this.dataset.timestep == magnitude.granularity ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[this.dataset.timestep]
       }
     }
     let toAdd: [number, string][] = [
@@ -222,17 +225,16 @@ export class DataManagerService {
   private loading: boolean;
   setLoadingOnMap(loading: boolean) {
     //only set loading once
-    if(this.loading != loading) {
-      this.loading = loading;
-      this.map.setLoad(loading);
-    }
+    //if(this.loading != loading) {
+    this.map.setLoad(loading);
+    //}
   }
 
 
   //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
   focusDataRetreiverCanceller: (reason: string) => void = null;
   getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 3000): void {
-    console.log("called!", date.toISOString());
+    //console.log("called!", date.toISOString());
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
     if(this.throttle) {
       clearTimeout(this.throttle);
@@ -244,6 +246,7 @@ export class DataManagerService {
 
     //two different cases where this used (cache hit/miss), set as function
     let setFocusedDataRetreiverHandler = (dataRetreiver: Promise<InternalDataPack>) => {
+      this.setLoadingOnMap(true);
       let focusDataRetreiver = new Promise((resolve, reject) => {
         this.focusDataRetreiverCanceller = reject;
         //resolve after cached promise resolves to allow for cancellation
@@ -262,12 +265,15 @@ export class DataManagerService {
           //emit the data to the application
           this.setFocusedData(date, data);
           //only runs if completed (not canceled)
-          this.setLoadingOnMap(false);
+          
         }
-      }, () => {/*cancelled*/});
+      }, () => {/*cancelled*/console.log("cancelled!");})
+      .then(() => {
+        console.log("spinner cancel");
+        this.setLoadingOnMap(false);
+      });
     };
-    //if already loading won't set load again
-    this.setLoadingOnMap(true);
+    
     let isoStr: string = date.toISOString();
     let dataRetreiver: CancellableQuery = this.cache.get(isoStr);
     //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
@@ -435,11 +441,11 @@ interface CancellableQuery {
 }
 
 export interface MovementVector {
-  magnitude: {
-    direction: 1 | -1,
-    granularity: string
-  } | null
-  baseGranularity: string,
+
+  direction: 1 | -1,
+  granularity: string
+
+  //baseGranularity: string,
 
 }
 

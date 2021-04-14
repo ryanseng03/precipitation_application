@@ -1,0 +1,13 @@
+<div *ngIf="loading; else loaded">
+  <h2>
+    Select a station to load time series data
+  </h2>
+</div>
+
+<ng-template #loaded>
+  <app-rainfall-graph
+    [selected]="selected"
+    [data]="data"
+    [date]="date">
+  </app-rainfall-graph>
+</ng-template>

@@ -6,6 +6,7 @@ import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import { Subject } from "rxjs";
 import { Dataset } from "../../models/dataset";
+import Moment from 'moment';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +52,8 @@ export class EventParamRegistrarService {
   }
 
   pushSiteFilter(filteredSites: SiteInfo[]): void {
+    //reset selected site
+    this.pushSiteSelect(null);
     this._filteredSiteSource.next(filteredSites);
   }
 
@@ -123,7 +126,7 @@ export class EventParamRegistrarService {
     let rasterSub = this.paramService.registerParameter<RasterData>(rasterTag);
     let sitesSub = this.paramService.registerParameter<SiteInfo[]>(sitesTag);
     let metricsSub = this.paramService.registerParameter<Metrics>(metricsTag);
-    let dateSub = this.paramService.registerParameter<string>(dateTag);
+    let dateSub = this.paramService.registerParameter<Moment.Moment>(dateTag);
 
     let siteSelectSub = this.paramService.registerParameter<SiteInfo>(selectedSiteTag);
     let filteredSitesSub = this.paramService.registerParameter<SiteInfo[]>(filteredSitesTag);
@@ -153,8 +156,15 @@ export class EventParamRegistrarService {
     focusedDataObserver.subscribe((data: FocusedData) => {
       rasterSub.next(data.data.raster);
       sitesSub.next(data.data.sites);
+
+      //TEMP//////////////////////
+
+      this.pushSiteFilter(data.data.sites);
+
+      //TEMP//////////////////////
+
       metricsSub.next(data.data.metrics);
-      dateSub.next(data.date.toISOString());
+      dateSub.next(data.date);
     });
     siteSelectObserver.subscribe((data: SiteInfo) => {
       siteSelectSub.next(data);

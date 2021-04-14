@@ -295,7 +295,7 @@ export class ExportComponent implements OnInit, OnDestroy {
   t = 0;
   openAddItemDialog(): void {
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
-      width: '250px',
+      width: "500px",
       data: null
     });
     dialogRef.afterClosed().subscribe(result => {

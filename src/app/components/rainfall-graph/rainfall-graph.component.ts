@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 import { SiteValue, SiteInfo } from 'src/app/models/SiteMetadata';
 import { FormControl } from '@angular/forms';
+import Moment  from 'moment';
 
 @Component({
   selector: 'app-rainfall-graph',
@@ -9,6 +10,32 @@ import { FormControl } from '@angular/forms';
   styleUrls: ['./rainfall-graph.component.scss']
 })
 export class RainfallGraphComponent implements OnInit {
+  loading: boolean = false;
+
+  @Input() set selected(station: SiteInfo) {
+    if(station) {
+      console.log("!", station)
+      this.loading = true;
+      this.graph.data[0].x = [];
+      this.graph.data[0].y = [];
+      this.value = null;
+    }
+  }
+
+  @Input() set data(data: SiteValue[]) {
+    if(data) {
+      console.log(data);
+      this.value = data;
+      this.updateGraph();
+      this.loading = false;
+    }
+  }
+
+  @Input() set date(date: Moment.Moment) {
+    let isoDate = date.toISOString();
+    this.focusedMonth = isoDate.substring(0, 7);
+    this.focusedYear = isoDate.substring(0, 4);
+  }
 
   public graph = {
     data: [
@@ -25,7 +52,7 @@ export class RainfallGraphComponent implements OnInit {
     layout: {
       width: 900,
       height: 500,
-      title: 'Rainfall Site Data',
+      title: 'Rainfall Station Data',
       xaxis: {
         title: {
           text: 'Date',
@@ -87,33 +114,7 @@ export class RainfallGraphComponent implements OnInit {
       this.updateGraph();
     });
 
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: string) => {
-      this.focusedMonth = date.substring(0, 7);
-      this.focusedYear = date.substring(0, 4);
-      //this.setFocusedSiteFilter();
-    });
 
-    // this.siteIndex = SiteInfo.getFields();
-    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-    //   this.focusedSiteValues = [];
-    //   this.filteredFocusedSiteValues = [];
-    //   this.site = site;
-    // });
-
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      this.graph.data[0].x = [];
-      this.graph.data[0].y = [];
-      this.value = null;
-    });
-
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (siteValues: SiteValue[]) => {
-      //let dateFormat = /[0-9]{4}-([0-9]{2})-[0-9]{2}/;
-      //filter by current selected month
-
-      
-      this.value = siteValues;
-      this.updateGraph();
-    });
   }
 
   updateGraph() {

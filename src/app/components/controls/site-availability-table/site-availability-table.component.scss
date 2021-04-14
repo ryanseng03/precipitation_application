@@ -72,6 +72,7 @@ thead {
  th {
     padding: 5px 0px;
     text-align: left;
+    font-weight: 500;
  }
 
 
@@ -90,6 +91,7 @@ th:nth-child(3) {
 
 td:nth-child(1) {
     width: 40%;
+    max-width: 40%;
 }
 
 td:nth-child(2) {

@@ -106,29 +106,29 @@ export class ViewContainerComponent implements OnInit {
     clearTimeout(this.scrollTimeoutHandle);
     this.scrollTimeoutHandle = setTimeout(() => {
       let scrollDelta = this.lastScrollPos - lastScrollLocal;
-      //scrolling up
-      if(scrollDelta < 0) {
-        let divsBetween = this.betweenDivs();
-        if(divsBetween) {
-          this.goToNav(divsBetween.upper);
+      let inContainer = this.divsInContainer();
+      if(inContainer.between) {
+        let scrollDir = "upper";
+        if(scrollDelta > 0) {
+          scrollDir = "lower";
         }
+        this.goToNav(inContainer.between[scrollDir]);
       }
-      //scrolling down
-      else if(scrollDelta > 0) {
-        let divsBetween = this.betweenDivs();
-        if(divsBetween) {
-          this.goToNav(divsBetween.lower);
-        }
+      //set active tile to item in container if completely contained (otherwise handled by goToNav)
+      else {
+        this.activeTileRef = inContainer.focus;
       }
     }, this.scrollTimeout);
-
   }
 
   //check if view container between component divs
-  betweenDivs(): DivsBetween {
-    let between: DivsBetween = null;
+  divsInContainer(): InContainer {
+    let inContainer: InContainer = {
+      focus: this.navInfo[this.navInfo.length - 1]
+    };
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
     let containerUpper = containerElement.scrollTop;
+    //client height, only stuff in view (excludes scrollbar etc)
     let containerLower = containerUpper + containerElement.clientHeight;
     let upper = 0;
     //length -1 because don't have to do last element (has to be inside last element if none in others)
@@ -137,11 +137,11 @@ export class ViewContainerComponent implements OnInit {
       let element = data.element;
       //is the container within this element, stradling lower boundary, or outside
       let alignment: ElementAlignment = "none";
-      let height = element.clientHeight;
+      //offsetHeight includes everything
+      let height = element.offsetHeight;
       let lower = upper + height;
       //if container upper bound is above element lower bound then there's some overlap (top bound handled in previous iters)
-      if(containerUpper <= lower) {
-        console.log(i, containerLower, lower);
+      if(containerUpper < lower) {
         //if lower bound of container is in element lower bound then container is within element
         if(containerLower <= lower) {
           alignment = "within";
@@ -153,13 +153,18 @@ export class ViewContainerComponent implements OnInit {
       }
       //fully within an element, leave as null, break and return
       if(alignment == "within") {
+        inContainer = {
+          focus: data
+        };
         break;
       }
       //stradling lower boundary, set between and break
       else if(alignment == "over") {
-        between = {
-          upper: data,
-          lower: this.navInfo[i + 1]
+        inContainer = {
+          between: {
+            upper: data,
+            lower: this.navInfo[i + 1]
+          }
         }
         break;
       }
@@ -167,16 +172,19 @@ export class ViewContainerComponent implements OnInit {
       //set top of next div
       upper = lower;
     }
-    return between;
+    return inContainer;
   }
 
 }
 
 type ElementAlignment = "within" | "over" | "none";
 
-interface DivsBetween {
-  upper: NavData,
-  lower: NavData
+interface InContainer {
+  between?: {
+    upper: NavData,
+    lower: NavData
+  }
+  focus?: NavData
 }
 
 interface NavData {

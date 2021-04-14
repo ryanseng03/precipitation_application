@@ -1,24 +1,125 @@
-<div class="main-container">
-  <p class="title">
-    Select The Dataset You Would Like to View.
-  </p>
+<div class="container">
 
-  <!-- should create config json for this stuff to make it easy to update -->
+  <app-date-focus
+    [lower]="dataset.dateRange.low.value"
+    [upper]="dataset.dateRange.high.value"
+    [timestep]="dataset.timestep.value"
+    [initDate]="dataset.dateRange.high.value"
+    (dateChangeInfo)="setDate($event)">
+  </app-date-focus>
 
-  <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
+  <hr>
 
-  <!-- what type of data (rainfall, etc) -->
-  <mat-form-field>
-    <mat-label>Data Set</mat-label>
-    <mat-select disableOptionCentering="true">
-      <mat-option>
-        rainfall
-      </mat-option>
-      <mat-option></mat-option>
-    </mat-select>
-  </mat-form-field>
+  <div class="form-body">
+    <h2>
+      Select The Dataset You Would Like to View.
+    </h2>
+  
+  
+    <!-- should create config json for this stuff to make it easy to update -->
+  
+    <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
+  
+    <!-- what type of data (rainfall, etc) -->
+    <div class="control-group">
+      <div class="control">
+        <mat-form-field>
+          <mat-label>Data Type</mat-label>
+          <mat-select 
+            disableOptionCentering="true"
+            [formControl]="dataset.datatype.control">
+            <mat-option [value]="dataset.datatype.value">
+              {{dataset.datatype.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    
+      <div class="control">
+        <mat-form-field>
+          <mat-label>Time Period</mat-label>
+          <mat-select 
+            disableOptionCentering="true"
+            [formControl]="dataset.timestep.control">
+            <mat-option [value]="dataset.timestep.value">
+              {{dataset.timestep.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    
+      <div class="control" *ngIf="dataset.advanced.control.value">
+        <mat-form-field>
+          <mat-label>Data Tier</mat-label>
+          <mat-select 
+            disableOptionCentering="true"
+            [formControl]="dataset.advanced.tier.control">
+            <mat-option [value]="dataset.advanced.tier.value">
+              {{dataset.advanced.tier.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    
+      <div class="control">
+        <h4>
+          Dataset Coverage
+        </h4>
+        <p>
+          {{dataset.dateRange.low.label}} - {{dataset.dateRange.high.label}}
+        </p>
+      </div>
+    </div>
 
-  <div class="control">
+    <div class="spacer"></div>
+  
+    <!-- remember that all of this stuff needs to be genericized -->
+    <div class="control-group" *ngIf="dataset.raster">
+      <h3>
+        Data Grid
+      </h3>
+      <div class="spacer"></div>
+    </div>
+
+    
+    
+    <div class="control-group" *ngIf="dataset.station">
+      <h3>
+        Data Stations
+      </h3>
+      <div class="control-subgroup">
+        <div class="control">
+          <mat-form-field>
+            <mat-label>Fill Type</mat-label>
+            <mat-select 
+              disableOptionCentering="true"
+              [formControl]="dataset.station.fill.control">
+              <mat-option [value]="dataset.station.fill.value">
+                {{dataset.station.fill.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="control-group">
+      <div class="control">
+        <mat-checkbox
+          [formControl]="dataset.advanced.control">
+          Show Advanced
+        </mat-checkbox>
+      </div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  
+
+  
+  
+
+  <!-- <div class="control">
     <app-date-selector
       label="Start Date"
       [min]="dataRange.min"
@@ -36,11 +137,11 @@
       [initDate]="defaultHigh"
       (dateChange)="setMax($event)">
     </app-date-selector>
-  </div>
-  <div class="control">
+  </div> -->
+  <!-- <div class="control">
 
 
-  </div>
+  </div> -->
 
   <!-- <p class="title">
     Raster Data
@@ -86,14 +187,14 @@
   <br> -->
 
 
-  <div class="control">
+  <!-- <div class="control">
     <app-data-set-interval-selector
       (setTimestep)="setTimestep($event)"
       (setDateRange)="setDateRange($event)"
       (setType)="setType($event)"
       (setFill)="setFill($event)">
     </app-data-set-interval-selector>
-  </div>
+  </div> -->
 
 
   <!-- <h3>Raster Data</h3>
@@ -131,7 +232,6 @@
 
 
 
-  <br>
   <!-- <app-data-set-selector></app-data-set-selector> -->
 
   <button mat-raised-button color="primary" (click)="updateDataSet()" [disabled]="!valid">

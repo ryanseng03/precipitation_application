@@ -1,8 +1,15 @@
-<div>
-  <div class="time-range-dropdown">
-    <mat-select disableOptionCentering="true" [formControl]="control">
-      <mat-option *ngFor="let opt of rangeOpts" [value]="opt.value">{{opt.display}}</mat-option>
-    </mat-select>
-  </div>
-  <plotly-plot [data]="graph.data" [layout]="graph.layout"></plotly-plot>
+
+<div *ngIf="loading; else loaded;">
+  <app-loading-component></app-loading-component>
 </div>
+
+<ng-template #loaded>
+  <div class="container">
+    <div class="time-range-dropdown">
+      <mat-select disableOptionCentering="true" [formControl]="control">
+        <mat-option *ngFor="let opt of rangeOpts" [value]="opt.value">{{opt.display}}</mat-option>
+      </mat-select>
+    </div>
+    <plotly-plot [data]="graph.data" [layout]="graph.layout"></plotly-plot>
+  </div>
+</ng-template>

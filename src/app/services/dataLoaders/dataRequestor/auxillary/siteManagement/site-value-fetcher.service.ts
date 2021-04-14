@@ -55,15 +55,15 @@ export class SiteValueFetcherService {
     }
 
     return this.dbcon.query(query).then((request: RequestResults) => {
-      console.log(request);
+      //console.log(request);
       return request.transform((response: any) => {
         //query cancelled, propogate null
         if(response == null) {
           return null;
         }
-        console.log(response)
+        //console.log(response)
         let header: RasterHeader = resultHandler(response.result)
-        console.log(header);
+        //console.log(header);
         return header;
       });
     });
@@ -95,8 +95,6 @@ export class SiteValueFetcherService {
       query += `,{'value.key.${value}':'${tempKey[value]}'}`
     }
     query += `]}`;
-
-    console.log(query);
 
     //right now have month and year as fields, should change this to date?
 
@@ -152,20 +150,33 @@ export class SiteValueFetcherService {
 
 
   getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): Promise<RequestResults> {
+    
     let startS = start.format("YYYY-MM-DD");
     let endS = end.format("YYYY-MM-DD");
 
     let query = `{'$and':[{'name':'station_vals'},{'value.date':{$gt:'${startS}'}},{'value.date':{$lt:'${endS}'}},{'value.skn':'${skn}'},{'value.version':'v1.2'}]}`;
     //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
+    query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'}]}`;
+    //console.log(query);
 
     //wrap data handler to lexically bind to this
     let wrappedResultHandler = (recent: any[]) => {
-      console.log(recent)
       let siteData: SiteValue[] = [];
       let dates = new Set();
       for(let item of recent) {
+
+        //TEMP TRANSFORM
+        item.value = {
+          date: item.value.date,
+          datatype: item.value.key.datatype,
+          value: parseFloat(item.value.data),
+          skn: item.value.descriptor.station_id
+        };
+        ////////////////
+
         dates.add(item.value.date);
         let siteValue: SiteValue = this.processor.processValueDocs(item.value);
+        //console.log(siteValue);
         siteData.push(siteValue);
       }
       //sort by date
@@ -225,15 +236,28 @@ export class SiteValueFetcherService {
     let formattedDate = date.format("YYYY-MM");
 
     let query = `{'$and':[{'name':'station_vals_month'},{'value.date':{$eq:'${formattedDate}'}},{'value.version':'v1.1'}]}`;
-    //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
+    query = `{'$and':[{'name':'hcdp_station_value'},{'value.date':'${formattedDate}'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.key.datatype':'rainfall'},{'value.key.period':'month'}]}`;
+    //console.log(query);
+    //"{'name': 'hcdp_station_value', 'value.version': '2.0', 'value.key.fill': 'partial'}"
 
     //wrap data handler to lexically bind to this
     let wrappedResultHandler = (vals: any[]) => {
+      //console.log(vals);
       // console.log(recent)
       let siteData = [];
       let dates = new Set();
       for(let item of vals) {
         dates.add(item.value.date);
+
+        //TEMP TRANSFORM
+        item.value = {
+          date: item.value.date,
+          datatype: item.value.key.datatype,
+          value: parseFloat(item.value.data),
+          skn: item.value.descriptor.station_id
+        };
+        ////////////////
+
         let siteValue: SiteValue = this.processor.processValueDocs(item.value);
         siteData.push(siteValue);
       }
@@ -341,7 +365,7 @@ export class SiteValueFetcherService {
           return null;
         }
         let vals: DateRefValues = wrappedResultHandler(response.result);
-        console.log(vals);
+        //console.log(vals);
         return vals;
       });
     });

@@ -18,6 +18,7 @@ import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
 import { LeafletOpacitySliderComponent } from '../leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
+import Moment from 'moment';
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
@@ -56,7 +57,7 @@ export class MapComponent implements OnInit {
   // private drawOptions: any;
   map: L.Map;
   private baseLayers: any;
-  private active: ActiveData;
+  active: ActiveData;
   private dataLayers: {
     [band: string]: any
   };
@@ -257,14 +258,22 @@ export class MapComponent implements OnInit {
 
   }
 
+  private loading: number = 0;
   //spin seems to already have an internal counter, neat
   setLoad(load: boolean) {
     if(load) {
       (<any>this.map).spin(true, {color: "white", length: 20});
+      this.loading++;
     }
     else {
       (<any>this.map).spin(false);
+      this.loading--;
+      console.log(this.loading);
     }
+  }
+
+  isLoading(): boolean {
+    return this.loading > 0;
   }
 
   onMapReady(map: L.Map) {
@@ -300,7 +309,10 @@ export class MapComponent implements OnInit {
     // }, 1000);
 
     L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
-    L.control.scale({position: 'bottomleft'}).addTo(map);
+    L.control.scale({
+      position: 'bottomleft',
+      maxWidth: 200
+    }).addTo(map);
 
 
 
@@ -392,37 +404,40 @@ export class MapComponent implements OnInit {
 
     });
 
-    let selectedSiteHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      let marker: L.CircleMarker = this.markerInfo.markerMap.get(site);
+    let selectedSiteHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+      if(station) {
+        let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
 
-      //siteMarkers.zoomToShowLayer(marker, () => {
-      if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
-        this.selectedMarker.closePopup();
+        //siteMarkers.zoomToShowLayer(marker, () => {
+        if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
+          this.selectedMarker.closePopup();
+        }
+        this.map.panTo(station.location, {animate: true});
+        //console.log(map.panTo);
+        this.selectedMarker = marker;
+        //popup sometimes still closes when moving mouse for some reason, but this helps some
+        //moveend isn't always triggered when finished, so use this as a fallback
+        setTimeout(() => {
+          if(marker.isPopupOpen && this.selectedMarker === marker) {
+            marker.openPopup();
+          }
+        }, 300);
+        //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
+        //think something about it already moving interferes with the popup repositioning
+        map.once("moveend", () => {
+          if(marker.isPopupOpen && this.selectedMarker === marker) {
+            marker.openPopup();
+          }
+  
+        })
       }
-      this.map.panTo(site.location, {animate: true});
-      //console.log(map.panTo);
-      this.selectedMarker = marker;
-      //popup sometimes still closes when moving mouse for some reason, but this helps some
-      //moveend isn't always triggered when finished, so use this as a fallback
-      setTimeout(() => {
-        if(marker.isPopupOpen && this.selectedMarker === marker) {
-          marker.openPopup();
-        }
-      }, 300);
-      //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
-      //think something about it already moving interferes with the popup repositioning
-      map.once("moveend", () => {
-        if(marker.isPopupOpen && this.selectedMarker === marker) {
-          marker.openPopup();
-        }
-
-      })
+      
       //});
 
 
     });
 
-    let dateHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: string) => {
+    let dateHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
       this.active.data.date = date;
     });
 
@@ -521,6 +536,14 @@ export class MapComponent implements OnInit {
 
   }
 
+  getHeaderDate(): string {
+    let formattedDate = "";
+    if(this.active.data.date) {
+      formattedDate = this.active.data.date.format("MMMM YYYY");
+    }
+    return formattedDate;
+  }
+
 
   initMarkerInfo() {
     this.markerInfo = {
@@ -600,7 +623,7 @@ export class MapComponent implements OnInit {
 
   getMarkerPopupText(site: SiteInfo): string {
     let siteDetails: string = "Name: " + site.name
-    + "<br> Network: " + site.network
+    + "<br> SKN: " + site.skn
     + "<br> Lat: " + site.lat + ", Lng: " + site.lng
     + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
     + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
@@ -727,7 +750,7 @@ interface ActiveData {
 interface DataPack {
   sites: SiteInfo[],
   raster: RasterData,
-  date: string,
+  date: Moment.Moment
 }
 
 interface PopupData {

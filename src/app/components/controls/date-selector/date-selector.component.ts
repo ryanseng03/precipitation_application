@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, OnInit, ViewChild, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import {MAT_DATE_FORMATS} from '@angular/material/core';
 import {DateFormatHelperService, DateUnit} from "../../../services/controlHelpers/date-format-helper.service";
 import {Platform} from '@angular/cdk/platform';
@@ -7,7 +7,6 @@ import {MatCalendarHeader, MatDatepicker, MatDatepickerInput, MatDatepickerModul
 import Moment from "moment";
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-
 
 export let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
   return formatHelper.getDateFormat();
@@ -44,7 +43,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   set date(date: Moment.Moment) {
     this.dateControl.setValue(date);
   }
-  @Output() dateChange: Observable<Moment.Moment>;
+  @Output() dateChange: EventEmitter<Moment.Moment> = new EventEmitter<Moment.Moment>();
 
   @Input() timestep: string;
 
@@ -85,7 +84,9 @@ export class DateSelectorComponent implements OnInit, OnChanges {
         return null;
       }
     }));
-    this.dateChange = this.dateControl.valueChanges;
+    this.dateControl.valueChanges.subscribe((date: Moment.Moment) => {
+      this.dateChange.emit(date);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {

@@ -1,6 +1,45 @@
 
 <div class="container">
-  <app-station-filter-interface></app-station-filter-interface>
+  <h2>
+    Select what data to export
+  </h2>
+  <h3 *ngIf="exportItems.length < 1">
+    Click the "+" button to add a set of files
+  </h3>
+  <!-- <app-station-filter-interface></app-station-filter-interface> -->
+  <div class="control-container">
+    <div class="item-tile" *ngFor="let item of exportItems; let i = index">
+      <div class="export-item">
+        <div class="text-block">
+          {{getExportedItemDataset(i)}}
+        </div>
+        <div class="text-block">
+          <h4>
+            Files
+          </h4>
+          <div>
+            {{getExportedItemFiles(i)}}
+          </div>
+        </div>
+      </div>
+      <div class="button-container">
+        <button mat-icon-button (click)="removeExportItem(i)">
+          <mat-icon>clear</mat-icon>
+        </button>
+        <button mat-icon-button (click)="addExportData(i)">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+      
+    </div>
+    
+    <button mat-icon-button (click)="addExportData(-1)">
+      <mat-icon>add</mat-icon>
+    </button>
+    <button mat-button [disabled]="exportItems.length < 1">
+      Export Items
+    </button>
+  </div>
 </div>
 
 

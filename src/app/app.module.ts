@@ -78,6 +78,8 @@ import { StationPropertyFiltersComponent } from './components/station-property-f
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import { HeaderControlComponent } from './components/leaflet-controls/header-control/header-control.component';
 import { ViewContainerComponent } from './components/view-container/view-container.component';
+import { LoadingComponentComponent } from './components/loading-component/loading-component.component';
+import { TimeSeriesComponent } from './components/time-series/time-series.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -123,7 +125,9 @@ PlotlyModule.plotlyjs = PlotlyJS;
     StationFilterInterfaceComponent,
     StationPropertyFiltersComponent,
     HeaderControlComponent,
-    ViewContainerComponent
+    ViewContainerComponent,
+    LoadingComponentComponent,
+    TimeSeriesComponent
   ],
   imports: [
     BrowserModule,

@@ -151,7 +151,10 @@ export class FilterMapComponent implements OnInit {
     //map.once("moveend zoomend", () => {console.log("!");map.invalidateSize()});
     this.map = map;
     this.drawnItems.addTo(map);
-    L.control.scale({position: "bottomleft"}).addTo(map);
+    L.control.scale({
+      position: "bottomleft",
+      maxWidth: 200
+    }).addTo(map);
     //(<any>L).control.rose('rose', {position: "bottomright", icon: "nautical", iSize: "medium", opacity: 0.8}).addTo(map);
 
     //new T({position: "bottomleft"}).addTo(map);

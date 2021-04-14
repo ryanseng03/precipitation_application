@@ -1,51 +1,42 @@
 <div class="main-container">
   <div class="button-container">
-    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].back.e.tooltip" [disabled]="controlData[dataset.timestep].back.e.disabled()" (click)="controlData[dataset.timestep].back.e.trigger()">
+    <button mat-icon-button [matTooltip]="controlData[timestep].back.e.tooltip" [disabled]="controlData[timestep].back.e.disabled()" (click)="controlData[timestep].back.e.trigger()">
       <mat-icon svgIcon="el"></mat-icon>
     </button>
 
-    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].back.ff.tooltip" [disabled]="controlData[dataset.timestep].back.ff.disabled()" (click)="controlData[dataset.timestep].back.ff.trigger()">
+    <button mat-icon-button [matTooltip]="controlData[timestep].back.ff.tooltip" [disabled]="controlData[timestep].back.ff.disabled()" (click)="controlData[timestep].back.ff.trigger()">
       <mat-icon svgIcon="ffl"></mat-icon>
     </button>
 
-    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].back.f.tooltip" [disabled]="controlData[dataset.timestep].back.f.disabled()" (click)="controlData[dataset.timestep].back.f.trigger()">
+    <button mat-icon-button [matTooltip]="controlData[timestep].back.f.tooltip" [disabled]="controlData[timestep].back.f.disabled()" (click)="controlData[timestep].back.f.trigger()">
       <mat-icon svgIcon="fl"></mat-icon>
     </button>
-
-
   </div>
-
 
   <div class="date-container">
     <app-date-selector
-      label="Focused Date"
-      [min]="dataset.startDate"
-      [max]="dataset.endDate"
-      [timestep]="dataset.timestep"
-      [initDate]="dataset.endDate"
+      label="Map Date"
+      [min]="lower"
+      [max]="upper"
+      [timestep]="timestep"
+      [initDate]="initDate"
       [date]="focusedDate"
       (dateChange)="setDate($event)"
       [readonly]="true">
     </app-date-selector>
   </div>
 
-
   <div class="button-container">
-    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].forward.f.tooltip" [disabled]="controlData[dataset.timestep].forward.f.disabled()" (click)="controlData[dataset.timestep].forward.f.trigger()">
+    <button mat-icon-button [matTooltip]="controlData[timestep].forward.f.tooltip" [disabled]="controlData[timestep].forward.f.disabled()" (click)="controlData[timestep].forward.f.trigger()">
       <mat-icon svgIcon="fr"></mat-icon>
     </button>
-    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].forward.ff.tooltip" [disabled]="controlData[dataset.timestep].forward.ff.disabled()" (click)="controlData[dataset.timestep].forward.ff.trigger()">
+    <button mat-icon-button [matTooltip]="controlData[timestep].forward.ff.tooltip" [disabled]="controlData[timestep].forward.ff.disabled()" (click)="controlData[timestep].forward.ff.trigger()">
       <mat-icon svgIcon="ffr"></mat-icon>
     </button>
-    <button mat-icon-button [matTooltip]="controlData[dataset.timestep].forward.e.tooltip" [disabled]="controlData[dataset.timestep].forward.e.disabled()" (click)="controlData[dataset.timestep].forward.e.trigger()">
+    <button mat-icon-button [matTooltip]="controlData[timestep].forward.e.tooltip" [disabled]="controlData[timestep].forward.e.disabled()" (click)="controlData[timestep].forward.e.trigger()">
       <mat-icon svgIcon="er"></mat-icon>
     </button>
   </div>
-
-
-
-
-
 </div>
 
 

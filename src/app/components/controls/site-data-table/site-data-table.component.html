@@ -1,18 +1,18 @@
-<div *ngIf="site != undefined" class="wrapper">
+<div class="wrapper">
   <table class="outer-table">
     <tr>
         <th colspan="2" class="header">
-          Rainfall Site Metadata
+          Station Metadata
         </th>
     </tr>
-    <tr *ngFor="let field of siteIndex">
-      <td class="field-cell">{{field}}</td>
-      <td>{{site[field]}}</td>
+    <tr *ngFor="let data of selected2datamap()">
+      <td class="field-cell">{{data.field}}</td>
+      <td>{{data.value}}</td>
     </tr>
 
-    <tr>
+    <!-- <tr>
       <th colspan="2" class="header">
-        Rainfall Site Values
+        Rainfall Station Values
       </th>
     </tr>
 
@@ -49,9 +49,9 @@
         </div>
 
       </td>
-    </tr>
+    </tr> -->
 
-    <tr (click)=changeState()>
+    <!-- <tr (click)=changeState()>
       <th colspan="2" class="embeded-cell">
         <div class="selector">
           <div class="label-left">
@@ -62,7 +62,7 @@
         </div>
       </th>
 
-    </tr>
+    </tr> -->
 
   </table>
 </div>

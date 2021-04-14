@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import {EventParamRegistrarService} from "src/app/services/inputManager/event-param-registrar.service";
 import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import {trigger, state, style, animate, transition} from "@angular/animations";
+import Moment from "moment";
 
 @Component({
   selector: 'app-site-data-table',
@@ -27,6 +28,8 @@ export class SiteDataTableComponent implements OnInit {
   site: SiteInfo;
   siteIndex: string[];
 
+  @Input() selected: SiteInfo;
+
   focusedSiteValues: SiteValue[] = [];
   filteredFocusedSiteValues: SiteValue[] = [];
   focusedMonth: string = "";
@@ -36,30 +39,29 @@ export class SiteDataTableComponent implements OnInit {
   labelR = "\u25BE";
 
   constructor(private paramService: EventParamRegistrarService) {
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: string) => {
-      console.log(date);
-      this.focusedMonth = date.substring(0, 7);
-      this.setFocusedSiteFilter();
-    });
+    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
+    //   let isoDate = date.toISOString();
+    //   this.focusedMonth = isoDate.substring(0, 7);
+    //   console.log(this.focusedMonth);
+    //   this.setFocusedSiteFilter();
+    // });
 
-    this.siteIndex = SiteInfo.getFields();
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-      this.focusedSiteValues = [];
-      this.filteredFocusedSiteValues = [];
-      this.site = site;
-    });
+    // this.siteIndex = SiteInfo.getFields();
+    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
+    //   this.focusedSiteValues = [];
+    //   this.filteredFocusedSiteValues = [];
+    //   this.site = site;
+    // });
 
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (siteValues: SiteValue[]) => {
-      //let dateFormat = /[0-9]{4}-([0-9]{2})-[0-9]{2}/;
-      //filter by current selected month
-      this.focusedSiteValues = siteValues;
-      this.setFocusedSiteFilter();
-    });
+    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (siteValues: SiteValue[]) => {
+    //   //let dateFormat = /[0-9]{4}-([0-9]{2})-[0-9]{2}/;
+    //   //filter by current selected month
+    //   this.focusedSiteValues = siteValues;
+    //   this.setFocusedSiteFilter();
+    // });
   }
 
   setFocusedSiteFilter() {
-    console.log(this.focusedMonth);
-    console.log(this.focusedSiteValues[0]);
     this.filteredFocusedSiteValues = this.focusedSiteValues.filter((site: SiteValue) => {
       let month = site.date.substring(0, 7);
       return month == this.focusedMonth;
@@ -81,6 +83,53 @@ export class SiteDataTableComponent implements OnInit {
       this.labelL = "Expand";
       this.labelR = "\u25BE";
     }
+  }
+
+  //TEMP!!
+  field2label = {
+    skn: "SKN",
+    name: "Name",
+    observer: "Observer",
+    network: "Network",
+    island: "Island",
+    elevation: "Elevation",
+    lat: "Latitude",
+    lng: "Longitude",
+    nceiID: "NCEI ID",
+    nwsID: "NWS ID",
+    scanID: "Scan ID",
+    smartNodeRfID: "Smart Node RFID",
+    value: "Value",
+  }
+
+  islandNameMap = {
+    BI: "Big Island",
+    OA: "Oʻahu",
+    MA: "Maui",
+    KA: "Kauai",
+    MO: "Molokaʻi",
+    KO: "Kahoʻolawe"
+  }
+  //
+
+  selected2datamap() {
+    let map = [];
+    for(let field of SiteInfo.getFields()) {
+      let fieldLabel = this.field2label[field];
+      let value = this.selected[field];
+      if(field == "island") {
+        value = this.islandNameMap[value];
+      }
+      if(fieldLabel) {
+        map.push({
+          field: fieldLabel,
+          value: value
+        });
+      }
+      //console.log(field);
+      
+    }
+    return map;
   }
 
 }

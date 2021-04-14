@@ -11,10 +11,12 @@ import { trigger, state, style, transition, animate } from "@angular/animations"
         width: "100%"
       })),
       state("expand", style({
-        width: "275px"
+        width: "275px",
+        minWidth: "275px"
       })),
       state("collapse", style({
-        width: "30px"
+        width: "30px",
+        minWidth: "30px"
       })),
       transition("expand <=> collapse", [
         animate("0.2s")

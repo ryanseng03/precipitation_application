@@ -18,10 +18,11 @@
   </div>
 
   <div class="component-container">
-    <div *ngIf="component == 'vis'" class="vis-container">
+    <!-- definitely a better way to do this -->
+    <div [ngClass]="{hidden: component != 'vis'}" class="vis-container">
       <app-vis></app-vis>
     </div>
-    <div *ngIf="component == 'export'" class="export-container">
+    <div [ngClass]="{hidden: component != 'export'}" class="export-container">
       <app-export-interface></app-export-interface>
     </div>
   </div>
