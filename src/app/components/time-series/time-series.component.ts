@@ -25,6 +25,7 @@ export class TimeSeriesComponent implements OnInit {
       else {
         this.loading = true;
       }
+      this.data = null;
     });
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (data: SiteValue[]) => {
       //console.log(data);

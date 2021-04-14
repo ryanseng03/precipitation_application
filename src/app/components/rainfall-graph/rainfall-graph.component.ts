@@ -14,7 +14,6 @@ export class RainfallGraphComponent implements OnInit {
 
   @Input() set selected(station: SiteInfo) {
     if(station) {
-      console.log("!", station)
       this.loading = true;
       this.graph.data[0].x = [];
       this.graph.data[0].y = [];
@@ -24,7 +23,6 @@ export class RainfallGraphComponent implements OnInit {
 
   @Input() set data(data: SiteValue[]) {
     if(data) {
-      console.log(data);
       this.value = data;
       this.updateGraph();
       this.loading = false;

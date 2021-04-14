@@ -88,7 +88,7 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
   ngAfterViewInit() {
     this.generateRowMap(this.dataRows);
     this.dataRows.changes.subscribe((rows: QueryList<ElementRef>) => {
-      console.log(rows);
+      //console.log(rows);
       this.generateRowMap(rows);
     });
     // this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
