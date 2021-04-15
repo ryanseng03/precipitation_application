@@ -64,7 +64,6 @@ export class ViewContainerComponent implements OnInit {
       element: this.timeSeriesComponent.nativeElement
     }];
     this.activeTileRef = this.navInfo[0];
-
   }
 
   getScrollBarWidth(element: HTMLElement): string {
@@ -99,6 +98,7 @@ export class ViewContainerComponent implements OnInit {
     this.activeTileRef = nav;
   }
 
+  // [ngStyle]="{'padding-right': getScrollBarWidth(viewContainer)}"
   containerScroll(e: Event): void {
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
     let lastScrollLocal = this.lastScrollPos;
