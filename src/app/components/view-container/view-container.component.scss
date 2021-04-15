@@ -10,6 +10,7 @@
     width: 30px;
     display: flex;
     flex-flow: column wrap;
+    -webkit-text-orientation: upright;
     text-orientation: upright;
     writing-mode: vertical-lr;
     font-weight: 500;
