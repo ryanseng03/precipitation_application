@@ -135,38 +135,29 @@ export class ViewContainerComponent implements OnInit {
     for(let i = 0; i < this.navInfo.length - 1; i++) {
       let data = this.navInfo[i];
       let element = data.element;
-      //is the container within this element, stradling lower boundary, or outside
-      let alignment: ElementAlignment = "none";
       //offsetHeight includes everything
       let height = element.offsetHeight;
       let lower = upper + height;
       //if container upper bound is above element lower bound then there's some overlap (top bound handled in previous iters)
       if(containerUpper < lower) {
+        console.log(i, containerUpper, containerLower, upper, lower);
         //if lower bound of container is in element lower bound then container is within element
         if(containerLower <= lower) {
-          alignment = "within";
+          inContainer = {
+            focus: data
+          };
+          break;
         }
         //otherwise stradles boundary
         else {
-          alignment = "over"
-        }
-      }
-      //fully within an element, leave as null, break and return
-      if(alignment == "within") {
-        inContainer = {
-          focus: data
-        };
-        break;
-      }
-      //stradling lower boundary, set between and break
-      else if(alignment == "over") {
-        inContainer = {
-          between: {
-            upper: data,
-            lower: this.navInfo[i + 1]
+          inContainer = {
+            between: {
+              upper: data,
+              lower: this.navInfo[i + 1]
+            }
           }
+          break;
         }
-        break;
       }
       //otherwise no overlap, keep going
       //set top of next div
@@ -176,8 +167,6 @@ export class ViewContainerComponent implements OnInit {
   }
 
 }
-
-type ElementAlignment = "within" | "over" | "none";
 
 interface InContainer {
   between?: {
