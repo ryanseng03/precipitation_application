@@ -89,6 +89,7 @@ export class ViewContainerComponent implements OnInit {
     let component = nav.element;
     let top = component.offsetTop;
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
+    console.log(top);
     containerElement.scroll({
       top: top,
       left: 0,
