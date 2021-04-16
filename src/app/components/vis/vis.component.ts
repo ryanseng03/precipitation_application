@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, Input } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
 import { MapComponent } from '../map/map.component';
 
@@ -8,6 +8,14 @@ import { MapComponent } from '../map/map.component';
   styleUrls: ['./vis.component.scss']
 })
 export class VisComponent implements OnInit, AfterViewInit {
+
+  @Input() set visible(state: boolean) {
+    if(state) {
+      setTimeout(() => {
+        this.checkMoveInfo();
+      }, 500);
+    }
+  }
 
   @ViewChild("container") container: ElementRef;
   @ViewChild("mapContainer") mapContainer: ElementRef;
@@ -30,9 +38,9 @@ export class VisComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      this.checkMoveInfo();
-    }, 1000);
+    // setTimeout(() => {
+    //   this.checkMoveInfo();
+    // }, 1000);
   }
 
   ngOnInit() {

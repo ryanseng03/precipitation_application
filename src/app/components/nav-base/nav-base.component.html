@@ -18,9 +18,11 @@
   </div>
 
   <div class="component-container">
-    <!-- definitely a better way to do this -->
+    <!-- maybe a better way to do this? -->
     <div [ngClass]="{hidden: component != 'vis'}" class="vis-container">
-      <app-vis></app-vis>
+      <app-vis
+        [visible]="component == 'vis'">
+      </app-vis>
     </div>
     <div [ngClass]="{hidden: component != 'export'}" class="export-container">
       <app-export-interface></app-export-interface>
