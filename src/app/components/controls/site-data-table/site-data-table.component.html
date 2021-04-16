@@ -10,60 +10,6 @@
       <td>{{data.value}}</td>
     </tr>
 
-    <!-- <tr>
-      <th colspan="2" class="header">
-        Rainfall Station Values
-      </th>
-    </tr>
-
-    <tr>
-      <td colspan="2" class="embeded-cell">
-        <div class="collapsible-wrapper" [@expand]="state">
-          <table class="internal-table collapsible">
-            <thead>
-                <tr>
-                  <th>
-                    Date
-                  </th>
-                  <th>
-                    Value
-                  </th>
-                </tr>
-            </thead>
-            <div *ngIf="focusedSiteValues.length == 0" class="loading">
-              <div class="loading-text">Loading Data</div>
-              <div class="loading-symbol"><mat-spinner [diameter]="50"></mat-spinner></div>
-            </div>
-            <tbody>
-              <tr *ngFor="let value of filteredFocusedSiteValues">
-                <td>
-                  {{value.date}}
-                </td>
-                <td>
-                  {{value.value}}mm
-                </td>
-              </tr>
-            </tbody>
-
-          </table>
-        </div>
-
-      </td>
-    </tr> -->
-
-    <!-- <tr (click)=changeState()>
-      <th colspan="2" class="embeded-cell">
-        <div class="selector">
-          <div class="label-left">
-              {{labelL}}
-          </div>
-          <div [innerHTML]="labelR" class="label-right">
-          </div>
-        </div>
-      </th>
-
-    </tr> -->
-
   </table>
 </div>
 

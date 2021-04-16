@@ -2,13 +2,13 @@
     [leafletOptions]="options"
     (leafletMapReady)="onMapReady($event)">
 </div>
-<app-leaflet-opacity-slider #layerController
+<app-leaflet-layer-control-extension #layerController
     [map]="map"
     (opacity)="setOpacity($event)"
     (colorScheme)="setColorScheme($event)"
     [mapGetOpacity]="getOpacity.bind(this)"
     [mapLayerReady]="layerReady.bind(this)"
-></app-leaflet-opacity-slider>
+></app-leaflet-layer-control-extension>
 <app-leaflet-color-scale
     [map]="map"
     [colorScale]="colorScheme"

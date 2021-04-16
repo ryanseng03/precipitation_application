@@ -1,9 +1,8 @@
 import { Component, OnInit, AfterContentInit, AfterViewInit, NgZone, ChangeDetectionStrategy } from '@angular/core';
-import {Timestep} from "../controls/data-set-interval-selector/data-set-interval-selector.component";
 import Moment from "moment";
 import "moment-timezone";
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
-import {Dataset, SetType, FillType} from "../../models/dataset";
+import {Dataset, SetType, FillType, Timestep} from "../../models/dataset";
 import { FormControl } from '@angular/forms';
 import {DateChangeInfo} from "../controls/date-focus/date-focus.component";
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
@@ -23,7 +22,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   // @Input() initDate: Moment.Moment;
   // @Output() date
 
- 
+
 
 
   private static readonly GLOBAL_MAX = Moment();
@@ -111,7 +110,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     //remember change format day/month
     this.dataset.dateRange.low.label = this.dataset.dateRange.low.value.format("MMMM YYYY");
     this.dataset.dateRange.high.label = this.dataset.dateRange.high.value.format("MMMM YYYY");
-    
+
     // this.min = this.dataRange.min;
     // this.max = this.dataRange.max
     // this.timestep = "monthly";

@@ -9,11 +9,11 @@ import { ColorScale } from 'src/app/models/colorScale';
 import { CustomColorSchemeService } from 'src/app/services/helpers/custom-color-scheme.service';
 
 @Component({
-  selector: 'app-leaflet-opacity-slider',
-  templateUrl: './leaflet-opacity-slider.component.html',
-  styleUrls: ['./leaflet-opacity-slider.component.scss']
+  selector: 'app-leaflet-layer-control-extension',
+  templateUrl: './leaflet-layer-control-extension.component.html',
+  styleUrls: ['./leaflet-layer-control-extension.component.scss']
 })
-export class LeafletOpacitySliderComponent implements OnInit {
+export class LeafletLayerControlExtensionComponent implements OnInit {
 
   private _map: Map;
   public control: Control.Layers;

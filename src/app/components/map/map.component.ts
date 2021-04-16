@@ -16,9 +16,9 @@ import "leaflet.markercluster";
 import "leaflet-easyprint";
 import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
-import { LeafletOpacitySliderComponent } from '../leaflet-controls/leaflet-opacity-slider/leaflet-opacity-slider.component';
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import Moment from 'moment';
+import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
@@ -33,7 +33,7 @@ let LExt: any = L;
 export class MapComponent implements OnInit {
 
   @ViewChild("mapElement") mapElement: ElementRef;
-  @ViewChild("layerController") layerController: LeafletOpacitySliderComponent;
+  @ViewChild("layerController") layerController: LeafletLayerControlExtensionComponent;
 
   readonly extents: {[county: string]: L.LatLngBoundsExpression} = {
     ka: [ [ 21.819, -159.816 ], [ 22.269, -159.25125 ] ],
@@ -253,7 +253,7 @@ export class MapComponent implements OnInit {
           fillColor: hex
         });
       }
-      
+
     }
 
   }
@@ -428,10 +428,10 @@ export class MapComponent implements OnInit {
           if(marker.isPopupOpen && this.selectedMarker === marker) {
             marker.openPopup();
           }
-  
+
         })
       }
-      
+
       //});
 
 

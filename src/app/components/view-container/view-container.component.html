@@ -17,34 +17,9 @@
     </div>
   </div>
 
-    <!-- <div class="view-component-wrapper">
-
-        <div #formComponent class="view-component">
-          a
-        </div>
-        <div #tableComponent class="view-component">
-          b
-        </div>
-        <div #timeSeriesComponent class="view-component">
-          c
-        </div>
-
-
-
-  </div> -->
   <div class="view-nav">
     <div *ngFor="let nav of navInfo" class="nav-tile" [@selectColor]="nav == activeTileRef ? 'selected' : 'deselected'" (click)="goToNav(nav)">
       {{nav.label}}
     </div>
   </div>
 </div>
-
-<!-- <div #formComponent>
-
-</div>
-<div #tableComponent>
-
-</div>
-<div #timeSeriesComponent>
-
-</div> -->
