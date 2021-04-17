@@ -85,22 +85,21 @@ export class ViewContainerComponent implements OnInit {
 
   }
 
-  goToPos: number = -1;
+  //debounce scroll after go to nav, no reason to do computations
+  scrollDebounce: boolean = false;
   goToNav(nav: NavData) {
     let component = nav.element;
     let top = component.offsetTop;
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
-    console.log(top);
-    let scroll = containerElement.scrollTop;
-    if(scroll !== top) {
-      this.goToPos = top;
-      containerElement.scroll({
-        top: top,
-        left: 0,
-        behavior: "smooth"
-      });
-    }
-    
+
+    this.scrollDebounce = true;
+    containerElement.scroll({
+      //add one to top to avoid weird partial pixel errors in chrome for some displays
+      top: top + 1,
+      left: 0,
+      behavior: "smooth"
+    });
+
     //set active nav ref
     this.activeTileRef = nav;
   }
@@ -112,7 +111,7 @@ export class ViewContainerComponent implements OnInit {
     this.lastScrollPos = containerElement.scrollTop;
     clearTimeout(this.scrollTimeoutHandle);
     this.scrollTimeoutHandle = setTimeout(() => {
-      if(this.goToPos < 0) {
+      if(!this.scrollDebounce) {
         let scrollDelta = this.lastScrollPos - lastScrollLocal;
         let inContainer = this.divsInContainer();
         if(inContainer.between) {
@@ -128,12 +127,9 @@ export class ViewContainerComponent implements OnInit {
         }
       }
       else {
-        //containerElement.scroll(0, this.goToPos);
-        containerElement.scrollTop = this.goToPos;
-        console.log(containerElement.scrollTop);
-        this.goToPos = -1;
+        this.scrollDebounce = false;
       }
-      
+
     }, this.scrollTimeout);
   }
 
