@@ -128,7 +128,8 @@ export class ViewContainerComponent implements OnInit {
         }
       }
       else {
-        containerElement.scroll(0, this.goToPos);
+        //containerElement.scroll(0, this.goToPos);
+        containerElement.scrollTop = this.goToPos;
         console.log(containerElement.scrollTop);
         this.goToPos = -1;
       }
