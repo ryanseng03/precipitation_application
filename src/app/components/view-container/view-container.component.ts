@@ -85,16 +85,22 @@ export class ViewContainerComponent implements OnInit {
 
   }
 
+  goToPos: number = -1;
   goToNav(nav: NavData) {
     let component = nav.element;
     let top = component.offsetTop;
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
     console.log(top);
-    containerElement.scroll({
-      top: top,
-      left: 0,
-      behavior: "smooth"
-    });
+    let scroll = containerElement.scrollTop;
+    if(scroll !== top) {
+      this.goToPos = top;
+      containerElement.scroll({
+        top: top,
+        left: 0,
+        behavior: "smooth"
+      });
+    }
+    
     //set active nav ref
     this.activeTileRef = nav;
   }
@@ -106,19 +112,27 @@ export class ViewContainerComponent implements OnInit {
     this.lastScrollPos = containerElement.scrollTop;
     clearTimeout(this.scrollTimeoutHandle);
     this.scrollTimeoutHandle = setTimeout(() => {
-      let scrollDelta = this.lastScrollPos - lastScrollLocal;
-      let inContainer = this.divsInContainer();
-      if(inContainer.between) {
-        let scrollDir = "upper";
-        if(scrollDelta > 0) {
-          scrollDir = "lower";
+      if(this.goToPos < 0) {
+        let scrollDelta = this.lastScrollPos - lastScrollLocal;
+        let inContainer = this.divsInContainer();
+        if(inContainer.between) {
+          let scrollDir = "upper";
+          if(scrollDelta > 0) {
+            scrollDir = "lower";
+          }
+          this.goToNav(inContainer.between[scrollDir]);
         }
-        this.goToNav(inContainer.between[scrollDir]);
+        //set active tile to item in container if completely contained (otherwise handled by goToNav)
+        else {
+          this.activeTileRef = inContainer.focus;
+        }
       }
-      //set active tile to item in container if completely contained (otherwise handled by goToNav)
       else {
-        this.activeTileRef = inContainer.focus;
+        containerElement.scroll(0, this.goToPos);
+        console.log(containerElement.scrollTop);
+        this.goToPos = -1;
       }
+      
     }, this.scrollTimeout);
   }
 
