@@ -1,5 +1,5 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 
 @Component({
   selector: 'app-view-container',
@@ -23,6 +23,18 @@ export class ViewContainerComponent implements OnInit {
   @ViewChild("tableComponent") tableComponent: ElementRef;
   @ViewChild("timeSeriesComponent") timeSeriesComponent: ElementRef;
 
+  //set scrollbar width the first time becomes visible
+  scrollbarSet: boolean = false;
+  //just set scrollbar width once for efficiency, on macs it's fine to have the scrollbar visible while sscrolling
+  //also it seems like getting the scrollbar width on a mac might not work even while scrolling
+  @Input() set visible(state: boolean) {
+    if(state && !this.scrollbarSet) {
+      let element: HTMLElement = this.viewContainer.nativeElement;
+      let scrollbarWidth = element.offsetWidth - element.clientWidth + "px";
+      element.style.paddingRight = scrollbarWidth;
+      this.scrollbarSet = true;
+    }
+  }
 
   nav2Component: {
     form: ElementRef,
@@ -37,7 +49,7 @@ export class ViewContainerComponent implements OnInit {
 
   scrollbarWidthThrottle: NodeJS.Timer;
   scrollbarWidthPause: boolean = false;
-  scrollbarWidth: string;
+  
 
   constructor() {
     this.scrollTimeoutHandle = null;
@@ -66,33 +78,38 @@ export class ViewContainerComponent implements OnInit {
     this.activeTileRef = this.navInfo[0];
   }
 
-  getScrollBarWidth(element: HTMLElement): string {
-    let scrollbarWidth: string;
-    //weird workaround for ExpressionChangedAfterItHasBeenCheckedError in dev (also potentially good for performance in prod for changing scrollbars)
-    if(this.scrollbarWidthPause) {
-      scrollbarWidth = this.scrollbarWidth;
-    }
-    else {
-      this.scrollbarWidthPause = true;
-      let throttle = 10;
-      setTimeout(() => {
-        this.scrollbarWidthPause = false;
-      }, throttle);
-      scrollbarWidth = element.offsetWidth - element.clientWidth + "px";
-      this.scrollbarWidth = scrollbarWidth;
-    }
-    return scrollbarWidth;
+  //resizing the window can scroll the container div causing it to trigger on another element, so fix that
 
+  @HostListener("window:resize", ["$event"])
+  fixResizeScroll() {
+    this.goToNav(this.activeTileRef);
   }
 
-  //debounce scroll after go to nav, no reason to do computations
-  scrollDebounce: boolean = false;
+
+  // getScrollBarWidth(element: HTMLElement): string {
+  //   let scrollbarWidth: string;
+  //   //weird workaround for ExpressionChangedAfterItHasBeenCheckedError in dev (also potentially good for performance in prod for changing scrollbars)
+  //   if(this.scrollbarWidthPause) {
+  //     scrollbarWidth = this.scrollbarWidth;
+  //   }
+  //   else {
+  //     this.scrollbarWidthPause = true;
+  //     let throttle = 10;
+  //     setTimeout(() => {
+  //       this.scrollbarWidthPause = false;
+  //     }, throttle);
+  //     scrollbarWidth = element.offsetWidth - element.clientWidth + "px";
+  //     this.scrollbarWidth = scrollbarWidth;
+  //   }
+  //   return scrollbarWidth;
+  // }
+
+  //note removed debounce because weird offsets make it difficult to debounce where not actually scrolling, should be fine without debounce given offset to prevent boundary issues
   goToNav(nav: NavData) {
     let component = nav.element;
     let top = component.offsetTop;
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
 
-    this.scrollDebounce = true;
     containerElement.scroll({
       //add one to top to avoid weird partial pixel errors in chrome for some displays
       top: top + 1,
@@ -111,23 +128,18 @@ export class ViewContainerComponent implements OnInit {
     this.lastScrollPos = containerElement.scrollTop;
     clearTimeout(this.scrollTimeoutHandle);
     this.scrollTimeoutHandle = setTimeout(() => {
-      if(!this.scrollDebounce) {
-        let scrollDelta = this.lastScrollPos - lastScrollLocal;
-        let inContainer = this.divsInContainer();
-        if(inContainer.between) {
-          let scrollDir = "upper";
-          if(scrollDelta > 0) {
-            scrollDir = "lower";
-          }
-          this.goToNav(inContainer.between[scrollDir]);
+      let scrollDelta = this.lastScrollPos - lastScrollLocal;
+      let inContainer = this.divsInContainer();
+      if(inContainer.between) {
+        let scrollDir = "upper";
+        if(scrollDelta > 0) {
+          scrollDir = "lower";
         }
-        //set active tile to item in container if completely contained (otherwise handled by goToNav)
-        else {
-          this.activeTileRef = inContainer.focus;
-        }
+        this.goToNav(inContainer.between[scrollDir]);
       }
+      //set active tile to item in container if completely contained (otherwise handled by goToNav)
       else {
-        this.scrollDebounce = false;
+        this.activeTileRef = inContainer.focus;
       }
 
     }, this.scrollTimeout);
@@ -152,7 +164,6 @@ export class ViewContainerComponent implements OnInit {
       let lower = upper + height;
       //if container upper bound is above element lower bound then there's some overlap (top bound handled in previous iters)
       if(containerUpper < lower) {
-        console.log(i, containerUpper, containerLower, upper, lower);
         //if lower bound of container is in element lower bound then container is within element
         if(containerLower <= lower) {
           inContainer = {

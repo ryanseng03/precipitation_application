@@ -9,7 +9,9 @@ import { MapComponent } from '../map/map.component';
 })
 export class VisComponent implements OnInit, AfterViewInit {
 
+  _visible: boolean;
   @Input() set visible(state: boolean) {
+    this._visible = state;
     if(state) {
       setTimeout(() => {
         this.checkMoveInfo();
