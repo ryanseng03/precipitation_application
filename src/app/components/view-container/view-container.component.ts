@@ -22,18 +22,28 @@ export class ViewContainerComponent implements OnInit {
   @ViewChild("formComponent") formComponent: ElementRef;
   @ViewChild("tableComponent") tableComponent: ElementRef;
   @ViewChild("timeSeriesComponent") timeSeriesComponent: ElementRef;
+  @ViewChild("viewNav") viewNav: ElementRef;
 
   //set scrollbar width the first time becomes visible
-  scrollbarSet: boolean = false;
+  // scrollbarSet: boolean = false;
+  scrollBarWidth: number = -1;
   //just set scrollbar width once for efficiency, on macs it's fine to have the scrollbar visible while sscrolling
   //also it seems like getting the scrollbar width on a mac might not work even while scrolling
   @Input() set visible(state: boolean) {
-    if(state && !this.scrollbarSet) {
+    if(state && this.scrollBarWidth < 0) {
       let element: HTMLElement = this.viewContainer.nativeElement;
-      let scrollbarWidth = element.offsetWidth - element.clientWidth + "px";
-      element.style.paddingRight = scrollbarWidth;
-      this.scrollbarSet = true;
+      let scrollbarWidth = element.offsetWidth - element.clientWidth;
+      element.style.paddingRight = scrollbarWidth + "px";
+      this.scrollBarWidth = scrollbarWidth;
     }
+  }
+  _width: number;
+  @Input() set width(width: number) {
+    //instead of using width just use the width of the view container
+    let viewNavEl: HTMLElement = this.viewContainer.nativeElement;
+    let navWidth = viewNavEl.clientWidth;
+    //subtract 40, 20 padding on each side
+    this._width = navWidth - 40;
   }
 
   nav2Component: {

@@ -1,6 +1,6 @@
 .filter-table {
   display: inline-block;
-  width: 700px;
+  width: 600px;
   padding: 10px;
 }
 
@@ -23,6 +23,7 @@
 .filter-container {
   display: block;
   clear: both;
+  min-width: 600px;
 }
 
 .filter-component {

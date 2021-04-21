@@ -10,14 +10,16 @@
             <app-data-views></app-data-views>
           </div>
           <div #timeSeriesComponent class="view-component">
-            <app-time-series></app-time-series>
+            <app-time-series
+              [width]="_width">
+            </app-time-series>
           </div>
       </div>
 
     </div>
   </div>
 
-  <div class="view-nav">
+  <div #viewNav class="view-nav">
     <div *ngFor="let nav of navInfo" class="nav-tile" [@selectColor]="nav == activeTileRef ? 'selected' : 'deselected'" (click)="goToNav(nav)">
       {{nav.label}}
     </div>

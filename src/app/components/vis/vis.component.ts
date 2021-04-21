@@ -31,6 +31,7 @@ export class VisComponent implements OnInit, AfterViewInit {
 
 
   mapWidth: string = "calc(50% - 10px)";
+  viewWidth: number;
 
   //dragState: DragState;
 
@@ -39,14 +40,20 @@ export class VisComponent implements OnInit, AfterViewInit {
   constructor() {
   }
 
+  setViewWidth() {
+    let element: HTMLElement = this.viewContainer.nativeElement;
+    this.viewWidth = element.clientWidth;
+  }
+
   ngAfterViewInit() {
+    
     // setTimeout(() => {
     //   this.checkMoveInfo();
     // }, 1000);
   }
 
   ngOnInit() {
-
+    this.setViewWidth();
     // setTimeout(() => {
     //   this.moveInfo();
     // }, 2000);
@@ -60,6 +67,7 @@ export class VisComponent implements OnInit, AfterViewInit {
   @HostListener('window:resize', ['$event'])
   checkMoveInfo() {
     this.map.invalidateSize();
+    this.setViewWidth();
     // let parent: HTMLElement;
     // if(this.viewContainer.nativeElement.offsetWidth < 500) {
     //   parent = this.p1.nativeElement;
@@ -88,8 +96,6 @@ export class VisComponent implements OnInit, AfterViewInit {
       let x = event.clientX - left - dragbarOffset;
       x = Math.max(0, x);
       this.mapWidth = x + "px";
-      this.checkMoveInfo();
-
       return false;
     }
 
@@ -103,7 +109,7 @@ export class VisComponent implements OnInit, AfterViewInit {
         document.removeEventListener("mouseup", stopResize);
       }
 
-      this.map.invalidateSize();
+      this.checkMoveInfo();
 
       return false;
     }

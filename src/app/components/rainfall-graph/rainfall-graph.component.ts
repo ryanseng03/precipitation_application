@@ -12,6 +12,15 @@ import Moment  from 'moment';
 export class RainfallGraphComponent implements OnInit {
   loading: boolean = false;
 
+  @Input() set width(width: number) {
+    let minWidth = 600;
+    let h2wRat = 5/9;
+    let w = Math.max(minWidth, width);
+    let h = w * h2wRat;
+    this.graph.layout.height = h;
+    this.graph.layout.width = w;
+  }
+
   @Input() set selected(station: SiteInfo) {
     if(station) {
       this.loading = true;
@@ -33,6 +42,10 @@ export class RainfallGraphComponent implements OnInit {
     let isoDate = date.toISOString();
     this.focusedMonth = isoDate.substring(0, 7);
     this.focusedYear = isoDate.substring(0, 4);
+  }
+
+  config = {
+    responsive: true
   }
 
   public graph = {

@@ -37,8 +37,7 @@
 .view-component {
     min-height: 100vh;
     width: 100%;
-    padding: 20px;
-    padding-bottom: 500px;
+    padding: 20px 20px 500px 20px;
 }
 
 .scroll-hide {
@@ -67,5 +66,4 @@
 .view-component-wrapper {
   height: fit-content;
   width: fit-content;
-  min-width: 100%;
 }

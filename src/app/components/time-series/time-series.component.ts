@@ -10,6 +10,8 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 })
 export class TimeSeriesComponent implements OnInit {
 
+  @Input() width: number;
+
   loading = true;
 
   selected: SiteInfo;

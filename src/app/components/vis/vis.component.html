@@ -11,9 +11,10 @@
   <div #dragbar (touchstart)="startResize(true)" (mousedown)="startResize(false)" class="resize-bar">
     <div class="line"></div>
   </div>
-  <div class="view-container">
+  <div #viewContainer class="view-container">
     <app-view-container
-      [visible]="_visible">
+      [visible]="_visible"
+      [width]="viewWidth">
     </app-view-container>
   </div>
 
