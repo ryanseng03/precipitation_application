@@ -36,7 +36,7 @@
     <button mat-icon-button (click)="addExportData(-1)">
       <mat-icon>add</mat-icon>
     </button>
-    <button mat-button [disabled]="exportItems.length < 1">
+    <button mat-button [disabled]="exportItems.length < 1" (click)="export()">
       Export Items
     </button>
   </div>

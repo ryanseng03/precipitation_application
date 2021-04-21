@@ -2,6 +2,7 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ExportAddItemComponent, ExportDataInfo } from 'src/app/dialogs/export-add-item/export-add-item.component';
+import { ExportUnimplementedComponent } from 'src/app/dialogs/export-unimplemented/export-unimplemented.component';
 
 
 @Component({
@@ -70,6 +71,13 @@ export class ExportInterfaceComponent implements OnInit {
       files.push(fileInfo.label);
     }
     return files.join(", ");
+  }
+
+  export() {
+    const dialogRef = this.dialog.open(ExportUnimplementedComponent, {
+      width: '250px',
+      data: null
+    });
   }
 }
 
