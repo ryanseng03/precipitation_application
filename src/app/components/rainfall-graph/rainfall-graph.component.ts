@@ -3,6 +3,7 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 import { SiteValue, SiteInfo } from 'src/app/models/SiteMetadata';
 import { FormControl } from '@angular/forms';
 import Moment  from 'moment';
+import { Dataset } from 'src/app/models/dataset';
 
 @Component({
   selector: 'app-rainfall-graph',
@@ -44,6 +45,18 @@ export class RainfallGraphComponent implements OnInit {
     this.focusedYear = isoDate.substring(0, 4);
   }
 
+  //needs day time series goes to, should switch dates in dataset to be full (down to second), have
+  @Input() set range(range: [Moment.Moment, Moment.Moment]) {
+    let rangeGen = Moment(range[0]);
+    while(rangeGen.isSameOrBefore(range[1])) {
+      rangeGen.add(1, "day");
+      rangeGen.month();
+    }
+    this.graph.data[0].y = new Array().fill(null);
+  }
+
+  @Input() minDatePeriod: "second" | "minute" | "hour" | "day" | "month" | "year";
+
   config = {
     responsive: true
   }
@@ -55,6 +68,7 @@ export class RainfallGraphComponent implements OnInit {
           y: [],
           type: 'scatter',
           mode: 'lines+points',
+          connectgaps: false,
           marker: {
             color: 'blue'
           }
@@ -79,6 +93,8 @@ export class RainfallGraphComponent implements OnInit {
 
   control = new FormControl(0);
 
+  //need to add gaps in data when no data
+  //have x axis pre-populated with dates (change when focused date changes)
   public rangeOpts = [{
     display: "Current Month",
     value: 0,
@@ -100,7 +116,7 @@ export class RainfallGraphComponent implements OnInit {
           this.graph.data[0].y.push(siteValue.value);
           this.graph.data[0].x.push(siteValue.date);
         }
-        
+
       }
     }
   }, {
@@ -125,7 +141,9 @@ export class RainfallGraphComponent implements OnInit {
       this.updateGraph();
     });
 
-
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+      console.log(dataset);
+    });
   }
 
   updateGraph() {
@@ -135,7 +153,7 @@ export class RainfallGraphComponent implements OnInit {
       let index = this.control.value;
       this.rangeOpts[index].filter(this.value);
     }
-    
+
   }
 
   ngOnInit() {

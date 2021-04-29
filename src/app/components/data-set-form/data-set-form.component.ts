@@ -124,7 +124,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     // this.valid = false;
     this.valid = true;
 
-    this.updateDataSet();
+    // this.updateDataSet();
   }
 
   ngOnInit() {

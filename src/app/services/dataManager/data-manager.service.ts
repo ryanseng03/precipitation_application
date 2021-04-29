@@ -52,6 +52,7 @@ export class DataManagerService {
 
     let focusedSite = null;
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+      console.log(dataset);
       this.dataset = dataset;
       this.updateStationTimeSeries()
     });
@@ -66,7 +67,7 @@ export class DataManagerService {
         });
         this.updateStationTimeSeries();
       }
-      
+
     });
 
   }
@@ -265,7 +266,7 @@ export class DataManagerService {
           //emit the data to the application
           this.setFocusedData(date, data);
           //only runs if completed (not canceled)
-          
+
         }
       }, () => {/*cancelled*/console.log("cancelled!");})
       .then(() => {
@@ -273,7 +274,7 @@ export class DataManagerService {
         this.setLoadingOnMap(false);
       });
     };
-    
+
     let isoStr: string = date.toISOString();
     let dataRetreiver: CancellableQuery = this.cache.get(isoStr);
     //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
