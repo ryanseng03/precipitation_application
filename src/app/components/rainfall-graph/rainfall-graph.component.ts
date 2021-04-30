@@ -45,13 +45,36 @@ export class RainfallGraphComponent implements OnInit {
     this.focusedYear = isoDate.substring(0, 4);
   }
 
+  //DATASET SHOULD HAVE ASSOCIATED TIME SERIES GRANULARITIES
+  //FOR NOW HARDCODE AS DAILY
+
+  //dates
+  dates = {};
+  seriesPeriods: Period[] = ["day", "month"];
+
   //needs day time series goes to, should switch dates in dataset to be full (down to second), have
   @Input() set range(range: [Moment.Moment, Moment.Moment]) {
-    let rangeGen = Moment(range[0]);
-    while(rangeGen.isSameOrBefore(range[1])) {
+    let rangeGen: Moment.Moment;
+    for(let period of this.seriesPeriods) {
+      let format = this.period2Format(period);
+      rangeGen = Moment(range[0]);
+      this.dates[period] = [];
+      while(rangeGen.isBefore(range[1])) {
+        rangeGen.add(1, period);
+        let date = rangeGen.format(format);
+        this.dates[period].push(date);
+      }
+    }
+
+    let lowestPeriod = "day";
+
+    //let rangeGen = Moment(range[0]);
+    //use do while, want to capture the next group (if doing something like 5 year may surpass end)
+    do {
       rangeGen.add(1, "day");
       rangeGen.month();
     }
+    while(rangeGen.isBefore(range[1]))
     this.graph.data[0].y = new Array().fill(null);
   }
 
@@ -159,4 +182,30 @@ export class RainfallGraphComponent implements OnInit {
   ngOnInit() {
   }
 
+
+
+
+  //move to a service probably
+
+  periodProgression = ["second", "minute", "hour", "day", "month", "year"];
+
+  period2Format(period: Period): string {
+    let format: string;
+    switch(period) {
+      case "day": {
+        format = "YYYY-MM-DD";
+        break;
+      }
+      case "month": {
+        format = "YYYY-MM";
+        break;
+      }
+    }
+    return format;
+  }
+
 }
+
+
+//service
+type Period = "second" | "minute" | "hour" | "day" | "month" | "year";
