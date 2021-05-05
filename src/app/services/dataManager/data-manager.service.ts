@@ -39,9 +39,7 @@ export class DataManagerService {
     //   primary: {},
     //   focusedData: null
     // };
-    this.header = dataRequestor.getRasterHeader().then((request: RequestResults) => {
-      return request.toPromise();
-    });
+    this.header = dataRequestor.getRasterHeader().toPromise();
     // this.initPromise = this.initialize();
     //no delay for init data
     //this.getData(this.initDate, 0);
@@ -59,7 +57,7 @@ export class DataManagerService {
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
       if(station) {
-        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, station.skn);
+        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, station.skn).toPromise();
         p.then((request: RequestResults) => {
           request.toPromise().then((result: SiteValue[]) => {
             paramService.pushSelectedSiteTimeSeries(result);
@@ -92,7 +90,7 @@ export class DataManagerService {
   initDate = Moment("2019-12-01T00:00:00.000Z");
   //only store 7 (focus +-3)
   //map by date string to ensure access proper
-  cache = new Map<string, CancellableQuery>();
+  cache = new Map<string, RequestResults>();
   header: Promise<RasterHeader>;
 
   //available movement 1 ahead of base granularity
@@ -173,50 +171,36 @@ export class DataManagerService {
   // requestResults = {
 
   // }
-  private getDataPackRetreiver(date: Moment.Moment): CancellableQuery {
-    let rasterCanceller: () => void = null;
-    let siteCanceller: () => void = null;
-    let canceller = () => {
-      if(rasterCanceller) {
-        rasterCanceller();
-      }
-      if(siteCanceller) {
-        siteCanceller();
-      }
-    }
+  // private getDataPackRetreiver(date: Moment.Moment): CancellableQuery {
 
-    let dataPackRetreiver: Promise<InternalDataPack> = new Promise((resolve, reject) => {
-      let dataPack: InternalDataPack = {
-        bands: null,
-        sites: null,
-        metrics: null
-      }
+  //   let rasterLoader = this.dataRequestor.getRastersDate(date);
+  //   let siteLoader = this.dataRequestor.getSiteValsDate(date);
 
-      let rasterLoader = this.dataRequestor.getRastersDate(date).then((request: RequestResults) => {
-        //saving function in isolation from lexical context strips this binding, so need to bind to parent object
-        rasterCanceller = request.cancel.bind(request);
-        return request.toPromise();
-      });
-      let siteLoader = this.dataRequestor.getSiteValsDate(date).then((request: RequestResults) => {
-        //saving function in isolation from lexical context strips this binding, so need to bind to parent object
-        siteCanceller = request.cancel.bind(request);
-        return request.toPromise();
-      });
-      //shouldn't have to worry about data bein
-      Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
-        dataPack.bands = data[0];
-        dataPack.sites = data[1];
-        resolve(dataPack);
-      });
-    });
+  //   let dataPackRetreiver: Promise<InternalDataPack> = new Promise((resolve, reject) => {
+  //     let dataPack: InternalDataPack = {
+  //       bands: null,
+  //       sites: null,
+  //       metrics: null
+  //     }
 
-    let query: CancellableQuery = {
-      result: dataPackRetreiver,
-      cancel: canceller
-    }
+  //     Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
+  //       dataPack.bands = data[0];
+  //       dataPack.sites = data[1];
+  //       resolve(dataPack);
+  //     })
+  //     .catch());
+  //   });
 
-    return query;
-  }
+  //   let query: CancellableQuery = {
+  //     result: dataPackRetreiver,
+  //     cancel: () => {
+  //       rasterLoader.cancel();
+  //       siteLoader.cancel();
+  //     }
+  //   }
+
+  //   return query;
+  // }
 
 
   private map: MapComponent;
@@ -232,8 +216,11 @@ export class DataManagerService {
   }
 
 
-  //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
-  focusDataRetreiverCanceller: (reason: string) => void = null;
+  //note should flush cache at data change
+
+  // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
+  // //probably has to do with non-production running lifecycle hooks multiple times for change verification
+  // focusDataRetreiverCanceller: (reason: string) => void = null;
   getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 3000): void {
     //console.log("called!", date.toISOString());
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
@@ -268,7 +255,7 @@ export class DataManagerService {
           //only runs if completed (not canceled)
 
         }
-      }, () => {/*cancelled*/console.log("cancelled!");})
+      }, () => {/*cancelled*/})
       .then(() => {
         console.log("spinner cancel");
         this.setLoadingOnMap(false);
@@ -444,7 +431,7 @@ interface CancellableQuery {
 export interface MovementVector {
 
   direction: 1 | -1,
-  granularity: string
+  period: string
 
   //baseGranularity: string,
 

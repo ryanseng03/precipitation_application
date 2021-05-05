@@ -1,150 +1,176 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpEvent, HttpResponse } from '@angular/common/http';
-import { Observable, merge, of, Subscription } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Observable, merge, of, Subscription, throwError, Subject, observable } from 'rxjs';
 import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
+
+
+interface Config {
+  oAuthAccessToken: string,
+  queryEndpoint: string
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class DbConService {
 
-  static readonly TOKEN_FILE = "/assets/APIToken.txt";
+  static readonly CONFIG_FILE = "/assets/config.json";
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
-  private oAuthAccessToken = "token";
-  private initPromise;
+  private initPromise: Promise<Config>;
 
   constructor(private http: HttpClient) {
-
-    this.initPromise = this.http.get(DbConService.TOKEN_FILE, { responseType: "text" }).toPromise().then((data) => {
-      this.oAuthAccessToken = data;
-    });
+    this.initPromise = <Promise<Config>>(this.http.get(DbConService.CONFIG_FILE, { responseType: "json" }).toPromise());
   }
 
   //at some point may be cleaner to rework this a bit so don't have to wrap RequestResult in a promise, allow for RequestResult to be initialized before request initialized, then if cancelled before initialization just never execute the transfer (keep cancelled variable or something)
-  query(query: string, offset: number = 0): Promise<RequestResults> {
-    interface ResponseResults {
-      result: any
-    }
+  query(query: string, offset: number = 0): RequestResults {      
 
-    let r =  this.initPromise.then(() => {
-      let url = `https://agaveauth.its.hawaii.edu/search/v2/data?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
+    //mirror results through external subject to avoid issues with promise wrapper
+    let response = new RequestResults(this.http);
+    this.initPromise.then((config: Config) => {
+      response.get(query, config, offset);
+    });
+
+    
+    return response;
+
+  }
+}
+
+
+
+export class RequestResults {
+  private sub: Subscription;
+  private data: Promise<any>;
+  private http: HttpClient;
+  private retry: number;
+  private resolve: (value: any) => void;
+  private reject: (reason: any) => void;
+  private linked: RequestResults[];
+
+  cancelled: boolean;
+
+  constructor(http: HttpClient, retry: number = 3) {
+    this.http = http;
+    this.retry = retry;
+    this.cancelled = false;
+    this.data = new Promise<any>((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
+    this.linked = [];
+  }
+
+  get(query: string, config: Config, offset: number) {
+    //if cancelled or already called ignore
+    if(!this.cancelled && !this.sub) {
+      let url = `${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
 
       if(url.length > DbConService.MAX_URI) {
-        throw new Error("Query too long.");
+        this.reject("Query too long.");
       }
 
       let head = new HttpHeaders()
-      .set("Authorization", "Bearer " + this.oAuthAccessToken)
+      .set("Authorization", "Bearer " + config.oAuthAccessToken)
       .set("Content-Type", "application/x-www-form-urlencoded");
       let options = {
         headers: head
       };
 
-      let resultPromise = null;
-      let resultSub = null;
-      let resolver = null;
-
-      resultPromise = new Promise((resolve, reject) => {
-        resolver = resolve;
-        let results = this.http.get(url, options)
-        .pipe(
-          retry(3),
-          take(1),
-          catchError((e) => {
-            return Observable.throw(e);
-          })
-        );
-        resultSub = results.subscribe((response: any) => {
-          resolve(response);
-        });
+      this.http.get(url, options)
+      .pipe(
+        retry(this.retry),
+        take(1),
+        catchError((e: HttpErrorResponse) => {
+          return throwError(e);
+        })
+      )
+      .subscribe((response: any) => {
+        this.resolve(response);
+      }, (error: any) => {
+        let reject: RequestReject = {
+          cancelled: this.cancelled,
+          reason: `Error querying url ${url}: ${error}`
+        }
+        this.reject(reject);
+      }, () => {
+        if(this.cancelled) {
+          let reject: RequestReject = {
+            cancelled: true,
+            reason: null
+          }
+          this.reject(reject);
+        }
       });
-
-      // let results = this.http.get(url, options)
-      // .pipe(
-      //   retry(3),
-      //   take(1),
-      //   catchError((e) => {
-      //     return Observable.throw(e);
-      //   })
-      // ).toPromise().then((response: any) => {
-      //   return resultHandler(response.result);
-      // });
-
-      let request = new RequestResults(resultPromise, resolver, resultSub);
-      //console.log(request);
-      return request;
-
-    });
-
-    //console.log(r);
-
-    return r;
-  }
-}
-
-// class CancellableRequest {
-//   resultSub: Subscription;
-//   resultPromise: Promise<any>;
-//   resolver: (result: any) => void;
-//   //interesting syntax (looks like this grabs the type of the prototype function given it's name as the index)
-//   // then: Promise<any>["then"];
-
-//   //what is the tpye for options? just use any for now, not super important
-//   constructor(url: string, options: any, http: HttpClient) {
-//     console.log(http);
-//     this.resultPromise = new Promise((resolve, reject) => {
-//       this.resolver = resolve;
-//       console.log(http);
-//       let results = http.get(url, options)
-//         .pipe(
-//           retry(3),
-//           take(1),
-//           catchError((e) => {
-//             return Observable.throw(e);
-//           })
-//         );
-//         this.resultSub = results.subscribe((response: any) => {
-//           console.log(response);
-//           let res = response.result;
-//           resolve(res);
-//         });
-//       });
-
-
-//     // //allow chaining of internal promise by setting internal promise to result of any then calls actually make modified method so have choice)
-//     // this.then = this.resultPromise.then;
-//   }
-
-//   toRequestResult(): RequestResults {
-//     return new RequestResults(this.resultPromise, this.resolver, this.resultSub);
-//   }
-
-
-// }
-
-export class RequestResults {
-  result: Promise<any>;
-  resultSub: Subscription;
-  resolver: (result: any) => void;
-
-  constructor(result: Promise<any>, resolver: (result: any) => void, resultSub: Subscription) {
-    this.result = result;
-    this.resultSub = resultSub;
-    this.resolver = resolver;
+    }
   }
 
-  transform(onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any): RequestResults {
-    return new RequestResults(this.result.then(onfulfilled, onrejected), this.resolver, this.resultSub);
+  transform(onfulfilled: (value: any) => any, onrejected: (reason: RequestReject) => any) {
+    this.data = this.data.then(onfulfilled, onrejected);
   }
 
   cancel(): void {
-    this.resolver(null);
-    this.resultSub.unsubscribe();
+    for(let link of this.linked) {
+      link.cancel();
+    }
+    this.cancelled = true;
+    //does this complete the stream?
+    this.sub.unsubscribe();
+    //this.outSource.complete();
+  }
+
+  combine(request: RequestResults): void {
+    this.linked.push(request);
+    this.data = Promise.all([this, ...this.linked]);
   }
 
   toPromise(): Promise<any> {
-    return this.result;
+    return this.data;
   }
+
 }
+
+export interface RequestReject {
+  cancelled: boolean,
+  reason: any
+}
+
+
+
+// class SubjectChain {
+//   head: SubjectChainNode;
+//   tail: SubjectChainNode;
+
+//   constructor(root: Subject<any>) {
+//     let head: SubjectChainNode = {
+//       subject: root,
+//       next: null
+//     };
+//     this.head = head;
+//     this.tail = head;
+//   }
+
+//   link(obs: Subject<any>) {
+//     let tail: SubjectChainNode = {
+//       subject: obs,
+//       next: null
+//     };
+//     this.tail.next = tail;
+//     this.tail = tail;
+//   }
+
+//   complete() {
+//     let node: SubjectChainNode = this.head;
+//     while(node) {
+//       node.subject.complete();
+//       node = node.next;
+//     }
+//   }
+// }
+
+// interface SubjectChainNode {
+//   subject: Subject<any>;
+//   next: SubjectChainNode
+// }

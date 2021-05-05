@@ -11,6 +11,7 @@
 # API key
 /src/assets/APIToken.txt
 /src/assets/TestToken.txt
+/src/assets/config.json
 
 # IDEs and editors
 /.idea

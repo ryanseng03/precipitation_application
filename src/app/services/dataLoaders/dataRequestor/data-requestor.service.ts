@@ -21,20 +21,24 @@ export class DataRequestorService {
   //need to be careful how you set up separation between site and raster data, need to keep date consistent
   //
 
-  getRasterHeader(): Promise<RequestResults> {
+  getRasterHeader(): RequestResults {
     return this.siteRetreiver.getRasterHeader();
   }
 
-  getSiteValsDate(date: Moment.Moment): Promise<RequestResults> {
+  getSiteValsDate(date: Moment.Moment): RequestResults {
     return this.siteRetreiver.getSiteValsDate(date);
   }
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): Promise<RequestResults> {
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): RequestResults {
     return this.siteRetreiver.getSiteTimeSeries(start, end, skn);
   }
 
-  getRastersDate(date: Moment.Moment): Promise<RequestResults> {
+  getRastersDate(date: Moment.Moment): RequestResults {
     return this.siteRetreiver.getRastersDate(date);
+  }
+
+  getDataPack(date) {
+    
   }
 
   // //just return values, wait to combine with metadata references until needed to avoid excess storage
@@ -42,7 +46,7 @@ export class DataRequestorService {
   //   return this.siteRetreiver.getInitValues();
   // }
 
-  getSiteVals(start: string, end: string): Promise<RequestResults> {
+  getSiteVals(start: string, end: string): RequestResults {
     return this.siteRetreiver.getValueRange(Moment(start), Moment(end));
   }
 
