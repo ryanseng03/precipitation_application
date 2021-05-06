@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as L from "leaflet";
-import { DataRetreiverService, DecoupledCoords } from "../utility/data-retreiver.service";
+import { DataRetreiverService, DecoupledCoords } from "../util/data-retreiver.service";
 import { ColorScale } from '../../models/colorScale';
 import { RasterHeader, IndexedValues } from '../../models/RasterData';
 
@@ -55,9 +55,9 @@ export class LeafletRasterLayerService {
         let coordString = JSON.stringify(coords);
 
         let tile: HTMLCanvasElement = <HTMLCanvasElement>L.DomUtil.create('canvas', 'leaflet-tile');
-    
+
         if(!this.options.cacheEmpty || !__this.emptyTileCache.has(coordString)) {
-        
+
 
           let ctx = tile.getContext("2d");
           let tileSize = this.getTileSize();
@@ -66,7 +66,7 @@ export class LeafletRasterLayerService {
           tile.height = tileSize.y;
           //console.log(tile);
           let imgData = ctx.getImageData(0, 0, tileSize.x, tileSize.y);
-         
+
 
 
           //get the coordinates of the tile corner, tile coords times scale
@@ -78,11 +78,11 @@ export class LeafletRasterLayerService {
           let x = 0;
           let y = 0;
           let colorOff = 0;
-          
+
           let hasValue = false;
 
           for(y = yMin; y < yMax; y++) {
-            for(x = xMin; x < xMax; x++) { 
+            for(x = xMin; x < xMax; x++) {
               //unproject fast enough that unnecessary to decouple
               let latlng: L.LatLng = this._map.unproject([x, y], coords.z);
 
@@ -96,7 +96,7 @@ export class LeafletRasterLayerService {
               }
               colorOff += 4;
             }
-            
+
           }
 
           //if caching empty tiles and tile had no values in it, add to empty tile cache
@@ -108,7 +108,7 @@ export class LeafletRasterLayerService {
         return tile;
       }
     });
-    
+
     R.gridLayer.RasterLayer = function(options: RasterOptions) {
       return new R.GridLayer.RasterLayer(options);
     };

@@ -6,7 +6,7 @@ import {saveAs} from "file-saver";
 import * as geotiff from "geotiff";
 import { Color, ColorScale } from "../../models/colorScale";
 import { ColorGeneratorService } from "../../services/rasterLayerGeneration/color-generator.service";
-import { DataRetreiverService } from "../../services/utility/data-retreiver.service";
+import { DataRetreiverService } from "../../services/util/data-retreiver.service";
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
 import { EventParamRegistrarService, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";

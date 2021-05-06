@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { UnitConversionService } from "../utility/unit-conversion.service";
+import { UnitConversionService } from "../util/unit-conversion.service";
 
 @Injectable({
   providedIn: 'root'
@@ -64,7 +64,7 @@ export class UnitTransformerService {
     if(unit) {
 
     }
-    else { 
+    else {
       console.error("No unit conversion found.");
     }
   }

@@ -8,7 +8,6 @@ import Moment from 'moment';
 import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
 import {Dataset} from "../../models/dataset";
-import moment from 'moment';
 
 
 @Injectable({
@@ -34,6 +33,14 @@ export class DataManagerService {
   //OVERHEAD SHOULD BE MINIMAL
 
   constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService) {
+
+    let t1 = Moment();
+    setTimeout(() => {
+      let t2 = Moment();
+      console.log(t1.toISOString());
+      console.log(t2.toISOString());
+    }, 5000);
+
     // this.data = {
     //   header: null,
     //   primary: {},
@@ -69,6 +76,39 @@ export class DataManagerService {
     });
 
   }
+
+
+  //background tasks --------------------------------------
+
+  //how many station values timeseries cache?
+  timeseriesCacheSize = 25;
+  datasetCacheSize = 25;
+  timeseriesCache = new AccessWeightedCache<string, RequestResults>(this.timeseriesCacheSize);
+  datasetCache = new AccessWeightedCache<string, RequestResults>(this.timeseriesCacheSize);
+
+  //MAP OBJECTS MAINTAIN INSERTION ORDER, CAN USE FOR IMPLICIT TIME ORDERING!
+  requests = {
+    georef: null,
+    stationMetadata: null,
+    dates: [null, null],
+    focus: null,
+    cache: {},
+    timeseries: {
+
+    }
+  }
+
+  //get date range before set (as soon as select dataset before submit)
+  getDataSetInfo() {
+    //get georef
+    //get station metadata
+    //get latest date data
+    //
+  }
+
+  //-------------------------------------------------------
+
+
 
   updateStationTimeSeries() {
     //console.log("!!!!");
@@ -113,7 +153,7 @@ export class DataManagerService {
       //just set magnitude to a default value, all directions will be the same anyway
       magnitude = {
         direction: 1,
-        granularity: this.dataset.timestep
+        period: this.dataset.timestep
       }
     }
     let baseI = this.granularities.indexOf(this.dataset.timestep);
@@ -126,8 +166,8 @@ export class DataManagerService {
         opposite: -magnitude.direction
       },
       granularity: {
-        same: this.granularityTranslation[magnitude.granularity],
-        opposite: this.dataset.timestep == magnitude.granularity ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[this.dataset.timestep]
+        same: this.granularityTranslation[magnitude.period],
+        opposite: this.dataset.timestep == magnitude.period ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[this.dataset.timestep]
       }
     }
     let toAdd: [number, string][] = [
@@ -227,16 +267,16 @@ export class DataManagerService {
     if(this.throttle) {
       clearTimeout(this.throttle);
     }
-    if(this.focusDataRetreiverCanceller) {
-      //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
-      this.focusDataRetreiverCanceller("Another date was focused before completion.");
-    }
+    // if(this.focusDataRetreiverCanceller) {
+    //   //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
+    //   this.focusDataRetreiverCanceller("Another date was focused before completion.");
+    // }
 
     //two different cases where this used (cache hit/miss), set as function
     let setFocusedDataRetreiverHandler = (dataRetreiver: Promise<InternalDataPack>) => {
       this.setLoadingOnMap(true);
       let focusDataRetreiver = new Promise((resolve, reject) => {
-        this.focusDataRetreiverCanceller = reject;
+        //this.focusDataRetreiverCanceller = reject;
         //resolve after cached promise resolves to allow for cancellation
         dataRetreiver.then((data: InternalDataPack) => {
           console.log("got focus data", data);
@@ -263,34 +303,34 @@ export class DataManagerService {
     };
 
     let isoStr: string = date.toISOString();
-    let dataRetreiver: CancellableQuery = this.cache.get(isoStr);
+    //let dataRetreiver: CancellableQuery = this.cache.get(isoStr);
     //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
-    if(dataRetreiver) {
-      console.log("cache hit!!");
-      setFocusedDataRetreiverHandler(dataRetreiver.result);
-    }
+    // if(dataRetreiver) {
+    //   console.log("cache hit!!");
+    //   setFocusedDataRetreiverHandler(dataRetreiver.result);
+    // }
 
     //set timeout regardless of cache hit for cache data
-    this.throttle = setTimeout(() => {
-      //cache missed, get focus date data
-      if(!dataRetreiver) {
-        console.log("cache miss!");
-        dataRetreiver = this.getDataPackRetreiver(date);
-        this.cache.set(date.toISOString(), dataRetreiver);
-        setFocusedDataRetreiverHandler(dataRetreiver.result);
-      }
+    // this.throttle = setTimeout(() => {
+    //   //cache missed, get focus date data
+    //   if(!dataRetreiver) {
+    //     console.log("cache miss!");
+    //     dataRetreiver = this.getDataPackRetreiver(date);
+    //     this.cache.set(date.toISOString(), dataRetreiver);
+    //     setFocusedDataRetreiverHandler(dataRetreiver.result);
+    //   }
 
-      /////////
-      //dates//
-      /////////
+    //   /////////
+    //   //dates//
+    //   /////////
 
 
-      //get additional dates to pull data for for cache
-      let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-      //cache data for new dates and clear old entries
-      this.cacheDates(date, cacheDates);
+    //   //get additional dates to pull data for for cache
+    //   let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+    //   //cache data for new dates and clear old entries
+    //   this.cacheDates(date, cacheDates);
 
-    }, delay);
+    // }, delay);
 
   }
 
@@ -313,8 +353,8 @@ export class DataManagerService {
       }
       //not in cache, need to retreive data
       else {
-        let cacheData = this.getDataPackRetreiver(date);
-        this.cache.set(dateString, cacheData);
+        //let cacheData = this.getDataPackRetreiver(date);
+        //this.cache.set(dateString, cacheData);
       }
     }
     //remove old entries that weren't recached (anything still in cachedDatesSet)
@@ -487,4 +527,106 @@ export type DataType = keyof DataBands;
 //define metrics structure
 export interface Metrics {
 
+}
+
+
+class AccessWeightedCache<T, U> {
+  private limit: number;
+  private index: Map<T, CacheNode<T, U>>;
+  private priority: CachePriority<T, U>
+
+  constructor(limit: number) {
+    if(limit <= 0) {
+      throw "Cache underflow";
+    }
+    this.limit = limit;
+    this.index = new Map<T, CacheNode<T, U>>();
+    this.priority = new CachePriority<T, U>();
+  }
+
+  setLimit(limit: number): void {
+    if(limit <= 0) {
+      throw "Cache underflow";
+    }
+    this.limit = limit;
+    this.clean();
+  }
+
+  cache(key: T, value: U, priority: boolean = true): void {
+    let node = this.priority.add(key, value, priority);
+    this.index.set(key, node);
+    this.clean();
+  }
+
+  get(key: T): U {
+    let value: U = null;
+    let node = this.index.get(key);
+    if(node) {
+      value = node.value;
+      this.priority.accessed(node);
+    }
+    return value;
+  }
+
+  clear(): void {
+    this.index.clear();
+    this.priority.clear();
+  }
+
+  private clean(): void {
+    while(this.index.size > this.limit) {
+      let key = this.priority.removeLast();
+      this.index.delete(key);
+    }
+  }
+}
+
+class CachePriority<T, U> {
+  head: CacheNode<T, U>;
+  tail: CacheNode<T, U>;
+
+  constructor() {
+    this.head = null;
+    this.tail = null;
+  }
+
+  //add to head (last accessed)
+  add(key: T, value: U): CacheNode<T, U> {
+    let node = new CacheNode<T, U>();
+    node.key = key;
+    node.value = value;
+    node.next = this.head;
+    node.previous = null;
+    this.head.previous = node;
+    this.head = node;
+    return node;
+  }
+
+  accessed(node: CacheNode<T, U>): void {
+    node.previous.next = node.next;
+    node.previous = null;
+    node.next = this.head;
+    this.head.previous = node;
+    this.head = node;
+  }
+
+  //remove LRU
+  removeLast(): T {
+    let key = this.tail.key;
+    this.tail = this.tail.previous;
+    this.tail.next = null;
+    return key;
+  }
+
+  clear() {
+    this.head = null;
+    this.tail = null;
+  }
+}
+
+class CacheNode<T, U> {
+  key: T;
+  value: U;
+  next: CacheNode<T, U>;
+  previous: CacheNode<T, U>;
 }
