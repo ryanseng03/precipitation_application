@@ -2,7 +2,7 @@ import { Component, OnInit, AfterContentInit, AfterViewInit, NgZone, ChangeDetec
 import Moment from "moment";
 import "moment-timezone";
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
-import {Dataset, SetType, FillType, Timestep} from "../../models/dataset";
+import {Dataset, SetType, FillType, Timestep} from "../../models/Dataset";
 import { FormControl } from '@angular/forms';
 import {DateChangeInfo} from "../controls/date-focus/date-focus.component";
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable, merge, of, Subscription, throwError, Subject, observable } from 'rxjs';
 import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
+import { promise } from 'protractor';
 
 
 interface Config {
@@ -31,6 +32,9 @@ export class DbConService {
     let response = new RequestResults(this.http);
     this.initPromise.then((config: Config) => {
       response.get(query, config, offset);
+    })
+    .catch((e: any) => {
+      console.error(`Error getting config: ${e}`);
     });
 
     
@@ -69,7 +73,11 @@ export class RequestResults {
       let url = `${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
 
       if(url.length > DbConService.MAX_URI) {
-        this.reject("Query too long.");
+        let reject: RequestReject = {
+          cancelled: this.cancelled,
+          reason: `Query too long: max length: ${DbConService.MAX_URI}, query length: ${url.length}`
+        };
+        this.reject(reject);
       }
 
       let head = new HttpHeaders()
@@ -79,7 +87,7 @@ export class RequestResults {
         headers: head
       };
 
-      this.http.get(url, options)
+      this.sub = this.http.get(url, options)
       .pipe(
         retry(this.retry),
         take(1),
@@ -93,7 +101,7 @@ export class RequestResults {
         let reject: RequestReject = {
           cancelled: this.cancelled,
           reason: `Error querying url ${url}: ${error}`
-        }
+        };
         this.reject(reject);
       }, () => {
         if(this.cancelled) {
@@ -108,7 +116,8 @@ export class RequestResults {
   }
 
   transform(onfulfilled: (value: any) => any, onrejected: (reason: RequestReject) => any) {
-    this.data = this.data.then(onfulfilled, onrejected);
+    this.data = this.data.then(onfulfilled)
+    .catch(onrejected);
   }
 
   cancel(): void {
@@ -123,7 +132,11 @@ export class RequestResults {
 
   combine(request: RequestResults): void {
     this.linked.push(request);
-    this.data = Promise.all([this, ...this.linked]);
+    let promises = [this.data];
+    for(let link of this.linked) {
+      promises.push(link.toPromise());
+    }
+    this.data = Promise.all(promises);
   }
 
   toPromise(): Promise<any> {

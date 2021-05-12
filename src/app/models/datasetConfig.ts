@@ -1,4 +1,4 @@
-import {Dataset} from "./dataset"
+import {Dataset} from "./Dataset"
 
 export interface DatasetConfig {
     initialSetIndex: number,

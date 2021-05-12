@@ -7,8 +7,15 @@ import {DataRequestorService, RequestResults} from "../dataLoaders/dataRequestor
 import Moment from 'moment';
 import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
-import {Dataset} from "../../models/dataset";
+import {Dataset} from "../../models/Dataset";
+import moment from 'moment';
 
+
+interface StagedTimeseriesData {
+  month: RequestResults,
+  year: RequestResults,
+  full: RequestResults
+}
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +26,10 @@ export class DataManagerService {
   public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
   public static readonly FALLBACK_DATE: string = "1970-01-01T00:00:00.000Z";
 
+  private throttles: {
+    focus: NodeJS.Timer,
+    cache: NodeJS.Timer
+  };
 
 
   //use manager to mitigate issues with changing data structure
@@ -33,29 +44,12 @@ export class DataManagerService {
   //OVERHEAD SHOULD BE MINIMAL
 
   constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService) {
+    this.throttles = {
+      focus: null,
+      cache: null
+    };
 
-    let t1 = Moment();
-    setTimeout(() => {
-      let t2 = Moment();
-      console.log(t1.toISOString());
-      console.log(t2.toISOString());
-    }, 5000);
-
-    // this.data = {
-    //   header: null,
-    //   primary: {},
-    //   focusedData: null
-    // };
     this.header = dataRequestor.getRasterHeader().toPromise();
-    // this.initPromise = this.initialize();
-    //no delay for init data
-    //this.getData(this.initDate, 0);
-    // setTimeout(() => {
-    //   console.log("second submitted");
-    //   this.getData(Moment("2018-11-01T00:00:00.000Z"));
-    // }, 10000);
-
-    let focusedSite = null;
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
       console.log(dataset);
       this.dataset = dataset;
@@ -77,8 +71,42 @@ export class DataManagerService {
 
   }
 
+  updateStationTimeSeries() {
+    //console.log("!!!!");
+  }
 
-  //background tasks --------------------------------------
+  //store single raster data object and swap out bands
+
+
+  //////////////////////////
+  //////////////////////////
+  ///////////////////////////
+  /////////////////
+
+  //store time range info for current site
+
+
+  //TEMP PATCH
+  //all months for now
+  initDate = Moment("2019-12-01T00:00:00.000Z");
+  //only store 7 (focus +-3)
+  //map by date string to ensure access proper
+  cache = new Map<string, RequestResults>();
+  //timeseriesCache = new Map<StationData, >();
+
+  header: Promise<RasterHeader>;
+
+  //available movement 1 ahead of base granularity
+  granularities = ["daily", "monthly", "yearly"];
+  granularityTranslation = {
+    daily: "days",
+    monthly: "months",
+    yearly: "years"
+  };
+
+
+
+  //----------------------------------------------------------------------------
 
   //how many station values timeseries cache?
   timeseriesCacheSize = 25;
@@ -106,40 +134,7 @@ export class DataManagerService {
     //
   }
 
-  //-------------------------------------------------------
-
-
-
-  updateStationTimeSeries() {
-    //console.log("!!!!");
-  }
-
-  //store single raster data object and swap out bands
-
-
-  //////////////////////////
-  //////////////////////////
-  ///////////////////////////
-  /////////////////
-
-  //store time range info for current site
-
-
-  //TEMP PATCH
-  //all months for now
-  initDate = Moment("2019-12-01T00:00:00.000Z");
-  //only store 7 (focus +-3)
-  //map by date string to ensure access proper
-  cache = new Map<string, RequestResults>();
-  header: Promise<RasterHeader>;
-
-  //available movement 1 ahead of base granularity
-  granularities = ["daily", "monthly", "yearly"];
-  granularityTranslation = {
-    daily: "days",
-    monthly: "months",
-    yearly: "years"
-  };
+  //----------------------------------------------------------------------------
 
 
   private getRangeBreakdown(movementInfo: MovementVector): [number, string][] {
@@ -202,46 +197,8 @@ export class DataManagerService {
         }
       }
     }
-    console.log(range);
     return range;
   }
-
-  throttle = null;
-
-  // requestResults = {
-
-  // }
-  // private getDataPackRetreiver(date: Moment.Moment): CancellableQuery {
-
-  //   let rasterLoader = this.dataRequestor.getRastersDate(date);
-  //   let siteLoader = this.dataRequestor.getSiteValsDate(date);
-
-  //   let dataPackRetreiver: Promise<InternalDataPack> = new Promise((resolve, reject) => {
-  //     let dataPack: InternalDataPack = {
-  //       bands: null,
-  //       sites: null,
-  //       metrics: null
-  //     }
-
-  //     Promise.all([rasterLoader, siteLoader]).then((data: [BandData, SiteValue[]]) => {
-  //       dataPack.bands = data[0];
-  //       dataPack.sites = data[1];
-  //       resolve(dataPack);
-  //     })
-  //     .catch());
-  //   });
-
-  //   let query: CancellableQuery = {
-  //     result: dataPackRetreiver,
-  //     cancel: () => {
-  //       rasterLoader.cancel();
-  //       siteLoader.cancel();
-  //     }
-  //   }
-
-  //   return query;
-  // }
-
 
   private map: MapComponent;
   setMap(map: MapComponent) {
@@ -256,81 +213,95 @@ export class DataManagerService {
   }
 
 
-  //note should flush cache at data change
+
+  //should handler stuff as a transform
+  //nope because not necessaruly cancelling
+
+  //probably the easiest way is to just check if current date matches, if it doesn't then skip
+  //what about if move around and back? trigger multiple times?
+  focusDataRetreiverCanceller: (reason: string) => void = null;
 
   // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
   // //probably has to do with non-production running lifecycle hooks multiple times for change verification
-  // focusDataRetreiverCanceller: (reason: string) => void = null;
   getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 3000): void {
-    //console.log("called!", date.toISOString());
+    
+    this.setLoadingOnMap(true);
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
-    if(this.throttle) {
-      clearTimeout(this.throttle);
+    if(this.throttles.focus) {
+      clearTimeout(this.throttles.focus);
+      this.setLoadingOnMap(false);
     }
-    // if(this.focusDataRetreiverCanceller) {
-    //   //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
-    //   this.focusDataRetreiverCanceller("Another date was focused before completion.");
-    // }
+    if(this.throttles.cache) {
+      clearTimeout(this.throttles.cache);
+    }
+    if(this.focusDataRetreiverCanceller) {
+      //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
+      this.focusDataRetreiverCanceller("Another date was focused before completion.");
+    }
 
     //two different cases where this used (cache hit/miss), set as function
-    let setFocusedDataRetreiverHandler = (dataRetreiver: Promise<InternalDataPack>) => {
-      this.setLoadingOnMap(true);
-      let focusDataRetreiver = new Promise((resolve, reject) => {
-        //this.focusDataRetreiverCanceller = reject;
-        //resolve after cached promise resolves to allow for cancellation
-        dataRetreiver.then((data: InternalDataPack) => {
-          console.log("got focus data", data);
-          resolve(data);
+    let focusedDataHandler = (dataRetreiver: RequestResults) => {  
+      let start = new Date().getTime();
+      new Promise((resolve, reject) => {
+        this.focusDataRetreiverCanceller = reject;
+        return dataRetreiver.toPromise().then((data: InternalDataPack) => {
+          resolve(data)
+        })
+        .catch(() => {
+          //cancelled or failed
+          reject();
         });
-      });
-      focusDataRetreiver.then((data: InternalDataPack) => {
-        //bands or sites null if query cancelled, should never actually happen since theres no reason the focused data should be uncached (if moved focus then this should be cancelled and this code shouldn't run)
-        if(data.bands == null || data.sites == null) {
-          //log error to console, and just dont set data, maybe can recover (will keep "loading" forever to indicate error)
-          console.error("Focused data set cancelled! This should never happen!");
-        }
-        else {
-          //emit the data to the application
-          this.setFocusedData(date, data);
-          //only runs if completed (not canceled)
-
-        }
-      }, () => {/*cancelled*/})
+      })
+      .then((data: InternalDataPack) => {
+        let time = new Date().getTime() - start;
+        let timeSec = time / 1000;
+        console.log(`Retreived focused data, time elapsed ${timeSec} seconds`);
+        //emit the data to the application
+        this.setFocusedData(date, data);
+      })
+      .catch(() => {/*request cancelled or failed upstream*/})
+      //loading complete
       .then(() => {
-        console.log("spinner cancel");
         this.setLoadingOnMap(false);
       });
     };
 
     let isoStr: string = date.toISOString();
-    //let dataRetreiver: CancellableQuery = this.cache.get(isoStr);
-    //if already in cache no need to wait since not submitting new request, just set up hook on cached promise (will be cancelled if new request comes through before)
-    // if(dataRetreiver) {
-    //   console.log("cache hit!!");
-    //   setFocusedDataRetreiverHandler(dataRetreiver.result);
-    // }
+    let dataRetreiver: RequestResults = this.cache.get(isoStr); 
+    
+    let cacheDates = () => {
+      this.throttles.cache = setTimeout(() => {
+        this.throttles.cache = null;
 
-    //set timeout regardless of cache hit for cache data
-    // this.throttle = setTimeout(() => {
-    //   //cache missed, get focus date data
-    //   if(!dataRetreiver) {
-    //     console.log("cache miss!");
-    //     dataRetreiver = this.getDataPackRetreiver(date);
-    //     this.cache.set(date.toISOString(), dataRetreiver);
-    //     setFocusedDataRetreiverHandler(dataRetreiver.result);
-    //   }
+        /////////
+        //dates//
+        /////////
 
-    //   /////////
-    //   //dates//
-    //   /////////
+        //get additional dates to pull data for for cache
+        let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+        //cache data for new dates and clear old entries
+        this.cacheDates(date, cacheDates);
+      }, delay);
+    }
 
+    if(dataRetreiver) {
+      this.throttles.focus = setTimeout(() => {
+        this.throttles.focus = null;
+        focusedDataHandler(dataRetreiver);
+        cacheDates();
+      }, 0)
+    }
+    else {
+      this.throttles.focus = setTimeout(() => {
+        this.throttles.focus = null;
+        dataRetreiver = this.dataRequestor.getDataPack(date);
+        this.cache.set(date.toISOString(), dataRetreiver);
+        focusedDataHandler(dataRetreiver);
+        cacheDates();
+      }, delay);  
+    }
 
-    //   //get additional dates to pull data for for cache
-    //   let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-    //   //cache data for new dates and clear old entries
-    //   this.cacheDates(date, cacheDates);
-
-    // }, delay);
+    
 
   }
 
@@ -353,8 +324,8 @@ export class DataManagerService {
       }
       //not in cache, need to retreive data
       else {
-        //let cacheData = this.getDataPackRetreiver(date);
-        //this.cache.set(dateString, cacheData);
+        let cacheData = this.dataRequestor.getDataPack(date);
+        this.cache.set(dateString, cacheData);
       }
     }
     //remove old entries that weren't recached (anything still in cachedDatesSet)
@@ -364,7 +335,6 @@ export class DataManagerService {
       this.cache.delete(date);
     });
   }
-
 
 
 
@@ -380,7 +350,6 @@ export class DataManagerService {
           data: null,
         };
 
-
         //if undefined then the date doesn't exist, do nothing and return null
         if(internalData != undefined) {
           let data: DataPack = {
@@ -389,7 +358,7 @@ export class DataManagerService {
             metrics: null
           };
           focus.data = data;
-          this.combineMetaWithValues(internalData.sites).then((info: SiteInfo[]) => {
+          this.combineMetaWithValues(internalData.stations).then((info: SiteInfo[]) => {
             data.sites = info;
             //console.log(internalData.sites);
             //wrap in rasterdata object
@@ -407,13 +376,9 @@ export class DataManagerService {
           });
         }
         else {
-          //only get site data for now
-          //this.dataRequestor.getSiteVals(date)
-          //cache data
-          //not implemented just reject for now
           reject();
         }
-        //resolve(focus);
+
       });
     });
   }
@@ -469,12 +434,8 @@ interface CancellableQuery {
 }
 
 export interface MovementVector {
-
   direction: 1 | -1,
   period: string
-
-  //baseGranularity: string,
-
 }
 
 //update as needed
@@ -493,7 +454,7 @@ interface DateReferencedInternalDataPack {
 interface InternalDataPack {
   bands: BandData,
   //might change to something a bit more robust
-  sites: SiteValue[],
+  stations: SiteValue[],
   //need to define this, refer to empty interface for now
   metrics: Metrics
 }
@@ -529,7 +490,6 @@ export interface Metrics {
 
 }
 
-
 class AccessWeightedCache<T, U> {
   private limit: number;
   private index: Map<T, CacheNode<T, U>>;
@@ -552,8 +512,8 @@ class AccessWeightedCache<T, U> {
     this.clean();
   }
 
-  cache(key: T, value: U, priority: boolean = true): void {
-    let node = this.priority.add(key, value, priority);
+  cache(key: T, value: U): void {
+    let node = this.priority.add(key, value);
     this.index.set(key, node);
     this.clean();
   }

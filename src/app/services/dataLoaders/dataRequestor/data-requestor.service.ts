@@ -37,8 +37,8 @@ export class DataRequestorService {
     return this.siteRetreiver.getRastersDate(date);
   }
 
-  getDataPack(date) {
-    
+  getDataPack(date: Moment.Moment) {
+    return this.siteRetreiver.getDataPackByDate(date);
   }
 
   // //just return values, wait to combine with metadata references until needed to avoid excess storage

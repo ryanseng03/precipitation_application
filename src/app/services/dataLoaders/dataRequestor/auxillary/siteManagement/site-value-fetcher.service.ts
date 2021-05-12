@@ -7,7 +7,7 @@ import { SiteValue } from '../../../../../models/SiteMetadata';
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 import { BandData, RasterHeader, RasterData, IndexedValues } from 'src/app/models/RasterData';
 import moment from 'moment';
-import { DataPack } from 'src/app/services/dataManager/data-manager.service';
+//import { DataPack } from 'src/app/services/dataManager/data-manager.service';
 
 export {RequestResults} from "../dbCon/db-con.service";
 
@@ -81,10 +81,11 @@ export class SiteValueFetcherService {
     let stationRequest = this.getSiteValsDate(date);
     rasterRequest.combine(stationRequest);
     rasterRequest.transform((data: [BandData, SiteValue[]]) => {
+      console.log(data);
       let dataPack = {
         bands: data[0],
         stations: data[1]
-      }
+      };
       return dataPack;
     }, (reason: RequestReject) => {
       if(reason.reason) {

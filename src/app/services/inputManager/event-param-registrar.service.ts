@@ -5,7 +5,7 @@ import { FocusedData, DataType, Metrics } from "../../services/dataManager/data-
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import { Subject } from "rxjs";
-import { Dataset } from "../../models/dataset";
+import { Dataset } from "../../models/Dataset";
 import Moment from 'moment';
 
 @Injectable({

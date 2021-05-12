@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { DbConService, RequestResults } from "../dbCon/db-con.service";
+import { DbConService, RequestResults, RequestReject } from "../dbCon/db-con.service";
 import { SiteMetadata } from "../../../../../models/SiteMetadata";
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 import { LatLng } from "leaflet";
 import dsconfig from "./DataSetConfig.json";
 
-export {RequestResults} from "../dbCon/db-con.service";
+export {RequestResults, RequestReject} from "../dbCon/db-con.service";
 
 @Injectable({
   providedIn: 'root'
@@ -36,12 +36,17 @@ export class MetadataStoreService {
       return metadata;
     }
 
-    this.siteMeta = dbcon.query(query).toPromise().then((result: RequestResults) => {
-      return result.toPromise().then((response: any) => {
-        let siteMeta: SKNRefMeta = resultHandler(response.result);
-        //console.log(siteMeta);
-        return siteMeta;
-      });
+    this.siteMeta = dbcon.query(query).toPromise()
+    .then((response: any) => {
+      let siteMeta: SKNRefMeta = resultHandler(response.result);
+      //console.log(siteMeta);
+      return siteMeta;
+    })
+    .catch((reason: RequestReject) => {
+      if(reason.reason) {
+        console.error(reason.reason);
+      }
+      return null;
     });
   }
 
@@ -71,6 +76,8 @@ export class MetadataStoreService {
 
 
 }
+
+//multiple metadata docs?
 
 export interface SKNRefMeta {
   [skn: string]: SiteMetadata

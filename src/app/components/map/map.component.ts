@@ -268,7 +268,6 @@ export class MapComponent implements OnInit {
     else {
       (<any>this.map).spin(false);
       this.loading--;
-      console.log(this.loading);
     }
   }
 

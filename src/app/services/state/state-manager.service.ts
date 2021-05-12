@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import Moment from "moment";
-import { StationData } from "../../models/StationMetadata";
+//import { StationData } from "../../models/StationMetadata";
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +9,7 @@ export class StateManagerService {
 
   state: {
     descriptors: number[]
-    station: StationData
+    //station: StationData
     visData: {
       timeseries: null
     }

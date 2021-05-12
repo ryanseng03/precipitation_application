@@ -3,7 +3,7 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 import { SiteValue, SiteInfo } from 'src/app/models/SiteMetadata';
 import { FormControl } from '@angular/forms';
 import Moment  from 'moment';
-import { Dataset } from 'src/app/models/dataset';
+import { Dataset } from 'src/app/models/Dataset';
 
 @Component({
   selector: 'app-rainfall-graph',
