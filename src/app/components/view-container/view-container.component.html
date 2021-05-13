@@ -2,18 +2,29 @@
   <div class="scroll-hide">
     <div #viewContainer class="view-container" (scroll)="containerScroll($event)">
 
+      <div #dateControlComponent class="date-focus-control" [ngStyle]="{width: viewContainer.scrollWidth - 40 + 'px'}">
+        <app-date-focus *ngIf="dataset"
+          [lower]="dataset.startDate"
+          [upper]="dataset.endDate"
+          [timestep]="dataset.timestep"
+          [initDate]="dataset.endDate"
+          (dateChangeInfo)="setDate($event)">
+        </app-date-focus>
+      </div>
+      
+
       <div class="view-component-wrapper">
-          <div #formComponent class="view-component">
-            <app-data-set-form></app-data-set-form>
-          </div>
-          <div #tableComponent class="view-component">
-            <app-data-views></app-data-views>
-          </div>
-          <div #timeSeriesComponent class="view-component">
-            <app-time-series
-              [width]="_width">
-            </app-time-series>
-          </div>
+        <div #formComponent class="view-component">
+          <app-data-set-form></app-data-set-form>
+        </div>
+        <div #tableComponent class="view-component">
+          <app-data-views></app-data-views>
+        </div>
+        <div #timeSeriesComponent class="view-component">
+          <app-time-series
+            [width]="_width">
+          </app-time-series>
+        </div>
       </div>
 
     </div>

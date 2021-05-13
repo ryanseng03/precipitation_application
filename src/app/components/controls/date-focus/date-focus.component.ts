@@ -5,6 +5,7 @@ import {MatIconRegistry} from "@angular/material/icon";
 import {DomSanitizer} from "@angular/platform-browser";
 import {DataManagerService, MovementVector} from "../../../services/dataManager/data-manager.service";
 import { MapComponent } from '../../map/map.component';
+import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 @Component({
   selector: 'app-date-focus',
@@ -147,13 +148,19 @@ export class DateFocusComponent implements OnInit {
     }
   };
 
-  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
-    this.matIconRegistry.addSvgIcon("fl", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/fl_m.svg"));
-    this.matIconRegistry.addSvgIcon("ffl", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/ffl_m.svg"));
-    this.matIconRegistry.addSvgIcon("el", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/el_m.svg"));
-    this.matIconRegistry.addSvgIcon("fr", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/fr_m.svg"));
-    this.matIconRegistry.addSvgIcon("ffr", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/ffr_m.svg"));
-    this.matIconRegistry.addSvgIcon("er", this.domSanitizer.bypassSecurityTrustResourceUrl("/assets/icons/er_m.svg"));
+  constructor(private matIconRegistry: MatIconRegistry, private assetService: AssetManagerService) {
+    let icon = assetService.getTrustedResourceURL("/icons/fl_m.svg");
+    this.matIconRegistry.addSvgIcon("fl", icon);
+    icon = assetService.getTrustedResourceURL("/icons/ffl_m.svg");
+    this.matIconRegistry.addSvgIcon("ffl", icon);
+    icon =  assetService.getTrustedResourceURL("/icons/el_m.svg");
+    this.matIconRegistry.addSvgIcon("el", icon);
+    icon =  assetService.getTrustedResourceURL("/icons/fr_m.svg");
+    this.matIconRegistry.addSvgIcon("fr", icon);
+    icon =  assetService.getTrustedResourceURL("/icons/ffr_m.svg");
+    this.matIconRegistry.addSvgIcon("ffr", icon);
+    icon =  assetService.getTrustedResourceURL("/icons/er_m.svg");
+    this.matIconRegistry.addSvgIcon("er", icon);
   }
 
   ngOnInit() {

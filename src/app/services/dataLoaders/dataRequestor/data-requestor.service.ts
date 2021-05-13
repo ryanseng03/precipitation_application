@@ -29,8 +29,8 @@ export class DataRequestorService {
     return this.siteRetreiver.getSiteValsDate(date);
   }
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): RequestResults {
-    return this.siteRetreiver.getSiteTimeSeries(start, end, skn);
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, focus: Moment.Moment, skn: string): {[group: string]: RequestResults} {
+    return this.siteRetreiver.getSiteTimeSeries(start, end, focus, skn);
   }
 
   getRastersDate(date: Moment.Moment): RequestResults {

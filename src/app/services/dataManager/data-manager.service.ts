@@ -55,14 +55,16 @@ export class DataManagerService {
       this.dataset = dataset;
       this.updateStationTimeSeries()
     });
+    let date: Moment.Moment;
+    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
+      date = date;
+    });
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
       if(station) {
-        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, station.skn).toPromise();
-        p.then((request: RequestResults) => {
-          request.toPromise().then((result: SiteValue[]) => {
-            paramService.pushSelectedSiteTimeSeries(result);
-          });
+        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, date, station.skn).month.toPromise();
+        p.then((result: SiteValue[]) => {
+          paramService.pushSelectedSiteTimeSeries(result);
         });
         this.updateStationTimeSeries();
       }
@@ -313,7 +315,6 @@ export class DataManagerService {
     let cachedDatesSet = new Set(cachedDates);
     //remove focus date
     cachedDatesSet.delete(focusDate.toISOString());
-    console.log(cachedDatesSet);
     for(let date of dates) {
       let dateString = date.toISOString();
       //already in cache, just delete from set so not cleared

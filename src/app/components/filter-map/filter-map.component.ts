@@ -7,6 +7,7 @@ import { InternalPointsService } from "../../services/geospatial/internal-points
 import { StationFilteringService, FilteredStations, StationMetadata, Filter, FilterBase, FilterGroup } from "../../services/filters/station-filtering.service";
 import { AnimationStyleMetadata } from '@angular/animations';
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
+import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 
 
@@ -46,10 +47,7 @@ export class FilterMapComponent implements OnInit {
   private drawnFilters: Map<L.Layer, LayerInfo>;
 
   private _stations: SiteMetadata[];
-  roseOptions: RoseControlOptions = {
-    image: "assets/arrows/nautical.svg",
-    position: "bottomleft"
-  };
+  roseOptions: RoseControlOptions;
 
 
   //!!!MAKE SELECT ON MAP FILTER AN ID FILTER
@@ -104,7 +102,13 @@ export class FilterMapComponent implements OnInit {
 
 
 
-  constructor(private ips: InternalPointsService, private filterService: StationFilteringService) {
+  constructor(private ips: InternalPointsService, private filterService: StationFilteringService, private assetService: AssetManagerService) {
+    let roseImage = "/arrows/nautical.svg";
+    let roseURL = assetService.getAssetURL(roseImage);
+    this.roseOptions = {
+      image: roseURL,
+      position: "bottomleft"
+    }
 
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),

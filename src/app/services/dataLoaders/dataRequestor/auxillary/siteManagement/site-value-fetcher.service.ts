@@ -174,15 +174,7 @@ export class SiteValueFetcherService {
   }
 
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, skn: string): RequestResults {
-    
-    let startS = start.format("YYYY-MM-DD");
-    let endS = end.format("YYYY-MM-DD");
-
-    let query = `{'$and':[{'name':'station_vals'},{'value.date':{$gt:'${startS}'}},{'value.date':{$lt:'${endS}'}},{'value.skn':'${skn}'},{'value.version':'v1.2'}]}`;
-    //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
-    query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'}]}`;
-    //console.log(query);
+  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, focus: Moment.Moment, skn: string): {[group: string]: RequestResults} {
 
     //wrap data handler to lexically bind to this
     let wrappedResultHandler = (recent: any[]) => {
@@ -211,25 +203,98 @@ export class SiteValueFetcherService {
 
       return siteData;//this.extractLastValues(recent)
     }
+    
+    let results = {
+      month: null,
+      year: null,
+      full: null
+    };
+    //want to genericize, currently just month with day
+    //year and full should have two separate ranges, leave out initial month
+    let groups = {
+      month: [null, null],
+      year: [[null, null], [null, null]],
+      full: [[null, null], [null, null]]
+    };
 
+    //create groups
+    groups.month[0] = focus.clone().startOf("month");
+    groups.month[0] = groups.month[0].clone().add(1, "month");
+    //skip month already being retreived
+    groups.month[0][0] = focus.clone().startOf("year").format("YYYY-MM-DD");
+    groups.month[0][1] = groups.month[0].format("YYYY-MM-DD");
+    groups.month[1][0] = groups.month[1].format("YYYY-MM-DD");
+    groups.month[1][1] = focus.clone().endOf("year").format("YYYY-MM-DD");
+    
+    groups.full[0][0] = start.format("YYYY-MM-DD");
+    groups.full[0][1] = groups.year[0][0].format("YYYY-MM-DD");
+    groups.full[1][0] = groups.year[1][1].format("YYYY-MM-DD");
+    groups.full[1][1] = end.format("YYYY-MM-DD");
 
-    let response = this.dbcon.query(query);
+    let startS = start.format("YYYY-MM-DD");
+    let endS = end.format("YYYY-MM-DD");
 
-    //need to add in some error handling
-    response.transform((response: any) => {
-      //query cancelled, propogate null
-      if(response == null) {
-        return null;
+    //create date portions of the queries
+    //let queryDates: {[group: string]: string} = {};
+    for(let group in groups) {
+      let dates = groups[group];
+      let queryDate: string;
+      if(Array.isArray(dates[0])) {
+        let queryDate = `{'$or':[`;
+        let queryParts = [];
+        //need to be or together
+        for(let range of dates) {
+          let queryPart = `{'value.date':{'$gte':{'${range[0]}'}}},{'value.date':{'$lt':{'${range[1]}'}}}`;
+          queryParts.push(queryPart);
+        }
+        queryDate += queryParts.join(",");
+        queryDate += `]}`;
       }
-      let vals: SiteValue[] = wrappedResultHandler(response.result);
-      return vals;
-    }, (reason: RequestReject) => {
-      if(reason.reason) {
-        console.error(reason.reason);
+      else {
+        queryDate = `{'value.date':{'$gte':{'${dates[0]}'}}},{'value.date':{'$lt':{'${dates[1]}'}}}`;
       }
-    });
+      //queryDates[group] = queryDate;
 
-    return response
+      //construct full query
+      let query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'},${queryDate}]}`;
+      
+      let response = this.dbcon.query(query);
+
+      //how should errors be handled? any user notification?
+      response.transform((response: any) => {
+        //query cancelled, propogate null
+        if(response == null) {
+          return null;
+        }
+        let vals: SiteValue[] = wrappedResultHandler(response.result);
+        return vals;
+      }, (reason: RequestReject) => {
+        if(reason.reason) {
+          console.error(reason.reason);
+        }
+      });
+      
+      results[group] = response;
+    }
+
+    return results;
+
+    // for(let group in queryDates) {
+    //   let queryDate
+    // }
+
+
+    // let query = `{'$and':[{'name':'station_vals'},{'value.date':{$gt:'${startS}'}},{'value.date':{$lt:'${endS}'}},{'value.skn':'${skn}'},{'value.version':'v1.2'}]}`;
+    // //query = `{'$and':[{'name':'${dsconfig.valueDocName}'}]}`;
+    // query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'}]}`;
+    // //console.log(query);
+
+    
+
+
+    
+
+    // return response
   }
 
   //for now everything by month, note that format will change if doing daily

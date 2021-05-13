@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse } f
 import { Observable, merge, of, Subscription, throwError, Subject, observable } from 'rxjs';
 import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
 import { promise } from 'protractor';
+import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 
 interface Config {
@@ -15,14 +16,15 @@ interface Config {
 })
 export class DbConService {
 
-  static readonly CONFIG_FILE = "/assets/config.json";
+  static readonly CONFIG_FILE = "config.json";
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
   private initPromise: Promise<Config>;
 
-  constructor(private http: HttpClient) {
-    this.initPromise = <Promise<Config>>(this.http.get(DbConService.CONFIG_FILE, { responseType: "json" }).toPromise());
+  constructor(private http: HttpClient, assetService: AssetManagerService) {
+    let url = assetService.getAssetURL(DbConService.CONFIG_FILE);
+    this.initPromise = <Promise<Config>>(this.http.get(url, { responseType: "json" }).toPromise());
   }
 
   //at some point may be cleaner to rework this a bit so don't have to wrap RequestResult in a promise, allow for RequestResult to be initialized before request initialized, then if cancelled before initialization just never execute the transfer (keep cancelled variable or something)

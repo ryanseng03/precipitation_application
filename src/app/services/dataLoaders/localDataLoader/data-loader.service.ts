@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import {RasterData, RasterHeader, BandData, UpdateFlags, UpdateStatus} from "../../../models/RasterData";
+import { AssetManagerService } from '../../util/asset-manager.service';
 import {GeotiffDataLoaderService} from "./auxillary/geotiff-data-loader.service";
 
 @Injectable({
@@ -7,7 +8,7 @@ import {GeotiffDataLoaderService} from "./auxillary/geotiff-data-loader.service"
 })
 export class DataLoaderService {
 
-  constructor(private geotiffLoader: GeotiffDataLoaderService) { }
+  constructor(private geotiffLoader: GeotiffDataLoaderService, private assetService: AssetManagerService) { }
 
   public getInitRaster(): Promise<RasterData> {
     return this.getInitRasterDataFromFiles();
@@ -16,10 +17,10 @@ export class DataLoaderService {
 
   private getInitRasterDataFromFiles(): Promise<RasterData> {
     let promises = [
-      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_a.tif", -3.3999999521443642e+38),
-      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_b.tif", -3.3999999521443642e+38),
-      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_c.tif", -3.3999999521443642e+38),
-      this.geotiffLoader.getDataFromGeotiff("/assets/test_data/test_d.tif", -3.3999999521443642e+38)
+      this.geotiffLoader.getDataFromGeotiff(this.assetService.getAssetURL("/test_data/test_a.tif"), -3.3999999521443642e+38),
+      this.geotiffLoader.getDataFromGeotiff(this.assetService.getAssetURL("/test_data/test_b.tif"), -3.3999999521443642e+38),
+      this.geotiffLoader.getDataFromGeotiff(this.assetService.getAssetURL("/test_data/test_c.tif"), -3.3999999521443642e+38),
+      this.geotiffLoader.getDataFromGeotiff(this.assetService.getAssetURL("/test_data/test_d.tif"), -3.3999999521443642e+38)
     ];
     return Promise.all(promises).then((geotiffData: RasterData[]) => {
       let dataMain = geotiffData[0];

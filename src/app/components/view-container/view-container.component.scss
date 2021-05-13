@@ -37,7 +37,11 @@
 .view-component {
     min-height: 100vh;
     width: 100%;
-    padding: 20px 20px 500px 20px;
+    padding: 140px 20px 500px 20px;
+}
+
+.view-component:first-child {
+  padding-top: 20px;
 }
 
 .scroll-hide {
@@ -52,6 +56,8 @@
   height: 100%;
   width: 100%;
   position: relative;
+  margin: 0;
+  padding: 0;
   //min-width: 0;
   // -ms-overflow-style: none;  /* IE and Edge */
   // scrollbar-width: none;  /* Firefox */
@@ -66,4 +72,15 @@
 .view-component-wrapper {
   height: fit-content;
   width: fit-content;
+}
+
+.date-focus-control {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1000;
+  height: fit-content;
+  padding: 20px;
+  border-bottom: 1px solid;
 }

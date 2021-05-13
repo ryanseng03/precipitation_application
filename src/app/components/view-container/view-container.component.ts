@@ -1,5 +1,9 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
+import { Dataset } from 'src/app/models/Dataset';
+import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
+import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
+import { DateChangeInfo } from '../controls/date-focus/date-focus.component';
 
 @Component({
   selector: 'app-view-container',
@@ -23,6 +27,8 @@ export class ViewContainerComponent implements OnInit {
   @ViewChild("tableComponent") tableComponent: ElementRef;
   @ViewChild("timeSeriesComponent") timeSeriesComponent: ElementRef;
   @ViewChild("viewNav") viewNav: ElementRef;
+
+  @ViewChild("dateControlComponent") dateControlComponent: ElementRef;
 
   //set scrollbar width the first time becomes visible
   // scrollbarSet: boolean = false;
@@ -59,10 +65,20 @@ export class ViewContainerComponent implements OnInit {
 
   scrollbarWidthThrottle: NodeJS.Timer;
   scrollbarWidthPause: boolean = false;
+
+  dataset: Dataset;
+
+  upperBuffer: string;
+
+  firstElement: HTMLElement;
   
 
-  constructor() {
+  constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService) {
     this.scrollTimeoutHandle = null;
+    this.paramRegistrar.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+      this.dataset = dataset;
+    });
+
   }
 
   ngOnInit() {
@@ -86,6 +102,16 @@ export class ViewContainerComponent implements OnInit {
       element: this.timeSeriesComponent.nativeElement
     }];
     this.activeTileRef = this.navInfo[0];
+
+    // setTimeout(() => {
+    //   let dateControlElement: HTMLElement = this.dateControlComponent.nativeElement;
+    //   this.upperBuffer = dateControlElement.offsetHeight + "px";
+    //   console.log(this.upperBuffer);
+    // }, 1000);
+    
+    this.firstElement = this.formComponent.nativeElement;
+    
+
   }
 
   //resizing the window can scroll the container div causing it to trigger on another element, so fix that
@@ -117,12 +143,17 @@ export class ViewContainerComponent implements OnInit {
   //note removed debounce because weird offsets make it difficult to debounce where not actually scrolling, should be fine without debounce given offset to prevent boundary issues
   goToNav(nav: NavData) {
     let component = nav.element;
-    let top = component.offsetTop;
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
+
+    let top: number = 0;
+    if(component != this.firstElement) {
+      let elTop = component.offsetTop;
+      top = elTop + 25;
+    }
 
     containerElement.scroll({
       //add one to top to avoid weird partial pixel errors in chrome for some displays
-      top: top + 1,
+      top: top,
       left: 0,
       behavior: "smooth"
     });
@@ -198,6 +229,16 @@ export class ViewContainerComponent implements OnInit {
     }
     return inContainer;
   }
+
+
+  setDate(changeInfo: DateChangeInfo) {
+    //console.log(changeInfo.date.format("YYYY MM"));
+    this.dateSelector.setDate(changeInfo.date, changeInfo.magnitude);
+  }
+
+  // getWidth(): string {
+
+  // }
 
 }
 

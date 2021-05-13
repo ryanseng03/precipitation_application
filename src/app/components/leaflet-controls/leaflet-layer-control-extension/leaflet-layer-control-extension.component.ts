@@ -7,6 +7,7 @@ import {UploadCustomColorSchemeComponent} from "../../../dialogs/upload-custom-c
 import { ColorGeneratorService, XMLColorSchemeData } from 'src/app/services/rasterLayerGeneration/color-generator.service';
 import { ColorScale } from 'src/app/models/colorScale';
 import { CustomColorSchemeService } from 'src/app/services/helpers/custom-color-scheme.service';
+import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 @Component({
   selector: 'app-leaflet-layer-control-extension',
@@ -88,7 +89,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     return this._map
   }
 
-  constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService) {
+  constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService) {
     this.opacity = new EventEmitter<number>();
     this.colorScheme = new EventEmitter<ColorScale>();
     this.schemeControl = new FormControl(this.defaultScheme);
@@ -249,42 +250,48 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
         break;
       }
       case "tacc1": {
-        p = getColorSchemeFromAssetFile("/assets/colorschemes/1-3wbgy.xml", true).then((colorScale: ColorScale) => {
+        let url = this.assetService.getAssetURL("/colorschemes/1-3wbgy.xml")
+        p = getColorSchemeFromAssetFile(url, true).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
         break;
       }
       case "tacc2": {
-        p = getColorSchemeFromAssetFile("/assets/colorschemes/1-bluegary1.xml").then((colorScale: ColorScale) => {
+        let url = this.assetService.getAssetURL("/colorschemes/1-bluegary1.xml");
+        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
         break;
       }
       case "tacc3": {
-        p = getColorSchemeFromAssetFile("/assets/colorschemes/4-3wbgy.xml", true).then((colorScale: ColorScale) => {
+        let url = this.assetService.getAssetURL("/colorschemes/4-3wbgy.xml");
+        p = getColorSchemeFromAssetFile(url, true).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
         break;
       }
       case "tacc4": {
-        p = getColorSchemeFromAssetFile("/assets/colorschemes/13-4w_grphgrnl.xml").then((colorScale: ColorScale) => {
+        let url = this.assetService.getAssetURL("/colorschemes/13-4w_grphgrnl.xml");
+        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
         break;
       }
       case "tacc5": {
-        p = getColorSchemeFromAssetFile("/assets/colorschemes/17-5wdkcool.xml").then((colorScale: ColorScale) => {
+        let url = this.assetService.getAssetURL("/colorschemes/17-5wdkcool.xml");
+        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
         break;
       }
       case "tacc6": {
-        p = getColorSchemeFromAssetFile("/assets/colorschemes/18-5w_coolcrisp2.xml").then((colorScale: ColorScale) => {
+        let url = this.assetService.getAssetURL("/colorschemes/18-5w_coolcrisp2.xml");
+        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });

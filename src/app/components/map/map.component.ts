@@ -19,6 +19,7 @@ import {DataManagerService} from "../../services/dataManager/data-manager.servic
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import Moment from 'moment';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
+import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 //type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
 let C: any = L.control;
@@ -68,7 +69,15 @@ export class MapComponent implements OnInit {
 
 
 
-  constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService) {
+  constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService, private assetService: AssetManagerService) {
+    let roseImage = "/arrows/nautical.svg";
+    let roseURL = assetService.getAssetURL(roseImage);
+    this.roseOptions = {
+      image: roseURL,
+      position: "bottomleft"
+    }
+
+
     dataManager.setMap(this);
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
@@ -94,56 +103,6 @@ export class MapComponent implements OnInit {
       maxBounds: this.extents.bounds
     };
 
-    this.roseOptions = {
-      image: "assets/arrows/nautical.svg",
-      position: "bottomleft"
-    };
-
-    // this.drawnItems = new L.FeatureGroup;
-
-    // this.drawOptions = {
-    //   position: 'topleft',
-    //   draw: {
-    //      polyline: false,
-    //      circle: false,
-    //      marker: false,
-    //      circlemarker: false
-    //   },
-    //   edit: {
-    //     featureGroup: this.drawnItems
-    //   }
-    // };
-
-    // L.Icon.Default.mergeOptions({
-    //   iconRetinaUrl: "/assets/marker-icon-2x.png",
-    //   iconUrl: "/assets/marker-icon.png",
-    //   shadowUrl: "/assets/marker-shadow.png"
-    // });
-
-    // const iconRetinaUrl = '/assets/marker-icon-2x.png';
-    // const iconUrl = '/assets/marker-icon.png';
-    // const shadowUrl = '/assets/marker-shadow.png';
-    // const iconDefault = L.icon({
-    //   iconRetinaUrl,
-    //   iconUrl,
-    //   shadowUrl,
-    //   iconSize: [25, 41],
-    //   iconAnchor: [12, 41],
-    //   popupAnchor: [1, -34],
-    //   tooltipAnchor: [16, -28],
-    //   shadowSize: [41, 41]
-    // });
-    // L.Marker.prototype.options.icon = iconDefault;
-
-    //don't want popup to be force closed when another one appears
-    // L.Map.prototype.openPopup = function(popup) {
-    //   this._popup = popup;
-
-    //   return this.addLayer(popup).fire('popupopen', {
-    //     popup: this._popup
-    //   });
-    // }
-
     delete (L.Icon.Default.prototype as any)._getIconUrl;
 
     L.Icon.Default.mergeOptions({
@@ -152,40 +111,6 @@ export class MapComponent implements OnInit {
       shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
     });
   }
-
-  // markerLimits = {
-  //   radius: {
-  //     min: 5,
-  //     max: 20
-  //   },
-  //   zoom: 10
-  // };
-  // zoomPivot = 10;
-  // setMarkerData() {
-  //   let zoom = this.map.getZoom();
-  //   let scale = this.map.getZoomScale(this.markerInfo.oldZoom, zoom);
-  //   this.markerInfo.oldZoom = zoom;
-  //   let limitScale = this.map.getZoomScale(zoom, this.markerLimits.zoom);
-  //   let scaledRadiusMin = this.markerLimits.radius.min * limitScale;
-  //   let scaledRadiusMax = this.markerLimits.radius.max * limitScale;
-  //   if(zoom < this.zoomPivot) {
-  //     for(let marker of this.markerInfo.markers) {
-  //       marker.metadata.scaledRadius *= scale;
-  //       let radius = marker.metadata.scaledRadius;
-  //       marker.marker.setRadius(radius);
-  //       this.markerInfo.weight *= scale;
-  //       let weight = this.markerInfo.weight;
-  //       marker.marker.setStyle({weight: weight});
-  //     }
-  //   }
-  //   else {
-  //     for(let marker of this.markerInfo.markers) {
-
-  //       let radius = ;
-  //       marker.metadata.scaledRadius *= scale;
-  //     }
-  //   }
-  // }
 
 
   invalidateSize() {
