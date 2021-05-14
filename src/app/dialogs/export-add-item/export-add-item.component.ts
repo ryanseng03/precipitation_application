@@ -163,31 +163,31 @@ export class ExportAddItemComponent {
   rasterFiles = {
     raster: {
       valid: false,
-      label: "Data Map",
+      label: "Gridded Data Map",
       control: new FormControl(false),
       disabled: false
     },
     stderr: {
       valid: false,
-      label: "Standard Error Map",
+      label: "Gridded Standard Error Map",
       control: new FormControl(false),
       disabled: false
     },
     anomaly: {
       valid: false,
-      label: "Anomaly Map",
+      label: "Gridded Anomaly Map",
       control: new FormControl(false),
       disabled: false
     },
     loocv: {
       valid: false,
-      label: "LOOCV Error Metrics",
+      label: "Gridded LOOCV Error Metrics",
       control: new FormControl(false),
       disabled: false
     },
     metadata: {
       valid: false,
-      label: "Map Metadata",
+      label: "Gridded Data Metadata",
       control: new FormControl(false),
       disabled: false
     }
@@ -264,7 +264,7 @@ export class ExportAddItemComponent {
             if(!metadataControl.value) {
               metadataControl.setValue(true);
             }
-          } 
+          }
           else {
             metadataData.disabled = false;
           }

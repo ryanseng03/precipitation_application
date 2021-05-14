@@ -22,7 +22,7 @@
           </div>
         </div>
       </div>
-      <div class="button-container">
+      <div class="tile-button-container">
         <button mat-icon-button (click)="removeExportItem(i)">
           <mat-icon>clear</mat-icon>
         </button>
@@ -30,15 +30,22 @@
           <mat-icon>edit</mat-icon>
         </button>
       </div>
-      
     </div>
-    
-    <button mat-icon-button (click)="addExportData(-1)">
-      <mat-icon>add</mat-icon>
-    </button>
-    <button mat-button [disabled]="exportItems.length < 1" (click)="export()">
-      Export Items
-    </button>
+
+    <div class="control-button-container">
+      <div class="control-button">
+        <button mat-icon-button (click)="addExportData(-1)">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+      <div class="control-button">
+        <button mat-button [disabled]="exportItems.length < 1" (click)="export()">
+          Export Items
+        </button>
+      </div>
+
+    </div>
+
   </div>
 </div>
 

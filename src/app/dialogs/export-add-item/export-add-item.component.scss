@@ -1,25 +1,45 @@
 .container {
-    display: inline-block;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
     font-family: Roboto;
+
   }
-  
+
+  .form-buttons {
+    padding: 20px;
+    //border-top: 1px solid;
+  }
+
+  //flex
   .control {
     clear: right;
   }
-  
+
+  .header {
+    padding: 20px;
+    //border-bottom: 1px solid;
+  }
+
+  .header h3 {
+    margin: 0;
+  }
+
   // .control h4 {
   //   margin: 0;
   // }
-  
+
   p {
     margin-top: 0;
   }
-  
-  // .form-body {
-  //   padding-bottom: 20px;
-  // }
+
+  .form-body {
+    overflow-y: auto;
+    padding-left: 20px;
+  }
+
+
   .control-subgroup {
     padding-left: 20px;
     width: 400px;
@@ -28,16 +48,16 @@
     padding: 10px;
     border-radius: 10px;
   }
-  
+
   // .control-group {
   //   padding-top: 20px;
   // }
-  
+
   .spacer {
     height: 20px;
     clear: both;
   }
-  
+
 //   h4 {
 //     font-weight: 500;
 //     margin-bottom: 5px;
@@ -58,7 +78,7 @@
       padding-bottom: 10px;
       padding-right: 10px;
   }
-  
+
   .control-subgroup /deep/ .mat-checkbox-frame {
     border-color: white
   }
@@ -76,4 +96,8 @@
 
 .cancel-button {
     float: right
+}
+
+::ng-deep .mat-dialog-container {
+  padding: 0;
 }
