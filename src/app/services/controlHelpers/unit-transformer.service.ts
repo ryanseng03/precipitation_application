@@ -53,7 +53,7 @@ export class UnitTransformerService {
 
 
   private baseData = {
-    raster: [],
+    raster: []
 
   }
 
@@ -64,7 +64,7 @@ export class UnitTransformerService {
     if(unit) {
 
     }
-    else {
+    else { 
       console.error("No unit conversion found.");
     }
   }

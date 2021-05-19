@@ -7,3 +7,11 @@
 .dark-theme {
     @include angular-material-theme($dark-theme);
 }
+
+// .export-dialog {
+    
+// }
+
+.export-dialog .mat-dialog-container {
+    padding: 0;
+}

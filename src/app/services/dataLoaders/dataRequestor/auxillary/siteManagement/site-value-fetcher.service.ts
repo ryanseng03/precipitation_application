@@ -219,20 +219,20 @@ export class SiteValueFetcherService {
 
     //create groups
     groups.month[0] = focus.clone().startOf("month");
-    groups.month[0] = groups.month[0].clone().add(1, "month");
+    groups.month[1] = groups.month[0].clone().add(1, "month");
     //skip month already being retreived
-    groups.month[0][0] = focus.clone().startOf("year").format("YYYY-MM-DD");
-    groups.month[0][1] = groups.month[0].format("YYYY-MM-DD");
-    groups.month[1][0] = groups.month[1].format("YYYY-MM-DD");
-    groups.month[1][1] = focus.clone().endOf("year").format("YYYY-MM-DD");
+    groups.year[0][0] = focus.clone().startOf("year");
+    groups.year[0][1] = groups.month[0];
+    groups.year[1][0] = groups.month[1];
+    groups.year[1][1] = groups.year[0][0].clone().add(1, "year");
     
-    groups.full[0][0] = start.format("YYYY-MM-DD");
-    groups.full[0][1] = groups.year[0][0].format("YYYY-MM-DD");
-    groups.full[1][0] = groups.year[1][1].format("YYYY-MM-DD");
-    groups.full[1][1] = end.format("YYYY-MM-DD");
+    groups.full[0][0] = start;
+    groups.full[0][1] = groups.year[0][0];
+    groups.full[1][0] = groups.year[1][1];
+    groups.full[1][1] = end;
 
-    let startS = start.format("YYYY-MM-DD");
-    let endS = end.format("YYYY-MM-DD");
+    // let startS = start.format("YYYY-MM-DD");
+    // let endS = end.format("YYYY-MM-DD");
 
     //create date portions of the queries
     //let queryDates: {[group: string]: string} = {};
@@ -240,24 +240,28 @@ export class SiteValueFetcherService {
       let dates = groups[group];
       let queryDate: string;
       if(Array.isArray(dates[0])) {
-        let queryDate = `{'$or':[`;
+        queryDate = `{'$or':[`;
         let queryParts = [];
         //need to be or together
         for(let range of dates) {
-          let queryPart = `{'value.date':{'$gte':{'${range[0]}'}}},{'value.date':{'$lt':{'${range[1]}'}}}`;
+          let startDate = range[0].format("YYYY-MM-DD");
+          let endDate = range[1].format("YYYY-MM-DD");
+          let queryPart = `{'value.date':{'$gte':'${startDate}'}},{'value.date':{'$lt':'${endDate}'}}`;
           queryParts.push(queryPart);
         }
         queryDate += queryParts.join(",");
         queryDate += `]}`;
       }
       else {
-        queryDate = `{'value.date':{'$gte':{'${dates[0]}'}}},{'value.date':{'$lt':{'${dates[1]}'}}}`;
+        let startDate = dates[0].format("YYYY-MM-DD");
+        let endDate = dates[1].format("YYYY-MM-DD");
+        queryDate = `{'value.date':{'$gte':'${startDate}'}},{'value.date':{'$lt':'${endDate}'}}`;
       }
       //queryDates[group] = queryDate;
 
       //construct full query
       let query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'},${queryDate}]}`;
-      
+      query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'}]}`;
       let response = this.dbcon.query(query);
 
       //how should errors be handled? any user notification?
@@ -275,6 +279,7 @@ export class SiteValueFetcherService {
       });
       
       results[group] = response;
+      break;
     }
 
     return results;

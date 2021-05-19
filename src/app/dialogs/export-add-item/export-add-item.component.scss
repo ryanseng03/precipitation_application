@@ -98,6 +98,7 @@
     float: right
 }
 
-::ng-deep .mat-dialog-container {
-  padding: 0;
-}
+//this would modify all dialogs, since in upper class have to use global class and pass in on form creation
+// ::ng-deep .mat-dialog-container {
+//   padding: 0;
+// }

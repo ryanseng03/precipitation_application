@@ -49,21 +49,31 @@ export class DataManagerService {
       cache: null
     };
 
+    let date: Moment.Moment;
     this.header = dataRequestor.getRasterHeader().toPromise();
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
       console.log(dataset);
       this.dataset = dataset;
+      //bad, redo this
+      date = dataset.endDate;
       this.updateStationTimeSeries()
     });
-    let date: Moment.Moment;
+    //note this should push initial date, it doesnt...
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
+      console.log(date);
       date = date;
     });
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+      console.log(date);
       if(station) {
+        let start = new Date().getTime();
         let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, date, station.skn).month.toPromise();
         p.then((result: SiteValue[]) => {
+          let time = new Date().getTime() - start;
+          let timeSec = time / 1000;
+          console.log(`Retreived timeseries data, time elapsed ${timeSec} seconds`);
+
           paramService.pushSelectedSiteTimeSeries(result);
         });
         this.updateStationTimeSeries();

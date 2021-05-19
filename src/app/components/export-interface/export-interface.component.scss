@@ -3,6 +3,8 @@
     width: 100%;
     padding-top: 20px;
     padding-left: 50px;
+    //border box makes height and width include padding (EXCLUDED by default)
+    box-sizing: border-box;
     overflow-y: auto;
 }
 

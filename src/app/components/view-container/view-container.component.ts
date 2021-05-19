@@ -25,7 +25,7 @@ export class ViewContainerComponent implements OnInit {
   @ViewChild("viewContainer") viewContainer: ElementRef;
   @ViewChild("formComponent") formComponent: ElementRef;
   @ViewChild("tableComponent") tableComponent: ElementRef;
-  @ViewChild("timeSeriesComponent") timeSeriesComponent: ElementRef;
+  @ViewChild("timeseriesComponent") timeseriesComponent: ElementRef;
   @ViewChild("viewNav") viewNav: ElementRef;
 
   @ViewChild("dateControlComponent") dateControlComponent: ElementRef;
@@ -55,7 +55,7 @@ export class ViewContainerComponent implements OnInit {
   nav2Component: {
     form: ElementRef,
     table: ElementRef,
-    timeSeries: ElementRef
+    timeseries: ElementRef
   };
   scrollTimeoutHandle: NodeJS.Timer;
   lastScrollPos: number;
@@ -85,7 +85,7 @@ export class ViewContainerComponent implements OnInit {
     this.nav2Component = {
       form: this.formComponent,
       table: this.tableComponent,
-      timeSeries: this.timeSeriesComponent
+      timeseries: this.timeseriesComponent
     };
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
     this.lastScrollPos = containerElement.scrollTop;
@@ -99,7 +99,7 @@ export class ViewContainerComponent implements OnInit {
     },
     {
       label: "Time Series",
-      element: this.timeSeriesComponent.nativeElement
+      element: this.timeseriesComponent.nativeElement
     }];
     this.activeTileRef = this.navInfo[0];
 
@@ -148,7 +148,8 @@ export class ViewContainerComponent implements OnInit {
     let top: number = 0;
     if(component != this.firstElement) {
       let elTop = component.offsetTop;
-      top = elTop + 25;
+      //top padding - 95 (date control) - 20 (padding)
+      top = elTop + 125;
     }
 
     containerElement.scroll({
@@ -236,9 +237,18 @@ export class ViewContainerComponent implements OnInit {
     this.dateSelector.setDate(changeInfo.date, changeInfo.magnitude);
   }
 
-  // getWidth(): string {
-
-  // }
+  getDateControlWidth(): string {
+    let components = [this.viewContainer, this.formComponent, this.tableComponent, this.timeseriesComponent];
+    let max = 0;
+    for(let component of components) {
+      let element: HTMLElement = component.nativeElement;
+      let width = element.clientWidth;
+      if(width > max) {
+        max = width;
+      }
+    }
+    return max + "px";
+  }
 
 }
 

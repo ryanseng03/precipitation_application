@@ -29,9 +29,11 @@ export class ExportInterfaceComponent implements OnInit {
   addExportData(i: number) {
     let initData: ExportDataInfo = i < 0 ? null : this.exportItems[i]
     
+    //panelClass applies global class to form (styles.scss)
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
       width: "80%",
       height: "90%",
+      panelClass: "export-dialog",
       data: initData
     });
     dialogRef.afterClosed().subscribe((data: ExportDataInfo) => {

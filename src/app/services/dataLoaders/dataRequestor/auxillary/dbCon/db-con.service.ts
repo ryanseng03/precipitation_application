@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable, merge, of, Subscription, throwError, Subject, observable } from 'rxjs';
 import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
-import { promise } from 'protractor';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 
-interface Config {
+export interface Config {
   oAuthAccessToken: string,
   queryEndpoint: string
 }
@@ -20,7 +19,7 @@ export class DbConService {
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
-  private initPromise: Promise<Config>;
+  initPromise: Promise<Config>;
 
   constructor(private http: HttpClient, assetService: AssetManagerService) {
     let url = assetService.getAssetURL(DbConService.CONFIG_FILE);
