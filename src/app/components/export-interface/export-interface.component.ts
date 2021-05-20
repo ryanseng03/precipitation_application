@@ -3,6 +3,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ExportAddItemComponent, ExportDataInfo } from 'src/app/dialogs/export-add-item/export-add-item.component';
 import { ExportUnimplementedComponent } from 'src/app/dialogs/export-unimplemented/export-unimplemented.component';
+import { ExportManagerService } from 'src/app/services/export/export-manager.service';
 
 
 @Component({
@@ -14,7 +15,7 @@ export class ExportInterfaceComponent implements OnInit {
 
   exportItems: ExportDataInfo[] = [];
 
-  constructor(public dialog: MatDialog) {
+  constructor(public dialog: MatDialog, private exportManager: ExportManagerService) {
   }
 
   ngOnInit() {
@@ -28,7 +29,7 @@ export class ExportInterfaceComponent implements OnInit {
 
   addExportData(i: number) {
     let initData: ExportDataInfo = i < 0 ? null : this.exportItems[i]
-    
+
     //panelClass applies global class to form (styles.scss)
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
       width: "80%",
@@ -41,7 +42,7 @@ export class ExportInterfaceComponent implements OnInit {
       if(data) {
         if(i < 0) {
           this.exportItems.push(data);
-        } 
+        }
         else {
           this.exportItems.splice(i, 1, data);
         }
@@ -55,11 +56,11 @@ export class ExportInterfaceComponent implements OnInit {
     if(data.timeperiod.value == "monthly") {
       format = "MMMM YYYY";
     }
-    else { 
+    else {
       format = "MMMM DD YYYY";
     }
     let dataset = `${data.timeperiod.label} ${data.datatype.label} ${data.dates[0].format(format)} - ${data.dates[1].format(format)}`;
-    
+
     return dataset;
   }
 

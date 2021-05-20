@@ -70,6 +70,7 @@ import { ViewContainerComponent } from './components/view-container/view-contain
 import { LoadingComponentComponent } from './components/loading-component/loading-component.component';
 import { TimeSeriesComponent } from './components/time-series/time-series.component';
 import { LeafletLayerControlExtensionComponent } from './components/leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
+import { ErrorPopupComponent } from './dialogs/error-popup/error-popup.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -107,7 +108,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     ViewContainerComponent,
     LoadingComponentComponent,
     TimeSeriesComponent,
-    LeafletLayerControlExtensionComponent
+    LeafletLayerControlExtensionComponent,
+    ErrorPopupComponent
   ],
   imports: [
     BrowserModule,
