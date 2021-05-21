@@ -144,7 +144,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
   entryComponents: [
     ExportUnimplementedComponent,
     UploadCustomColorSchemeComponent,
-    ExportAddItemComponent
+    ExportAddItemComponent,
+    ErrorPopupComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

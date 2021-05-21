@@ -66,10 +66,6 @@ export class SiteValueFetcherService {
       let header: RasterHeader = resultHandler(response.result)
       //console.log(header);
       return header;
-    }, (reason: RequestReject) => {
-      if(reason.reason) {
-        console.error(reason.reason);
-      }
     });
 
     return response;
@@ -81,16 +77,11 @@ export class SiteValueFetcherService {
     let stationRequest = this.getSiteValsDate(date);
     rasterRequest.combine(stationRequest);
     rasterRequest.transform((data: [BandData, SiteValue[]]) => {
-      console.log(data);
       let dataPack = {
         bands: data[0],
         stations: data[1]
       };
       return dataPack;
-    }, (reason: RequestReject) => {
-      if(reason.reason) {
-        console.error(reason.reason);
-      }
     });
 
     return rasterRequest;
@@ -163,10 +154,6 @@ export class SiteValueFetcherService {
         rainfall: data2map
       };
       return bands;
-    }, (reason: RequestReject) => {
-      if(reason.reason) {
-        console.error(reason.reason);
-      }
     });
 
     return response;
@@ -272,10 +259,6 @@ export class SiteValueFetcherService {
         }
         let vals: SiteValue[] = wrappedResultHandler(response.result);
         return vals;
-      }, (reason: RequestReject) => {
-        if(reason.reason) {
-          console.error(reason.reason);
-        }
       });
       
       results[group] = response;
@@ -351,10 +334,6 @@ export class SiteValueFetcherService {
       let vals: SiteValue[] = wrappedResultHandler(response.result);
       return vals;
 
-    }, (reason: RequestReject) => {
-      if(reason.reason) {
-        console.error(reason.reason);
-      }
     });
 
     return response;
@@ -384,10 +363,6 @@ export class SiteValueFetcherService {
       let vals: DateRefValues = wrappedResultHandler(response.result);
       //console.log(vals);
       return vals;
-    }, (reason: RequestReject) => {
-      if(reason.reason) {
-        console.error(reason.reason);
-      }
     });
 
     return response;

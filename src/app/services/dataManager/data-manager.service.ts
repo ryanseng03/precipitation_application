@@ -9,6 +9,8 @@ import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
 import {Dataset} from "../../models/Dataset";
 import moment from 'moment';
+import { RequestReject } from '../dataLoaders/dataRequestor/auxillary/dbCon/db-con.service';
+import { ErrorPopupService } from '../errorHandling/error-popup.service';
 
 
 interface StagedTimeseriesData {
@@ -43,7 +45,7 @@ export class DataManagerService {
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService) {
+  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService) {
     this.throttles = {
       focus: null,
       cache: null
@@ -248,7 +250,7 @@ export class DataManagerService {
     }
     if(this.focusDataRetreiverCanceller) {
       //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
-      this.focusDataRetreiverCanceller("Another date was focused before completion.");
+      this.focusDataRetreiverCanceller(null);
     }
 
     //two different cases where this used (cache hit/miss), set as function
@@ -259,9 +261,9 @@ export class DataManagerService {
         return dataRetreiver.toPromise().then((data: InternalDataPack) => {
           resolve(data)
         })
-        .catch(() => {
+        .catch((reason: RequestReject) => {
           //cancelled or failed
-          reject();
+          reject(reason);
         });
       })
       .then((data: InternalDataPack) => {
@@ -271,7 +273,14 @@ export class DataManagerService {
         //emit the data to the application
         this.setFocusedData(date, data);
       })
-      .catch(() => {/*request cancelled or failed upstream*/})
+      .catch((reason: RequestReject) => {
+        //request cancelled or failed upstream
+        if(reason && !reason.cancelled) {
+          //don't need to put error details to user, have those in console
+          let emsg = `There was an issue retreiving the requested climate data. Please refresh the page and try again.`;
+          this.errorPop.notify(emsg);
+        }
+      })
       //loading complete
       .then(() => {
         this.setLoadingOnMap(false);

@@ -71,7 +71,7 @@ export class RequestResults {
   get(query: string, config: Config, offset: number) {
     //if cancelled or already called ignore
     if(!this.cancelled && !this.sub) {
-      let url = `${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
+      let url = `i${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
 
       if(url.length > DbConService.MAX_URI) {
         let reject: RequestReject = {
@@ -116,9 +116,23 @@ export class RequestResults {
     }
   }
 
-  transform(onfulfilled: (value: any) => any, onrejected: (reason: RequestReject) => any) {
-    this.data = this.data.then(onfulfilled)
-    .catch(onrejected);
+  transform(onfulfilled: (value: any) => any) {
+    this.data = this.data.then(onfulfilled, (reason: RequestReject) => {
+      //propogate rejection
+      return new Promise((resolve, reject) => {
+        reject(reason);
+      });
+    })
+    .catch((e: any) => {
+      return new Promise((resolve, reject) => {
+        //wrap error and propogate
+        let reason: RequestReject = {
+          cancelled: false,
+          reason: e
+        }
+        reject(reason);
+      });
+    });
   }
 
   cancel(): void {
