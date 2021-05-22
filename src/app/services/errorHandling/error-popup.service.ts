@@ -7,12 +7,22 @@ import { ErrorPopupComponent } from 'src/app/dialogs/error-popup/error-popup.com
 })
 export class ErrorPopupService {
 
-  constructor(private dialog: MatDialog) { }
+  popupChain: Promise<void>;
+
+  constructor(private dialog: MatDialog) {
+    this.popupChain = Promise.resolve();
+  }
 
   notify(error: string) {
-    const dialogRef = this.dialog.open(ErrorPopupComponent, {
-      width: '250px',
-      data: error
+    this.popupChain = this.popupChain.then(() => {
+      const dialogRef = this.dialog.open(ErrorPopupComponent, {
+        width: "50%",
+        height: "50%",
+        data: error
+      });
+
+      return dialogRef.afterClosed().toPromise();
     });
+
   }
 }

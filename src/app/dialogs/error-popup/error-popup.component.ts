@@ -14,4 +14,12 @@ export class ErrorPopupComponent implements OnInit {
   ngOnInit() {
   }
 
+  reload() {
+    window.location.reload();
+  }
+
+  close() {
+    this.dialogRef.close();
+  }
+
 }

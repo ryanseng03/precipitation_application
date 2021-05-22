@@ -27,7 +27,7 @@ export class DbConService {
   }
 
   //at some point may be cleaner to rework this a bit so don't have to wrap RequestResult in a promise, allow for RequestResult to be initialized before request initialized, then if cancelled before initialization just never execute the transfer (keep cancelled variable or something)
-  query(query: string, offset: number = 0): RequestResults {      
+  query(query: string, offset: number = 0): RequestResults {
 
     //mirror results through external subject to avoid issues with promise wrapper
     let response = new RequestResults(this.http);
@@ -38,7 +38,7 @@ export class DbConService {
       console.error(`Error getting config: ${e}`);
     });
 
-    
+
     return response;
 
   }
@@ -69,9 +69,10 @@ export class RequestResults {
   }
 
   get(query: string, config: Config, offset: number) {
+    console.log(query);
     //if cancelled or already called ignore
     if(!this.cancelled && !this.sub) {
-      let url = `i${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
+      let url = `${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
 
       if(url.length > DbConService.MAX_URI) {
         let reject: RequestReject = {
@@ -98,10 +99,11 @@ export class RequestResults {
       )
       .subscribe((response: any) => {
         this.resolve(response);
-      }, (error: any) => {
+      }, (error: HttpErrorResponse) => {
+        console.log(error);
         let reject: RequestReject = {
           cancelled: this.cancelled,
-          reason: `Error querying url ${url}: ${error}`
+          reason: `Error in query, status: ${error.status}, message: ${error.message}`
         };
         this.reject(reject);
       }, () => {
@@ -117,21 +119,9 @@ export class RequestResults {
   }
 
   transform(onfulfilled: (value: any) => any) {
-    this.data = this.data.then(onfulfilled, (reason: RequestReject) => {
-      //propogate rejection
-      return new Promise((resolve, reject) => {
-        reject(reason);
-      });
-    })
-    .catch((e: any) => {
-      return new Promise((resolve, reject) => {
-        //wrap error and propogate
-        let reason: RequestReject = {
-          cancelled: false,
-          reason: e
-        }
-        reject(reason);
-      });
+    this.data = this.data.then(onfulfilled)
+    .catch((reason: any) => {
+      return Promise.reject(reason);
     });
   }
 
@@ -151,11 +141,17 @@ export class RequestResults {
     for(let link of this.linked) {
       promises.push(link.toPromise());
     }
-    this.data = Promise.all(promises);
+    this.data = Promise.all(promises)
+    .catch((reason: RequestReject) => {
+      return Promise.reject(reason);
+    });
   }
 
   toPromise(): Promise<any> {
-    return this.data;
+    return this.data.catch((reason: RequestReject) => {
+      console.log(reason);
+      return Promise.reject(reason);
+    });
   }
 
 }

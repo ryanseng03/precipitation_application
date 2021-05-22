@@ -39,7 +39,7 @@ export class SiteValueFetcherService {
 
   getRasterHeader(): RequestResults {
 
-    let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'header'}]}`;
+    let query = `i{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'header'}]}`;
 
 
     let resultHandler: (results: any[]) => RasterHeader = (results: any[]) => {
@@ -101,8 +101,8 @@ export class SiteValueFetcherService {
     let doc_name = "hcdp_raster";
     let version = "0.1";
     let dateStr = date.format("YYYY-MM");
-    let query = `{'$and':[{'name':'${doc_name}'},{'value.date':'${dateStr}'},{'value.version':'${version}'}`;
-    
+    let query = `i{'$and':[{'name':'${doc_name}'},{'value.date':'${dateStr}'},{'value.version':'${version}'}`;
+
     for(let value in tempKey) {
       query += `,{'value.key.${value}':'${tempKey[value]}'}`
     }
@@ -190,7 +190,7 @@ export class SiteValueFetcherService {
 
       return siteData;//this.extractLastValues(recent)
     }
-    
+
     let results = {
       month: null,
       year: null,
@@ -212,7 +212,7 @@ export class SiteValueFetcherService {
     groups.year[0][1] = groups.month[0];
     groups.year[1][0] = groups.month[1];
     groups.year[1][1] = groups.year[0][0].clone().add(1, "year");
-    
+
     groups.full[0][0] = start;
     groups.full[0][1] = groups.year[0][0];
     groups.full[1][0] = groups.year[1][1];
@@ -260,7 +260,7 @@ export class SiteValueFetcherService {
         let vals: SiteValue[] = wrappedResultHandler(response.result);
         return vals;
       });
-      
+
       results[group] = response;
       break;
     }
@@ -277,10 +277,10 @@ export class SiteValueFetcherService {
     // query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'}]}`;
     // //console.log(query);
 
-    
 
 
-    
+
+
 
     // return response
   }
@@ -326,7 +326,7 @@ export class SiteValueFetcherService {
 
     //need to add in some error handling
     response.transform((response: any) => {
- 
+
       //query cancelled, propogate null
       if(response == null) {
         return null;

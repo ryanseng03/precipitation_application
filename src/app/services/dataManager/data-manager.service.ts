@@ -52,7 +52,15 @@ export class DataManagerService {
     };
 
     let date: Moment.Moment;
-    this.header = dataRequestor.getRasterHeader().toPromise();
+    //can't have a promise exist without a handler
+    this.header = dataRequestor.getRasterHeader().toPromise()
+    .catch((reason: RequestReject) => {
+      if(!reason.cancelled) {
+        console.error(reason.reason);
+        errorPop.notify(`Could not retreive map location data.`);
+      }
+      return null;
+    });
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
       console.log(dataset);
       this.dataset = dataset;
@@ -238,7 +246,7 @@ export class DataManagerService {
   // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
   // //probably has to do with non-production running lifecycle hooks multiple times for change verification
   getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 3000): void {
-    
+
     this.setLoadingOnMap(true);
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
     if(this.throttles.focus) {
@@ -254,7 +262,7 @@ export class DataManagerService {
     }
 
     //two different cases where this used (cache hit/miss), set as function
-    let focusedDataHandler = (dataRetreiver: RequestResults) => {  
+    let focusedDataHandler = (dataRetreiver: RequestResults) => {
       let start = new Date().getTime();
       new Promise((resolve, reject) => {
         this.focusDataRetreiverCanceller = reject;
@@ -274,10 +282,11 @@ export class DataManagerService {
         this.setFocusedData(date, data);
       })
       .catch((reason: RequestReject) => {
+        console.log(reason);
         //request cancelled or failed upstream
         if(reason && !reason.cancelled) {
           //don't need to put error details to user, have those in console
-          let emsg = `There was an issue retreiving the requested climate data. Please refresh the page and try again.`;
+          let emsg = `There was an issue retreiving the requested climate data.`;
           this.errorPop.notify(emsg);
         }
       })
@@ -288,8 +297,8 @@ export class DataManagerService {
     };
 
     let isoStr: string = date.toISOString();
-    let dataRetreiver: RequestResults = this.cache.get(isoStr); 
-    
+    let dataRetreiver: RequestResults = this.cache.get(isoStr);
+
     let cacheDates = () => {
       this.throttles.cache = setTimeout(() => {
         this.throttles.cache = null;
@@ -319,10 +328,10 @@ export class DataManagerService {
         this.cache.set(date.toISOString(), dataRetreiver);
         focusedDataHandler(dataRetreiver);
         cacheDates();
-      }, delay);  
+      }, delay);
     }
 
-    
+
 
   }
 
@@ -361,45 +370,38 @@ export class DataManagerService {
   //need to set something that cancels old calls on new data request to ensure synch
   //should also add some sort of small delay or cancel logic to data request logic to prevent slow down on rapid input changes, some sort of input throttle
   //sets the data focused by the application
-  private setFocusedData(date: Moment.Moment, internalData: InternalDataPack): Promise<FocusedData> {
+  private setFocusedData(date: Moment.Moment, internalData: InternalDataPack): void {
     //need to wait for raster header if not already in
-    return this.header.then((header: RasterHeader) => {
-      return new Promise<FocusedData>((resolve, reject) => {
+    this.header.then((header: RasterHeader) => {
+      //if header null then couldn't get header from server (already pushed error message)
+      if(header) {
         let focus: FocusedData = {
           date: date,
           data: null,
         };
 
-        //if undefined then the date doesn't exist, do nothing and return null
-        if(internalData != undefined) {
-          let data: DataPack = {
-            raster: null,
-            sites: null,
-            metrics: null
-          };
-          focus.data = data;
-          this.combineMetaWithValues(internalData.stations).then((info: SiteInfo[]) => {
-            data.sites = info;
-            //console.log(internalData.sites);
-            //wrap in rasterdata object
-            let raster: RasterData = new RasterData(header);
-            if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {
-              reject("Error Setting bands.");
-            }
-            else {
-              data.raster = raster;
-              // this.data.focusedData = focus;
-              this.paramService.pushFocusedData(focus);
-              resolve(focus);
-            }
-
-          });
-        }
-        else {
-          reject();
-        }
-
-      });
+        let data: DataPack = {
+          raster: null,
+          sites: null,
+          metrics: null
+        };
+        focus.data = data;
+        this.combineMetaWithValues(internalData.stations).then((info: SiteInfo[]) => {
+          data.sites = info;
+          //console.log(internalData.sites);
+          //wrap in rasterdata object
+          let raster: RasterData = new RasterData(header);
+          if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {
+            console.error(`Error setting bands, code: ${raster.addBands(internalData.bands).code}`);
+            this.errorPop.notify("An unexpected error occured while handling the climate data.");
+          }
+          else {
+            data.raster = raster;
+            // this.data.focusedData = focus;
+            this.paramService.pushFocusedData(focus);
+          }
+        });
+      }
     });
   }
 
