@@ -4,42 +4,68 @@ import { latLng, LatLng } from "leaflet";
 import { ValueData } from "./Dataset";
 
 //non dataset info
-export class StationValue {
-    metadataLabel: string;
-    id: string;
-    date: Moment.Moment;
-    value: number;
+//do we need to have array to assign values or something like that?
+// export class StationValue {
+//     id: string;
+//     date: Moment.Moment;
+//     value: number;
 
-    constructor(metadataLabel: string, id: string, date: Moment.Moment, value: number) {
-      this.metadataLabel = metadataLabel;
-      this.id = id;
-      this.date = date;
-      this.value = value;
-    }
-};
+//     constructor(id: string, date: Moment.Moment, value: number) {
+//       this.id = id;
+//       this.date = date;
+//       this.value = value;
+//     }
+// };
 
 export class StationMetadata {
-    label: string;
-    id: string;
-    location: LatLng;
-    ext: {[field: string]: StationField};
+  private _id: string;
+  private _location: LatLng;
+  //should be field value
+  private _ext: {[field: string]: StationField};
 
-    constructor(label: string, id: string, ext: StationField[], lat: number, lng: number, altitude?: number) {
-      this.label = label;
-      this.id = id;
-      this.location = latLng(lat, lng, altitude);
-      this.ext = {};
-      for(let fieldData of ext) {
-        let field = fieldData.getFieldInfo().value;
-        this.ext[field] = fieldData;
-      }
+  constructor(id: string, ext: StationField[], lat: number, lng: number, altitude?: number) {
+    this._id = id;
+    this._location = latLng(lat, lng, altitude);
+    this._ext = {};
+    for(let fieldData of ext) {
+      let field = fieldData.getFieldInfo().value;
+      this._ext[field] = fieldData;
     }
+  }
 
-    getFieldValue(field: string) {
-      let fieldData = this.ext[field];
-      let value = fieldData.getValue();
-      //return value;
+  getFieldValue(field: string): Range | string {
+    let fieldData = this._ext[field];
+    let value = fieldData.getValue();
+    return value;
+  }
+
+  get id(): string {
+    return this._id;
+  }
+
+  get location(): LatLng {
+    return this._location;
+  }
+
+  get lat(): number {
+    return this._location.lat;
+  }
+
+  get lng(): number {
+    return this._location.lng;
+  }
+
+  get elevation(): number {
+    return this._location.alt;
+  }
+
+  getExtFields(): string[] {
+    let fields: string[] = [];
+    for(let field in this._ext) {
+      fields.push(field);
     }
+    return fields;
+  }
 }
 
 //store metadata, add values, update values
@@ -49,54 +75,100 @@ export class StationMetadata {
 
 //does this need to store the metadata label, or just associate this with the full info object?
 export class StationData {
-  //global for specific time
-  metadataLabel: string;
-  //date: Moment.Moment;
 
-  value: number;
-
-
-  id: string;
-  location: LatLng;
-  ext: {[field: string]: StationField};
-  
-  
-  
+  private metadata: StationMetadata;
+  private value: number;
 
   constructor(metadata: StationMetadata, value?: number) {
     this.value = value || null;
-    this.metadataLabel = metadata.label;
-    this.id = metadata.id;
-    this.location = metadata.location;
-    this.ext = metadata.ext;
+    this.metadata = metadata;
   }
 
-  setValue(value: number) {
+  setValue(value: number): void {
     this.value = value;
+  }
+
+  getValue(): number | null {
+    return this.value;
+  }
+
+  get id(): string {
+    return this.metadata.id;
+  }
+
+  get location(): LatLng {
+    return this.metadata.location;
+  }
+
+  get lat(): number {
+    return this.metadata.lat;
+  }
+
+  get lng(): number {
+    return this.metadata.lng;
+  }
+
+  get elevation(): number {
+    return this.metadata.elevation;
+  }
+
+  getFieldValue(field: string): Range | string {
+    return this.metadata.getFieldValue(field);
+  }
+
+  getExtFields(): string[] {
+    return this.metadata.getExtFields();
+  }
+}
+
+//need this as an intermediary since have to set all values at once in info (otherwise have to set everything manually)
+export class StationValueSet {
+  private _map: {[id: string]: number}
+
+  constructor() {
+    this._map = {};
+  }
+
+  set(id: string, value: number) {
+    this._map[id] = value;
+  }
+
+  get(id: string): number {
+    return this._map[id];
+  }
+
+  get map(): {[id: string]: number} {
+    return this._map;
   }
 }
 
 //full info about all of the stations in a group
 export class StationInfo {
-  private fieldData: {[field: string]: StationField};
+  private metadata: StationMetadata[];
+  private fieldData: {[field: string]: ValueData<string>};
   //private metadata: {[id: string]: StationMetadata[]};
   private data: {[id: string]: StationData};
 
-  constructor(metadata: StationMetadata[], fieldData: {[field: string]: StationField}) {
+  constructor(metadata: StationMetadata[], fieldData: {[field: string]: ValueData<string>}) {
     this.fieldData = fieldData;
     let data: {[id: string]: StationData} = {};
     for(let meta of metadata) {
-      data[meta.id] = new StationData(meta, null);
+      data[meta.id] = new StationData(meta);
     }
     this.data = data;
   }
 
-  getStationData(id: string): StationData {
-    return this.data[id];
+  setStationValues(values: StationValueSet): void {
+    let map = values.map;
+    for(let meta of this.metadata) {
+      let id = meta.id;
+      let value = map[id] || null;
+      this.data[id].setValue(value);
+    }
   }
 
   getFields(): string[] {
-    return Object.keys(this.fieldData.fieldData);
+    return Object.keys(this.fieldData);
   }
 
   getFieldType(field: string): StationFieldType {
@@ -173,36 +245,39 @@ export class StationInfoHandler {
 
 export abstract class StationField {
     private type: StationFieldType;
-    private fieldInfo: ValueData<string>;
+    protected value: any;
 
-    constructor(type: StationFieldType, fieldInfo: ValueData<string>, valueMap: {}) {
-        this.type = type;
-        this.fieldInfo = fieldInfo;
+    constructor(type: StationFieldType, value: any) {
+      this.type = type;
+      this.value = value;
     }
 
-    getValue() {
-      //return this.value;
+    getValue(): any {
+      return this.value;
     }
 
-    getType() {
+    getType(): StationFieldType {
       return this.type;
-    }
-
-    getFieldInfo() {
-      return this.fieldInfo;
     }
 }
 
 export class DiscreetStationField extends StationField {
-  constructor(value: ValueData<string>, fieldData: ValueData<string>) {
-    super("discreet", fieldData, {});
+  constructor(value: ValueData<string>) {
+    super("discreet", value);
   }
 
+  getValue(): ValueData<string> {
+    return this.value;
+  }
 }
 
 export class ContinuousStationField extends StationField {
-  constructor(value: number, fieldData: ValueData<string>) {
-    super("continuous", fieldData, {});
+  constructor(value: number) {
+    super("continuous", value);
+  }
+
+  getValue(): number {
+    return this.value;
   }
 }
 
@@ -214,3 +289,6 @@ export interface Dataset {
     period: string,
     tier: number
 }
+
+export type Range = [number, number];
+export type DateRange = [Moment.Moment, Moment.Moment];

@@ -65,6 +65,10 @@ export class RequestResults {
       this.resolve = resolve;
       this.reject = reject;
     });
+    // this.data.catch((reason: RequestReject) => {
+    //   console.log(reason);
+    //   //return Promise.reject(reason);
+    // });
     this.linked = [];
   }
 
@@ -119,10 +123,11 @@ export class RequestResults {
   }
 
   transform(onfulfilled: (value: any) => any) {
-    this.data = this.data.then(onfulfilled)
-    .catch((reason: any) => {
-      return Promise.reject(reason);
-    });
+    this.data = this.data.then(onfulfilled);
+
+    // this.data.catch((reason: any) => {
+    //   return Promise.reject(reason);
+    // });
   }
 
   cancel(): void {
@@ -141,17 +146,15 @@ export class RequestResults {
     for(let link of this.linked) {
       promises.push(link.toPromise());
     }
-    this.data = Promise.all(promises)
-    .catch((reason: RequestReject) => {
-      return Promise.reject(reason);
-    });
+    this.data = Promise.all(promises);
+    // this.data.catch((reason: RequestReject) => {
+    //   console.log(reason);
+    //   return Promise.reject(reason);
+    // });
   }
 
   toPromise(): Promise<any> {
-    return this.data.catch((reason: RequestReject) => {
-      console.log(reason);
-      return Promise.reject(reason);
-    });
+    return this.data;
   }
 
 }
