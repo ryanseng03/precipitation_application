@@ -39,7 +39,7 @@ export class SiteValueFetcherService {
 
   getRasterHeader(): RequestResults {
 
-    let query = `i{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'header'}]}`;
+    let query = `{'$and':[{'name':'${this.current.name}'},{'value.version':'${this.current.version}'},{'value.type':'header'}]}`;
 
 
     let resultHandler: (results: any[]) => RasterHeader = (results: any[]) => {
@@ -101,7 +101,7 @@ export class SiteValueFetcherService {
     let doc_name = "hcdp_raster";
     let version = "0.1";
     let dateStr = date.format("YYYY-MM");
-    let query = `i{'$and':[{'name':'${doc_name}'},{'value.date':'${dateStr}'},{'value.version':'${version}'}`;
+    let query = `{'$and':[{'name':'${doc_name}'},{'value.date':'${dateStr}'},{'value.version':'${version}'}`;
 
     for(let value in tempKey) {
       query += `,{'value.key.${value}':'${tempKey[value]}'}`
@@ -285,6 +285,7 @@ export class SiteValueFetcherService {
     // return response
   }
 
+  //hcdp@hawaii.edu
   //for now everything by month, note that format will change if doing daily
   getSiteValsDate(date: Moment.Moment): RequestResults {
 

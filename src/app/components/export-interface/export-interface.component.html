@@ -32,6 +32,28 @@
       </div>
     </div>
 
+    <div class="email-container" *ngIf="exportItems.length > 0">
+      <div>
+        <mat-checkbox
+          [formControl]="emailData.useEmailControl"
+          matTooltip="The download package is too large to be downloaded directly. Please enter an email address and a download link will be sent to you when ready."
+          [matTooltipDisabled]="!emailData.maxSizeExceeded"
+          [disabled]="emailData.maxSizeExceeded">
+          Send download package to email
+        </mat-checkbox>
+        <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
+      </div>
+
+      <div class="email-input">
+        <mat-form-field *ngIf="emailData.useEmailControl.value" class="example-full-width">
+          <mat-label>Email Address</mat-label>
+          <input required matInput [formControl]="emailData.emailInputControl">
+          <mat-error *ngIf="!emailData.emailInputControl.valid">Please enter a valid email address.</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+
     <div class="control-button-container">
       <div class="control-button">
         <button mat-icon-button (click)="addExportData(-1)">
@@ -39,7 +61,7 @@
         </button>
       </div>
       <div class="control-button">
-        <button mat-button [disabled]="exportItems.length < 1" (click)="export()">
+        <button mat-button [disabled]="exportItems.length < 1 || (emailData.useEmailControl.value && !emailData.emailInputControl.valid)" (click)="export()">
           Export Items
         </button>
       </div>

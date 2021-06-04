@@ -73,7 +73,7 @@ export class RequestResults {
   }
 
   get(query: string, config: Config, offset: number) {
-    console.log(query);
+    //console.log(query);
     //if cancelled or already called ignore
     if(!this.cancelled && !this.sub) {
       let url = `${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;

@@ -282,9 +282,9 @@ export class DataManagerService {
         this.setFocusedData(date, data);
       })
       .catch((reason: RequestReject) => {
-        console.log(reason);
         //request cancelled or failed upstream
         if(reason && !reason.cancelled) {
+          console.error(reason);
           //don't need to put error details to user, have those in console
           let emsg = `There was an issue retreiving the requested climate data.`;
           this.errorPop.notify(emsg);
@@ -413,6 +413,8 @@ export class DataManagerService {
       let value: SiteValue = values[i];
       let skn: string = value.skn;
       resPromises.push(this.dataRequestor.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
+
+
         if(metadata != undefined) {
           return new SiteInfo(metadata, value);
         }
