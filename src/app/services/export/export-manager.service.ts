@@ -7,6 +7,7 @@ import { throwError } from "rxjs";
 import { saveAs }  from 'file-saver';
 import * as Moment from 'moment';
 import { ValueData } from 'src/app/models/Dataset';
+//import * as zip from "@zip.js/zip.js";
 
 @Injectable({
   providedIn: 'root'
@@ -122,6 +123,7 @@ export class ExportManagerService {
   }
 
   private createPackage(data: DownloadData[]) {
+    console.log(data);
     let start = new Date().getTime();
 
     //const intro = { name: "intro.txt", lastModified: new Date(), input: "Hello. This is the client-zip library." }
@@ -133,28 +135,31 @@ export class ExportManagerService {
     //   saveAs(zipData, ExportManagerService.EXPORT_PACKAGE_NAME);
     // });
 
+    //let t = 100n;
+    let t = BigInt(100);
+
     // let writer = new zip.BlobWriter("application/zip");
     // let zipWriter = new zip.ZipWriter(writer);
     // let reader = new zip.BlobReader(new Blob([data[0].contents]));
     // zipWriter.add("test.zip", reader);
 
     // cast any with jszip, throws an error otherwise but works (not sure why)
-    let zip: JSZip = new (<any>JSZip)();
-    for(let fileData of data) {
-      zip.file(fileData.fname, fileData.contents);
-    }
+    // let zip: JSZip = new (<any>JSZip)();
+    // for(let fileData of data) {
+    //   zip.file(fileData.fname, fileData.contents);
+    // }
     // let zipOpts: JSZip.JSZipGeneratorOptions = {
     //   type: "blob",
-    //   compression: "DEFLATE",
-    //   streamFiles: true
+    //   // compression: "DEFLATE",
+    //   // streamFiles: true
     // };
-    zip.generateAsync()
-    .then((zipData: Blob) => {
-      let time = new Date().getTime() - start;
-      let timeSec = time / 1000;
-      console.log(console.log(`Generated download package, time elapsed ${timeSec} seconds`));
-      saveAs(zipData, ExportManagerService.EXPORT_PACKAGE_NAME);
-    });
+    // zip.generateAsync(zipOpts)
+    // .then((zipData: Blob) => {
+    //   let time = new Date().getTime() - start;
+    //   let timeSec = time / 1000;
+    //   console.log(console.log(`Generated download package, time elapsed ${timeSec} seconds`));
+    //   saveAs(zipData, ExportManagerService.EXPORT_PACKAGE_NAME);
+    // });
   }
 
   //should have selection for county
@@ -217,70 +222,143 @@ interface DownloadData {
   contents: ArrayBuffer
 }
 
+
+
+// interface OptionGroups {
+//   raster: Options[],
+//   stations: Options[],
+//   general: Options[]
+// }
+
+// interface Options {
+//   data: ValueData<string>,
+//   next: Options,
+//   files: FileGroups,
+//   symetric: ValueData<Options>[]
+// }
+
+// // interface SymetricOptions {
+// //   options: SymetricOptions[]
+// // }
+
+// // interface SymetricOption {
+// //   data: ValueData<string>,
+// //   files: FileGroups,
+// //   next: HierarchicalOption
+// // }
+
+// interface ExportOptionsCap {
+//   dates: [Moment.Moment, Moment.Moment],
+//   files: FileGroups
+// }
+
+
+
+
+//////////////////////////////////////////////////////
+
+//output stuff
+
 export interface FileData {
+  //need to have information to populate form...
+
+
+  //temp
   fileBase: string,
   requires: string[]
+
 }
 
-interface OptionGroups {
-  raster: Options[],
-  stations: Options[],
-  general: Options[]
-}
 
-interface Options {
-  data: ValueData<string>,
-  next: Options,
-  files: FileGroups,
-  symetric: ValueData<Options>[]
-}
+////////////////////////////////////////////////////
 
-// interface SymetricOptions {
-//   options: SymetricOptions[]
+// interface ExportOptionsLayer {
+//   options: ExportOption[] | ExportOptionCap,
+//   files: FileGroups
 // }
 
-// interface SymetricOption {
+// interface ExportOption {
+//   //info on option and option values
+//   data: ValueData<ExportOptionValue[]>,
+// }
+
+// interface ExportOptionValue {
 //   data: ValueData<string>,
-//   files: FileGroups,
-//   next: HierarchicalOption
+//   next: ExportOptionsLayer
 // }
 
-interface ExportOptionsCap {
-  dates: [Moment.Moment, Moment.Moment],
-  files: FileGroups
+// interface ExportOptionCap {
+//   basePath: string,
+//   baseOpts: ValueData<ExportMultioption>[],
+//   dates: [Moment.Moment, Moment.Moment],
+//   files: FileGroups
+// }
+
+interface ExportMultioption {
+  min: number,
+  default?: number[],
+  data: ValueData<ValueData<string>[]>
 }
 
-interface FileGroups {
+// export interface FileData {
+//   fileBase: string,
+//   requires: string[]
+// }
+
+
+//THE SELECTOR VALUE HAS TO BE UNIQUE...
+//SETTING THE VALUE IN THE CONTROL SETS THE LABEL (won't work unless the value is unique)
+
+//just need a set of values, set the controls
+interface SelectorPathData {
+  path: string
+}
+
+interface FileGroup {
+  //raster, station, general
+  group: ValueData<string>
+  //bind multi-options to file data
+  fileData: FileData[]
+}
+
+// export interface FileData {
+  
+//   resourceID: string
+// }
+
+
+//no, FileGroup[] instead
+interface FileSelectorGroups {
   raster: FileData[],
   stations: FileData[],
   general: FileData[]
 }
 
-
-//////////////////////////////////////////////////////
-
-interface ExportOptionsLayer {
-  options: ExportOption[] | ExportOptionCap,
-  files: FileGroups
-}
-
-interface ExportOption {
-  //info on option and option values
-  data: ValueData<ExportOptionValue[]>,
-}
-
-interface ExportOptionValue {
+interface FileSelectData {
   data: ValueData<string>,
-  next: ExportOptionsLayer
+  resourceIDGroups: string[]
+  requires: string[]
 }
 
-interface ExportOptionCap {
-  baseOpts: ValueData<ExportMultioption>[],
-  dates: [Moment.Moment, Moment.Moment]
+//ex, groupData is county, valueData label is county, value is resource ID
+//value should be the resource ID
+type FileResourceIDGroup = SelectorData<string, string>;
+
+//resource id should be the value
+// interface FileResourceIDSelector {
+//   selector: ValueData<string>
+// }
+
+//same
+// interface SelectorGroupData<T, U> {
+//   groupData: ValueData<T>,
+//   valueData: ValueData<U>[]
+// }
+
+interface SelectorData<T, U> {
+  groupData: ValueData<T>,
+  valueData: ValueData<U>[]
 }
 
-interface ExportMultioption {
-  min: number,
-  max: number,
-  data: ValueData<string>[]
-}
+//multioptions have multiple baseurls associated
+//each file should have a key to reference it by (use value in ValueData)
