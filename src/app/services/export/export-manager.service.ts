@@ -7,7 +7,7 @@ import { throwError } from "rxjs";
 import { saveAs }  from 'file-saver';
 import * as Moment from 'moment';
 import { ValueData } from 'src/app/models/Dataset';
-//import * as zip from "@zip.js/zip.js";
+import * as zip from "client-zip";
 
 @Injectable({
   providedIn: 'root'
@@ -124,7 +124,11 @@ export class ExportManagerService {
 
   private createPackage(data: DownloadData[]) {
     console.log(data);
+    //let t = 100n;
+    let t2 = BigInt(100);
     let start = new Date().getTime();
+    const intro = { name: "intro.txt", lastModified: new Date(), input: "Hello. This is the client-zip library." };
+    const blob = zip.downloadZip([intro]).blob();
 
     //const intro = { name: "intro.txt", lastModified: new Date(), input: "Hello. This is the client-zip library." }
     //czip.downloadZip([intro]).blob()
@@ -136,7 +140,7 @@ export class ExportManagerService {
     // });
 
     //let t = 100n;
-    let t = BigInt(100);
+    //let t = BigInt(100);
 
     // let writer = new zip.BlobWriter("application/zip");
     // let zipWriter = new zip.ZipWriter(writer);
@@ -354,6 +358,26 @@ type FileResourceIDGroup = SelectorData<string, string>;
 //   groupData: ValueData<T>,
 //   valueData: ValueData<U>[]
 // }
+
+//file data should have either a resource id, or a resource id map (map to multi-data values (set multi-data values to keys instead of resource ids))
+
+interface Cap {
+  t: SelectorData<string, string>[]
+}
+
+interface Ft {
+  resourceIDs: string[],
+
+}
+
+interface FileSelectorGroup {
+  group: ValueData<string>,
+  files: ValueData<string>[]
+}
+
+interface Filesss {
+  groups: FileSelectorGroup[]
+}
 
 interface SelectorData<T, U> {
   groupData: ValueData<T>,
