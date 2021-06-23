@@ -57,7 +57,7 @@ export class DataManagerService {
     .catch((reason: RequestReject) => {
       if(!reason.cancelled) {
         console.error(reason.reason);
-        errorPop.notify(`Could not retreive map location data.`);
+        errorPop.notify("error", `Could not retreive map location data.`);
       }
       return null;
     });
@@ -287,7 +287,7 @@ export class DataManagerService {
           console.error(reason);
           //don't need to put error details to user, have those in console
           let emsg = `There was an issue retreiving the requested climate data.`;
-          this.errorPop.notify(emsg);
+          this.errorPop.notify("error", emsg);
         }
       })
       //loading complete
@@ -393,7 +393,7 @@ export class DataManagerService {
           let raster: RasterData = new RasterData(header);
           if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {
             console.error(`Error setting bands, code: ${raster.addBands(internalData.bands).code}`);
-            this.errorPop.notify("An unexpected error occured while handling the climate data.");
+            this.errorPop.notify("error", "An unexpected error occured while handling the climate data.");
           }
           else {
             data.raster = raster;

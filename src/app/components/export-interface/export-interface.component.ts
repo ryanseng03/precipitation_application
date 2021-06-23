@@ -5,8 +5,10 @@ import { MatDialog } from '@angular/material/dialog';
 import Moment from 'moment';
 import { ExportAddItemComponent, ExportDataInfo } from 'src/app/dialogs/export-add-item/export-add-item.component';
 import { ExportUnimplementedComponent } from 'src/app/dialogs/export-unimplemented/export-unimplemented.component';
-import { ExportManagerService } from 'src/app/services/export/export-manager.service';
+import { ExportManagerService, DownloadProgress, ResourceInfo } from 'src/app/services/export/export-manager.service';
 import { ExportInfo, FileData } from "src/app/services/export/export-manager.service";
+import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.service';
+
 
 @Component({
   selector: 'app-export-interface',
@@ -15,15 +17,21 @@ import { ExportInfo, FileData } from "src/app/services/export/export-manager.ser
 })
 export class ExportInterfaceComponent implements OnInit {
 
+  exportActivityMonitor = {
+    active: false,
+    mode: "query",
+    value: 0
+  };
+
   emailData: {
     useEmailControl: FormControl,
     emailInputControl: FormControl,
     maxSizeExceeded: boolean
-  }
+  };
 
   exportItems: ExportDataInfo[] = [];
 
-  constructor(public dialog: MatDialog, private exportManager: ExportManagerService) {
+  constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService) {
     this.emailData = {
       useEmailControl: new FormControl(false),
       emailInputControl: new FormControl(),
@@ -38,28 +46,37 @@ export class ExportInterfaceComponent implements OnInit {
     // });
   }
 
-  checkExportSize() {
-    //size should be set to the export package size
-    let size = 0;
-    if(size < 100) {
-      this.emailData.maxSizeExceeded = false;
-    }
-    else {
-      this.emailData.maxSizeExceeded = true;
-      this.emailData.useEmailControl.setValue(true);
-    }
-  }
+  // checkExportSize() {
+  //   //size should be set to the export package size
+  //   let size = 0;
+  //   if(size < 100) {
+  //     this.emailData.maxSizeExceeded = false;
+  //   }
+  //   else {
+  //     this.emailData.maxSizeExceeded = true;
+  //     this.emailData.useEmailControl.setValue(true);
+  //   }
+  // }
 
   ngOnInit() {
     //this.addExportData(-1);
   }
 
+  checkEmailReq() {
+    let inLimit = this.exportManager.packageSizeInLimit(this.fileData);
+    this.emailData.maxSizeExceeded = !inLimit;
+    if(this.emailData.maxSizeExceeded) {
+      this.emailData.useEmailControl.setValue(true);
+    }
+  }
+
 
   removeExportItem(i: number) {
     this.exportItems.splice(i, 1);
+    this.checkEmailReq();
   }
 
-  fileData: ExportInfo[] = [];
+  fileData: ResourceInfo[] = [];
   addExportData(i: number) {
     let initData: ExportDataInfo = i < 0 ? null : this.exportItems[i]
 
@@ -72,59 +89,60 @@ export class ExportInterfaceComponent implements OnInit {
     });
 
 
+    
     //TEMP MAPPING
     //raster and stations have separate mappings
-    let tempExportInfoMap: {
-      raster: ExportInfo,
-      station: ExportInfo
-    } = {
-      raster: {
-        dateInfo: {
-          //test dates so don't overwhelm
-          dates: [Moment("1990-01"), Moment("1991-01")],
-          period: "month",
-        },
-        //should add better path combination (strip extra /)
-        baseURL: "Rainfall/allMonYrData",
-        files: []
-      },
-      station: {
-        //dateInfo: null,
-        baseURL: "Rainfall",
-        files: []
-      }
-    };
+    // let tempExportInfoMap: {
+    //   raster: ExportInfo,
+    //   station: ExportInfo
+    // } = {
+    //   raster: {
+    //     dateInfo: {
+    //       //test dates so don't overwhelm
+    //       dates: [Moment("1990-01"), Moment("1991-01")],
+    //       period: "month",
+    //     },
+    //     //should add better path combination (strip extra /)
+    //     baseURL: "Rainfall/allMonYrData",
+    //     files: []
+    //   },
+    //   station: {
+    //     //dateInfo: null,
+    //     baseURL: "Rainfall",
+    //     files: []
+    //   }
+    // };
 
-    let tempFileMap: {[item: string]: FileData} = {
-      partial: {
-        fileBase: "monthly_rf_new_data_1990_2020_FINAL_19dec2020.csv",
-        requires: []
-      },
-      unfilled: {
-        fileBase: "monthly_rf_new_data_1990_2020_FINAL_19dec2020.csv",
-        requires: []
-      },
-      raster: {
-        fileBase: "statewide_rf_mm.tif",
-        requires: []
-      },
-      stderr: {
-        fileBase: "statewide_rf_mm_SE.tif",
-        requires: []
-      },
-      anomaly: {
-        fileBase: "statewide_anom.tif",
-        requires: []
-      },
-      loocv: {
-        fileBase: "statewide_anom_SE.tif",
-        requires: []
-      },
-      metadata: {
-        fileBase: "statewide_rf_mm_meta.txt",
-        requires: []
-      }
-    };
+    // let tempFileMap: {[item: string]: FileData} = {
+    //   partial: {
+    //     fileBase: "monthly_rf_new_data_1990_2020_FINAL_19dec2020.csv",
+    //     requires: []
+    //   },
+    //   unfilled: {
+    //     fileBase: "monthly_rf_new_data_1990_2020_FINAL_19dec2020.csv",
+    //     requires: []
+    //   },
+    //   raster: {
+    //     fileBase: "statewide_rf_mm.tif",
+    //     requires: []
+    //   },
+    //   stderr: {
+    //     fileBase: "statewide_rf_mm_SE.tif",
+    //     requires: []
+    //   },
+    //   anomaly: {
+    //     fileBase: "statewide_anom.tif",
+    //     requires: []
+    //   },
+    //   loocv: {
+    //     fileBase: "statewide_anom_SE.tif",
+    //     requires: []
+    //   },
+    //   metadata: {
+    //     fileBase: "statewide_rf_mm_meta.txt",
+    //     requires: []
+    //   }
+    // };
 
     //
 
@@ -137,32 +155,72 @@ export class ExportInterfaceComponent implements OnInit {
         else {
           this.exportItems.splice(i, 1, data);
         }
-        this.checkExportSize();
+        //this.checkExportSize();
 
         //temp using temp mappings--------------
-        let rasterExportBase: ExportInfo = {
-          dateInfo: tempExportInfoMap.raster.dateInfo,
-          baseURL: tempExportInfoMap.raster.baseURL,
-          files: []
-        };
-        for(let info of data.files.raster) {
-          let value = info.value;
-          rasterExportBase.files.push(tempFileMap[value]);
-        }
-        this.fileData.push(rasterExportBase);
+        // let rasterExportBase: ExportInfo = {
+        //   dateInfo: tempExportInfoMap.raster.dateInfo,
+        //   baseURL: tempExportInfoMap.raster.baseURL,
+        //   files: []
+        // };
 
-        let stationExportBase: ExportInfo = {
-          dateInfo: tempExportInfoMap.station.dateInfo,
-          baseURL: tempExportInfoMap.station.baseURL,
-          files: []
-        };
-        for(let info of data.files.station) {
-          let value = info.value;
-          stationExportBase.files.push(tempFileMap[value]);
+        //temp
+
+
+        for(let info of data.files.raster) {
+          let resourceInfo: ResourceInfo = {
+            opts: {
+              datatype: data.datatype.value,
+              fileGroup: {
+                group: "raster",
+                type: "values"
+              },
+              fileData: {
+                period: data.timeperiod.value,
+                dates: [data.dates[0].format("YYYY-MM"), data.dates[1].format("YYYY-MM")],
+                extent: "state",
+                type: info.value,
+                tier: data.tier.value
+              },
+              filterOpts: {}
+            },
+            //maybe should move this size property
+            size: 1
+          }
+          
+          this.fileData.push(resourceInfo);
         }
-        this.fileData.push(stationExportBase);
+
+        // let stationExportBase: ExportInfo = {
+        //   dateInfo: tempExportInfoMap.station.dateInfo,
+        //   baseURL: tempExportInfoMap.station.baseURL,
+        //   files: []
+        // };
+        for(let info of data.files.station) {
+          let resourceInfo: ResourceInfo = {
+            opts: {
+              datatype: data.datatype.value,
+              fileGroup: {
+                group: "stations",
+                type: "values"
+              },
+              fileData: {
+                period: data.timeperiod.value,
+                fill: info.value,
+                tier: data.tier.value
+              },
+              filterOpts: {}
+            },
+            //maybe should move this size property
+            size: 1
+          }
+  
+          this.fileData.push(resourceInfo);
+        }
 
         //---------------------------------------
+
+        this.checkEmailReq();
       }
     });
   }
@@ -198,9 +256,52 @@ export class ExportInterfaceComponent implements OnInit {
     //   width: '250px',
     //   data: null
     // });
-    this.exportManager.generatePackage(this.fileData, this.emailData.emailInputControl.value);
+    if(this.emailData.useEmailControl.value) {
+      this.exportActivityMonitor.mode = "indeterminate"
+      this.exportActivityMonitor.active = true;
+      let email = this.emailData.emailInputControl.value
+      this.exportManager.submitEmailPackageReq([], email).then(() => {
+        let message = `A download request has been generated. You should receive an email at ${email} with your download package shortly. If you do not receive an email within 4 hours, please ensure the email address you entered is spelled correctly and try again or contact the site administrators.`;
+        this.errorService.notify("info", message);
+        this.exportActivityMonitor.active = false;
+      })
+      .catch((e) => {
+        this.errorService.notify("error", "An error occured while requesting the download package.");
+        this.exportActivityMonitor.active = false;
+      });
+    }
+    else {
+      this.exportActivityMonitor.mode = "query"
+      this.exportActivityMonitor.active = true;
+      this.exportManager.submitInstantDownloadReq([]).then((progress: DownloadProgress) => {
+        this.exportActivityMonitor.mode = "determinate";
+        this.exportActivityMonitor.value = 0;
+        //need to normalize size and progress to [0, 100], compute coeff
+        let coeff = 100 / progress.sizeUL;
+        progress.progress.subscribe((complete: number) => {
+          //normalize progress to 100
+          let percent = coeff * complete
+          this.exportActivityMonitor.value = percent;
+        }, (e: any) => {
+          this.errorService.notify("error", "An error occured while retreiving the download package.");
+          //does complete still trigger on error?
+          this.exportActivityMonitor.active = false;
+        }, () => {
+          //if this triggers on error need to set flag or something
+          let message = `Your download package has been generated. Check your browser for the downloaded file.`;
+          this.errorService.notify("info", message);
+          this.exportActivityMonitor.active = false;
+        });
+        
+      })
+      .catch((e) => {
+        this.errorService.notify("error", "An error occured while generating the download package.");
+        this.exportActivityMonitor.active = false;
+      });
+    }
   }
 }
+
 
 
 
@@ -210,3 +311,4 @@ interface FileInfo {
   datatype: string,
 
 }
+

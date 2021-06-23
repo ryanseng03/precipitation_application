@@ -72,6 +72,9 @@ import { TimeSeriesComponent } from './components/time-series/time-series.compon
 import { LeafletLayerControlExtensionComponent } from './components/leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 import { ErrorPopupComponent } from './dialogs/error-popup/error-popup.component';
 
+import {MatProgressBarModule} from '@angular/material/progress-bar';
+import { InfoPopupComponent } from './dialogs/info-popup/info-popup.component';
+
 PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
@@ -109,9 +112,11 @@ PlotlyModule.plotlyjs = PlotlyJS;
     LoadingComponentComponent,
     TimeSeriesComponent,
     LeafletLayerControlExtensionComponent,
-    ErrorPopupComponent
+    ErrorPopupComponent,
+    InfoPopupComponent
   ],
   imports: [
+    MatProgressBarModule,
     BrowserModule,
     AppRoutingModule,
     LeafletModule.forRoot(),

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import * as JSZip from "jszip";
 import { DbConService, Config } from '../dataLoaders/dataRequestor/auxillary/dbCon/db-con.service';
 import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
-import { throwError } from "rxjs";
+import { Observable, Subject, throwError } from "rxjs";
 import { saveAs }  from 'file-saver';
 import * as Moment from 'moment';
 import { ValueData } from 'src/app/models/Dataset';
@@ -44,63 +44,162 @@ export class ExportManagerService {
   static readonly EXPORT_BASE_URL = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/";
 
   //sizes in MB
-  static readonly MAX_INTERNAL_PACKAGE_SIZE = 100;
-  static readonly GEOTIFF_SIZE = 25;
-  static readonly METADATA_SIZE = 2;
-  static readonly STATION_DATA = 20;
+  static readonly MAX_INTERNAL_PACKAGE_SIZE_MB = 100;
+  static readonly AVERAGE_FILE_SIZE = 1;
+  static readonly F_PART_SIZE_UL_MB = 4;
+
+  ///////////////////////
+  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu:443/genzip/instant/splitlink";
+  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu:443/genzip/email/";
+  ///////////////////////
 
   constructor(private http: HttpClient, private dbcon: DbConService) {
-    // let files: FileData[] = [this.fileData.stations[0]];
-    // this.generatePackage(files);
-  }
+    
+    let files1 = [];
+    let files2 = [];
 
-  generatePackage(files: ExportInfo[], email?: string) {
-    console.log(files);
-    let fnames = this.getResourceNames(files);
-    console.log(fnames);
-    //email support not here yet
-    if(email) {
+    // let base1 = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/Rainfall/";
+    // let base2 = "/data/"
 
-    }
-    //else {
-      let start = new Date().getTime();
-      let promises: Promise<DownloadData>[] = [];
-      for(let file of fnames) {
-        let fdata: Promise<DownloadData> = this.getFile(file);
-        promises.push(fdata);
+    //value metadata and overarching metadata, one for each item (e.g. by map) one for that file group
+    let resourceOptions: ResourceOptions[] = [
+      {
+        datatype: "rainfall",
+        fileGroup: {
+          group: "stations",
+          type: "value"
+        },
+        fileData: {
+          period: "month",
+          fill: "partial",
+          tier: 0
+        },
+        filterOpts: {}
+      },
+      {
+        datatype: "rainfall",
+        fileGroup: {
+          group: "stations",
+          type: "metadata"
+        },
+        fileData: {},
+        filterOpts: {}
       }
-      Promise.all(promises)
-      .then((data: DownloadData[]) => {
-        let time = new Date().getTime() - start;
-        let timeSec = time / 1000;
-        console.log(console.log(`Got file data, time elapsed ${timeSec} seconds`));
-        this.createPackage(data);
-      })
-      .catch((error: any) => {
-        console.error(error);
+    ];
+
+    for(let type of ["map", "stderr", "anomaly", "loocv", "metadata"]) {
+      let item = {
+        datatype: "rainfall",
+        fileGroup: {
+          group: "raster",
+          type: "value"
+        },
+        fileData: {
+          period: "month",
+          dates: ["1990-01", "1992-01"],
+          extent: "state",
+          type: type,
+          tier: 0
+        },
+        filterOpts: {}
+      }
+      resourceOptions.push(item);
+    }
+
+    let resourceInfo: ResourceInfo[] = [];
+    for(let opts of resourceOptions) {
+      resourceInfo.push({
+        opts: opts,
+        size: ExportManagerService.AVERAGE_FILE_SIZE
       });
-    //}
+    }
   }
 
-  private getFile(file: string): Promise<DownloadData> {
-    //should chnage base url with https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data, rest can be root dir for that dataset
-    //maybe? what if what to use different storage sys, maybe just have all specified by dataset
-    let url = `${ExportManagerService.EXPORT_BASE_URL}${file}`;
-    // let resourceSplit = url.split("/");
-    // let fname = resourceSplit[resourceSplit.length - 1]
+  packageSizeInLimit(files: ResourceInfo[]): boolean {
+    let size = files.reduce((acc: number, value: ResourceInfo) => {
+      let groupSize = 0;
+      //temp, just assume month for now, also maybe do this pre string conversion
+      if(value.opts.fileData.dates) {
+        let d1: string = value.opts.fileData.dates[0];
+        let d2: string = value.opts.fileData.dates[1];
+        let y1 = Number.parseInt(d1.substring(0, 4));
+        let y2 = Number.parseInt(d2.substring(0, 4));
+        let m1 = Number.parseInt(d1.substring(5, 7));
+        let m2 = Number.parseInt(d2.substring(5, 7));
+        groupSize += 12 * (y2 - y1);
+        groupSize += m2 - m1;
+        console.log(y2, y2, m2, m1);
+      }
+      console.log(groupSize, this.translateSize(value.size));
+      return acc + groupSize * this.translateSize(value.size);
+    }, 0);
+    console.log(files, size);
+    return size <= ExportManagerService.MAX_INTERNAL_PACKAGE_SIZE_MB;
+  }
 
-    return new Promise<DownloadData>((resolve, reject) => {
-      // let head = new HttpHeaders()
-      // // .set("Authorization", "Bearer " + config.oAuthAccessToken)
-      // .set("Content-Type", "application/x-www-form-urlencoded");
-      let options = {
-        //headers: head,
-        responseType: "arraybuffer"
-      };
 
-      //remember error manager and dialogs
-      //cast options to any because typings being weird
-      this.http.get(url, <any>options)
+  private getFiles(files: string[]): DownloadData {
+    let progress = new Subject<number>();
+
+    let data: Promise<Blob> = new Promise((resolve, reject) => {
+      let responses: ArrayBuffer[];
+      let acc = 0;
+      let start = new Date().getTime();
+      for(let file of files) {
+        this.getFile(file).subscribe((event: HttpEvent<ArrayBuffer>) => {
+          if(event.type === HttpEventType.DownloadProgress) {
+            acc += event.loaded;
+            progress.next(acc);
+          }
+          else if(event.type === HttpEventType.Response) {
+            responses.push(event.body);
+            if(responses.length === files.length) {
+              let time = new Date().getTime() - start;
+              let timeSec = time / 1000;
+              console.log(`Got all zip data, time elapsed ${timeSec} seconds`);
+              resolve(responses);
+              progress.complete();
+            }
+          }
+        });
+      }
+    })
+    .then((responses: ArrayBuffer[]) => {
+      return new Blob(responses, {type: "application/zip"});
+    })
+    .catch((e: any) => {
+      //error out progress and reject
+      progress.error(e);
+      return Promise.reject(e);
+    });
+    //progress is in bytes so multiply by 1024 * 1024
+    let sizeUL = files.length * ExportManagerService.F_PART_SIZE_UL_MB * 1024 * 1024;
+    return {
+      progress: {
+        sizeUL: sizeUL,
+        progress: progress.asObservable()
+      },
+      data: data
+    };
+  }
+
+
+
+  async submitEmailPackageReq(files: ResourceInfo[], email: string): Promise<void> {
+    let reqBody = {
+      files: files,
+      email: email
+    };
+    let head = new HttpHeaders();
+    const responseType: "text" = "text";
+    let reqOpts = {
+      headers: head,
+      responseType: responseType,
+    };
+    let endpoint = ExportManagerService.ENDPOINT_EMAIL;
+    let start = new Date().getTime();
+    return new Promise<void>((resolve, reject) => {
+      this.http.post(endpoint, reqBody, reqOpts)
       .pipe(
         retry(3),
         take(1),
@@ -108,107 +207,163 @@ export class ExportManagerService {
           return throwError(e);
         })
       )
-      .subscribe((response: ArrayBuffer) => {
-        let data: DownloadData = {
-          fname: file,
-          contents: response
-        };
-        //console.log(response);
-        resolve(data);
+      .subscribe((response: string) => {
+        let time = new Date().getTime() - start;
+        let timeSec = time / 1000;
+        console.log(`Got request confirmation, time elapsed ${timeSec} seconds`);
+        resolve();
       }, (error: any) => {
+        console.error(error);
         reject(error);
       });
     });
 
   }
 
-  private createPackage(data: DownloadData[]) {
-    console.log(data);
-    //let t = 100n;
-    let t2 = BigInt(100);
-    let start = new Date().getTime();
-    const intro = { name: "intro.txt", lastModified: new Date(), input: "Hello. This is the client-zip library." };
-    const blob = zip.downloadZip([intro]).blob();
 
-    //const intro = { name: "intro.txt", lastModified: new Date(), input: "Hello. This is the client-zip library." }
-    //czip.downloadZip([intro]).blob()
-    // .then((zipData: Blob) => {
-    //   let time = new Date().getTime() - start;
-    //   let timeSec = time / 1000;
-    //   console.log(console.log(`Generated download package, time elapsed ${timeSec} seconds`));
-    //   saveAs(zipData, ExportManagerService.EXPORT_PACKAGE_NAME);
-    // });
+  async submitInstantDownloadReq(files: ResourceInfo[]): Promise<DownloadProgress> {
+    let reqBody = {
+      files: files,
+    };
+    let head = new HttpHeaders();
+    const responseType: "json" = "json";
+    let reqOpts = {
+      headers: head,
+      responseType: responseType,
+    };
+    let endpoint = ExportManagerService.ENDPOINT_INSTANT;
 
-    //let t = 100n;
-    //let t = BigInt(100);
-
-    // let writer = new zip.BlobWriter("application/zip");
-    // let zipWriter = new zip.ZipWriter(writer);
-    // let reader = new zip.BlobReader(new Blob([data[0].contents]));
-    // zipWriter.add("test.zip", reader);
-
-    // cast any with jszip, throws an error otherwise but works (not sure why)
-    // let zip: JSZip = new (<any>JSZip)();
-    // for(let fileData of data) {
-    //   zip.file(fileData.fname, fileData.contents);
-    // }
-    // let zipOpts: JSZip.JSZipGeneratorOptions = {
-    //   type: "blob",
-    //   // compression: "DEFLATE",
-    //   // streamFiles: true
-    // };
-    // zip.generateAsync(zipOpts)
-    // .then((zipData: Blob) => {
-    //   let time = new Date().getTime() - start;
-    //   let timeSec = time / 1000;
-    //   console.log(console.log(`Generated download package, time elapsed ${timeSec} seconds`));
-    //   saveAs(zipData, ExportManagerService.EXPORT_PACKAGE_NAME);
-    // });
+    return new Promise<DownloadProgress>((resolve, reject) => {
+      let start = new Date().getTime()
+      this.http.post(endpoint, reqBody, reqOpts)
+        .pipe(
+          retry(3),
+          take(1),
+          catchError((e: HttpErrorResponse) => {
+            return throwError(e);
+          })
+        )
+        .subscribe(async (response: any) => {
+          let time = new Date().getTime() - start;
+          let timeSec = time / 1000;
+          console.log(`Got generated file names, time elapsed ${timeSec} seconds`);
+          let files: string[] = response.files;
+          let downloadData: DownloadData = this.getFiles(files);
+          //resolve with data monitor
+          resolve(downloadData.progress);
+          //when data download finished download to browser
+          downloadData.data.then((data: Blob) => {
+            this.downloadBlob(data, ExportManagerService.EXPORT_PACKAGE_NAME);
+          })
+          .catch((e: any) => {/*error logging and all that should be handled elsewhere, progress monitor should also get error for popping up client message*/});
+        }, (error: any) => {
+          console.error(error);
+          reject(error);
+        });
+    });
+    
+    
   }
 
-  //should have selection for county
-  private getResourceNames(fileInfo: ExportInfo[]): string[] {
-    let files = []
-    for(let info of fileInfo) {
-      if(info.dateInfo) {
-        //step through dates using granularity
-        let date: Moment.Moment = info.dateInfo.dates[0].clone();
-        while(date.isBefore(info.dateInfo.dates[1])) {
-          let dateForm: string;
-            switch(info.dateInfo.period) {
-              case "month": {
-                dateForm = date.format("YYYY_MM");
-                break;
-              }
-              case "day": {
-                dateForm = date.format("YYYY_MM_DD");
-                break;
-              }
-              default: {
-                throw new Error("Unknown date period. Can not generate file listing");
-              }
-            }
-          for(let file of info.files) {
-            let fname = `${dateForm}_${file.fileBase}`;
-            let fpath = `${info.baseURL}/${dateForm}/${fname}`;
-            files.push(fpath);
-          }
-          date.add(1, <Moment.unitOfTime.DurationConstructor>info.dateInfo.period);
-        }
-      }
-      else {
-        for(let file of info.files) {
-          let fpath = `${info.baseURL}/${file.fileBase}`;
-          files.push(fpath);
-        }
 
-      }
+  private downloadBlob(blob: Blob, name: string) {
+    let url = window.URL.createObjectURL(blob);
+    let link = document.createElement("a");
+    link.download = name;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
 
+
+  
+
+  private getFile(url: string): Observable<HttpEvent<ArrayBuffer>> {
+    let head = new HttpHeaders();
+    const responseType: "arraybuffer" = "arraybuffer";
+    const observe: "events" = "events";
+    let options = {
+      headers: head,
+      responseType: responseType,
+      reportProgress: true,
+      observe: observe
+    };
+
+    //remember error manager and dialogs
+    //cast options to any because typings being weird
+    return this.http.get(url, options)
+    .pipe(
+      retry(3),
+      take(1),
+      catchError((e: HttpErrorResponse) => {
+        return throwError(e);
+      })
+    );
+  }
+
+
+  private translateSize(size: string | number): number {
+    let sizeMB: number;
+    if(typeof size === "number") {
+      sizeMB = size;
     }
-
-    return files;
+    else {
+      let suffix: string = size.slice(-1);
+      suffix = suffix.toUpperCase();
+      let coeff = 0;
+      let base = Number.parseInt(size);
+      switch(suffix) {
+        case "G": {
+          coeff = 1024;
+          break;
+        }
+        case "M": {
+          coeff = 1;
+          break;
+        }
+        case "K": {
+          coeff = 1 / 1024;
+          break;
+        }
+        case "B": {
+          coeff = 1 / (1024 * 1024);
+          break;
+        }
+      }
+      sizeMB = coeff * base;
+    }
+    return sizeMB;
   }
 }
+
+export interface ResourceInfo {
+  opts: ResourceOptions,
+  size: string | number
+}
+
+export interface ResourceOptions {
+  datatype: string,
+  fileGroup: any,
+  fileData: any,
+  filterOpts: any
+}
+
+interface DownloadData {
+  progress: DownloadProgress,
+  data: Promise<Blob>
+}
+
+export interface DownloadProgress {
+  sizeUL: number,
+  progress: Observable<number>
+}
+
+
+
+
+
 
 export interface ExportInfo {
   dateInfo?: FileDateInfo,
@@ -221,10 +376,7 @@ interface FileDateInfo {
   period: string,
 }
 
-interface DownloadData {
-  fname: string,
-  contents: ArrayBuffer
-}
+
 
 
 
@@ -452,6 +604,12 @@ let propertyMap: {
 }
 
 
+interface DataSelection {
+  period: string,
+  [field: string]: string
+}
+type OptPath = string[];
+
 //can this be used for vis and export and file refs be moved out?
 //basis set of fields to determine file type and dates, all of the export/vis specific properties should be post-date
 //even cap "metadata" field should be used for both
@@ -463,6 +621,9 @@ let propertyMap: {
 //actually, can use it as a backbone, have annotations in the vis object noting unavailability for vis (backbone should be most expansive set)
 //can export have unavailability or always most expansive set?
 //note that even if somethings unavailable it should still have the full property path, just some of the value sets may be limited (e.g. period for vis no daily for now)
+
+//assume everything always has a period if there's dates for date format processing
+//have something that handles special fields
 let backboneData: any = {
   field: {
     fieldRef: "datatype",
@@ -494,6 +655,8 @@ let backboneData: any = {
                     max: null
                   }
                 },
+                //need to have special processing for certain properties
+                //for tiers in particular, tier values should be numeric, latest tag should query for greatest value ($max)
                 latest: {
                   dates: {
                     min: "1990-01",
@@ -640,9 +803,9 @@ interface ExportLayer {
 //file specific filters
 //file data should have links to options that apply to them
 //what if mutiple options affect file name?
-interface FileOptions {
-  selector: SelectorData
-}
+// interface FileOptions {
+//   selector: SelectorData
+// }
 
 interface FileOption {
   //implement as filter?
@@ -678,10 +841,10 @@ interface DateInfo {
 //are you going to store counties as filters? makes sense
 //any of these option things should be in propertyMap
 //how to link with filtering?
-interface FileData {
-  path: string
-  file: ValueData<string>
-}
+// interface FileData {
+//   path: string
+//   file: ValueData<string>
+// }
 
 interface FieldData {
   fieldRef: string,
@@ -824,3 +987,9 @@ interface SelectorData<T, U> extends ControlData<T> {
 
 //multioptions have multiple baseurls associated
 //each file should have a key to reference it by (use value in ValueData)
+
+
+export interface FileData {
+  fileBase: string,
+  requires: string[]
+}

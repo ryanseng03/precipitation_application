@@ -66,6 +66,10 @@
         </button>
       </div>
 
+      <div *ngIf="exportActivityMonitor.active">
+        <mat-progress-bar [mode]="exportActivityMonitor.mode" [value]="exportActivityMonitor.value"></mat-progress-bar>
+      </div>
+
     </div>
 
   </div>
