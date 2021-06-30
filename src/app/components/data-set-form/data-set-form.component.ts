@@ -28,7 +28,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   private static readonly GLOBAL_MAX = Moment();
   //set global min to january first year 0 (null/undefined works but seems to break change detection for some reason)
   private static readonly GLOBAL_MIN = Moment("0000-01-01T00:00:00.000Z").tz("utc");
-  private static readonly DEFAULT_TIMESTEP = "daily";
+  private static readonly DEFAULT_TIMESTEP = "day";
 
   // dataset: Dataset = {
   //   startDate: null,
@@ -73,8 +73,8 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     },
     timestep: {
       label: "Monthly",
-      value: "monthly",
-      control: new FormControl("monthly")
+      value: "month",
+      control: new FormControl("month")
     },
     dateRange: {
       low: {
@@ -113,7 +113,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
     // this.min = this.dataRange.min;
     // this.max = this.dataRange.max
-    // this.timestep = "monthly";
+    // this.timestep = "month";
     // this.validParts = {
     //   min: false,
     //   max: false,

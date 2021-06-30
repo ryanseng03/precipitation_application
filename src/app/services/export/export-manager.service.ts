@@ -138,15 +138,114 @@ export class ExportManagerService {
   }
 
 
+  
+
+
+
+  async submitEmailPackageReq(files: ResourceOptions[], email: string): Promise<void> {
+    let reqBody = {
+      fileData: files,
+      email: email
+    };
+    let head = new HttpHeaders();
+    const responseType: "text" = "text";
+    let reqOpts = {
+      headers: head,
+      responseType: responseType,
+    };
+    let endpoint = ExportManagerService.ENDPOINT_EMAIL;
+    let start = new Date().getTime();
+    return new Promise<void>((resolve, reject) => {
+      this.http.post(endpoint, reqBody, reqOpts)
+      .pipe(
+        retry(3),
+        take(1),
+        catchError((e: HttpErrorResponse) => {
+          return throwError(e);
+        })
+      )
+      .subscribe((response: string) => {
+        let time = new Date().getTime() - start;
+        let timeSec = time / 1000;
+        console.log(`Got request confirmation, time elapsed ${timeSec} seconds`);
+        resolve();
+      }, (error: any) => {
+        console.error(error);
+        reject(error);
+      });
+    });
+
+  }
+
+
+  async submitInstantDownloadReq(files: ResourceOptions[]): Promise<DownloadProgress> {
+    let reqBody = {
+      fileData: files,
+    };
+    let head = new HttpHeaders();
+    const responseType: "json" = "json";
+    let reqOpts = {
+      headers: head,
+      responseType: responseType,
+    };
+    let endpoint = ExportManagerService.ENDPOINT_INSTANT;
+
+    return new Promise<DownloadProgress>((resolve, reject) => {
+      let start = new Date().getTime()
+      this.http.post(endpoint, reqBody, reqOpts)
+        .pipe(
+          retry(3),
+          take(1),
+          catchError((e: HttpErrorResponse) => {
+            return throwError(e);
+          })
+        )
+        .subscribe(async (response: any) => {
+          let time = new Date().getTime() - start;
+          let timeSec = time / 1000;
+          console.log(`Got generated file names, time elapsed ${timeSec} seconds`);
+          let files: string[] = response.files;
+          console.log(files);
+          let downloadData: DownloadData = this.getFiles(files);
+          //resolve with data monitor
+          resolve(downloadData.progress);
+          //when data download finished download to browser
+          downloadData.data.then((data: Blob) => {
+            this.downloadBlob(data, ExportManagerService.EXPORT_PACKAGE_NAME);
+          })
+          .catch((e: any) => {/*error logging and all that should be handled elsewhere, progress monitor should also get error for popping up client message*/});
+        }, (error: any) => {
+          console.error(error);
+          reject(error);
+        });
+    });
+    
+    
+  }
+
+
+  private downloadBlob(blob: Blob, name: string) {
+    let url = window.URL.createObjectURL(blob);
+    let link = document.createElement("a");
+    link.download = name;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+
   private getFiles(files: string[]): DownloadData {
     let progress = new Subject<number>();
 
     let data: Promise<Blob> = new Promise((resolve, reject) => {
-      let responses: ArrayBuffer[];
+      let responses: ArrayBuffer[] = [];
       let acc = 0;
       let start = new Date().getTime();
       for(let file of files) {
         this.getFile(file).subscribe((event: HttpEvent<ArrayBuffer>) => {
+          console.log(event);
           if(event.type === HttpEventType.DownloadProgress) {
             acc += event.loaded;
             progress.next(acc);
@@ -182,102 +281,6 @@ export class ExportManagerService {
       data: data
     };
   }
-
-
-
-  async submitEmailPackageReq(files: ResourceInfo[], email: string): Promise<void> {
-    let reqBody = {
-      files: files,
-      email: email
-    };
-    let head = new HttpHeaders();
-    const responseType: "text" = "text";
-    let reqOpts = {
-      headers: head,
-      responseType: responseType,
-    };
-    let endpoint = ExportManagerService.ENDPOINT_EMAIL;
-    let start = new Date().getTime();
-    return new Promise<void>((resolve, reject) => {
-      this.http.post(endpoint, reqBody, reqOpts)
-      .pipe(
-        retry(3),
-        take(1),
-        catchError((e: HttpErrorResponse) => {
-          return throwError(e);
-        })
-      )
-      .subscribe((response: string) => {
-        let time = new Date().getTime() - start;
-        let timeSec = time / 1000;
-        console.log(`Got request confirmation, time elapsed ${timeSec} seconds`);
-        resolve();
-      }, (error: any) => {
-        console.error(error);
-        reject(error);
-      });
-    });
-
-  }
-
-
-  async submitInstantDownloadReq(files: ResourceInfo[]): Promise<DownloadProgress> {
-    let reqBody = {
-      files: files,
-    };
-    let head = new HttpHeaders();
-    const responseType: "json" = "json";
-    let reqOpts = {
-      headers: head,
-      responseType: responseType,
-    };
-    let endpoint = ExportManagerService.ENDPOINT_INSTANT;
-
-    return new Promise<DownloadProgress>((resolve, reject) => {
-      let start = new Date().getTime()
-      this.http.post(endpoint, reqBody, reqOpts)
-        .pipe(
-          retry(3),
-          take(1),
-          catchError((e: HttpErrorResponse) => {
-            return throwError(e);
-          })
-        )
-        .subscribe(async (response: any) => {
-          let time = new Date().getTime() - start;
-          let timeSec = time / 1000;
-          console.log(`Got generated file names, time elapsed ${timeSec} seconds`);
-          let files: string[] = response.files;
-          let downloadData: DownloadData = this.getFiles(files);
-          //resolve with data monitor
-          resolve(downloadData.progress);
-          //when data download finished download to browser
-          downloadData.data.then((data: Blob) => {
-            this.downloadBlob(data, ExportManagerService.EXPORT_PACKAGE_NAME);
-          })
-          .catch((e: any) => {/*error logging and all that should be handled elsewhere, progress monitor should also get error for popping up client message*/});
-        }, (error: any) => {
-          console.error(error);
-          reject(error);
-        });
-    });
-    
-    
-  }
-
-
-  private downloadBlob(blob: Blob, name: string) {
-    let url = window.URL.createObjectURL(blob);
-    let link = document.createElement("a");
-    link.download = name;
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  }
-
-
   
 
   private getFile(url: string): Observable<HttpEvent<ArrayBuffer>> {
@@ -291,12 +294,11 @@ export class ExportManagerService {
       observe: observe
     };
 
-    //remember error manager and dialogs
-    //cast options to any because typings being weird
+    console.log(url);
+
     return this.http.get(url, options)
     .pipe(
       retry(3),
-      take(1),
       catchError((e: HttpErrorResponse) => {
         return throwError(e);
       })
@@ -545,11 +547,11 @@ let propertyMap: {
     label: "Time Period",
     description: "Period of time covered by measurements"
     values: {
-      daily: {
+      day: {
         label: "Daily",
         description: "Data at a daily interval"
       },
-      monthly: {
+      month: {
         label: "Monthly",
         description: "Data at a monthly interval"
       }
@@ -642,7 +644,7 @@ let backboneData: any = {
             advanced: false
           },
           layerMap: {
-            monthly: {
+            month: {
               field: {
                 fieldRef: "tier",
                 advanced: true,
@@ -666,7 +668,7 @@ let backboneData: any = {
                 }
               }
             },
-            daily: {
+            day: {
               field: {
                 fieldRef: "tier",
                 advanced: true,
@@ -703,7 +705,7 @@ let backboneData: any = {
             max: "2013-01"
           },
           metadata: {
-            period: "monthly"
+            period: "month"
           },
         }
       }
@@ -715,7 +717,7 @@ let backboneData: any = {
 //use ${} with date format in between curlys, e.g. ${YYYY_MM}
 
 //default path
-let dataDefault = ["rainfall", "new", "monthly", "latest"];
+let dataDefault = ["rainfall", "new", "month", "latest"];
 
 //!!!!!!!
 //data tiers really do complicate everything... tiers will probably have to be a parameter for post-processing on csvs (much more straightforward for geotiff data)
@@ -737,7 +739,7 @@ let rasterDataRef = {
     new: {
       //going to need to add a folder after rainfall for this
       path: "",
-      monthly: {
+      month: {
         //obviously gonna change with daily maps
         path: "allMonYrData/",
         //how to handle data tiers...

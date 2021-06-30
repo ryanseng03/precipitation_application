@@ -119,11 +119,11 @@ export class DataManagerService {
   header: Promise<RasterHeader>;
 
   //available movement 1 ahead of base granularity
-  granularities = ["daily", "monthly", "yearly"];
+  granularities = ["day", "month", "year"];
   granularityTranslation = {
-    daily: "days",
-    monthly: "months",
-    yearly: "years"
+    day: "days",
+    month: "months",
+    year: "years"
   };
 
 

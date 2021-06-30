@@ -25,12 +25,12 @@ export class ExportAddItemComponent {
     timestep: {
       options: [{
         label: "Monthly",
-        value: "monthly"
+        value: "month"
       }, {
         label: "Daily",
-        value: "daily"
+        value: "day"
       }],
-      control: new FormControl("monthly")
+      control: new FormControl("month")
     },
     dates: {
       range: [Moment("1990-12"), Moment("2019-12")],
@@ -59,7 +59,7 @@ export class ExportAddItemComponent {
 
   datasets = [{
     datatype: "rainfall",
-    timeperiod: "monthly",
+    timeperiod: "month",
     tier: "t0",
     dates: [Moment("1990-12"), Moment("2019-12")],
     files: {
@@ -69,7 +69,7 @@ export class ExportAddItemComponent {
   },
   {
     datatype: "rainfall",
-    timeperiod: "daily",
+    timeperiod: "day",
     tier: "t0",
     dates: [Moment("1990-12"), Moment("2019-12")],
     files: {
@@ -80,11 +80,11 @@ export class ExportAddItemComponent {
 
   //use a temporary mapping of the only variable
   fileMap = {
-    monthly: {
+    month: {
       station: ["partial"],
       raster: ["raster", "stderr", "anomaly", "loocv", "metadata"]
     },
-    daily: {
+    day: {
       station: ["partial", "unfilled"],
       raster: []
     }
@@ -230,7 +230,7 @@ export class ExportAddItemComponent {
         }
       }
     });
-    this.dataset.timestep.control.setValue("monthly");
+    this.dataset.timestep.control.setValue("month");
     //
 
     this.rasterFileTags = [];

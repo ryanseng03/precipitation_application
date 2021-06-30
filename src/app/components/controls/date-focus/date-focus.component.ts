@@ -26,7 +26,7 @@ export class DateFocusComponent implements OnInit {
   focusedDate: Moment.Moment;
 
   controlData = {
-    monthly: {
+    month: {
       forward: {
         "f": {
           tooltip: "Move forward one month",
@@ -86,7 +86,7 @@ export class DateFocusComponent implements OnInit {
         }
       }
     },
-    daily: {
+    day: {
       forward: {
         "f": {
           tooltip: "Move forward one day",

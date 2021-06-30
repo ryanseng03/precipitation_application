@@ -30,7 +30,8 @@ export class ErrorPopupService {
       }
       const dialogRef = this.dialog.open(component, {
         width: "50%",
-        height: "50%",
+        height: "fitcontent",
+        maxHeight: "80vh",
         data: message
       });
 

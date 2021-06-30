@@ -17,5 +17,5 @@ export interface ValueData<T> {
 }
 
 export type FillType = "partial" | "full" | "none";
-export type Timestep = "monthly" | "daily";
+export type Timestep = "month" | "day";
 export type SetType = "rainfall" | "temperature";

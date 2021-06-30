@@ -90,7 +90,7 @@ config: any = {
             // controls
             // timesteps: ["monthly"],
             methods: ["new"],
-            timestepsAvailable: ["monthly", "daily"],
+            timestepsAvailable: ["month", "day"],
             fillTypes: ["filled", "partial", "unfilled"]
         }
     }
@@ -166,7 +166,7 @@ class Dataset_tt {
       granularity: "",
       map: {},
       stations: {
-        timeseries: ["monthly", "daily"],
+        timeseries: ["month", "day"],
         //options are things that may change between data sets, set of values referenced by assigned tag
         //note need to add this tag annotation to the dataset format
         //this will store whatever was selected during data set selection for these options
@@ -225,13 +225,13 @@ class SelectedSetInfo {
           max: moment("2019-12")
         },
         visItems: {
-          granularities: ["monthly"],
+          granularities: ["month"],
           options: [],
           map: {
             options: []
           },
           stations: {
-            timeseries: ["monthly", "daily"],
+            timeseries: ["month", "day"],
             options: [
               {
                 type: "select",

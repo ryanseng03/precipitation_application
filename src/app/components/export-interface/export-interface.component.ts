@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import Moment from 'moment';
 import { ExportAddItemComponent, ExportDataInfo } from 'src/app/dialogs/export-add-item/export-add-item.component';
 import { ExportUnimplementedComponent } from 'src/app/dialogs/export-unimplemented/export-unimplemented.component';
-import { ExportManagerService, DownloadProgress, ResourceInfo } from 'src/app/services/export/export-manager.service';
+import { ExportManagerService, DownloadProgress, ResourceInfo, ResourceOptions } from 'src/app/services/export/export-manager.service';
 import { ExportInfo, FileData } from "src/app/services/export/export-manager.service";
 import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.service';
 
@@ -228,7 +228,7 @@ export class ExportInterfaceComponent implements OnInit {
   getExportedItemDataset(i: number) {
     let data = this.exportItems[i];
     let format: string;
-    if(data.timeperiod.value == "monthly") {
+    if(data.timeperiod.value == "month") {
       format = "MMMM YYYY";
     }
     else {
@@ -256,11 +256,12 @@ export class ExportInterfaceComponent implements OnInit {
     //   width: '250px',
     //   data: null
     // });
+    let resourceOpts = this.fileData.map((item: ResourceInfo) => item.opts);
     if(this.emailData.useEmailControl.value) {
       this.exportActivityMonitor.mode = "indeterminate"
       this.exportActivityMonitor.active = true;
       let email = this.emailData.emailInputControl.value
-      this.exportManager.submitEmailPackageReq([], email).then(() => {
+      this.exportManager.submitEmailPackageReq(resourceOpts, email).then(() => {
         let message = `A download request has been generated. You should receive an email at ${email} with your download package shortly. If you do not receive an email within 4 hours, please ensure the email address you entered is spelled correctly and try again or contact the site administrators.`;
         this.errorService.notify("info", message);
         this.exportActivityMonitor.active = false;
@@ -273,7 +274,7 @@ export class ExportInterfaceComponent implements OnInit {
     else {
       this.exportActivityMonitor.mode = "query"
       this.exportActivityMonitor.active = true;
-      this.exportManager.submitInstantDownloadReq([]).then((progress: DownloadProgress) => {
+      this.exportManager.submitInstantDownloadReq(resourceOpts).then((progress: DownloadProgress) => {
         this.exportActivityMonitor.mode = "determinate";
         this.exportActivityMonitor.value = 0;
         //need to normalize size and progress to [0, 100], compute coeff

@@ -116,10 +116,10 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   getUnit(): DateUnit {
     switch(this.timestep) {
-      case "daily": {
+      case "day": {
         return "day";
       }
-      case "monthly": {
+      case "month": {
         return "month";
       }
       default: {
@@ -130,10 +130,10 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   getDefaultView() {
     switch(this.timestep) {
-      case "daily": {
+      case "day": {
         return "month";
       }
-      case "monthly": {
+      case "month": {
         return "year";
       }
       default: {
@@ -149,7 +149,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   }
 
   monthSelectHandler(event: Moment.Moment) {
-    if(this.timestep == "monthly") {
+    if(this.timestep == "month") {
       //event is a moment object for the selected date, set form control
       this.dateControl.setValue(event);
       this.datePicker.close();

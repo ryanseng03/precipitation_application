@@ -14,9 +14,9 @@ let config: any = {
                 start: "1990-01-01",
                 end: "2019-12-31"
             },
-            timesteps: ["monthly"],
+            timesteps: ["month"],
             methods: ["new"],
-            timestepsAvailable: ["monthly", "daily"],
+            timestepsAvailable: ["month", "day"],
             fillTypes: ["filled", "partial", "unfilled"]
         }]
     }
