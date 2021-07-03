@@ -3,6 +3,8 @@ import { FormControl } from '@angular/forms';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import Moment from "moment";
 import { timestamp } from 'rxjs/operators';
+import { ValueData } from 'src/app/models/Dataset';
+import { Period } from 'src/app/models/types';
 
 @Component({
   selector: 'app-export-add-item',
@@ -421,19 +423,19 @@ interface ResourceInfo {
 
 
 export interface ExportDataInfo {
-  datatype: FieldInfo,
-  timeperiod: FieldInfo,
-  tier: FieldInfo,
-  dates: [Moment.Moment, Moment.Moment],
-  files: {
+  datatype: ValueData<string>,
+  dates?: {
+    start: Moment.Moment,
+    end: Moment.Moment,
+    period: Period
+  },
+  groupData: {
+
+  }
+  fileData: {
     raster: FieldInfo[],
     station: FieldInfo[]
   }
-}
-
-interface FieldInfo {
-  label: string,
-  value: string
 }
 
 

@@ -5,9 +5,12 @@ import { MatDialog } from '@angular/material/dialog';
 import Moment from 'moment';
 import { ExportAddItemComponent, ExportDataInfo } from 'src/app/dialogs/export-add-item/export-add-item.component';
 import { ExportUnimplementedComponent } from 'src/app/dialogs/export-unimplemented/export-unimplemented.component';
-import { ExportManagerService, DownloadProgress, ResourceInfo, ResourceOptions } from 'src/app/services/export/export-manager.service';
+import { ExportManagerService, ResourceInfo } from 'src/app/services/export/export-manager.service';
 import { ExportInfo, FileData } from "src/app/services/export/export-manager.service";
 import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.service';
+import { Observable } from 'rxjs';
+import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
+import { Period } from 'src/app/models/types';
 
 
 @Component({
@@ -31,7 +34,7 @@ export class ExportInterfaceComponent implements OnInit {
 
   exportItems: ExportDataInfo[] = [];
 
-  constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService) {
+  constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService, private dateService: DateManagerService) {
     this.emailData = {
       useEmailControl: new FormControl(false),
       emailInputControl: new FormControl(),
@@ -89,7 +92,7 @@ export class ExportInterfaceComponent implements OnInit {
     });
 
 
-    
+
     //TEMP MAPPING
     //raster and stations have separate mappings
     // let tempExportInfoMap: {
@@ -147,6 +150,9 @@ export class ExportInterfaceComponent implements OnInit {
     //
 
     dialogRef.afterClosed().subscribe((data: ExportDataInfo) => {
+      //temp, fix typings
+      //the stuff here doesn't need labels, everything can be set with the values
+      let period: Period = <Period>data.timeperiod.value;
       console.log(data);
       if(data) {
         if(i < 0) {
@@ -169,25 +175,21 @@ export class ExportInterfaceComponent implements OnInit {
 
         for(let info of data.files.raster) {
           let resourceInfo: ResourceInfo = {
-            opts: {
-              datatype: data.datatype.value,
-              fileGroup: {
-                group: "raster",
-                type: "values"
-              },
-              fileData: {
-                period: data.timeperiod.value,
-                dates: [data.dates[0].format("YYYY-MM"), data.dates[1].format("YYYY-MM")],
-                extent: "state",
-                type: info.value,
-                tier: data.tier.value
-              },
-              filterOpts: {}
+            datatype: data.datatype.value,
+            fileGroup: {
+              group: "raster",
+              type: "values"
             },
-            //maybe should move this size property
-            size: 1
+            fileData: {
+              period: data.timeperiod.value,
+              dates: [data.dates[0].format("YYYY-MM"), data.dates[1].format("YYYY-MM")],
+              extent: "state",
+              type: info.value,
+              tier: data.tier.value
+            },
+            filterOpts: {}
           }
-          
+
           this.fileData.push(resourceInfo);
         }
 
@@ -198,23 +200,24 @@ export class ExportInterfaceComponent implements OnInit {
         // };
         for(let info of data.files.station) {
           let resourceInfo: ResourceInfo = {
-            opts: {
-              datatype: data.datatype.value,
-              fileGroup: {
-                group: "stations",
-                type: "values"
-              },
-              fileData: {
+            datatype: data.datatype.value,
+            fileGroup: {
+              group: "stations",
+              type: "values"
+            },
+            fileData: {
+              dates: {
+                start: data.dates[0],
+                end: data.dates[1],
                 period: data.timeperiod.value,
+              }
+              fields: {
                 fill: info.value,
                 tier: data.tier.value
-              },
-              filterOpts: {}
+              }
             },
-            //maybe should move this size property
-            size: 1
+            filterOpts: {}
           }
-  
           this.fileData.push(resourceInfo);
         }
 
@@ -252,16 +255,11 @@ export class ExportInterfaceComponent implements OnInit {
   }
 
   export() {
-    // const dialogRef = this.dialog.open(ExportUnimplementedComponent, {
-    //   width: '250px',
-    //   data: null
-    // });
-    let resourceOpts = this.fileData.map((item: ResourceInfo) => item.opts);
     if(this.emailData.useEmailControl.value) {
       this.exportActivityMonitor.mode = "indeterminate"
       this.exportActivityMonitor.active = true;
       let email = this.emailData.emailInputControl.value
-      this.exportManager.submitEmailPackageReq(resourceOpts, email).then(() => {
+      this.exportManager.submitEmailPackageReq(this.fileData, email).then(() => {
         let message = `A download request has been generated. You should receive an email at ${email} with your download package shortly. If you do not receive an email within 4 hours, please ensure the email address you entered is spelled correctly and try again or contact the site administrators.`;
         this.errorService.notify("info", message);
         this.exportActivityMonitor.active = false;
@@ -274,14 +272,11 @@ export class ExportInterfaceComponent implements OnInit {
     else {
       this.exportActivityMonitor.mode = "query"
       this.exportActivityMonitor.active = true;
-      this.exportManager.submitInstantDownloadReq(resourceOpts).then((progress: DownloadProgress) => {
+      this.exportManager.submitInstantDownloadReq(this.fileData).then((progress: Observable<number>) => {
         this.exportActivityMonitor.mode = "determinate";
         this.exportActivityMonitor.value = 0;
-        //need to normalize size and progress to [0, 100], compute coeff
-        let coeff = 100 / progress.sizeUL;
-        progress.progress.subscribe((complete: number) => {
-          //normalize progress to 100
-          let percent = coeff * complete
+        progress.subscribe((percent: number) => {
+          console.log(percent);
           this.exportActivityMonitor.value = percent;
         }, (e: any) => {
           this.errorService.notify("error", "An error occured while retreiving the download package.");
@@ -293,7 +288,7 @@ export class ExportInterfaceComponent implements OnInit {
           this.errorService.notify("info", message);
           this.exportActivityMonitor.active = false;
         });
-        
+
       })
       .catch((e) => {
         this.errorService.notify("error", "An error occured while generating the download package.");
@@ -301,15 +296,5 @@ export class ExportInterfaceComponent implements OnInit {
       });
     }
   }
-}
-
-
-
-
-
-//file identification info
-interface FileInfo {
-  datatype: string,
-
 }
 

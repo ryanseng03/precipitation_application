@@ -8,6 +8,8 @@ import { saveAs }  from 'file-saver';
 import * as Moment from 'moment';
 import { ValueData } from 'src/app/models/Dataset';
 import * as zip from "client-zip";
+import { Period } from 'src/app/models/types';
+import { DateManagerService } from '../dateManager/date-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -43,9 +45,9 @@ export class ExportManagerService {
   //config?
   static readonly EXPORT_BASE_URL = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/";
 
-  //sizes in MB
-  static readonly MAX_INTERNAL_PACKAGE_SIZE_MB = 100;
-  static readonly AVERAGE_FILE_SIZE = 1;
+  //lets just set a maximum number of files instead of a size for simplicity
+  static readonly MAX_INSTANT_PACKAGE_FILES = 250;
+  // static readonly AVERAGE_FILE_SIZE = 1;
   static readonly F_PART_SIZE_UL_MB = 4;
 
   ///////////////////////
@@ -53,98 +55,52 @@ export class ExportManagerService {
   static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu:443/genzip/email/";
   ///////////////////////
 
-  constructor(private http: HttpClient, private dbcon: DbConService) {
-    
-    let files1 = [];
-    let files2 = [];
+  constructor(private http: HttpClient, private dbcon: DbConService, private dateService: DateManagerService) {
 
-    // let base1 = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/Rainfall/";
-    // let base2 = "/data/"
+  }
 
-    //value metadata and overarching metadata, one for each item (e.g. by map) one for that file group
-    let resourceOptions: ResourceOptions[] = [
-      {
-        datatype: "rainfall",
-        fileGroup: {
-          group: "stations",
-          type: "value"
-        },
-        fileData: {
-          period: "month",
-          fill: "partial",
-          tier: 0
-        },
-        filterOpts: {}
-      },
-      {
-        datatype: "rainfall",
-        fileGroup: {
-          group: "stations",
-          type: "metadata"
-        },
-        fileData: {},
-        filterOpts: {}
-      }
-    ];
-
-    for(let type of ["map", "stderr", "anomaly", "loocv", "metadata"]) {
-      let item = {
-        datatype: "rainfall",
-        fileGroup: {
-          group: "raster",
-          type: "value"
-        },
-        fileData: {
-          period: "month",
-          dates: ["1990-01", "1992-01"],
-          extent: "state",
-          type: type,
-          tier: 0
-        },
-        filterOpts: {}
-      }
-      resourceOptions.push(item);
-    }
-
-    let resourceInfo: ResourceInfo[] = [];
-    for(let opts of resourceOptions) {
-      resourceInfo.push({
-        opts: opts,
-        size: ExportManagerService.AVERAGE_FILE_SIZE
-      });
-    }
+  private getNumDatesInRange(start: Moment.Moment, end: Moment.Moment, period: Moment.unitOfTime.Diff) {
+    let numDates = end.diff(start, period);
+    return numDates;
   }
 
   packageSizeInLimit(files: ResourceInfo[]): boolean {
-    let size = files.reduce((acc: number, value: ResourceInfo) => {
-      let groupSize = 0;
-      //temp, just assume month for now, also maybe do this pre string conversion
-      if(value.opts.fileData.dates) {
-        let d1: string = value.opts.fileData.dates[0];
-        let d2: string = value.opts.fileData.dates[1];
-        let y1 = Number.parseInt(d1.substring(0, 4));
-        let y2 = Number.parseInt(d2.substring(0, 4));
-        let m1 = Number.parseInt(d1.substring(5, 7));
-        let m2 = Number.parseInt(d2.substring(5, 7));
-        groupSize += 12 * (y2 - y1);
-        groupSize += m2 - m1;
-        console.log(y2, y2, m2, m1);
+    let numFiles = files.reduce((acc: number, value: ResourceInfo) => {
+      let groupSize: number;
+      let dates = value.fileData.dates;
+      if(dates) {
+        groupSize = this.getNumDatesInRange(dates.dates.start, dates.dates.end, dates.period);
       }
-      console.log(groupSize, this.translateSize(value.size));
-      return acc + groupSize * this.translateSize(value.size);
+      else {
+        groupSize = 1;
+      }
+      return acc + groupSize;
     }, 0);
-    console.log(files, size);
-    return size <= ExportManagerService.MAX_INTERNAL_PACKAGE_SIZE_MB;
+    console.log(files, numFiles);
+    return numFiles <= ExportManagerService.MAX_INSTANT_PACKAGE_FILES;
   }
 
 
-  
 
 
 
-  async submitEmailPackageReq(files: ResourceOptions[], email: string): Promise<void> {
+
+  async submitEmailPackageReq(files: ResourceInfo[], email: string): Promise<void> {
+    let convertedResourceInfo: ConvertedResourceInfo[] = files.map((resourceInfo: ResourceInfo) => {
+      //clone object
+      let clone: ConvertedResourceInfo = JSON.parse(JSON.stringify(resourceInfo));
+      //if there is a date field then convert dates and set date fields to formatted date strings
+      if(clone.fileData.dates) {
+        let start = resourceInfo.fileData.dates.dates.start;
+        let end = resourceInfo.fileData.dates.dates.end;
+        let period = resourceInfo.fileData.dates.period;
+        clone.fileData.dates.dates.start = this.dateService.dateToString(start, period);
+        clone.fileData.dates.dates.end = this.dateService.dateToString(end, period);
+      }
+      return clone;
+    });
     let reqBody = {
-      fileData: files,
+      fileInfo: convertedResourceInfo,
       email: email
     };
     let head = new HttpHeaders();
@@ -178,9 +134,22 @@ export class ExportManagerService {
   }
 
 
-  async submitInstantDownloadReq(files: ResourceOptions[]): Promise<DownloadProgress> {
+  async submitInstantDownloadReq(files: ResourceInfo[]): Promise<Observable<number>> {
+    let convertedResourceInfo: ConvertedResourceInfo[] = files.map((resourceInfo: ResourceInfo) => {
+      //clone object
+      let clone: ConvertedResourceInfo = JSON.parse(JSON.stringify(resourceInfo));
+      //if there is a date field then convert dates and set date fields to formatted date strings
+      if(clone.fileData.dates) {
+        let start = resourceInfo.fileData.dates.dates.start;
+        let end = resourceInfo.fileData.dates.dates.end;
+        let period = resourceInfo.fileData.dates.period;
+        clone.fileData.dates.dates.start = this.dateService.dateToString(start, period);
+        clone.fileData.dates.dates.end = this.dateService.dateToString(end, period);
+      }
+      return clone;
+    });
     let reqBody = {
-      fileData: files,
+      fileInfo: convertedResourceInfo
     };
     let head = new HttpHeaders();
     const responseType: "json" = "json";
@@ -190,7 +159,7 @@ export class ExportManagerService {
     };
     let endpoint = ExportManagerService.ENDPOINT_INSTANT;
 
-    return new Promise<DownloadProgress>((resolve, reject) => {
+    return new Promise<Observable<number>>((resolve, reject) => {
       let start = new Date().getTime()
       this.http.post(endpoint, reqBody, reqOpts)
         .pipe(
@@ -219,8 +188,8 @@ export class ExportManagerService {
           reject(error);
         });
     });
-    
-    
+
+
   }
 
 
@@ -239,16 +208,40 @@ export class ExportManagerService {
   private getFiles(files: string[]): DownloadData {
     let progress = new Subject<number>();
 
+    //progress is in bytes so multiply by 1024 * 1024
+    let fileBaseSize = ExportManagerService.F_PART_SIZE_UL_MB * 1024 * 1024;
+    let sizeUL = files.length * fileBaseSize;
+    let percentCoeff = 100 / sizeUL;
+    console.log(sizeUL, percentCoeff);
+
     let data: Promise<Blob> = new Promise((resolve, reject) => {
       let responses: ArrayBuffer[] = [];
-      let acc = 0;
+      //shortcut, all but last file should be the base size, so start file transfers in reverse and just add last file size on first transfer if total size defined
+      let actualSize = (files.length - 1) * fileBaseSize;
+      //flag for if real size already determined
+      let actualSizeFound = false;
+      let progressStore: number[] = new Array(files.length).fill(0);
       let start = new Date().getTime();
-      for(let file of files) {
+      //start at end to speed up last file size receipt
+      for(let i = files.length - 1; i >= 0; i--) {
+        let file = files[i];
         this.getFile(file).subscribe((event: HttpEvent<ArrayBuffer>) => {
           console.log(event);
           if(event.type === HttpEventType.DownloadProgress) {
-            acc += event.loaded;
-            progress.next(acc);
+            //if this is the last file (odd man out) and the total size field in the event is populated then adjust the total package size and percent coeff
+            if(!actualSizeFound && i == files.length - 1 && event.total) {
+              actualSize += event.total;
+              //recompute coeff
+              percentCoeff = 100 / actualSize;
+              console.log(actualSize, percentCoeff);
+              actualSizeFound = true;
+            }
+            progressStore[i] = event.loaded;
+            //reduce to total amount of data downloaded
+            let loaded = progressStore.reduce((acc, value) => acc + value, 0);
+            //convert to percent
+            loaded *= percentCoeff;
+            progress.next(loaded);
           }
           else if(event.type === HttpEventType.Response) {
             responses.push(event.body);
@@ -271,17 +264,13 @@ export class ExportManagerService {
       progress.error(e);
       return Promise.reject(e);
     });
-    //progress is in bytes so multiply by 1024 * 1024
-    let sizeUL = files.length * ExportManagerService.F_PART_SIZE_UL_MB * 1024 * 1024;
+
     return {
-      progress: {
-        sizeUL: sizeUL,
-        progress: progress.asObservable()
-      },
+      progress: progress.asObservable(),
       data: data
     };
   }
-  
+
 
   private getFile(url: string): Observable<HttpEvent<ArrayBuffer>> {
     let head = new HttpHeaders();
@@ -340,26 +329,57 @@ export class ExportManagerService {
   }
 }
 
-export interface ResourceInfo {
-  opts: ResourceOptions,
-  size: string | number
-}
 
-export interface ResourceOptions {
+interface ConvertedResourceInfo {
   datatype: string,
-  fileGroup: any,
-  fileData: any,
+  fileGroup: {[item: string]: string},
+  fileData: ConvertedFileData,
   filterOpts: any
 }
 
-interface DownloadData {
-  progress: DownloadProgress,
-  data: Promise<Blob>
+interface ConvertedFileData {
+  dates?: ConvertedDateInfo,
+  fields: {[item: string]: string | number}
 }
 
-export interface DownloadProgress {
-  sizeUL: number,
-  progress: Observable<number>
+interface ConvertedDateInfo {
+  dates: {
+    start: string,
+    end: string
+  },
+  period: Period
+}
+
+export interface ResourceInfo {
+  datatype: string,
+  fileGroup: {[item: string]: string},
+  fileData: FileData,
+  filterOpts: any
+}
+
+export interface FileData {
+  dates?: DateInfo,
+  fields: {[item: string]: string | number}
+}
+
+export interface DateInfo {
+  dates: {
+    start: Moment.Moment,
+    end: Moment.Moment
+  },
+  period: Period
+}
+
+// export interface ResourceOptions {
+//   datatype: string,
+//   fileGroup: any,
+//   fileData: any,
+//   filterOpts: any
+// }
+
+interface DownloadData {
+  progress: Observable<number>,
+  data: Promise<Blob>
 }
 
 
@@ -832,13 +852,7 @@ interface ExportLayerCap {
   files: FileData[]
 }
 
-interface DateInfo {
-  dates: {
-    min: string,
-    max: string
-  },
-  period: string
-}
+
 
 //are you going to store counties as filters? makes sense
 //any of these option things should be in propertyMap
@@ -991,7 +1005,7 @@ interface SelectorData<T, U> extends ControlData<T> {
 //each file should have a key to reference it by (use value in ValueData)
 
 
-export interface FileData {
-  fileBase: string,
-  requires: string[]
-}
+// export interface FileData {
+//   fileBase: string,
+//   requires: string[]
+// }
