@@ -11,14 +11,14 @@
     <div class="item-tile" *ngFor="let item of exportItems; let i = index">
       <div class="export-item">
         <div class="text-block">
-          {{getExportedItemDataset(i)}}
+          {{item.getLabelInfo().setLabel}}
         </div>
         <div class="text-block">
           <h4>
             Files
           </h4>
           <div>
-            {{getExportedItemFiles(i)}}
+            {{item.getLabelInfo().files.join(", ")}}
           </div>
         </div>
       </div>
@@ -66,9 +66,15 @@
         </button>
       </div>
 
-      <div *ngIf="exportActivityMonitor.active">
-        <mat-progress-bar [mode]="exportActivityMonitor.mode" [value]="exportActivityMonitor.value"></mat-progress-bar>
+      <div class="loading-bar">
+        <div *ngIf="exportActivityMonitor.active">
+          <p>
+            Creating Export Package...
+          </p>
+          <mat-progress-bar [mode]="exportActivityMonitor.mode" [value]="exportActivityMonitor.value"></mat-progress-bar>
+        </div>
       </div>
+      
 
     </div>
 

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Observable, merge, of, Subscription, throwError, Subject, observable } from 'rxjs';
-import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { Subscription, throwError } from 'rxjs';
+import { retry, catchError, take } from 'rxjs/operators';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
+import { GeotiffDataLoaderService } from '../../../localDataLoader/auxillary/geotiff-data-loader.service';
 
 
 export interface Config {
@@ -21,7 +22,7 @@ export class DbConService {
 
   initPromise: Promise<Config>;
 
-  constructor(private http: HttpClient, assetService: AssetManagerService) {
+  constructor(private http: HttpClient, assetService: AssetManagerService, testLoader: GeotiffDataLoaderService) {
     let url = assetService.getAssetURL(DbConService.CONFIG_FILE);
     this.initPromise = <Promise<Config>>(this.http.get(url, { responseType: "json" }).toPromise());
   }
@@ -104,7 +105,6 @@ export class RequestResults {
       .subscribe((response: any) => {
         this.resolve(response);
       }, (error: HttpErrorResponse) => {
-        console.log(error);
         let reject: RequestReject = {
           cancelled: this.cancelled,
           reason: `Error in query, status: ${error.status}, message: ${error.message}`

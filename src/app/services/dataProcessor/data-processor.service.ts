@@ -12,7 +12,7 @@ export class DataProcessorService {
   constructor() { }
 
   //need custom no data for now since geotiffs appear to have rounding error
-  getRasterDataFromGeoTIFFArrayBuffer(data: ArrayBuffer, customNoData?, bands?): Promise<RasterData> {
+  getRasterDataFromGeoTIFFArrayBuffer(data: ArrayBuffer, customNoData?: number, bands?: string[]): Promise<RasterData> {
     return geotiff.fromArrayBuffer(data).then((tiff: geotiff.GeoTIFF) => {
       //console.log(tiff);
       return tiff.getImage().then((image: geotiff.GeoTIFFImage) => {

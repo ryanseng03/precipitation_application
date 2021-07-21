@@ -10,6 +10,7 @@ import { ValueData } from 'src/app/models/Dataset';
 import * as zip from "client-zip";
 import { Period } from 'src/app/models/types';
 import { DateManagerService } from '../dateManager/date-manager.service';
+import { ResourceReq } from 'src/app/models/exportData';
 
 @Injectable({
   providedIn: 'root'
@@ -46,7 +47,7 @@ export class ExportManagerService {
   static readonly EXPORT_BASE_URL = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/";
 
   //lets just set a maximum number of files instead of a size for simplicity
-  static readonly MAX_INSTANT_PACKAGE_FILES = 250;
+  static readonly MAX_INSTANT_PACKAGE_FILES = 150;
   // static readonly AVERAGE_FILE_SIZE = 1;
   static readonly F_PART_SIZE_UL_MB = 4;
 
@@ -59,48 +60,35 @@ export class ExportManagerService {
 
   }
 
-  private getNumDatesInRange(start: Moment.Moment, end: Moment.Moment, period: Moment.unitOfTime.Diff) {
-    let numDates = end.diff(start, period);
-    return numDates;
-  }
+  // private getNumDatesInRange(start: Moment.Moment, end: Moment.Moment, period: Moment.unitOfTime.Diff) {
+  //   let numDates = end.diff(start, period);
+  //   return numDates;
+  // }
 
-  packageSizeInLimit(files: ResourceInfo[]): boolean {
-    let numFiles = files.reduce((acc: number, value: ResourceInfo) => {
-      let groupSize: number;
-      let dates = value.fileData.dates;
-      if(dates) {
-        groupSize = this.getNumDatesInRange(dates.dates.start, dates.dates.end, dates.period);
-      }
-      else {
-        groupSize = 1;
-      }
-      return acc + groupSize;
-    }, 0);
-    console.log(files, numFiles);
-    return numFiles <= ExportManagerService.MAX_INSTANT_PACKAGE_FILES;
-  }
-
-
+  // packageSizeInLimit(files: ResourceInfo[]): boolean {
+  //   let numFiles = files.reduce((acc: number, value: ResourceInfo) => {
+  //     let groupSize: number;
+  //     let dates = value.fileData.dates;
+  //     if(dates) {
+  //       groupSize = this.getNumDatesInRange(dates.dates.start, dates.dates.end, dates.period);
+  //     }
+  //     else {
+  //       groupSize = 1;
+  //     }
+  //     return acc + groupSize;
+  //   }, 0);
+  //   console.log(files, numFiles);
+  //   return numFiles <= ExportManagerService.MAX_INSTANT_PACKAGE_FILES;
+  // }
 
 
 
 
-  async submitEmailPackageReq(files: ResourceInfo[], email: string): Promise<void> {
-    let convertedResourceInfo: ConvertedResourceInfo[] = files.map((resourceInfo: ResourceInfo) => {
-      //clone object
-      let clone: ConvertedResourceInfo = JSON.parse(JSON.stringify(resourceInfo));
-      //if there is a date field then convert dates and set date fields to formatted date strings
-      if(clone.fileData.dates) {
-        let start = resourceInfo.fileData.dates.dates.start;
-        let end = resourceInfo.fileData.dates.dates.end;
-        let period = resourceInfo.fileData.dates.period;
-        clone.fileData.dates.dates.start = this.dateService.dateToString(start, period);
-        clone.fileData.dates.dates.end = this.dateService.dateToString(end, period);
-      }
-      return clone;
-    });
+
+
+  async submitEmailPackageReq(reqs: ResourceReq[], email: string): Promise<void> {
     let reqBody = {
-      fileInfo: convertedResourceInfo,
+      fileData: reqs,
       email: email
     };
     let head = new HttpHeaders();
@@ -134,22 +122,9 @@ export class ExportManagerService {
   }
 
 
-  async submitInstantDownloadReq(files: ResourceInfo[]): Promise<Observable<number>> {
-    let convertedResourceInfo: ConvertedResourceInfo[] = files.map((resourceInfo: ResourceInfo) => {
-      //clone object
-      let clone: ConvertedResourceInfo = JSON.parse(JSON.stringify(resourceInfo));
-      //if there is a date field then convert dates and set date fields to formatted date strings
-      if(clone.fileData.dates) {
-        let start = resourceInfo.fileData.dates.dates.start;
-        let end = resourceInfo.fileData.dates.dates.end;
-        let period = resourceInfo.fileData.dates.period;
-        clone.fileData.dates.dates.start = this.dateService.dateToString(start, period);
-        clone.fileData.dates.dates.end = this.dateService.dateToString(end, period);
-      }
-      return clone;
-    });
+  async submitInstantDownloadReq(reqs: ResourceReq[]): Promise<Observable<number>> {
     let reqBody = {
-      fileInfo: convertedResourceInfo
+      fileData: reqs
     };
     let head = new HttpHeaders();
     const responseType: "json" = "json";
@@ -215,7 +190,8 @@ export class ExportManagerService {
     console.log(sizeUL, percentCoeff);
 
     let data: Promise<Blob> = new Promise((resolve, reject) => {
-      let responses: ArrayBuffer[] = [];
+      let responses: ArrayBuffer[] = new Array(files.length);
+      let returnedResponses = 0;
       //shortcut, all but last file should be the base size, so start file transfers in reverse and just add last file size on first transfer if total size defined
       let actualSize = (files.length - 1) * fileBaseSize;
       //flag for if real size already determined
@@ -226,7 +202,7 @@ export class ExportManagerService {
       for(let i = files.length - 1; i >= 0; i--) {
         let file = files[i];
         this.getFile(file).subscribe((event: HttpEvent<ArrayBuffer>) => {
-          console.log(event);
+          // console.log(event);
           if(event.type === HttpEventType.DownloadProgress) {
             //if this is the last file (odd man out) and the total size field in the event is populated then adjust the total package size and percent coeff
             if(!actualSizeFound && i == files.length - 1 && event.total) {
@@ -244,8 +220,8 @@ export class ExportManagerService {
             progress.next(loaded);
           }
           else if(event.type === HttpEventType.Response) {
-            responses.push(event.body);
-            if(responses.length === files.length) {
+            responses[i] = event.body;
+            if(++returnedResponses === files.length) {
               let time = new Date().getTime() - start;
               let timeSec = time / 1000;
               console.log(`Got all zip data, time elapsed ${timeSec} seconds`);
@@ -350,12 +326,12 @@ interface ConvertedDateInfo {
   period: Period
 }
 
-export interface ResourceInfo {
-  datatype: string,
-  fileGroup: {[item: string]: string},
-  fileData: FileData,
-  filterOpts: any
-}
+// export interface ResourceInfo {
+//   datatype: string,
+//   fileGroup: {[item: string]: string},
+//   fileData: FileData,
+//   filterOpts: any
+// }
 
 export interface FileData {
   dates?: DateInfo,

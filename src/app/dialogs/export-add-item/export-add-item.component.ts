@@ -4,7 +4,31 @@ import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import Moment from "moment";
 import { timestamp } from 'rxjs/operators';
 import { ValueData } from 'src/app/models/Dataset';
-import { Period } from 'src/app/models/types';
+import { ResourceReq, ExportData, ExportInfo } from 'src/app/models/exportData';
+import { Period, StringMap } from 'src/app/models/types';
+import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
+
+// interface ExportData {
+//   datatype: string,
+//   dates: {
+//     period: Period,
+//     start: Moment.Moment,
+//     end: Moment.Moment
+//   },
+//   //this should be moved to variable stuff
+//   tier: string,
+//   //need to change this a bit for other groups
+//   files: {
+//     stations: {
+//       group: StringMap,
+//       data: StringMap[]
+//     },
+//     raster: {
+//       group: StringMap,
+//       data: StringMap[]
+//     }
+//   }
+// }
 
 @Component({
   selector: 'app-export-add-item',
@@ -13,8 +37,8 @@ import { Period } from 'src/app/models/types';
 })
 export class ExportAddItemComponent {
 
-  item: ExportItem;
-  exportItems: ExportItem[];
+  // item: ExportItem;
+  // exportItems: ExportItem[];
 
   //choices should come from external object
   //date from indicator if NRT or updated if possible
@@ -24,7 +48,7 @@ export class ExportAddItemComponent {
       value: "rainfall",
       control: new FormControl("rainfall")
     },
-    timestep: {
+    period: {
       options: [{
         label: "Monthly",
         value: "month"
@@ -45,52 +69,111 @@ export class ExportAddItemComponent {
         value: "0",
         control: new FormControl("0")
       }
-    },
-    raster: null,
-    station: {
-      fill: {
-        label: "Partial Fill",
-        value: "partial",
-        control: new FormControl("partial")
+    }
+  }
+
+  //group all options
+  getExportInfo(): ExportInfo {
+    let period = this.dataset.period.control.value;
+    let periodLabel: string;
+    for(let item of this.dataset.period.options) {
+      if(item.value === period) {
+        periodLabel = item.label;
+        break;
       }
     }
+    //extent is the only base thing that doesnt have, other things are "types"
+    let info: ExportInfo = {
+      datatypeLabel: "Rainfall",
+      datatype: this.dataset.datatype.control.value,
+      dates: {
+        periodLabel: periodLabel,
+        period: period,
+        start: this.dataset.dates.selected[0],
+        end: this.dataset.dates.selected[1]
+      },
+      tier: this.dataset.advanced.tier.control.value,
+      files: {
+        stations: {
+          group: {
+            group: "stations",
+            type: "values"
+          },
+          data: []
+        },
+        raster: {
+          group: {
+            group: "raster",
+            type: "values"
+          },
+          data: []
+        }
+      }
+    }
+
+
+    for(let fill in this.stationFiles) {
+      let fileData = this.stationFiles[fill];
+      if(fileData.control.value && fileData.valid) {
+        let label = fileData.label;
+        info.files.stations.data.push({
+          label: label,
+          data: {
+            fill: fill
+          }
+        });
+      }
+    }
+    for(let type in this.rasterFiles) {
+      let fileData = this.rasterFiles[type];
+      if(fileData.control.value && fileData.valid) {
+        let label = fileData.label;
+        info.files.raster.data.push({
+          label: label,
+          data: {
+            extent: "state",
+            type: type
+          }
+        });
+      }
+      
+    }
+    return info;
   }
 
 
+  // datasets = [{
+  //   datatype: "rainfall",
+  //   timeperiod: "month",
+  //   tier: "t0",
+  //   dates: [Moment("1990-12"), Moment("2019-12")],
+  //   files: {
+  //     raster: ["partial"],
+  //     station: ["raster", "stderr", "anomaly", "loocv", "metadata"]
+  //   }
+  // },
+  // {
+  //   datatype: "rainfall",
+  //   timeperiod: "day",
+  //   tier: "t0",
+  //   dates: [Moment("1990-12"), Moment("2019-12")],
+  //   files: {
+  //     raster: ["partial", "unfilled"],
+  //     station: ["raster", "stderr", "anomaly", "loocv", "metadata"]
+  //   }
+  // }]
 
-
-  datasets = [{
-    datatype: "rainfall",
-    timeperiod: "month",
-    tier: "t0",
-    dates: [Moment("1990-12"), Moment("2019-12")],
-    files: {
-      raster: ["partial"],
-      station: ["raster", "stderr", "anomaly", "loocv", "metadata"]
-    }
-  },
-  {
-    datatype: "rainfall",
-    timeperiod: "day",
-    tier: "t0",
-    dates: [Moment("1990-12"), Moment("2019-12")],
-    files: {
-      raster: ["partial", "unfilled"],
-      station: ["raster", "stderr", "anomaly", "loocv", "metadata"]
-    }
-  }]
-
-  //use a temporary mapping of the only variable
-  fileMap = {
-    month: {
-      station: ["partial"],
-      raster: ["raster", "stderr", "anomaly", "loocv", "metadata"]
-    },
-    day: {
-      station: ["partial", "unfilled"],
-      raster: []
-    }
-  }
+  // //use a temporary mapping of the only variable
+  // fileMap = {
+  //   month: {
+  //     station: ["partial"],
+  //     raster: ["raster", "stderr", "anomaly", "loocv", "metadata"]
+  //   },
+  //   day: {
+  //     station: ["partial", "unfilled"],
+  //     raster: []
+  //   }
+  // }
 
   /*
   [
@@ -133,6 +216,7 @@ export class ExportAddItemComponent {
   ]
   */
 
+
   selected = {
     raster: 0,
     station: 0
@@ -165,37 +249,37 @@ export class ExportAddItemComponent {
   rasterFiles = {
     raster: {
       valid: false,
-      label: "Gridded Data Map",
+      label: "Gridded Data",
       control: new FormControl(false),
       disabled: false
     },
     stderr: {
       valid: false,
-      label: "Gridded Standard Error Map",
+      label: "Gridded Standard Error",
       control: new FormControl(false),
       disabled: false
     },
     anomaly: {
       valid: false,
-      label: "Gridded Anomaly Map",
+      label: "Gridded Anomaly",
       control: new FormControl(false),
       disabled: false
     },
-    loocv: {
+    stderr_anomaly: {
       valid: false,
-      label: "Gridded LOOCV Error Metrics",
+      label: "Gridded Standard Error Anomaly",
       control: new FormControl(false),
       disabled: false
     },
     metadata: {
       valid: false,
-      label: "Gridded Data Metadata",
+      label: "Metadata and Error Metrics",
       control: new FormControl(false),
       disabled: false
     }
   };
 
-  constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: ExportDataInfo) {
+  constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: ExportData, private dateManager: DateManagerService) {
     // this.datasets = data.datasets;
     // this.exportItems = data.items;
 
@@ -209,30 +293,52 @@ export class ExportAddItemComponent {
     // }
 
     //temp
-    this.dataset.timestep.control.valueChanges.subscribe((value: string) => {
-      let validFiles = this.fileMap[value];
-      let files: string[] = validFiles.raster;
-      console.log(files);
-      for(let ftype in this.rasterFiles) {
-        if(files.includes(ftype)) {
-          this.rasterFiles[ftype].valid = true;
-        }
-        else {
-          this.rasterFiles[ftype].valid = false;
-        }
+    this.dataset.period.control.valueChanges.subscribe((value: Period) => {
+      // let files: string[] = validFiles.raster;
+      // console.log(files);
+      // for(let ftype in this.rasterFiles) {
+      //   if(files.includes(ftype)) {
+      //     this.rasterFiles[ftype].valid = true;
+      //   }
+      //   else {
+      //     this.rasterFiles[ftype].valid = false;
+      //   }
+      // }
+      // files = validFiles.station;
+      // console.log(files);
+      // for(let ftype in this.stationFiles) {
+      //   if(files.includes(ftype)) {
+      //     this.stationFiles[ftype].valid = true;
+      //   }
+      //   else {
+      //     this.stationFiles[ftype].valid = false;
+      //   }
+      // }
+      
+      
+      //temp
+      if(value == "month") {
+        this.rasterFiles.anomaly.valid = true;
+        this.rasterFiles.metadata.valid = true;
+        this.rasterFiles.raster.valid = true;
+        this.rasterFiles.stderr.valid = true;
+        this.rasterFiles.stderr_anomaly.valid = true;
+        this.stationFiles.filled.valid = false;
+        this.stationFiles.partial.valid = true;
+        this.stationFiles.unfilled.valid = false;
       }
-      files = validFiles.station;
-      console.log(files);
-      for(let ftype in this.stationFiles) {
-        if(files.includes(ftype)) {
-          this.stationFiles[ftype].valid = true;
-        }
-        else {
-          this.stationFiles[ftype].valid = false;
-        }
+      else { 
+        this.rasterFiles.anomaly.valid = false;
+        this.rasterFiles.metadata.valid = false;
+        this.rasterFiles.raster.valid = false;
+        this.rasterFiles.stderr.valid = false;
+        this.rasterFiles.stderr_anomaly.valid = false;
+        this.stationFiles.filled.valid = false;
+        this.stationFiles.partial.valid = true;
+        this.stationFiles.unfilled.valid = true;
       }
     });
-    this.dataset.timestep.control.setValue("month");
+    this.dataset.period.control.setValue("month");
     //
 
     this.rasterFileTags = [];
@@ -293,15 +399,18 @@ export class ExportAddItemComponent {
 
     //initialize from object if exist
     if(data) {
+      let info: ExportInfo = data.getExportInfo();
       //only need to do this one for now (note need to do all when fully implemented)
-      this.dataset.timestep.control.setValue(data.timeperiod.value);
-      this.dataset.dates.selected = [data.dates[0], data.dates[1]];
+      this.dataset.period.control.setValue(info.dates.period);
+      this.dataset.dates.selected = [info.dates.start, info.dates.end];
       //set files
-      for(let ftype of data.files.raster) {
-        this.rasterFiles[ftype.value].control.setValue(true);
+      for(let file of info.files.raster.data) {
+        let ftype = file.data.type;
+        this.rasterFiles[ftype].control.setValue(true);
       }
-      for(let ftype of data.files.station) {
-        this.stationFiles[ftype.value].control.setValue(true);
+      for(let file of info.files.stations.data) {
+        let ftype = file.data.fill;
+        this.stationFiles[ftype].control.setValue(true);
       }
     }
   }
@@ -331,55 +440,57 @@ export class ExportAddItemComponent {
   }
 
   submit() {
-    let data: ExportDataInfo = {
-      datatype: {
-        label: this.dataset.datatype.label,
-        value: this.dataset.datatype.control.value
-      },
-      //using label as value for now to avoid retranslation
-      timeperiod: {
-        label: null,
-        value: this.dataset.timestep.control.value
-      },
-      tier: {
-        label: this.dataset.advanced.tier.label,
-        value: this.dataset.advanced.control.value
-      },
-      dates: [this.dataset.dates.selected[0], this.dataset.dates.selected[1]],
-      files: {
-        raster: [],
-        station: []
-      }
-    };
+    // let data: ExportDataInfo = {
+    //   datatype: {
+    //     label: this.dataset.datatype.label,
+    //     value: this.dataset.datatype.control.value
+    //   },
+    //   //using label as value for now to avoid retranslation
+    //   timeperiod: {
+    //     label: null,
+    //     value: this.dataset.timestep.control.value
+    //   },
+    //   tier: {
+    //     label: this.dataset.advanced.tier.label,
+    //     value: this.dataset.advanced.control.value
+    //   },
+    //   dates: [this.dataset.dates.selected[0], this.dataset.dates.selected[1]],
+    //   files: {
+    //     raster: [],
+    //     station: []
+    //   }
+    // };
 
-    //how do you want to get the label from controls that actually have multiple values? just search for now
-    let timeperiod = data.timeperiod.value;
-    for(let opt of this.dataset.timestep.options) {
-      if(opt.value == timeperiod) {
-        data.timeperiod.label = opt.label;
-        break;
-      }
-    }
+    // //how do you want to get the label from controls that actually have multiple values? just search for now
+    // let timeperiod = data.timeperiod.value;
+    // for(let opt of this.dataset.timestep.options) {
+    //   if(opt.value == timeperiod) {
+    //     data.timeperiod.label = opt.label;
+    //     break;
+    //   }
+    // }
 
 
-    for(let ftype in this.stationFiles) {
-      let fdata = this.stationFiles[ftype];
-      if(fdata.valid && fdata.control.value) {
-        data.files.station.push({
-          label: this.stationFiles[ftype].label,
-          value: ftype
-        });
-      }
-    }
-    for(let ftype in this.rasterFiles) {
-      let fdata = this.rasterFiles[ftype];
-      if(fdata.valid && fdata.control.value) {
-        data.files.raster.push({
-          label: this.rasterFiles[ftype].label,
-          value: ftype
-        });
-      }
-    }
+    // for(let ftype in this.stationFiles) {
+    //   let fdata = this.stationFiles[ftype];
+    //   if(fdata.valid && fdata.control.value) {
+    //     data.files.station.push({
+    //       label: this.stationFiles[ftype].label,
+    //       value: ftype
+    //     });
+    //   }
+    // }
+    // for(let ftype in this.rasterFiles) {
+    //   let fdata = this.rasterFiles[ftype];
+    //   if(fdata.valid && fdata.control.value) {
+    //     data.files.raster.push({
+    //       label: this.rasterFiles[ftype].label,
+    //       value: ftype
+    //     });
+    //   }
+    // }
+    let info: ExportInfo = this.getExportInfo();
+    let data: ExportData = new ExportData(info, this.dateManager);
     this.dialogRef.close(data);
   }
 
@@ -403,39 +514,39 @@ export class ExportAddItemComponent {
 
 //need date range, class, subclass
 
-interface DatasetInfo {
-  classification: string,
-  subclassification: string,
-  period: string
-}
+// interface DatasetInfo {
+//   classification: string,
+//   subclassification: string,
+//   period: string
+// }
 
-interface ExportItem {
-  datasetInfo: DatasetInfo
-  //info specific to file type for identifying resource
-  resources: ResourceInfo[]
-}
+// interface ExportItem {
+//   datasetInfo: DatasetInfo
+//   //info specific to file type for identifying resource
+//   resources: ResourceInfo[]
+// }
 
-type ResourceType = "raster" | "station" | "anomaly" | "standard_error" | "LOOCV_error" | "metadata";
+// type ResourceType = "raster" | "station" | "anomaly" | "standard_error" | "LOOCV_error" | "metadata";
 
-interface ResourceInfo {
-  type: ResourceType
-}
+// interface ResourceInfo {
+//   type: ResourceType
+// }
 
 
-export interface ExportDataInfo {
-  datatype: ValueData<string>,
-  dates?: {
-    start: Moment.Moment,
-    end: Moment.Moment,
-    period: Period
-  },
-  groupData: {
+// export interface ExportDataInfo {
+//   datatype: ValueData<string>,
+//   dates?: {
+//     start: Moment.Moment,
+//     end: Moment.Moment,
+//     period: Period
+//   },
+//   groupData: {
 
-  }
-  fileData: {
-    raster: FieldInfo[],
-    station: FieldInfo[]
-  }
-}
+//   }
+//   fileData: {
+//     raster: FieldInfo[],
+//     station: FieldInfo[]
+//   }
+// }
 
 

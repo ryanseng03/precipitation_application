@@ -35,8 +35,8 @@
           <mat-label>Time Period</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="dataset.timestep.control">
-            <mat-option *ngFor="let timestep of dataset.timestep.options" [value]="timestep.value">
+            [formControl]="dataset.period.control">
+            <mat-option *ngFor="let timestep of dataset.period.options" [value]="timestep.value">
               {{timestep.label}}
             </mat-option>
           </mat-select>
@@ -65,7 +65,7 @@
               label="Start Date"
               [min]="dataset.dates.range[0]"
               [max]="dataset.dates.selected[1]"
-              [timestep]="dataset.timestep.control.value"
+              [timestep]="dataset.period.control.value"
               [initDate]="dataset.dates.selected[0]"
               (dateChange)="setDate(0, $event)"
               [readonly]="false">
@@ -74,7 +74,7 @@
             label="End Date"
             [min]="dataset.dates.selected[0]"
             [max]="dataset.dates.range[1]"
-            [timestep]="dataset.timestep.control.value"
+            [timestep]="dataset.period.control.value"
             [initDate]="dataset.dates.selected[1]"
             (dateChange)="setDate(1, $event)"
             [readonly]="false">

@@ -6,40 +6,34 @@ import { Period } from 'src/app/models/types';
   providedIn: 'root'
 })
 export class DateManagerService {
+  private formats = [{
+    second: "YYYY-MM-DD[T]HH:mm:ss",
+    minute: "YYYY-MM-DD[T]HH:mm",
+    hour: "YYYY-MM-DD[T]HH",
+    day: "YYYY-MM-DD",
+    month: "YYYY-MM",
+    year: "YYYY"
+  },
+  {
+    second: "MMMM DD YYYY h:mm:ss a",
+    minute: "MMMM DD YYYY h:mm a",
+    hour: "MMMM DD YYYY h a",
+    day: "MMMM DD YYYY",
+    month: "MMMM YYYY",
+    year: "YYYY"
+  }];
 
-  dateToString(date: Moment, period: Period): string {
-    let format = this.periodToFormat(period);
+  dateToString(date: Moment, period: Period, fancy: boolean = false): string {
+    let format = this.periodToFormat(period, fancy);
     return date.format(format);
   }
 
-  periodToFormat(period: Period): string {
-    let dateFormat: string;
-    switch(period) {
-      case "second": {
-        dateFormat = ":ss";
-      }
-      case "minute": {
-        dateFormat = ":mm" + dateFormat;
-      }
-      case "hour": {
-        //does T need to be escaped? so far not using hours, so maybe well find out in the future
-        dateFormat = "THH" + dateFormat;
-      }
-      case "day": {
-        dateFormat = "-DD" + dateFormat;
-      }
-      case "month": {
-        dateFormat = "-MM" + dateFormat;
-      }
-      case "year": {
-        dateFormat = "YYYY" + dateFormat;
-        break;
-      }
-      default: {
-        throw Error("Unrecognized period");
-      }
+  periodToFormat(period: Period, fancy: boolean = false): string {
+    let index = 0;
+    if(fancy) {
+      index = 1;
     }
-    return dateFormat;
+    return this.formats[index][period];
   }
 
   //inclusive
