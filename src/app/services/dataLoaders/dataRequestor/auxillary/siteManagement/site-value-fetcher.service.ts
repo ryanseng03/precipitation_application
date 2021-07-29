@@ -6,10 +6,9 @@ import dsconfig from "./DataSetConfig.json";
 import { SiteValue } from '../../../../../models/SiteMetadata';
 import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
 import { BandData, RasterHeader, RasterData, IndexedValues } from 'src/app/models/RasterData';
-import moment from 'moment';
-//import { DataPack } from 'src/app/services/dataManager/data-manager.service';
+import { DateInfo } from 'src/app/models/types';
 
-export {RequestResults} from "../dbCon/db-con.service";
+export { RequestResults };
 
 const LIVE: boolean = false;
 
@@ -55,7 +54,7 @@ export class SiteValueFetcherService {
       return header;
     }
 
-    let response = this.dbcon.query(query);
+    let response = this.dbcon.queryMetadata(query);
 
     response.transform((response: any) => {
       //query cancelled, propogate null
@@ -73,7 +72,8 @@ export class SiteValueFetcherService {
 
 
   getDataPackByDate(date: Moment.Moment): RequestResults {
-    let rasterRequest = this.getRastersDate(date);
+    //let rasterRequest = this.getRastersDate(date);
+    let rasterRequest = this.getRasterDateFile(date);
     let stationRequest = this.getSiteValsDate(date);
     rasterRequest.combine(stationRequest);
     rasterRequest.transform((data: [BandData, SiteValue[]]) => {
@@ -85,6 +85,29 @@ export class SiteValueFetcherService {
     });
 
     return rasterRequest;
+  }
+
+  getRasterDateFile(date: Moment.Moment): RequestResults {
+    let dateInfo: DateInfo = {
+      period: "month",
+      start: date
+    };
+    let params = {
+      datatype: "rainfall",
+      extent: "state",
+      tier: "0"
+    };
+    let response = this.dbcon.getRaster(dateInfo, params);
+    let start = new Date().getTime();
+    response.transform((data: RasterData) => {
+      let time = new Date().getTime() - start;
+      let timeSec = time / 1000;
+      console.log(`Retreived raster data for ${date.toISOString()}, time elapsed ${timeSec} seconds`);
+      data.renameBand("0", "rainfall");
+      let bands: BandData = data.getBands();
+      return bands;
+    });
+    return response;
   }
 
 
@@ -124,9 +147,14 @@ export class SiteValueFetcherService {
     // ]
     // }`
 
-    let response = this.dbcon.query(query);
+    let response = this.dbcon.queryMetadata(query);
 
+    let start = new Date().getTime();
     response.transform((response: any) => {
+      let time = new Date().getTime() - start;
+      let timeSec = time / 1000;
+      console.log(`Retreived raster data for ${date.toISOString()}, time elapsed ${timeSec} seconds`);
+
       //query cancelled, propogate null
       if(response == null) {
         return null;
@@ -249,7 +277,7 @@ export class SiteValueFetcherService {
       //construct full query
       let query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'},${queryDate}]}`;
       query = `{'$and':[{'name':'hcdp_station_value'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.descriptor.station_id':'${skn}'},{'value.key.datatype':'rainfall'},{'value.key.period':'day'}]}`;
-      let response = this.dbcon.query(query);
+      let response = this.dbcon.queryMetadata(query);
 
       //how should errors be handled? any user notification?
       response.transform((response: any) => {
@@ -323,10 +351,16 @@ export class SiteValueFetcherService {
       return siteData;//this.extractLastValues(recent)
     }
 
-    let response = this.dbcon.query(query);
+    let response = this.dbcon.queryMetadata(query);
 
+    
+    let start = new Date().getTime();
     //need to add in some error handling
     response.transform((response: any) => {
+
+      let time = new Date().getTime() - start;
+      let timeSec = time / 1000;
+      console.log(`Retreived station data for ${date.toISOString()}, time elapsed ${timeSec} seconds`);
 
       //query cancelled, propogate null
       if(response == null) {
@@ -354,7 +388,7 @@ export class SiteValueFetcherService {
       return this.sortByDate(results);
     }
 
-    let response = this.dbcon.query(query);
+    let response = this.dbcon.queryMetadata(query);
 
     response.transform((response: any) => {
       //query cancelled, propogate null

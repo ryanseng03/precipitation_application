@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
-import {SiteValueFetcherService, DateRefValues, RequestResults} from "./auxillary/siteManagement/site-value-fetcher.service";
-import {MetadataStoreService, SKNRefMeta} from "./auxillary/siteManagement/metadata-store.service";
-import { SiteValue, SiteMetadata, SiteInfo } from '../../../models/SiteMetadata';
+import { SiteValueFetcherService, RequestResults } from "./auxillary/siteManagement/site-value-fetcher.service";
+import { MetadataStoreService, SKNRefMeta}  from "./auxillary/siteManagement/metadata-store.service";
+import { SiteMetadata } from '../../../models/SiteMetadata';
 import Moment from "moment";
-import { RasterData, IndexedValues, BandData, RasterHeader } from '../../../models/RasterData';
-
-export {RequestResults} from "./auxillary/siteManagement/site-value-fetcher.service";
+import { RasterData, IndexedValues } from '../../../models/RasterData';
+export { RequestResults };
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
 //eventually also routes requests for remote raster data fetching

@@ -3,7 +3,10 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Subscription, throwError } from 'rxjs';
 import { retry, catchError, take } from 'rxjs/operators';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-import { GeotiffDataLoaderService } from '../../../localDataLoader/auxillary/geotiff-data-loader.service';
+import { DataProcessorService } from 'src/app/services/dataProcessor/data-processor.service';
+import { DateInfo, Period, StringMap } from 'src/app/models/types';
+import { Moment } from 'moment';
+import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 
 
 export interface Config {
@@ -15,45 +18,53 @@ export interface Config {
   providedIn: 'root'
 })
 export class DbConService {
-
   static readonly CONFIG_FILE = "config.json";
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
 
-  initPromise: Promise<Config>;
+  private initPromise: Promise<Config>;
 
-  constructor(private http: HttpClient, assetService: AssetManagerService, testLoader: GeotiffDataLoaderService) {
+  constructor(private http: HttpClient, assetService: AssetManagerService, private geotiffProcessor: DataProcessorService, private dateProcessor: DateManagerService) {
     let url = assetService.getAssetURL(DbConService.CONFIG_FILE);
     this.initPromise = <Promise<Config>>(this.http.get(url, { responseType: "json" }).toPromise());
   }
 
-  //at some point may be cleaner to rework this a bit so don't have to wrap RequestResult in a promise, allow for RequestResult to be initialized before request initialized, then if cancelled before initialization just never execute the transfer (keep cancelled variable or something)
-  query(query: string, offset: number = 0): RequestResults {
-
+  queryMetadata(query: string, offset: number = 0): MetadataRequestResults {
     //mirror results through external subject to avoid issues with promise wrapper
-    let response = new RequestResults(this.http);
+    let response = new MetadataRequestResults(this.http);
     this.initPromise.then((config: Config) => {
-      response.get(query, config, offset);
+      response.get({query, config, offset});
     })
     .catch((e: any) => {
       console.error(`Error getting config: ${e}`);
     });
 
-
     return response;
+  }
 
+  getRaster(date: DateInfo, params: StringMap): GeotiffRequestResults {
+    let response = new GeotiffRequestResults(this.http);
+    let geotiffParams: GeotiffParams = {
+      date,
+      params,
+      services: {
+        geotiffHandler: this.geotiffProcessor,
+        dateHandler: this.dateProcessor
+      }
+    }
+    response.get(geotiffParams);
+    return response;
   }
 }
 
 
-
-export class RequestResults {
-  private sub: Subscription;
+export abstract class RequestResults {
+  protected sub: Subscription;
   private data: Promise<any>;
   private http: HttpClient;
   private retry: number;
   private resolve: (value: any) => void;
-  private reject: (reason: any) => void;
+  protected reject: (reason: any) => void;
   private linked: RequestResults[];
 
   cancelled: boolean;
@@ -73,28 +84,10 @@ export class RequestResults {
     this.linked = [];
   }
 
-  get(query: string, config: Config, offset: number) {
-    //console.log(query);
-    //if cancelled or already called ignore
-    if(!this.cancelled && !this.sub) {
-      let url = `${config.queryEndpoint}?q=${encodeURI(query)}&limit=${DbConService.MAX_POINTS}&offset=${offset}`;
+  abstract get(params: GeotiffParams | MetadataParams): void;
 
-      if(url.length > DbConService.MAX_URI) {
-        let reject: RequestReject = {
-          cancelled: this.cancelled,
-          reason: `Query too long: max length: ${DbConService.MAX_URI}, query length: ${url.length}`
-        };
-        this.reject(reject);
-      }
-
-      let head = new HttpHeaders()
-      .set("Authorization", "Bearer " + config.oAuthAccessToken)
-      .set("Content-Type", "application/x-www-form-urlencoded");
-      let options = {
-        headers: head
-      };
-
-      this.sub = this.http.get(url, options)
+  protected _get(url: string, options: any) {
+    this.sub = this.http.get(url, options)
       .pipe(
         retry(this.retry),
         take(1),
@@ -119,7 +112,6 @@ export class RequestResults {
           this.reject(reject);
         }
       });
-    }
   }
 
   transform(onfulfilled: (value: any) => any) {
@@ -159,45 +151,101 @@ export class RequestResults {
 
 }
 
+
+export class MetadataRequestResults extends RequestResults {
+  
+  get(params: MetadataParams) {
+    if(!this.cancelled && !this.sub) {
+      let url = `${params.config.queryEndpoint}?q=${encodeURI(params.query)}&limit=${DbConService.MAX_POINTS}&offset=${params.offset}`;
+
+      if(url.length > DbConService.MAX_URI) {
+        let reject: RequestReject = {
+          cancelled: this.cancelled,
+          reason: `Query too long: max length: ${DbConService.MAX_URI}, query length: ${url.length}`
+        };
+        this.reject(reject);
+      }
+
+      let head = new HttpHeaders()
+      .set("Authorization", "Bearer " + params.config.oAuthAccessToken)
+      .set("Content-Type", "application/x-www-form-urlencoded");
+      let options = {
+        headers: head
+      };
+
+      this._get(url, options);
+    }
+  }
+  
+}
+
+export class GeotiffRequestResults extends RequestResults {
+  static readonly GEOTIFF_NODATA = -3.3999999521443642e+38;
+  static readonly ENDPOINT = "https://cistore.its.hawaii.edu:443/raster";
+
+  get(params: GeotiffParams) {
+    if(!this.cancelled && !this.sub) {
+      // let resourceInfo = {
+      //   datatype: "rainfall",
+      //   period: "month",
+      //   date: "2018-12",
+      //   extent: "state",
+      //   tier: "0"
+      // };
+
+      let geotiffNodata = params.geotiffNodata || GeotiffRequestResults.GEOTIFF_NODATA;
+      let dateStr = params.services.dateHandler.dateToString(params.date.start, params.date.period);
+      let resourceInfo = {
+        ...params.params,
+        date: dateStr,
+        period: params.date.period
+      };
+
+      console.log(resourceInfo);
+
+      let urlParams = [];
+      for(let key in resourceInfo) {
+        let value = resourceInfo[key];
+        urlParams.push(`${key}=${value}`);
+      }
+      let urlSuffix = `${GeotiffRequestResults.ENDPOINT}?${urlParams.join("&")}`;
+      let url = `${urlSuffix}`;
+      let head = new HttpHeaders()
+      .set("Cache-Control", "public, max-age=31536000");
+
+      let responseType: "arraybuffer" = "arraybuffer";
+      let options = {
+        responseType: responseType,
+        headers: head
+      };
+      //register transform before get to be safe
+      this.transform((data: ArrayBuffer) => {
+        return params.services.geotiffHandler.getRasterDataFromGeoTIFFArrayBuffer(data, geotiffNodata);
+      });
+      this._get(url, options);
+    }
+  }
+}
+
+
+interface GeotiffParams {
+  date: DateInfo,
+  params: StringMap,
+  services: {
+    geotiffHandler: DataProcessorService,
+    dateHandler: DateManagerService
+  },
+  geotiffNodata?: number
+}
+
+interface MetadataParams {
+  query: string,
+  config: Config,
+  offset: number
+}
+
+
 export interface RequestReject {
   cancelled: boolean,
   reason: any
 }
-
-
-
-// class SubjectChain {
-//   head: SubjectChainNode;
-//   tail: SubjectChainNode;
-
-//   constructor(root: Subject<any>) {
-//     let head: SubjectChainNode = {
-//       subject: root,
-//       next: null
-//     };
-//     this.head = head;
-//     this.tail = head;
-//   }
-
-//   link(obs: Subject<any>) {
-//     let tail: SubjectChainNode = {
-//       subject: obs,
-//       next: null
-//     };
-//     this.tail.next = tail;
-//     this.tail = tail;
-//   }
-
-//   complete() {
-//     let node: SubjectChainNode = this.head;
-//     while(node) {
-//       node.subject.complete();
-//       node = node.next;
-//     }
-//   }
-// }
-
-// interface SubjectChainNode {
-//   subject: Subject<any>;
-//   next: SubjectChainNode
-// }

@@ -13,50 +13,6 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 export class GeotiffDataLoaderService {
 
   constructor(private http: HttpClient, private processor: DataProcessorService, private paramService: EventParamRegistrarService) {
-    let test = () => {
-      // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (data: any) => {
-      //   console.log(data);
-      // });
-      //right now theres nothing broadcasting the data, should change how thats being handled
-      //test with temp data
-      let resourceInfo = {
-        datatype: "rainfall",
-        period: "month",
-        date: "2018-12",
-        extent: "state",
-        tier: "0"
-      };
-      let urlParams = [];
-      for(let key in resourceInfo) {
-        let value = resourceInfo[key];
-        urlParams.push(`${key}=${value}`);
-      }
-      let urlSuffix = `?${urlParams.join("&")}`;
-      let url = `https://cistore.its.hawaii.edu:443/raster${urlSuffix}`;
-      let head = new HttpHeaders()
-      .set("Cache-Control", "public, max-age=31536000");
-
-      let responseType: "arraybuffer" = "arraybuffer";
-      let options = {
-        responseType: responseType,
-        headers: head
-      };
-      //url = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/Rainfall/allMonYrData/2018_12/2018_12_statewide_rf_mm.tif";
-      let start = new Date().getTime();
-      this.http.get(url, options)
-      .subscribe((data: ArrayBuffer) => {
-        this.processor.getRasterDataFromGeoTIFFArrayBuffer(data, -3.3999999521443642e+38).then((rasterData: RasterData) => {
-          console.log(rasterData);
-          let time = new Date().getTime() - start;
-          let timeSec = time / 1000;
-          console.log(`Retreived raster data, time elapsed ${timeSec} seconds`);
-        });
-      });
-    }
-    test();
-    setTimeout(() => {
-      test();
-    }, 5000);
   }
 
   getDataFromGeotiff(url: string, customNoData?: number, bands?: string[]): Promise<RasterData> {
