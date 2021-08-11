@@ -209,7 +209,7 @@ export class ExportManagerService {
               actualSize += event.total;
               //recompute coeff
               percentCoeff = 100 / actualSize;
-              console.log(actualSize, percentCoeff);
+              // console.log(actualSize, percentCoeff);
               actualSizeFound = true;
             }
             progressStore[i] = event.loaded;
