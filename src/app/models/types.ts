@@ -20,3 +20,22 @@ export type StringMap = {[item: string]: string};
 // //type SelectedMap{[tag: string]: SelectedData<string>};
 // type SelectorData<T> = ValueData<{[tag: string]: ValueData<T>}>;
 // type SelectorMap = {[tag: string]: SelectorData<string>};
+
+type Dataset = {
+
+}
+
+let data = {
+
+}
+
+type ValueData<T> = {
+    id: string,
+    label: string,
+    descriptor: string,
+    value: T
+};
+
+type Selector = ValueData<ValueData<Selector>[]>;
+
+type SelectorPathNode = Selector | null

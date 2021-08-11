@@ -71,10 +71,10 @@ export class SiteValueFetcherService {
   }
 
 
-  getDataPackByDate(date: Moment.Moment): RequestResults {
+  getDataPackByDate(date: Moment.Moment, delay?: number): RequestResults {
     //let rasterRequest = this.getRastersDate(date);
-    let rasterRequest = this.getRasterDateFile(date);
-    let stationRequest = this.getSiteValsDate(date);
+    let rasterRequest = this.getRasterDateFile(date, delay);
+    let stationRequest = this.getSiteValsDate(date, delay);
     rasterRequest.combine(stationRequest);
     rasterRequest.transform((data: [BandData, SiteValue[]]) => {
       let dataPack = {
@@ -87,7 +87,7 @@ export class SiteValueFetcherService {
     return rasterRequest;
   }
 
-  getRasterDateFile(date: Moment.Moment): RequestResults {
+  getRasterDateFile(date: Moment.Moment, delay?: number): RequestResults {
     let dateInfo: DateInfo = {
       period: "month",
       start: date
@@ -97,7 +97,7 @@ export class SiteValueFetcherService {
       extent: "state",
       tier: "0"
     };
-    let response = this.dbcon.getRaster(dateInfo, params);
+    let response = this.dbcon.getRaster(dateInfo, params, delay);
     let start = new Date().getTime();
     response.transform((data: RasterData) => {
       let time = new Date().getTime() - start;
@@ -315,12 +315,13 @@ export class SiteValueFetcherService {
 
   //hcdp@hawaii.edu
   //for now everything by month, note that format will change if doing daily
-  getSiteValsDate(date: Moment.Moment): RequestResults {
+  getSiteValsDate(date: Moment.Moment, delay?: number): RequestResults {
 
     let formattedDate = date.format("YYYY-MM");
 
-    let query = `{'$and':[{'name':'station_vals_month'},{'value.date':{$eq:'${formattedDate}'}},{'value.version':'v1.1'}]}`;
-    query = `{'$and':[{'name':'hcdp_station_value'},{'value.date':'${formattedDate}'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.key.datatype':'rainfall'},{'value.key.period':'month'}]}`;
+    //let query = `{'$and':[{'name':'station_vals_month'},{'value.date':{$eq:'${formattedDate}'}},{'value.version':'v1.1'}]}`;
+    let query = `{'$and':[{'name':'hcdp_station_value'},{'value.date':'${formattedDate}'},{'value.version':'2.0'},{'value.key.fill':'partial'},{'value.key.datatype':'rainfall'},{'value.key.period':'month'}]}`;
+    //let query = `{'$and':[{'name':'hcdp_station_value'},{'value.date':'${formattedDate}'},{'value.key.period':'month'}]}`;
     //console.log(query);
     //"{'name': 'hcdp_station_value', 'value.version': '2.0', 'value.key.fill': 'partial'}"
 
@@ -345,13 +346,11 @@ export class SiteValueFetcherService {
         let siteValue: SiteValue = this.processor.processValueDocs(item.value);
         siteData.push(siteValue);
       }
-      // console.log(dates);
-      // console.log(siteData);
 
       return siteData;//this.extractLastValues(recent)
     }
 
-    let response = this.dbcon.queryMetadata(query);
+    let response = this.dbcon.queryMetadata(query, 0, delay);
 
     
     let start = new Date().getTime();

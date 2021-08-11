@@ -245,7 +245,7 @@ export class DataManagerService {
 
   // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
   // //probably has to do with non-production running lifecycle hooks multiple times for change verification
-  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 3000): void {
+  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 2000): void {
 
     this.setLoadingOnMap(true);
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
@@ -307,7 +307,7 @@ export class DataManagerService {
         //dates//
         /////////
 
-        //get additional dates to pull data for for cache
+        //get additional dates to pull data for cache
         let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
         //cache data for new dates and clear old entries
         this.cacheDates(date, cacheDates);
@@ -353,8 +353,11 @@ export class DataManagerService {
       }
       //not in cache, need to retreive data
       else {
-        let cacheData = this.dataRequestor.getDataPack(date);
+        //diffuse load by adding random delay up to five seconds
+        let delay = Math.round(Math.random() * 5000);
+        let cacheData = this.dataRequestor.getDataPack(date, delay);
         this.cache.set(dateString, cacheData);
+
       }
     }
     //remove old entries that weren't recached (anything still in cachedDatesSet)
@@ -434,6 +437,32 @@ export class DataManagerService {
     });
   }
 }
+
+
+
+// class DelayedRequest {
+//   timeout: NodeJS.Timeout;
+//   request: RequestResults;
+//   requestPromise: Promise<RequestResults>;
+
+//   constructor(dataRequestor: DataRequestorService, date: Moment.Moment, delay: number) {
+//     this.time
+//     let cacheData = dataRequestor.getDataPack(date);
+//   }
+
+//   cancel() {
+//     if(this.request) {
+//       this.request.cancel();
+//     }
+//     else {
+//       clearTimeout(this.timeout);
+//     }
+//   }
+
+//   async getRequest(): Promise<RequestResults> {
+
+//   }
+// }
 
 
 

@@ -29,11 +29,11 @@ export class DbConService {
     this.initPromise = <Promise<Config>>(this.http.get(url, { responseType: "json" }).toPromise());
   }
 
-  queryMetadata(query: string, offset: number = 0): MetadataRequestResults {
+  queryMetadata(query: string, offset: number = 0, delay?: number): MetadataRequestResults {
     //mirror results through external subject to avoid issues with promise wrapper
     let response = new MetadataRequestResults(this.http);
     this.initPromise.then((config: Config) => {
-      response.get({query, config, offset});
+      response.get({query, config, offset}, delay);
     })
     .catch((e: any) => {
       console.error(`Error getting config: ${e}`);
@@ -42,7 +42,7 @@ export class DbConService {
     return response;
   }
 
-  getRaster(date: DateInfo, params: StringMap): GeotiffRequestResults {
+  getRaster(date: DateInfo, params: StringMap, delay?: number): GeotiffRequestResults {
     let response = new GeotiffRequestResults(this.http);
     let geotiffParams: GeotiffParams = {
       date,
@@ -52,7 +52,7 @@ export class DbConService {
         dateHandler: this.dateProcessor
       }
     }
-    response.get(geotiffParams);
+    response.get(geotiffParams, delay);
     return response;
   }
 }
@@ -60,6 +60,7 @@ export class DbConService {
 
 export abstract class RequestResults {
   protected sub: Subscription;
+  protected timeout: NodeJS.Timeout;
   private data: Promise<any>;
   private http: HttpClient;
   private retry: number;
@@ -84,10 +85,12 @@ export abstract class RequestResults {
     this.linked = [];
   }
 
-  abstract get(params: GeotiffParams | MetadataParams): void;
+  abstract get(params: GeotiffParams | MetadataParams, delay?: number): void;
 
-  protected _get(url: string, options: any) {
-    this.sub = this.http.get(url, options)
+  protected _get(url: string, options: any, delay?: number) {
+    console.log(delay);
+    const setSub = () => {
+      this.sub = this.http.get(url, options)
       .pipe(
         retry(this.retry),
         take(1),
@@ -112,6 +115,18 @@ export abstract class RequestResults {
           this.reject(reject);
         }
       });
+    }
+
+    if(delay) {
+      this.timeout = setTimeout(() => {
+        setSub();
+      }, delay);
+    }
+    else {
+      setSub();
+    }
+    
+    
   }
 
   transform(onfulfilled: (value: any) => any) {
@@ -127,9 +142,13 @@ export abstract class RequestResults {
       link.cancel();
     }
     this.cancelled = true;
-    //does this complete the stream?
-    this.sub.unsubscribe();
-    //this.outSource.complete();
+    if(this.sub) {
+      //does this complete the stream?
+      this.sub.unsubscribe();
+    }
+    if(this.timeout) {
+      clearTimeout(this.timeout);
+    }
   }
 
   combine(request: RequestResults): void {
@@ -154,7 +173,7 @@ export abstract class RequestResults {
 
 export class MetadataRequestResults extends RequestResults {
   
-  get(params: MetadataParams) {
+  get(params: MetadataParams, delay?: number) {
     if(!this.cancelled && !this.sub) {
       let url = `${params.config.queryEndpoint}?q=${encodeURI(params.query)}&limit=${DbConService.MAX_POINTS}&offset=${params.offset}`;
 
@@ -173,7 +192,7 @@ export class MetadataRequestResults extends RequestResults {
         headers: head
       };
 
-      this._get(url, options);
+      this._get(url, options, delay);
     }
   }
   
@@ -183,7 +202,7 @@ export class GeotiffRequestResults extends RequestResults {
   static readonly GEOTIFF_NODATA = -3.3999999521443642e+38;
   static readonly ENDPOINT = "https://cistore.its.hawaii.edu:443/raster";
 
-  get(params: GeotiffParams) {
+  get(params: GeotiffParams, delay?: number) {
     if(!this.cancelled && !this.sub) {
       // let resourceInfo = {
       //   datatype: "rainfall",
@@ -222,7 +241,7 @@ export class GeotiffRequestResults extends RequestResults {
       this.transform((data: ArrayBuffer) => {
         return params.services.geotiffHandler.getRasterDataFromGeoTIFFArrayBuffer(data, geotiffNodata);
       });
-      this._get(url, options);
+      this._get(url, options, delay);
     }
   }
 }
