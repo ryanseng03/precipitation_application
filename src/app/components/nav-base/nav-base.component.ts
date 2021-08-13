@@ -28,7 +28,7 @@ import { trigger, state, style, transition, animate } from "@angular/animations"
     trigger("selectColor", [
       state("selected", style({
         backgroundColor: "#175db6",
-        color: "white"
+        fill: "white"
     })),
       state("deselected", style({})),
       transition("selected <=> deselected", [
@@ -46,7 +46,8 @@ export class NavBaseComponent implements OnInit {
 
   collapseTimer: NodeJS.Timer = null;
 
-  constructor() { }
+  constructor() {}
+
 
   ngOnInit() {
   }
@@ -62,14 +63,14 @@ export class NavBaseComponent implements OnInit {
         this.collapseTimer = null;
       }, 200);
     }
-    
-    
+
+
   }
 
   selectComponent(component: string) {
     this.component = component;
   }
-  
+
 
   getNavState() {
     let expandState = null;

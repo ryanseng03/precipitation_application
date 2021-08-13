@@ -9,7 +9,7 @@
     height: 100%;
     width: 30px;
     display: flex;
-    flex-flow: column wrap;
+    flex-flow: row;
     -webkit-text-orientation: upright;
     text-orientation: upright;
     writing-mode: vertical-lr;
@@ -18,15 +18,18 @@
 }
 
 .nav-tile {
-    width: 100%;
-    flex-grow: 1;
-    padding-top: 20px;
-    padding-left: 4px;
+  overflow: hidden;
+  flex-grow: 1;
+  width: 100%;
+  padding: 5px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
 .nav-tile:hover {
-    cursor: pointer;
-    box-shadow: 2px -2px inset, -1px 1px inset;
+  box-shadow: 2px -2px inset, -1px 1px inset;
 }
 
 .nav-tile-selected {

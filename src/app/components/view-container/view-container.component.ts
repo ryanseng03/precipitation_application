@@ -12,7 +12,8 @@ import { DateChangeInfo } from '../controls/date-focus/date-focus.component';
   animations: [trigger("selectColor", [
     state("selected", style({
       backgroundColor: "#175db6",
-      color: "white"
+      color: "white",
+      fill: "white"
   })),
     state("deselected", style({})),
     transition("selected <=> deselected", [
@@ -71,7 +72,7 @@ export class ViewContainerComponent implements OnInit {
   upperBuffer: string;
 
   firstElement: HTMLElement;
-  
+
 
   constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService) {
     this.scrollTimeoutHandle = null;
@@ -108,9 +109,9 @@ export class ViewContainerComponent implements OnInit {
     //   this.upperBuffer = dateControlElement.offsetHeight + "px";
     //   console.log(this.upperBuffer);
     // }, 1000);
-    
+
     this.firstElement = this.formComponent.nativeElement;
-    
+
 
   }
 

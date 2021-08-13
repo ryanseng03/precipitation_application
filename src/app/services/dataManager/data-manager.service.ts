@@ -300,18 +300,17 @@ export class DataManagerService {
     let dataRetreiver: RequestResults = this.cache.get(isoStr);
 
     let cacheDates = () => {
-      this.throttles.cache = setTimeout(() => {
-        this.throttles.cache = null;
+      return;
+      this.throttles.cache = null;
 
-        /////////
-        //dates//
-        /////////
+      /////////
+      //dates//
+      /////////
 
-        //get additional dates to pull data for cache
-        let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-        //cache data for new dates and clear old entries
-        this.cacheDates(date, cacheDates);
-      }, delay);
+      //get additional dates to pull data for cache
+      let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+      //cache data for new dates and clear old entries
+      this.cacheDates(date, cacheDates);
     }
 
     if(dataRetreiver) {

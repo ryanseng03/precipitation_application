@@ -8,10 +8,18 @@
     <ng-template #collapsedNav>
       <div class="data-nav-trigger">
         <div class="nav-sub-tile" [@selectColor]="component == 'vis' ? 'selected' : 'deselected'" (click)="selectComponent('vis')">
-          Visualize Data
+          <svg viewBox="0 0 10 300" width="100%" height="100%">
+            <text x="50%">
+              Visualize Data
+            </text>
+          </svg>
         </div>
         <div class="nav-sub-tile" [@selectColor]="component == 'export' ? 'selected' : 'deselected'" (click)="selectComponent('export')">
-          Export Data
+          <svg viewBox="0 0 10 300" width="100%" height="100%">
+            <text x="50%">
+              Export Data
+            </text>
+          </svg>
         </div>
       </div>
     </ng-template>
@@ -30,7 +38,7 @@
   </div>
 </div>
 
-  
+
 
 
 
