@@ -30,7 +30,7 @@
 
   <div #viewNav class="view-nav">
     <div *ngFor="let nav of navInfo" class="nav-tile" [@selectColor]="nav == activeTileRef ? 'selected' : 'deselected'" (click)="goToNav(nav)">
-      <svg viewBox="0 0 10 210" width="100%" height="100%">
+      <svg viewBox="0 0 10 225" width="100%" height="100%">
         <text x="50%">
           {{nav.label}}
         </text>
