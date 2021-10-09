@@ -13,8 +13,9 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "create-deploy": "ng build --prod; cp CNAME dist/CNAME",
-    "commit-dploy": "t"
+    "build-prod": "ng build --prod",
+    "config-deploy": "cp CNAME dist/CNAME",
+    "push-deploy": "git subtree push --prefix dist origin deploy"
   },
   "private": true,
   "dependencies": {
