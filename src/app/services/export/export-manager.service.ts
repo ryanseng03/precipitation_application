@@ -1,13 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse, HttpEventType } from '@angular/common/http';
-import * as JSZip from "jszip";
-import { DbConService, Config } from '../dataLoaders/dataRequestor/auxillary/dbCon/db-con.service';
-import { map, retry, catchError, mergeMap, take } from 'rxjs/operators';
+import { DbConService } from '../dataLoaders/dataRequestor/auxillary/dbCon/db-con.service';
+import { retry, catchError, take } from 'rxjs/operators';
 import { Observable, Subject, throwError } from "rxjs";
-import { saveAs }  from 'file-saver';
 import * as Moment from 'moment';
 import { ValueData } from 'src/app/models/Dataset';
-import * as zip from "client-zip";
 import { Period } from 'src/app/models/types';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
@@ -16,21 +13,6 @@ import { ResourceReq } from 'src/app/models/exportData';
   providedIn: 'root'
 })
 export class ExportManagerService {
-
-  // exportData = {
-  //   datatype:
-  //     period: {
-
-  //     },
-  //     files: {
-  //       rasters: [],
-  //       stations: []
-  //     }
-  //   files: {
-  //     rasters: [],
-  //     stations: []
-  //   }
-  // }
 
   //Master_Sta_List_Meta_2020_11_09.csv
   fileData = {
@@ -52,39 +34,13 @@ export class ExportManagerService {
   static readonly F_PART_SIZE_UL_MB = 4;
 
   ///////////////////////
-  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu:443/genzip/instant/splitlink";
-  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu:443/genzip/email/";
+  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu/genzip/instant/splitlink";
+  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu/genzip/email/";
   ///////////////////////
 
   constructor(private http: HttpClient, private dbcon: DbConService, private dateService: DateManagerService) {
 
   }
-
-  // private getNumDatesInRange(start: Moment.Moment, end: Moment.Moment, period: Moment.unitOfTime.Diff) {
-  //   let numDates = end.diff(start, period);
-  //   return numDates;
-  // }
-
-  // packageSizeInLimit(files: ResourceInfo[]): boolean {
-  //   let numFiles = files.reduce((acc: number, value: ResourceInfo) => {
-  //     let groupSize: number;
-  //     let dates = value.fileData.dates;
-  //     if(dates) {
-  //       groupSize = this.getNumDatesInRange(dates.dates.start, dates.dates.end, dates.period);
-  //     }
-  //     else {
-  //       groupSize = 1;
-  //     }
-  //     return acc + groupSize;
-  //   }, 0);
-  //   console.log(files, numFiles);
-  //   return numFiles <= ExportManagerService.MAX_INSTANT_PACKAGE_FILES;
-  // }
-
-
-
-
-
 
   async submitEmailPackageReq(reqs: ResourceReq[], email: string): Promise<void> {
     let reqBody = {

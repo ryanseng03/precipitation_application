@@ -200,7 +200,7 @@ export class MetadataRequestResults extends RequestResults {
 
 export class GeotiffRequestResults extends RequestResults {
   static readonly GEOTIFF_NODATA = -3.3999999521443642e+38;
-  static readonly ENDPOINT = "https://cistore.its.hawaii.edu:443/raster";
+  static readonly ENDPOINT = "https://cistore.its.hawaii.edu/raster";
 
   get(params: GeotiffParams, delay?: number) {
     if(!this.cancelled && !this.sub) {
