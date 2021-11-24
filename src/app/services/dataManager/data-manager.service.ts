@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
-import { RasterData, IndexedValues, BandData, RasterHeader, UpdateStatus, UpdateFlags } from "../../models/RasterData";
-import {Subject, Observable} from "rxjs";
+import { RasterData, IndexedValues, BandData, RasterHeader, UpdateFlags } from "../../models/RasterData";
 import {SiteMetadata, SiteValue, SiteInfo} from "../../models/SiteMetadata";
-import {DataLoaderService} from "../dataLoaders/localDataLoader/data-loader.service";
-import {DataRequestorService, RequestResults} from "../dataLoaders/dataRequestor/data-requestor.service";
+import {DataRequestorService, RequestResults} from "../dataLoader/data-requestor.service";
 import Moment from 'moment';
 import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
 import {Dataset} from "../../models/Dataset";
 import moment from 'moment';
-import { RequestReject } from '../dataLoaders/dataRequestor/auxillary/dbCon/db-con.service';
+import { RequestReject } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
 
 
@@ -45,7 +43,7 @@ export class DataManagerService {
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataLoader: DataLoaderService, private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService) {
+  constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService) {
     this.throttles = {
       focus: null,
       cache: null
@@ -245,9 +243,8 @@ export class DataManagerService {
 
   // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
   // //probably has to do with non-production running lifecycle hooks multiple times for change verification
-  //where is the freezing happening?
-  //1 second is probably good
-  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 1000): void {
+  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 2000): void {
+
     this.setLoadingOnMap(true);
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
     if(this.throttles.focus) {
@@ -330,6 +327,9 @@ export class DataManagerService {
         cacheDates();
       }, delay);
     }
+
+
+
   }
 
   //caches set of dates and clears old values from cache
@@ -354,6 +354,7 @@ export class DataManagerService {
         let delay = Math.round(Math.random() * 5000);
         let cacheData = this.dataRequestor.getDataPack(date, delay);
         this.cache.set(dateString, cacheData);
+
       }
     }
     //remove old entries that weren't recached (anything still in cachedDatesSet)

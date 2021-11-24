@@ -5,7 +5,6 @@ import * as L from "leaflet";
 import { SiteMetadata } from 'src/app/models/SiteMetadata';
 import { InternalPointsService } from "../../services/geospatial/internal-points.service";
 import { StationFilteringService, FilteredStations, StationMetadata, Filter, FilterBase, FilterGroup } from "../../services/filters/station-filtering.service";
-import { AnimationStyleMetadata } from '@angular/animations';
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
