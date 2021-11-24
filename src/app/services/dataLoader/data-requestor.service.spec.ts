@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
-import { UploadManagerService } from './upload-manager.service';
+import { DataRequestorService } from './data-requestor.service';
 
-describe('UploadManagerService', () => {
+describe('DataRequestorService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: UploadManagerService = TestBed.get(UploadManagerService);
+    const service: DataRequestorService = TestBed.get(DataRequestorService);
     expect(service).toBeTruthy();
   });
 });
