@@ -229,6 +229,11 @@ export class ExportManagerService {
               progress.complete();
             }
           }
+          //subscribe error handling?
+        }, (e) => {
+          console.log("error in subscription");
+          //is being triggered, but doesn't propogate to promise catch??
+          throw e;
         });
       }
     })
@@ -236,8 +241,11 @@ export class ExportManagerService {
       return new Blob(responses, {type: "application/zip"});
     })
     .catch((e: any) => {
+      //not getting here
       //error out progress and reject
       progress.error(e);
+      console.log("error caught");
+      throw e;
       return Promise.reject(e);
     });
 
@@ -260,6 +268,10 @@ export class ExportManagerService {
     };
 
     console.log(url);
+
+    let testObs = new Subject<HttpEvent<ArrayBuffer>>();
+    testObs.error("Test error");
+    return testObs.asObservable();
 
     return this.http.get(url, options)
     .pipe(

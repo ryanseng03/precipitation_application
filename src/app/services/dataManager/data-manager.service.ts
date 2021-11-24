@@ -245,8 +245,9 @@ export class DataManagerService {
 
   // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
   // //probably has to do with non-production running lifecycle hooks multiple times for change verification
-  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 2000): void {
-
+  //where is the freezing happening?
+  //1 second is probably good
+  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 1000): void {
     this.setLoadingOnMap(true);
     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
     if(this.throttles.focus) {
@@ -329,9 +330,6 @@ export class DataManagerService {
         cacheDates();
       }, delay);
     }
-
-
-
   }
 
   //caches set of dates and clears old values from cache
@@ -356,7 +354,6 @@ export class DataManagerService {
         let delay = Math.round(Math.random() * 5000);
         let cacheData = this.dataRequestor.getDataPack(date, delay);
         this.cache.set(dateString, cacheData);
-
       }
     }
     //remove old entries that weren't recached (anything still in cachedDatesSet)

@@ -87,54 +87,49 @@ export abstract class RequestResults {
 
   abstract get(params: GeotiffParams | MetadataParams, delay?: number): void;
 
-  protected _get(url: string, options: any, delay?: number) {
-    console.log(delay);
-    const setSub = () => {
-      this.sub = this.http.get(url, options)
-      .pipe(
-        retry(this.retry),
-        take(1),
-        catchError((e: HttpErrorResponse) => {
-          return throwError(e);
-        })
-      )
-      .subscribe((response: any) => {
-        this.resolve(response);
-      }, (error: HttpErrorResponse) => {
+  private _setSub(url: string, options: any) {
+    this.sub = this.http.get(url, options)
+    .pipe(
+      retry(this.retry),
+      take(1),
+      catchError((e: HttpErrorResponse) => {
+        return throwError(e);
+      })
+    )
+    .subscribe((response: any) => {
+      this.resolve(response);
+    }, (error: HttpErrorResponse) => {
+      let reject: RequestReject = {
+        cancelled: this.cancelled,
+        reason: `Error in query, status: ${error.status}, message: ${error.message}`
+      };
+      this.reject(reject);
+    }, () => {
+      if(this.cancelled) {
         let reject: RequestReject = {
-          cancelled: this.cancelled,
-          reason: `Error in query, status: ${error.status}, message: ${error.message}`
-        };
-        this.reject(reject);
-      }, () => {
-        if(this.cancelled) {
-          let reject: RequestReject = {
-            cancelled: true,
-            reason: null
-          }
-          this.reject(reject);
+          cancelled: true,
+          reason: null
         }
-      });
-    }
+        this.reject(reject);
+      }
+    });
+  }
 
+  protected _get(url: string, options: any, delay?: number) {
     if(delay) {
       this.timeout = setTimeout(() => {
-        setSub();
+        this._setSub(url, options);
       }, delay);
     }
     else {
-      setSub();
+      this._setSub(url, options);
     }
-    
-    
+
+
   }
 
   transform(onfulfilled: (value: any) => any) {
     this.data = this.data.then(onfulfilled);
-
-    // this.data.catch((reason: any) => {
-    //   return Promise.reject(reason);
-    // });
   }
 
   cancel(): void {
@@ -172,7 +167,7 @@ export abstract class RequestResults {
 
 
 export class MetadataRequestResults extends RequestResults {
-  
+
   get(params: MetadataParams, delay?: number) {
     if(!this.cancelled && !this.sub) {
       let url = `${params.config.queryEndpoint}?q=${encodeURI(params.query)}&limit=${DbConService.MAX_POINTS}&offset=${params.offset}`;
@@ -195,22 +190,15 @@ export class MetadataRequestResults extends RequestResults {
       this._get(url, options, delay);
     }
   }
-  
+
 }
 
 export class GeotiffRequestResults extends RequestResults {
   static readonly GEOTIFF_NODATA = -3.3999999521443642e+38;
-  static readonly ENDPOINT = "https://cistore.its.hawaii.edu:443/raster";
+  static readonly ENDPOINT = "https://cistore.its.hawaii.edu/raster";
 
   get(params: GeotiffParams, delay?: number) {
     if(!this.cancelled && !this.sub) {
-      // let resourceInfo = {
-      //   datatype: "rainfall",
-      //   period: "month",
-      //   date: "2018-12",
-      //   extent: "state",
-      //   tier: "0"
-      // };
 
       let geotiffNodata = params.geotiffNodata || GeotiffRequestResults.GEOTIFF_NODATA;
       let dateStr = params.services.dateHandler.dateToString(params.date.start, params.date.period);
@@ -219,8 +207,6 @@ export class GeotiffRequestResults extends RequestResults {
         date: dateStr,
         period: params.date.period
       };
-
-      console.log(resourceInfo);
 
       let urlParams = [];
       for(let key in resourceInfo) {
