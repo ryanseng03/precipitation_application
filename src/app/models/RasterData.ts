@@ -1,7 +1,7 @@
 
 
 export class RasterData {
-    
+
     private data: {
         header: RasterHeader,
         data: BandData
@@ -195,7 +195,7 @@ export class RasterData {
             status.details = null;
         }
 
-        
+
 
         return status;
     }
@@ -223,7 +223,7 @@ export interface RasterHeader {
     xllCorner: number,
     yllCorner: number,
     cellXSize: number,
-    cellYSize: number,
+    cellYSize: number
 }
 
 export interface UpdateStatus<T> {
@@ -242,4 +242,3 @@ export enum UpdateFlags {
     ERROR_HEADER_MISMATCH = 1 << 5
 }
 
-  

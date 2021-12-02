@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DbConService, RequestResults, RequestReject } from "../dbCon/db-con.service";
-import { SiteMetadata } from "../../../../../models/SiteMetadata";
-import {DataProcessorService} from "../../../../dataProcessor/data-processor.service";
-import { LatLng } from "leaflet";
-import dsconfig from "./DataSetConfig.json";
-
+import { SiteMetadata } from "../../../../models/SiteMetadata";
+import {DataProcessorService} from "../../../dataProcessor/data-processor.service";
 export {RequestResults, RequestReject} from "../dbCon/db-con.service";
 
 @Injectable({
@@ -16,7 +13,6 @@ export class MetadataStoreService {
   private siteMeta: Promise<SKNRefMeta>;
 
   constructor(private dbcon: DbConService, private processor: DataProcessorService) {
-    console.log("fetch!");
     let query = "{$and:[{'name':'station_metadata'},{value.version:'v1.3'}]}";
     //query = `{'name':'${dsconfig.metaDocName}'}`;
     let resultHandler: (results: any) => SKNRefMeta = (results: any) => {

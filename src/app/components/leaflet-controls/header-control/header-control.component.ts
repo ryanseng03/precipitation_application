@@ -14,27 +14,12 @@ export class HeaderControlComponent implements OnInit {
 
   @Input() set map(map: Map) {
     if(map) {
-      // let Header = Control.extend({
-        
-      //   onAdd: function () {
-      //     let control = DomUtil.get("header-control");
-      //     return control;
-      //   }
-      // });
-      // let header = new Header({position: "topleft"}).addTo(map);
-      // console.log(header);
-      // console.log(header.getPosition());
       let control = DomUtil.get("header-control");
       let mapContainer = map.getContainer();
-      console.log(mapContainer);
       let controlContainer = mapContainer.getElementsByClassName("leaflet-control-container");
-      console.log(controlContainer[0]);
       controlContainer[0].appendChild(control);
-      //map.getContainer().appendChild(control);
     }
   }
-
-  //content input
 
   constructor() { }
 

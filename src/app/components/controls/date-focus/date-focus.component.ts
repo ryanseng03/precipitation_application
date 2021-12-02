@@ -1,10 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import Moment from 'moment';
-import {Dataset, Timestep, FillType} from "../../../models/Dataset";
 import {MatIconRegistry} from "@angular/material/icon";
-import {DomSanitizer} from "@angular/platform-browser";
-import {DataManagerService, MovementVector} from "../../../services/dataManager/data-manager.service";
-import { MapComponent } from '../../map/map.component';
+import {MovementVector} from "../../../services/dataManager/data-manager.service";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 
 @Component({

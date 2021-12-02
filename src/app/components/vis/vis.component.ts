@@ -20,7 +20,7 @@ export class VisComponent implements OnInit, AfterViewInit {
   }
 
   @ViewChild("container") container: ElementRef;
-  @ViewChild("mapContainer") mapContainer: ElementRef;
+  @ViewChild("mapContainer") mapContainerRef: ElementRef;
   @ViewChild("dragbar") dragbar: ElementRef;
   @ViewChild("viewNav") viewNav: MatSidenav;
 
@@ -38,6 +38,7 @@ export class VisComponent implements OnInit, AfterViewInit {
   view: string = "select";
 
   constructor() {
+
   }
 
   setViewWidth() {
@@ -46,17 +47,11 @@ export class VisComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    
-    // setTimeout(() => {
-    //   this.checkMoveInfo();
-    // }, 1000);
+
   }
 
   ngOnInit() {
     this.setViewWidth();
-    // setTimeout(() => {
-    //   this.moveInfo();
-    // }, 2000);
   }
 
 
@@ -89,7 +84,7 @@ export class VisComponent implements OnInit, AfterViewInit {
 
     let moveHandler = (event: MouseEvent) => {
       let dragbar: HTMLElement = this.dragbar.nativeElement;
-      let mapContainer: HTMLElement = this.mapContainer.nativeElement;
+      let mapContainer: HTMLElement = this.mapContainerRef.nativeElement;
       //offset to midpoint of dragbar
       let dragbarOffset = dragbar.clientWidth / 2;
       let left = mapContainer.getBoundingClientRect().left;

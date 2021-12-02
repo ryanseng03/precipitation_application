@@ -1,7 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import {Map, Control, DomUtil, DomEvent, ControlPosition} from 'leaflet';
+import {Map, Control, DomUtil, ControlPosition} from 'leaflet';
 import { ColorScale } from 'src/app/models/colorScale';
-import { strictEqual } from 'assert';
 
 @Component({
   selector: 'app-leaflet-color-scale',
@@ -16,7 +15,7 @@ export class LeafletColorScaleComponent implements OnInit {
   control: Control;
   intervals: string[];
   numIntervals: number = 4;
-  
+
 
   @Input() colorScale: ColorScale;
   @Input() position: ControlPosition = "bottomright";

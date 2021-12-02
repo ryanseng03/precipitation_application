@@ -1,30 +1,22 @@
-import { Component, OnInit, ViewChild, ElementRef, OnChanges, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
 import * as L from "leaflet";
 import "leaflet-spin";
 import * as chroma from "chroma-js";
-import {saveAs} from "file-saver";
-import * as geotiff from "geotiff";
-import { Color, ColorScale } from "../../models/colorScale";
+import { ColorScale } from "../../models/colorScale";
 import { ColorGeneratorService } from "../../services/rasterLayerGeneration/color-generator.service";
 import { DataRetreiverService } from "../../services/util/data-retreiver.service";
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
 import { EventParamRegistrarService, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";
-import { BandData, IndexedValues, RasterHeader, RasterData } from 'src/app/models/RasterData.js';
-import { SiteMetadata, SiteInfo } from 'src/app/models/SiteMetadata.js';
+import { RasterData } from 'src/app/models/RasterData.js';
+import { SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
-import "leaflet-easyprint";
-import {first, min} from "rxjs/operators";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import Moment from 'moment';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
+// import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-
-//type workaround, c contains plugin controls, typed as any so won't give error due to type constraints not being in leaflet typedef
-let C: any = L.control;
-let CC: any = L.Control;
-let LExt: any = L;
 
 @Component({
   selector: 'app-map',
@@ -32,6 +24,8 @@ let LExt: any = L;
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit {
+
+  @Input() imageContainer: ElementRef;
 
   @ViewChild("mapElement") mapElement: ElementRef;
   @ViewChild("layerController") layerController: LeafletLayerControlExtensionComponent;
@@ -45,6 +39,8 @@ export class MapComponent implements OnInit {
     bounds: [ [14.050369038588524, -167.60742187500003], [26.522031143884014, -144.47021484375003] ]
   };
   //private R: any = L;
+
+  imageHiddenControls = ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-export"];
 
   markerInfo: RainfallStationMarkerInfo;
 
@@ -63,7 +59,6 @@ export class MapComponent implements OnInit {
     [band: string]: any
   };
 
-  private layerLabelMap: TwoWayLabelMap;
 
   private selectedMarker: L.CircleMarker;
 
@@ -84,20 +79,12 @@ export class MapComponent implements OnInit {
       Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
     };
     this.dataLayers = {};
-    this.layerLabelMap = new TwoWayLabelMap({
-      "rainfall": "Rainfall",
-      "anomaly": "Anomaly",
-      "se_rainfall": "Rainfall Standard Error",
-      "se_anomaly": "Anomaly Standard Error"
-    });
 
     this.options = {
       layers: this.baseLayers.Satellite,
       zoom: 7,
       center: L.latLng(20.559, -157.242),
       attributionControl: false,
-      // zoomSnap: 0.01,
-      // wheelPxPerZoomLevel: 200,
       minZoom: 6,
       maxZoom: 18,
       maxBounds: this.extents.bounds
@@ -119,18 +106,12 @@ export class MapComponent implements OnInit {
 
   focusedBoundary = null
   focusSpatialExtent(extent: string) {
-    // if(this.markerClusterLayer) {
-    //   this.map.removeLayer(this.markerClusterLayer);
-    // }
     this.clearExtent();
     let bounds: L.LatLngBoundsExpression = this.extents[extent];
     this.map.flyToBounds(bounds);
     let boundary = L.rectangle(bounds, {weight: 2, fillOpacity: 0});
     boundary.addTo(this.map);
     this.focusedBoundary = boundary;
-    // if(this.markerClusterLayer) {
-    //   this.map.addLayer(this.markerClusterLayer);
-    // }
   }
 
   clearExtent() {
@@ -163,11 +144,6 @@ export class MapComponent implements OnInit {
   setColorScheme(colorScheme: ColorScale) {
     let layer: any = this.dataLayers[this.active.band];
     if(layer) {
-
-      // //set the selected scheme type for validation on cb
-      // this.colorSchemeType = scheme;
-
-
       layer.setColorScale(colorScheme);
       this.colorScheme = colorScheme;
       //update marker colors
@@ -201,17 +177,11 @@ export class MapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
-    //note A4Portrait and A4Landscape options for sizes don't seem to always load tiles outside view properly, so only allow current view for now
-    LExt.easyPrint({
-      title: "Export Map",
-      position: "topleft",
-      sizeModes: ["Current"],
-      exportOnly: true,
-      hideControlContainer: false,
-      filename: "HCDP_map",
-      hideClasses: ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-easyPrint"]
-    }).addTo(map);
-
+    setTimeout(() => {
+      map.eachLayer((layer) => {
+        console.log(layer);
+      });
+    }, 1000);
 
 
     this.active = {
@@ -256,13 +226,7 @@ export class MapComponent implements OnInit {
 
 
 
-    // let layerGroups = {
-    //   Types: {}
-    // };
 
-    // let clusterOptions = {
-    //   //chunkedLoading: true
-    // };
     //provides minimum radius at a specific scale
     let pivotZoom = 10;
     let minRadiusInfo = [5, 10];
@@ -281,8 +245,6 @@ export class MapComponent implements OnInit {
       this.constructMarkerLayerPopulateMarkerData(sites);
     });
 
-    // let lc = C.layers(this.baseLayers);
-    // lc.addTo(map);
     this.layerController.addLayers(this.baseLayers);
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
@@ -312,7 +274,7 @@ export class MapComponent implements OnInit {
 
       //install hover handler (requires raster to be set to work)
       let hoverTag = this.paramService.registerMapHover(map);
-      let hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
+      this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
 
       //uninstall current hook and replace with update hook that updates raster
       rasterHook.uninstall();
@@ -328,7 +290,7 @@ export class MapComponent implements OnInit {
 
     });
 
-    let selectedSiteHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
       if(station) {
         let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
 
@@ -356,38 +318,7 @@ export class MapComponent implements OnInit {
         })
       }
 
-      //});
-
-
     });
-
-    let dateHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
-      this.active.data.date = date;
-    });
-
-
-
-
-
-
-    this.setBaseLayerHandlers();
-
-    map.on("baselayerchange", () => {
-
-    });
-
-  }
-
-
-
-  setBaseLayerHandlers() {
-    //can use this if using multiple bands in the future, for now only one so don't worry about changing it (should always be 'rainfall')
-    //note that is using this you need to make the band overlays exclusive and ignore the rainfall station overlay
-    // this.map.on('overlayadd', (e: L.LayersControlEvent) => {
-    //   //set layer to type any
-    //   //let layer: any = e.layer;
-    //   this.active.band = e.name.toLowerCase();
-    // });
   }
 
 
@@ -448,13 +379,6 @@ export class MapComponent implements OnInit {
 
   }
 
-  // setDrawingHandlers() {
-  //   this.map.on(L.Draw.Event.CREATED, (e: any) => {
-  //     let geojson = e.layer.toGeoJSON();
-  //     console.log(geojson);
-  //     //console.log(this.dataRetreiver.getGeoJSONBoundingBox(geojson));
-  //   });
-  // }
 
   ngOnInit() {
 
@@ -487,13 +411,6 @@ export class MapComponent implements OnInit {
     let markerLayer = L.layerGroup();
     let minRadiusAtPivot = Number.POSITIVE_INFINITY;
     sites.forEach((site: SiteInfo) => {
-      // //troubleshooting markers not appearing
-      // if(site.location.lat < this.options.maxBounds[0][0] || site.location.lat > this.options.maxBounds[1][0]
-      // || site.location.lng < this.options.maxBounds[0][1] || site.location.lng > this.options.maxBounds[1][1]) {
-      //   console.log("OOB!", site.location.lat, site.location.lng);
-      // }
-      //let polyMarker = L.circle([site.location.lat, site.location.lng], {radius: (site.value + 1) * 1000});
-      //polyMarkerLayer.addLayer(polyMarker);
       let radius = this.getMarkerRadiusAtPivot(site);
       if(radius < minRadiusAtPivot) {
         minRadiusAtPivot = radius;
@@ -532,15 +449,11 @@ export class MapComponent implements OnInit {
     this.updateMarkers();
 
     if(this.markerInfo.layer) {
-      //siteMarkers.removeLayers(this.markers);
       this.map.removeLayer(this.markerInfo.layer);
       this.layerController.removeLayer(this.markerInfo.layer);
     }
     this.markerInfo.layer = markerLayer;
 
-    //console.log(markers);
-    //siteMarkers.addLayers(markers);
-    //console.log(siteMarkers);
     this.layerController.addOverlay(markerLayer, "Rainfall Stations");
     this.map.addLayer(markerLayer);
   }
@@ -589,13 +502,8 @@ export class MapComponent implements OnInit {
     let min = 5;
     let max = 30;
     let radius = min + site.value / 50;
-    //radius = Math.max(radius, min);
     radius = Math.min(radius, max);
     return radius;
-    // if(site.value > 1) {
-    //   radius += Math.log(site.value) / Math.log(1.5);
-    // }
-
   }
 
   setStaticMarkerRadius(marker: RainfallStationMarker) {
@@ -683,29 +591,6 @@ interface PopupData {
   popup: L.Popup
 }
 
-class TwoWayLabelMap {
-  nameToLabelMap: any;
-  labelToNameMap: any;
-
-  constructor(nameToLabelMap: {[name: string]: string}) {
-    this.labelToNameMap = {};
-    let keys = Object.keys(nameToLabelMap);
-    for(let key in keys) {
-      let label = nameToLabelMap[key];
-      this.labelToNameMap[label] = name;
-    }
-    this.nameToLabelMap = nameToLabelMap;
-  }
-
-  getLabel(name: string) {
-    return this.nameToLabelMap[name];
-  }
-
-  getName(label: string) {
-    return this.labelToNameMap[label];
-  }
-
-}
 
 
 

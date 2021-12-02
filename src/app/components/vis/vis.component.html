@@ -1,11 +1,10 @@
 
-
-
-
 <div #container class="data-container">
 
   <div #mapContainer class="map-container" [ngStyle]="{'width': mapWidth}">
-    <app-map #map></app-map>
+    <app-map #map
+      [imageContainer]="mapContainerRef">
+    </app-map>
   </div>
 
   <div #dragbar (touchstart)="startResize(true)" (mousedown)="startResize(false)" class="resize-bar">

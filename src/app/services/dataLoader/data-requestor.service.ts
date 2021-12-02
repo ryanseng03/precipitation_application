@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { SiteValueFetcherService, RequestResults } from "./auxillary/siteManagement/site-value-fetcher.service";
-import { MetadataStoreService, SKNRefMeta}  from "./auxillary/siteManagement/metadata-store.service";
-import { SiteMetadata } from '../../../models/SiteMetadata';
+import { SiteValueFetcherService, RequestResults } from "./auxillary/stationManagement/site-value-fetcher.service";
+import { MetadataStoreService, SKNRefMeta}  from "./auxillary/stationManagement/metadata-store.service";
+import { SiteMetadata } from '../../models/SiteMetadata';
 import Moment from "moment";
-import { RasterData, IndexedValues } from '../../../models/RasterData';
+import { RasterData, IndexedValues } from '../../models/RasterData';
 export { RequestResults };
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
@@ -21,23 +21,23 @@ export class DataRequestorService {
   //
 
   getRasterHeader(): RequestResults {
-    return this.siteRetreiver.getRasterHeader();
+    return this.siteRetreiver.getRasterHeader({});
   }
 
   getSiteValsDate(date: Moment.Moment): RequestResults {
-    return this.siteRetreiver.getSiteValsDate(date);
+    return null;//this.siteRetreiver.getSiteValsDate(date);
   }
 
   getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, focus: Moment.Moment, skn: string): {[group: string]: RequestResults} {
-    return this.siteRetreiver.getSiteTimeSeries(start, end, focus, skn);
+    return null;//this.siteRetreiver.getSiteTimeSeries(start, end, focus, skn);
   }
 
   getRastersDate(date: Moment.Moment): RequestResults {
-    return this.siteRetreiver.getRastersDate(date);
+    return null;//this.siteRetreiver.getRastersDate(date);
   }
 
   getDataPack(date: Moment.Moment, delay?: number) {
-    return this.siteRetreiver.getDataPackByDate(date, delay);
+    return null;//this.siteRetreiver.getDataPackByDate(date, delay);
   }
 
   // //just return values, wait to combine with metadata references until needed to avoid excess storage
@@ -46,7 +46,7 @@ export class DataRequestorService {
   // }
 
   getSiteVals(start: string, end: string): RequestResults {
-    return this.siteRetreiver.getValueRange(Moment(start), Moment(end));
+    return null;//this.siteRetreiver.getValueRange(Moment(start), Moment(end));
   }
 
   getInitRasters(): Promise<RasterData> {

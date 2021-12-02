@@ -1,17 +1,17 @@
 <div #mapElement leaflet class="map"
-    [leafletOptions]="options"
-    (leafletMapReady)="onMapReady($event)">
+  [leafletOptions]="options"
+  (leafletMapReady)="onMapReady($event)">
 </div>
 <app-leaflet-layer-control-extension #layerController
-    [map]="map"
-    (opacity)="setOpacity($event)"
-    (colorScheme)="setColorScheme($event)"
-    [mapGetOpacity]="getOpacity.bind(this)"
-    [mapLayerReady]="layerReady.bind(this)"
+  [map]="map"
+  (opacity)="setOpacity($event)"
+  (colorScheme)="setColorScheme($event)"
+  [mapGetOpacity]="getOpacity.bind(this)"
+  [mapLayerReady]="layerReady.bind(this)"
 ></app-leaflet-layer-control-extension>
 <app-leaflet-color-scale
-    [map]="map"
-    [colorScale]="colorScheme"
+  [map]="map"
+  [colorScale]="colorScheme"
 ></app-leaflet-color-scale>
 <app-leaflet-compass-rose
   [map]="map"
@@ -22,3 +22,10 @@
   [dataset]="'Monthly Rainfall'"
   [date]="getHeaderDate()">
 </app-header-control>
+<app-leaflet-image-export
+  [map]="map"
+  [imageContainer]="imageContainer"
+  [hiddenControls]="imageHiddenControls">
+</app-leaflet-image-export>
+
+

@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { PropertyType, PropertyFilterOptions, StationFilteringService, StationMetadata } from 'src/app/services/filters/station-filtering.service';
+import { PropertyType, StationFilteringService, StationMetadata } from 'src/app/services/filters/station-filtering.service';
 import {CdkDragDrop, moveItemInArray, transferArrayItem, CdkDrag} from '@angular/cdk/drag-drop';
-import { MetadataStoreService, SKNRefMeta } from 'src/app/services/dataLoaders/dataRequestor/auxillary/siteManagement/metadata-store.service';
-// import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
-// import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { MetadataStoreService, SKNRefMeta } from 'src/app/services/dataLoader/auxillary/stationManagement/metadata-store.service';
 import * as L from "leaflet";
 import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';

@@ -60,23 +60,20 @@ export class DataManagerService {
       return null;
     });
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
-      console.log(dataset);
       this.dataset = dataset;
       //bad, redo this
-      date = dataset.endDate;
+      date = dataset.end;
       this.updateStationTimeSeries()
     });
     //note this should push initial date, it doesnt...
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
-      console.log(date);
       date = date;
     });
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
-      console.log(date);
       if(station) {
         let start = new Date().getTime();
-        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.startDate, this.dataset.endDate, date, station.skn).month.toPromise();
+        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.start, this.dataset.end, date, station.skn).month.toPromise();
         p.then((result: SiteValue[]) => {
           let time = new Date().getTime() - start;
           let timeSec = time / 1000;
@@ -413,8 +410,6 @@ export class DataManagerService {
       let value: SiteValue = values[i];
       let skn: string = value.skn;
       resPromises.push(this.dataRequestor.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
-
-
         if(metadata != undefined) {
           return new SiteInfo(metadata, value);
         }

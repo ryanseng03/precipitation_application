@@ -45,7 +45,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   //
   @Input() set map(map: Map) {
     if(map) {
-      //console.log(map);
       this._map = map;
       let LayerControl = <any>Control.Layers.extend({
         onAdd: function() {
@@ -133,7 +132,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
             this.schemeControl.setValue(tag);
           }
           let colorScheme = colorSchemeData[1];
-          console.log(scheme, colorScheme);
           this.colorScheme.emit(colorScheme);
         })
         .catch((reason: {cancelled: boolean, reason: any}) => {
@@ -146,7 +144,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
             if(reversionValue === null) {
               reversionValue = this.defaultScheme
             }
-            console.log(reversionValue);
             this.schemeControl.setValue(reversionValue);
           }
         });
@@ -347,7 +344,6 @@ class CancellablePromise<T> {
       .catch((reason: any) => {
         //if cancelled promise was already rejected, shouldn't do anything
         if(!this.cancelled) {
-          console.log("here???", reason);
           //propogate reject
           reject({
             cancelled: false,

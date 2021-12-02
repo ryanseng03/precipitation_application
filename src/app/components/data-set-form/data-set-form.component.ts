@@ -2,9 +2,7 @@ import { Component, OnInit, AfterContentInit, AfterViewInit, NgZone, ChangeDetec
 import Moment from "moment";
 import "moment-timezone";
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
-import {Dataset, SetType, FillType, Timestep} from "../../models/Dataset";
 import { FormControl } from '@angular/forms';
-import {DateChangeInfo} from "../controls/date-focus/date-focus.component";
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
 
 @Component({
@@ -56,7 +54,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   //should probably store as UTC, provide as local
   min: Moment.Moment;
   max: Moment.Moment;
-  timestep: Timestep;
+  timestep: string;
 
   defaultLow: Moment.Moment = Moment("1990-12-01");
   defaultHigh: Moment.Moment = Moment("2019-12-01");
@@ -134,12 +132,12 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     this.updateDataSet();
   }
 
-  
 
- 
+
+
 
   updateDataSet() {
-    let dscp: Dataset = {
+    let dscp: any = {
       startDate: this.dataset.dateRange.low.value,
       endDate: this.dataset.dateRange.high.value,
       timestep: this.dataset.timestep.control.value,

@@ -111,7 +111,8 @@ export class FilterMapComponent implements OnInit {
 
     this.baseLayers = {
       Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
-      Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
+      Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}'),
+      Test: L.tileLayer("https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png")
     };
 
     this.leafletOptions = {
