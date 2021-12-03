@@ -58,7 +58,7 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
       }
       this.selectedRef = undefined;
     }
-    
+
   }
   @Output() selectedChange: EventEmitter<SiteInfo> = new EventEmitter<SiteInfo>();
 
@@ -91,16 +91,8 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
       //console.log(rows);
       this.generateRowMap(rows);
     });
-    // this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-    //   // if(site === null) {
-    //   //   if(this.selectedRef !== undefined) {
-    //   //     this.selectedRef.selected = false;
-    //   //   }
-    //   //   this.cdr.detectChanges();
-    //   // }
-      
 
-    // });
+
   }
 
   ngAfterContentInit() {

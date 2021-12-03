@@ -51,7 +51,7 @@ export class DataManagerService {
 
     let date: Moment.Moment;
     //can't have a promise exist without a handler
-    this.header = dataRequestor.getRasterHeader().toPromise()
+    this.header = dataRequestor.getRasterHeader({}).toPromise()
     .catch((reason: RequestReject) => {
       if(!reason.cancelled) {
         console.error(reason.reason);
@@ -59,18 +59,18 @@ export class DataManagerService {
       }
       return null;
     });
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
       this.dataset = dataset;
       //bad, redo this
       date = dataset.end;
-      this.updateStationTimeSeries()
+      this.updateStationTimeSeries();
     });
     //note this should push initial date, it doesnt...
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
       date = date;
     });
     //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedSite, (station: SiteInfo) => {
       if(station) {
         let start = new Date().getTime();
         let p = this.dataRequestor.getSiteTimeSeries(this.dataset.start, this.dataset.end, date, station.skn).month.toPromise();
@@ -88,19 +88,8 @@ export class DataManagerService {
 
   }
 
-  updateStationTimeSeries() {
-    //console.log("!!!!");
-  }
-
-  //store single raster data object and swap out bands
 
 
-  //////////////////////////
-  //////////////////////////
-  ///////////////////////////
-  /////////////////
-
-  //store time range info for current site
 
 
   //TEMP PATCH
@@ -143,13 +132,7 @@ export class DataManagerService {
     }
   }
 
-  //get date range before set (as soon as select dataset before submit)
-  getDataSetInfo() {
-    //get georef
-    //get station metadata
-    //get latest date data
-    //
-  }
+
 
   //----------------------------------------------------------------------------
 
@@ -430,49 +413,6 @@ export class DataManagerService {
   }
 }
 
-
-
-// class DelayedRequest {
-//   timeout: NodeJS.Timeout;
-//   request: RequestResults;
-//   requestPromise: Promise<RequestResults>;
-
-//   constructor(dataRequestor: DataRequestorService, date: Moment.Moment, delay: number) {
-//     this.time
-//     let cacheData = dataRequestor.getDataPack(date);
-//   }
-
-//   cancel() {
-//     if(this.request) {
-//       this.request.cancel();
-//     }
-//     else {
-//       clearTimeout(this.timeout);
-//     }
-//   }
-
-//   async getRequest(): Promise<RequestResults> {
-
-//   }
-// }
-
-
-
-//why is this so hard?
-// class CancellablePromise<T> extends Promise<T> {
-//   private static temp = null;
-//   private reject = null;
-//   constructor(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
-//     super(executor);
-//     console.log((<any>this).PromiseResolve);
-//     this.reject = CancellablePromise.temp;
-//   }
-
-//   public cancel(reason: string) {
-//     this.reject(reason);
-//   }
-// }
-
 interface CancellableQuery {
   result: Promise<InternalDataPack>,
   cancel: () => void
@@ -635,3 +575,24 @@ class CacheNode<T, U> {
   next: CacheNode<T, U>;
   previous: CacheNode<T, U>;
 }
+
+//static for now, get at start and store
+//raster header, station metadata
+
+//CLEAR ALL CACHES ON DATASET CHANGE
+
+//get on triggers
+  //focus date or dataset change
+    //station data, raster
+      //cache by date
+  //station select change
+    //station time series
+      //cache by station id
+
+//cache keep object index, array o
+
+
+//FOR CACHE ORDER ISSUE, INSERTION DOES NOT COUNT AS ACCESS
+//insert at end of cache, access moved to front
+
+//CAN USE DELAY AS THROTTLE WITH CANCELLATIONS WHEN MOVE OUT OF CACHE, IF MOVED OUT OF CACHE WHILE GOING THROUGH DATES THEN JUST CANCEL THE QUERY, IF BEFORE DELAY TIMEOUT THEN WONT BE DISPATCHED ANYWAY

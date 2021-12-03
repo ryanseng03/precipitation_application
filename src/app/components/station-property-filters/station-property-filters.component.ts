@@ -5,6 +5,8 @@ import { MetadataStoreService, SKNRefMeta } from 'src/app/services/dataLoader/au
 import * as L from "leaflet";
 import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { SiteInfo } from 'src/app/models/SiteMetadata';
+import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 
 @Component({
   selector: 'app-station-property-filters',
@@ -12,6 +14,44 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./station-property-filters.component.scss']
 })
 export class StationPropertyFiltersComponent implements OnInit {
+
+  /////////////////////////////////
+
+  //how to apply filters
+  //map bounds (move to map component? maybe instead have everything emit filter function, has to pass all of them to get through)
+  //current stuff is way too complicated
+
+  //TEMP, remember to change types
+  stationsInMapBounds(bounds: L.LatLngBounds, stations: SiteInfo[]): SiteInfo[] {
+    let filtered = stations.filter((station: SiteInfo) => {
+      return bounds.contains(station);
+    });
+    return filtered;
+  }
+
+  framework() {
+    //note change mapbounds with filters emitter, replace temp stationsInMapBounds funct with emitted funct
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.mapBounds, (bounds: L.LatLngBounds) => {
+      let filterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: any[]) => {
+        //remember to check for null always
+        if(stations) {
+          let filtered = this.stationsInMapBounds(bounds, stations);
+          //allow uninstall to go through so it doesn't get stuck (should work)
+          setTimeout(() => {
+            this.paramService.pushFilteredStations(filtered);
+          }, 0);
+        }
+      });
+      //only want to run against current set
+      filterHook.uninstall();
+    })
+  }
+
+
+  /////////////////////////////////
+
+
+
   groupCount = 0;
 
   stations: StationMetadata[];
@@ -39,7 +79,7 @@ export class StationPropertyFiltersComponent implements OnInit {
   }
 
 
-  constructor(private filterService: StationFilteringService, private metaService: MetadataStoreService) {
+  constructor(private filterService: StationFilteringService, private metaService: MetadataStoreService, private paramService: EventParamRegistrarService) {
     this.stations = [];
     this.availableProperties = new Set<string>();
 

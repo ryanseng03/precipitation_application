@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { SiteValueFetcherService, RequestResults } from "./auxillary/stationManagement/site-value-fetcher.service";
-import { MetadataStoreService, SKNRefMeta}  from "./auxillary/stationManagement/metadata-store.service";
-import { SiteMetadata } from '../../models/SiteMetadata';
-import Moment from "moment";
-import { RasterData, IndexedValues } from '../../models/RasterData';
+import { DbConService, RequestResults } from "./auxillary/dbCon/db-con.service";
+import { RasterData } from '../../models/RasterData';
+import {DataProcessorService} from "../dataProcessor/data-processor.service";
+
 export { RequestResults };
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
@@ -12,64 +11,111 @@ export { RequestResults };
   providedIn: 'root'
 })
 export class DataRequestorService {
+  static readonly GEOTIFF_NODATA = -3.3999999521443642e+38;
 
-  constructor(private siteRetreiver: SiteValueFetcherService, private metaRetreiver: MetadataStoreService) {
+  constructor(private dbcon: DbConService, private processor: DataProcessorService) {}
 
+  getRasterHeader(properties: any, delay?: number): RequestResults {
+    let query = this.propertiesToQuery("prew1", properties);
+    let timingMessage = `Retreived raster header`;
+    let response = this.basicQueryDispatch(query, delay, timingMessage);
+    //extract first document
+    response.transform((response: any[]) => {
+      let header = null;
+      if(response != null) {
+        header = response[0];
+      }
+      return header;
+    });
+    return response;
   }
 
-  //need to be careful how you set up separation between site and raster data, need to keep date consistent
-  //
-
-  getRasterHeader(): RequestResults {
-    return this.siteRetreiver.getRasterHeader({});
+  getDateRange(properties: any, delay?: number): RequestResults {
+    let query = this.propertiesToQuery("hcdp_station_value_range", properties);
+    let timingMessage = `Retreived raster data for ${properties.date}`;
+    let response = this.basicQueryDispatch(query, delay, timingMessage);
+    return response;
   }
 
-  getSiteValsDate(date: Moment.Moment): RequestResults {
-    return null;//this.siteRetreiver.getSiteValsDate(date);
+  getRaster(properties: any, delay?: number): RequestResults {
+    let start = new Date().getTime();
+    let response = this.dbcon.getRaster(properties, delay);
+    response.transform((data: ArrayBuffer) => {
+      let time = new Date().getTime() - start;
+      let timeSec = time / 1000;
+      console.log(`Retreived raster data for ${properties.date}, time elapsed ${timeSec} seconds`);
+
+      let handler = null;
+      //if query wasn't cancelled process array buffer to raster data
+      if(data != null) {
+        //transform array buffer to raster data
+        return this.processor.getRasterDataFromGeoTIFFArrayBuffer(data, DataRequestorService.GEOTIFF_NODATA)
+        .then((rasterData: RasterData) => {
+          return rasterData
+        });
+      }
+
+      return handler;
+    });
+
+    return response;
   }
 
-  getSiteTimeSeries(start: Moment.Moment, end: Moment.Moment, focus: Moment.Moment, skn: string): {[group: string]: RequestResults} {
-    return null;//this.siteRetreiver.getSiteTimeSeries(start, end, focus, skn);
+  getStationData(properties: any, delay?: number): RequestResults {
+    let query = this.propertiesToQuery("hcdp_station_value", properties);
+    let timingMessage = `Retreived station data for ${properties.date}`;
+    let response = this.basicQueryDispatch(query, delay, timingMessage);
+    return response;
   }
 
-  getRastersDate(date: Moment.Moment): RequestResults {
-    return null;//this.siteRetreiver.getRastersDate(date);
+  getStationMetadata(properties: any, delay?: number): RequestResults {
+    let query = this.propertiesToQuery("station_metadata", properties);
+    let timingMessage = `Retreived station metadata`;
+    let response = this.basicQueryDispatch(query, delay, timingMessage);
+    return response
   }
 
-  getDataPack(date: Moment.Moment, delay?: number) {
-    return null;//this.siteRetreiver.getDataPackByDate(date, delay);
+  getStationTimeSeries(start: string, end: string, properties: any, delay?: number): RequestResults {
+    let query = this.propertiesToQuery("hcdp_station_value", properties);
+    query = `{'$and':[${query},{'value.date':{'$gte':'${start}'}},{'value.date':{'$lt':'${end}'}}]}`;
+    let timingMessage = `Retreived station ${properties.skn} timeseries for ${start}-${end}`;
+    let response = this.basicQueryDispatch(query, delay, timingMessage);
+    return response;
   }
 
-  // //just return values, wait to combine with metadata references until needed to avoid excess storage
-  // getInitSiteVals(): Promise<SiteValue[]> {
-  //   return this.siteRetreiver.getInitValues();
-  // }
+  private basicQueryDispatch(query: string, delay?: number, timingMessage?: string): RequestResults {
+    let start = new Date().getTime();
+    let response = this.dbcon.queryMetadata(query, delay);
+    response.transform((response: any) => {
+      //if provided with a timing message print timing
+      if(timingMessage) {
+        let time = new Date().getTime() - start;
+        let timeSec = time / 1000;
+        let message = `${timingMessage}, time elapsed ${timeSec} seconds`;
+        console.log(message);
+      }
 
-  getSiteVals(start: string, end: string): RequestResults {
-    return null;//this.siteRetreiver.getValueRange(Moment(start), Moment(end));
+      let vals: any[] = null;
+      //if query is not cancelled extract value fields
+      if(response != null) {
+        //extract value fields from results
+        vals = response.result.map((metadata: any) => {
+          return metadata.value;
+        });
+      }
+      return vals;
+    });
+
+    return response;
   }
 
-  getInitRasters(): Promise<RasterData> {
-    throw new Error("Unimplemented");
+  private propertiesToQuery(name: string, properties: any): string {
+    let query = `{'name':${name}`
+    for(let property in properties) {
+      let value = properties[property];
+      query += `,'value.${property}':'${value}'`
+    }
+    query += "}";
+    return query;
   }
-
-  //all non-init raster data is just passed as a set of indexed values
-  getRasters(start: string, end: string): Promise<IndexedValues> {
-    throw new Error("Unimplemented");
-  }
-
-
-  //wrappers, everything should go through this service rather than aux services directly
-  getMetaBySKN(skn: string): Promise<SiteMetadata> {
-    return this.metaRetreiver.getMetaBySKN(skn);
-  }
-
-  getMetaBySKNs(skns: string[]): Promise<SKNRefMeta> {
-    return this.metaRetreiver.getMetaBySKNs(skns);
-  }
-
-
-
-  //getInitData()
-
 }

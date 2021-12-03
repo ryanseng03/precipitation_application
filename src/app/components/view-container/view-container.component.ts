@@ -76,7 +76,7 @@ export class ViewContainerComponent implements OnInit {
 
   constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService) {
     this.scrollTimeoutHandle = null;
-    this.paramRegistrar.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
+    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
       this.dataset = dataset;
     });
 

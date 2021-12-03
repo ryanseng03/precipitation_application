@@ -53,11 +53,11 @@ export class RainfallGraphComponent implements OnInit {
       //range of dates for data set, this should be updated when data set changes
       //hardcode for now
       let dateRange = [Moment("1991-01-01"), Moment("2019-12-31")];
-      
+
 
       //need to map dates from total min and max, global min is beginning of year, global max is current date, rest can be taken as subsets
       //total range
-      
+
       this.dates = this.dateHandler.expandDates(dateRange[0], dateRange[1], "day");
 
       //map date strings to moments
@@ -106,7 +106,7 @@ export class RainfallGraphComponent implements OnInit {
 
   //dates
   //dates = {};
- 
+
 
   // //needs day time series goes to, should switch dates in dataset to be full (down to second), have
   // @Input() set range(range: [Moment.Moment, Moment.Moment]) {
@@ -244,10 +244,6 @@ export class RainfallGraphComponent implements OnInit {
     this.control.valueChanges.subscribe((value: string) => {
       this.updateGraph();
     });
-
-    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.dataset, (dataset: Dataset) => {
-    //   console.log(dataset);
-    // });
   }
 
   updateGraph() {

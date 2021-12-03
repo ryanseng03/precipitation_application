@@ -102,10 +102,10 @@ export class DataViewsComponent implements OnInit {
           return inFilter;
         });
       }
-      this.paramService.pushSiteFilter(filteredStations);
+      this.paramService.pushFilteredStations(filteredStations);
     }
 
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (stations: SiteInfo[]) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
       this.unfilteredStations = stations;
       for(let field in this.field2Data) {
         this.field2Data[field] = new Set<string>();
@@ -117,7 +117,7 @@ export class DataViewsComponent implements OnInit {
       setTimeout(() => {
         filterStations();
       }, 0);
-      
+
     });
     this.fieldControl.valueChanges.subscribe((value: string) => {
       this.filterControl.setValue([]);
@@ -130,11 +130,11 @@ export class DataViewsComponent implements OnInit {
 
 
 
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (stations: SiteInfo[]) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
       this.loading = false;
       this.stations = stations
     });
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
       this.selectedStation = station;
     });
   }
@@ -143,7 +143,7 @@ export class DataViewsComponent implements OnInit {
   }
 
   selectStation(station: SiteInfo) {
-    this.paramService.pushSiteSelect(station);
+    this.paramService.pushSelectedStation(station);
   }
 
 

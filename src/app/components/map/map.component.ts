@@ -186,7 +186,7 @@ export class MapComponent implements OnInit {
 
     this.active = {
       data: {
-        sites: null,
+        stations: null,
         raster: null,
         date: null
       },
@@ -218,36 +218,29 @@ export class MapComponent implements OnInit {
 
 
     let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
-    //let colorScale: ColorScale = this.colors.getDefaultRainbowRainfallColorScale();
     this.colorScheme = colorScale;
 
-
-
-
-
-
-
-    //provides minimum radius at a specific scale
-    let pivotZoom = 10;
-    let minRadiusInfo = [5, 10];
     this.map.on("zoomend", () => {
-
+      let bounds: L.LatLngBounds = map.getBounds();
+      this.paramService.pushMapBounds(bounds);
       this.updateMarkers();
     });
 
+    this.map.on("moveend", () => {
+      let bounds: L.LatLngBounds = map.getBounds();
+      this.paramService.pushMapBounds(bounds);
+    });
 
 
-
-    //want filtered, should anything be done with the unfiltered sites? gray them out or just exclude them? can always change
-    let siteHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.filteredSites, (sites: SiteInfo[]) => {
-      this.active.data.sites = sites;
-
-      this.constructMarkerLayerPopulateMarkerData(sites);
+    //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
+    let stationHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
+      this.active.data.stations = stations;
+      this.constructMarkerLayerPopulateMarkerData(stations);
     });
 
     this.layerController.addLayers(this.baseLayers);
 
-    let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
+    let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
 
       this.active.data.raster = raster;
       let bands = raster.getBands();
@@ -278,7 +271,7 @@ export class MapComponent implements OnInit {
 
       //uninstall current hook and replace with update hook that updates raster
       rasterHook.uninstall();
-      rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.raster, (raster: RasterData) => {
+      rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
         this.active.data.raster = raster;
         bands = raster.getBands();
         //set layer data
@@ -290,11 +283,11 @@ export class MapComponent implements OnInit {
 
     });
 
-    this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
       if(station) {
         let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
 
-        //siteMarkers.zoomToShowLayer(marker, () => {
+        //stationMarkers.zoomToShowLayer(marker, () => {
         if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
           this.selectedMarker.closePopup();
         }
@@ -404,39 +397,39 @@ export class MapComponent implements OnInit {
     }
   }
 
-  constructMarkerLayerPopulateMarkerData(sites: SiteInfo[]): void {
+  constructMarkerLayerPopulateMarkerData(stations: SiteInfo[]): void {
     let markers: RainfallStationMarker[] = [];
     this.markerInfo.markerMap.clear();
 
     let markerLayer = L.layerGroup();
     let minRadiusAtPivot = Number.POSITIVE_INFINITY;
-    sites.forEach((site: SiteInfo) => {
-      let radius = this.getMarkerRadiusAtPivot(site);
+    stations.forEach((station: SiteInfo) => {
+      let radius = this.getMarkerRadiusAtPivot(station);
       if(radius < minRadiusAtPivot) {
         minRadiusAtPivot = radius;
       }
-      let fill = this.colorScheme.getColor(site.value);
+      let fill = this.colorScheme.getColor(station.value);
       let hexFill = chroma([fill.r, fill.g, fill.b]).hex();
-      let marker = L.circleMarker(site.location, {
+      let marker = L.circleMarker(station.location, {
         opacity: 1,
         fillOpacity: 1,
         color: "black",
         fillColor: hexFill
       });
 
-      let siteDetails = this.getMarkerPopupText(site);
-      marker.bindPopup(siteDetails, { autoPan: false, autoClose: false});
+      let stationDetails = this.getMarkerPopupText(station);
+      marker.bindPopup(stationDetails, { autoPan: false, autoClose: false});
       marker.on("click", () => {
-        this.paramService.pushSiteSelect(site);
+        this.paramService.pushSelectedStation(station);
       });
-      this.markerInfo.markerMap.set(site, marker);
-      //console.log(siteDetails);
+      this.markerInfo.markerMap.set(station, marker);
+      //console.log(stationDetails);
       markerLayer.addLayer(marker);
       let stationMarker: RainfallStationMarker = {
         marker: marker,
         metadata: {
           pivotRadius: radius,
-          value: site.value
+          value: station.value
         }
       }
       markers.push(stationMarker);
@@ -458,13 +451,13 @@ export class MapComponent implements OnInit {
     this.map.addLayer(markerLayer);
   }
 
-  getMarkerPopupText(site: SiteInfo): string {
-    let siteDetails: string = "Name: " + site.name
-    + "<br> SKN: " + site.skn
-    + "<br> Lat: " + site.lat + ", Lng: " + site.lng
-    + `<br> Value: ${Math.round(site.value * 100) / 100}mm`
-    + `, ${Math.round((site.value / 25.4) * 100) / 100}in`;
-    return siteDetails;
+  getMarkerPopupText(station: SiteInfo): string {
+    let stationDetails: string = "Name: " + station.name
+    + "<br> SKN: " + station.skn
+    + "<br> Lat: " + station.lat + ", Lng: " + station.lng
+    + `<br> Value: ${Math.round(station.value * 100) / 100}mm`
+    + `, ${Math.round((station.value / 25.4) * 100) / 100}in`;
+    return stationDetails;
   }
 
   updateMarkers(): void {
@@ -498,10 +491,10 @@ export class MapComponent implements OnInit {
     return weight;
   }
 
-  getMarkerRadiusAtPivot(site: SiteInfo): number {
+  getMarkerRadiusAtPivot(station: SiteInfo): number {
     let min = 5;
     let max = 30;
-    let radius = min + site.value / 50;
+    let radius = min + station.value / 50;
     radius = Math.min(radius, max);
     return radius;
   }
@@ -580,7 +573,7 @@ interface ActiveData {
 }
 
 interface DataPack {
-  sites: SiteInfo[],
+  stations: SiteInfo[],
   raster: RasterData,
   date: Moment.Moment
 }

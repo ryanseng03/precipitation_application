@@ -68,11 +68,6 @@ export class DateSelectorComponent implements OnInit, OnChanges {
       }
     };
 
-    // this.paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.timestep, (timestep: string) => {
-    //   this.timeGranularity = timestep;
-    //   let unit: DateUnit = this.getUnit();
-    //   this.dateFormat.setDateMinUnit(unit);
-    // });
 
     //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
     //use map pipe to send null if invalid date

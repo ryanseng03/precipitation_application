@@ -19,7 +19,7 @@ export class TimeSeriesComponent implements OnInit {
   date: Moment.Moment;
 
   constructor(private paramService: EventParamRegistrarService) {
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (station: SiteInfo) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
       if(station) {
         this.loading = false;
         this.selected = station;
@@ -29,11 +29,11 @@ export class TimeSeriesComponent implements OnInit {
       }
       this.data = null;
     });
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (data: SiteValue[]) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stationTimeseries, (data: SiteValue[]) => {
       //console.log(data);
       this.data = data;
     });
-    paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
       this.date = date;
     });
   }

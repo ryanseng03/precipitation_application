@@ -39,26 +39,6 @@ export class SiteDataTableComponent implements OnInit {
   labelR = "\u25BE";
 
   constructor(private paramService: EventParamRegistrarService) {
-    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.date, (date: Moment.Moment) => {
-    //   let isoDate = date.toISOString();
-    //   this.focusedMonth = isoDate.substring(0, 7);
-    //   console.log(this.focusedMonth);
-    //   this.setFocusedSiteFilter();
-    // });
-
-    // this.siteIndex = SiteInfo.getFields();
-    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSite, (site: SiteInfo) => {
-    //   this.focusedSiteValues = [];
-    //   this.filteredFocusedSiteValues = [];
-    //   this.site = site;
-    // });
-
-    // paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.selectedSiteTimeSeries, (siteValues: SiteValue[]) => {
-    //   //let dateFormat = /[0-9]{4}-([0-9]{2})-[0-9]{2}/;
-    //   //filter by current selected month
-    //   this.focusedSiteValues = siteValues;
-    //   this.setFocusedSiteFilter();
-    // });
   }
 
   setFocusedSiteFilter() {
@@ -127,7 +107,7 @@ export class SiteDataTableComponent implements OnInit {
         });
       }
       //console.log(field);
-      
+
     }
     return map;
   }

@@ -8,7 +8,7 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
 export class SiteFilterService {
 
   constructor(private paramService: EventParamRegistrarService) {
-    let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.GLOBAL_HANDLE_TAGS.sites, (sites: SiteInfo[]) => {
+    let hook: ParameterHook = paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (sites: SiteInfo[]) => {
       // let filtered = this.applySiteFilter(sites);
       // paramService.pushSiteFilter(filtered);
     });
