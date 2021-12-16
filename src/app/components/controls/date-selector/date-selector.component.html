@@ -12,7 +12,6 @@
     <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
     <mat-datepicker #datePicker
       (monthSelected)="monthSelectHandler($event)"
-      (dateChange)="dateControl.setValue($event)"
       startView={{getDefaultView()}}>
     </mat-datepicker>
     <mat-error>Invalid Date</mat-error>

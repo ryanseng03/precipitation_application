@@ -206,7 +206,7 @@ export class ColorGeneratorService {
   }
 
     
-  getViridusColorScale() {
+  getViridisColorScale() {
     let parts = 450;
     let range: [number, number] = [0, 650];
 

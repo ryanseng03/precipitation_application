@@ -1,5 +1,6 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
+import { Moment } from 'moment';
 import { Dataset } from 'src/app/models/Dataset';
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
@@ -53,6 +54,8 @@ export class ViewContainerComponent implements OnInit {
     this._width = navWidth - 40;
   }
 
+  date: Moment;
+
   nav2Component: {
     form: ElementRef,
     table: ElementRef,
@@ -67,19 +70,39 @@ export class ViewContainerComponent implements OnInit {
   scrollbarWidthThrottle: NodeJS.Timer;
   scrollbarWidthPause: boolean = false;
 
-  dataset: Dataset;
+  dataset: any;
+  dateRange: any
 
   upperBuffer: string;
 
   firstElement: HTMLElement;
+  dateDebounce: boolean = false;
 
 
   constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService) {
     this.scrollTimeoutHandle = null;
-    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
-      this.dataset = dataset;
+    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+      if(dataset) {
+        this.dataset = dataset;
+      }
     });
-
+    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dateRange, (dateRange: any) => {
+      if(dateRange) {
+        this.dateRange = dateRange;
+        this.date = dateRange.end;
+      }
+    });
+    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {
+      if(date) {
+        if(!this.dateDebounce) {
+          this.dateDebounce = true;
+          this.date = date;
+        }
+        else {
+          this.dateDebounce = false;
+        }
+      }
+    });
   }
 
   ngOnInit() {
@@ -111,8 +134,16 @@ export class ViewContainerComponent implements OnInit {
     // }, 1000);
 
     this.firstElement = this.formComponent.nativeElement;
+  }
 
-
+  setDate(changeInfo: DateChangeInfo) {
+    if(!this.dateDebounce) {
+      this.dateDebounce = true;
+      this.dateSelector.setDate(changeInfo.date, changeInfo.magnitude);
+    }
+    else {
+      this.dateDebounce = false;
+    }
   }
 
   //resizing the window can scroll the container div causing it to trigger on another element, so fix that
@@ -233,10 +264,7 @@ export class ViewContainerComponent implements OnInit {
   }
 
 
-  setDate(changeInfo: DateChangeInfo) {
-    //console.log(changeInfo.date.format("YYYY MM"));
-    this.dateSelector.setDate(changeInfo.date, changeInfo.magnitude);
-  }
+  
 
   getDateControlWidth(): string {
     let components = [this.viewContainer, this.formComponent, this.tableComponent, this.timeseriesComponent];

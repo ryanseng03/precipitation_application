@@ -21,11 +21,11 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   private layers: Layer;
   public schemeControl: FormControl;
   //change to input?
-  private defaultScheme: string = "mono";
+  private defaultScheme: string = "viridis";
   baseColorSchemes = {
     mono: "Monochromatic",
     usgs: "USGS",
-    viridus: "Viridis",
+    viridis: "Viridis",
     turbo: "Turbo",
     tacc3: "TACC 3-wave",
     tacc4: "TACC 4-wave",
@@ -91,7 +91,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService) {
     this.opacity = new EventEmitter<number>();
     this.colorScheme = new EventEmitter<ColorScale>();
-    this.schemeControl = new FormControl(this.defaultScheme);
+    this.schemeControl = new FormControl();
     this.customColorSchemes = {};
     this.forbiddenNames = new Set<string>(Object.values(this.baseColorSchemes));
     this.debounce = false;
@@ -150,6 +150,8 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
 
     });
+
+    this.schemeControl.setValue(this.defaultScheme);
   }
 
   ngOnDestroy() {
@@ -240,8 +242,8 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
         p = Promise.resolve(data);
         break;
       }
-      case "viridus": {
-        let colorScheme = this.colors.getViridusColorScale();
+      case "viridis": {
+        let colorScheme = this.colors.getViridisColorScale();
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;

@@ -6,7 +6,7 @@ import { ColorScale } from "../../models/colorScale";
 import { ColorGeneratorService } from "../../services/rasterLayerGeneration/color-generator.service";
 import { DataRetreiverService } from "../../services/util/data-retreiver.service";
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
-import { EventParamRegistrarService, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
+import { EventParamRegistrarService, LoadingData, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";
 import { RasterData } from 'src/app/models/RasterData.js';
 import { SiteInfo } from 'src/app/models/SiteMetadata.js';
@@ -73,20 +73,34 @@ export class MapComponent implements OnInit {
     }
 
 
-    dataManager.setMap(this);
     this.baseLayers = {
-      Satellite: L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}"),
-      Street: L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}')
+      "Satellite (Google)": L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
+        maxZoom: 20
+      }),
+      "Street (Google)": L.tileLayer('https://www.google.com/maps/vt?lyrs=m@221097413,traffic&x={x}&y={y}&z={z}', {
+        maxZoom: 20
+      }),
+      "World Imagery (ESRI)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      }),
+      "USGS Topo (USGS)": L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 16,
+        attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+      }),
+      "Shaded Relief (ESRI)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 13,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
+      })
     };
     this.dataLayers = {};
 
     this.options = {
-      layers: this.baseLayers.Satellite,
+      layers: this.baseLayers["Satellite (Google)"],
       zoom: 7,
       center: L.latLng(20.559, -157.242),
       attributionControl: false,
       minZoom: 6,
-      maxZoom: 18,
       maxBounds: this.extents.bounds
     };
 
@@ -97,6 +111,13 @@ export class MapComponent implements OnInit {
       iconUrl: require('leaflet/dist/images/marker-icon.png'),
       shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
     });
+
+
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.loading, (data: LoadingData) => {
+      if(data && data.tag == "vis") {
+        this.setLoad(data.loading);
+      }
+    })
   }
 
 
@@ -142,6 +163,7 @@ export class MapComponent implements OnInit {
   //use to prevent race conditions for xml loaded schemes
   colorSchemeType: string;
   setColorScheme(colorScheme: ColorScale) {
+    console.log(colorScheme);
     let layer: any = this.dataLayers[this.active.band];
     if(layer) {
       layer.setColorScale(colorScheme);
@@ -177,12 +199,6 @@ export class MapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
-    setTimeout(() => {
-      map.eachLayer((layer) => {
-        console.log(layer);
-      });
-    }, 1000);
-
 
     this.active = {
       data: {
@@ -190,7 +206,7 @@ export class MapComponent implements OnInit {
         raster: null,
         date: null
       },
-      band: "rainfall",
+      band: "0",
     };
 
 
@@ -198,9 +214,6 @@ export class MapComponent implements OnInit {
 
     this.initMarkerInfo();
 
-    // setInterval(() => {
-    //   map.invalidateSize();
-    // }, 1000);
 
     L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
     L.control.scale({
@@ -217,7 +230,7 @@ export class MapComponent implements OnInit {
     //have to use "function()" syntax if new context
 
 
-    let colorScale: ColorScale = this.colors.getDefaultMonochromaticRainfallColorScale();
+    let colorScale: ColorScale = this.colors.getViridisColorScale();
     this.colorScheme = colorScale;
 
     this.map.on("zoomend", () => {
@@ -233,54 +246,59 @@ export class MapComponent implements OnInit {
 
 
     //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
-    let stationHook: ParameterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
-      this.active.data.stations = stations;
-      this.constructMarkerLayerPopulateMarkerData(stations);
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
+      if(stations) {
+        console.log(stations);
+        this.active.data.stations = stations;
+        this.constructMarkerLayerPopulateMarkerData(stations);
+      }
     });
 
     this.layerController.addLayers(this.baseLayers);
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
-
-      this.active.data.raster = raster;
-      let bands = raster.getBands();
-      let header = raster.getHeader();
-      for(let band in bands) {
-        let rasterOptions: RasterOptions = {
-          cacheEmpty: true,
-          colorScale: colorScale,
-          data: {
-            header: header,
-            values: bands[band]
-          }
-        };
-        let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
-        //layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
-        this.dataLayers[band] = rasterLayer;
-        rasterLayer.setOpacity(this.opacity);
-      }
-      //add rainfall layer to map as default
-      map.addLayer(this.dataLayers["rainfall"]);
-
-      //for now at least only one layer, make sure to replace if multiple
-      this.layerController.addOverlay(this.dataLayers["rainfall"], "Rainfall Map");
-
-      //install hover handler (requires raster to be set to work)
-      let hoverTag = this.paramService.registerMapHover(map);
-      this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
-
-      //uninstall current hook and replace with update hook that updates raster
-      rasterHook.uninstall();
-      rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
+      if(raster) {
         this.active.data.raster = raster;
-        bands = raster.getBands();
-        //set layer data
+        let bands = raster.getBands();
+        let header = raster.getHeader();
         for(let band in bands) {
-          let values = bands[band];
-          this.dataLayers[band].setData(values);
+          let rasterOptions: RasterOptions = {
+            cacheEmpty: true,
+            colorScale: this.colorScheme,
+            data: {
+              header: header,
+              values: bands[band]
+            }
+          };
+          let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
+          //layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
+          this.dataLayers[band] = rasterLayer;
+          rasterLayer.setOpacity(this.opacity);
         }
-      });
-
+        //add rainfall layer to map as default
+        map.addLayer(this.dataLayers["0"]);
+  
+        //for now at least only one layer, make sure to replace if multiple
+        this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
+  
+        //install hover handler (requires raster to be set to work)
+        let hoverTag = this.paramService.registerMapHover(map);
+        this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
+  
+        //uninstall current hook and replace with update hook that updates raster
+        rasterHook.uninstall();
+        rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
+          if(raster) {
+            this.active.data.raster = raster;
+            bands = raster.getBands();
+            //set layer data
+            for(let band in bands) {
+              let values = bands[band];
+              this.dataLayers[band].setData(values);
+            }
+          }
+        });
+      }
     });
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
@@ -311,6 +329,13 @@ export class MapComponent implements OnInit {
         })
       }
 
+    });
+
+    map.on("layeradd", (addData: any) => {
+      let layer = addData.layer;
+      if(layer.options && layer.options.maxZoom) {
+        map.setMaxZoom(layer.options.maxZoom);
+      }
     });
   }
 
@@ -447,7 +472,7 @@ export class MapComponent implements OnInit {
     }
     this.markerInfo.layer = markerLayer;
 
-    this.layerController.addOverlay(markerLayer, "Rainfall Stations");
+    this.layerController.addOverlay(markerLayer, "Data Stations");
     this.map.addLayer(markerLayer);
   }
 

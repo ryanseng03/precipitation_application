@@ -78,7 +78,16 @@ export class DataRetreiverService {
   }
 
   geoPosToColor(header: RasterHeader, data: IndexedValues, pos: LatLng, colorScale: ColorScale): Color {
-    return colorScale.getColor(this.geoPosToGridValue(header, data, pos));
+    let color: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0
+    };
+    if(colorScale) {
+      color = colorScale.getColor(this.geoPosToGridValue(header, data, pos));
+    }
+    return color;
   }
 
   //if !getNoValue just return null if the cell is background

@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import Moment from "moment";
-import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
+import { EventParamRegistrarService, LoadingData } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
   selector: 'app-time-series',
@@ -19,22 +19,20 @@ export class TimeSeriesComponent implements OnInit {
   date: Moment.Moment;
 
   constructor(private paramService: EventParamRegistrarService) {
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
-      if(station) {
-        this.loading = false;
-        this.selected = station;
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.loading, (loadData: LoadingData) => {
+      if(loadData && loadData.tag == "timeseries") {
+        this.loading = loadData.loading;
       }
-      else {
-        this.loading = true;
-      }
-      this.data = null;
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stationTimeseries, (data: SiteValue[]) => {
-      //console.log(data);
-      this.data = data;
+      if(data) {
+        this.data = data;
+      }
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
-      this.date = date;
+      if(date) {
+        this.date = date;
+      }
     });
   }
 

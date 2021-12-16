@@ -19,7 +19,8 @@ export class EventParamRegistrarService {
     dataset: "dataset",
     stationTimeseries: "stationTimeseries",
     loading: "loading",
-    mapBounds: "mapBounds"
+    mapBounds: "mapBounds",
+    dateRange: "dateRange"
   };
 
   private datasetSource: BehaviorSubject<any>;
@@ -29,8 +30,9 @@ export class EventParamRegistrarService {
   private selectedStationSource: BehaviorSubject<any>;
   private stationTimeseriesSource: BehaviorSubject<any>;
   private dateSource: BehaviorSubject<Moment.Moment>;
-  private loadingSource: BehaviorSubject<string>;
+  private loadingSource: BehaviorSubject<LoadingData>;
   private mapBoundsSource: BehaviorSubject<L.LatLngBounds>;
+  private dateRangeSource: BehaviorSubject<any>;
 
   private tagGen: UniqueTagID;
 
@@ -44,8 +46,9 @@ export class EventParamRegistrarService {
     this.selectedStationSource = this.paramService.registerParameter<SiteInfo>(EventParamRegistrarService.EVENT_TAGS.selectedStation);
     this.stationTimeseriesSource = this.paramService.registerParameter<any>(EventParamRegistrarService.EVENT_TAGS.stationTimeseries);
     this.dateSource = this.paramService.registerParameter<Moment.Moment>(EventParamRegistrarService.EVENT_TAGS.date);
-    this.loadingSource = this.paramService.registerParameter<string>(EventParamRegistrarService.EVENT_TAGS.loading);
+    this.loadingSource = this.paramService.registerParameter<LoadingData>(EventParamRegistrarService.EVENT_TAGS.loading);
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
+    this.dateRangeSource = this.paramService.registerParameter<any>(EventParamRegistrarService.EVENT_TAGS.dateRange);
   }
 
   pushDataset(dataset: any): void {
@@ -78,12 +81,16 @@ export class EventParamRegistrarService {
     this.dateSource.next(date);
   }
 
-  pushLoading(loading: string): void {
+  pushLoading(loading: LoadingData): void {
     this.loadingSource.next(loading);
   }
 
   pushMapBounds(mapBounds: L.LatLngBounds): void {
     this.mapBoundsSource.next(mapBounds);
+  }
+
+  pushDateRange(dateRange: any): void {
+    this.dateRangeSource.next(dateRange);
   }
 
 
@@ -139,7 +146,10 @@ export interface RegisterOptions {
   updateTrigger?: Observable<any>
 }
 
-
+export interface LoadingData {
+  tag: string,
+  loading: boolean
+}
 
 //provides a unique id for creating a tag, not secure (can easily guess ids), probably don't need a secure tagging system
 class UniqueTagID {

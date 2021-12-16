@@ -106,18 +106,19 @@ export class DataViewsComponent implements OnInit {
     }
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
-      this.unfilteredStations = stations;
-      for(let field in this.field2Data) {
-        this.field2Data[field] = new Set<string>();
-        for(let station of stations) {
-          let value = station[field];
-          this.field2Data[field].add(value);
+      if(stations) {
+        this.unfilteredStations = stations;
+        for(let field in this.field2Data) {
+          this.field2Data[field] = new Set<string>();
+          for(let station of stations) {
+            let value = station[field];
+            this.field2Data[field].add(value);
+          }
         }
+        setTimeout(() => {
+          filterStations();
+        }, 0);
       }
-      setTimeout(() => {
-        filterStations();
-      }, 0);
-
     });
     this.fieldControl.valueChanges.subscribe((value: string) => {
       this.filterControl.setValue([]);
@@ -131,8 +132,10 @@ export class DataViewsComponent implements OnInit {
 
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
-      this.loading = false;
-      this.stations = stations
+      if(stations) {
+        this.loading = false;
+        this.stations = stations;
+      }
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
       this.selectedStation = station;

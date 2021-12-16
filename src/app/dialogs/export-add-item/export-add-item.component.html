@@ -65,8 +65,8 @@
               label="Start Date"
               [min]="dataset.dates.range[0]"
               [max]="dataset.dates.selected[1]"
-              [timestep]="dataset.period.control.value"
-              [initDate]="dataset.dates.selected[0]"
+              [period]="dataset.period.control.value"
+              [date]="dataset.dates.selected[0]"
               (dateChange)="setDate(0, $event)"
               [readonly]="false">
           </app-date-selector>
@@ -74,8 +74,8 @@
             label="End Date"
             [min]="dataset.dates.selected[0]"
             [max]="dataset.dates.range[1]"
-            [timestep]="dataset.period.control.value"
-            [initDate]="dataset.dates.selected[1]"
+            [period]="dataset.period.control.value"
+            [date]="dataset.dates.selected[1]"
             (dateChange)="setDate(1, $event)"
             [readonly]="false">
           </app-date-selector>
@@ -100,7 +100,7 @@
       <!-- remember that all of this stuff needs to be genericized -->
       <div class="control-group">
         <h3>
-          Grided Data Files
+          Gridded Data Files
         </h3>
         <div class="control-subgroup">
           <h4>

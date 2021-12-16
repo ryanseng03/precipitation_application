@@ -17,10 +17,12 @@ export class DataRequestorService {
 
   getRasterHeader(properties: any, delay?: number): RequestResults {
     let query = this.propertiesToQuery("prew1", properties);
+    console.log(query);
     let timingMessage = `Retreived raster header`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     //extract first document
     response.transform((response: any[]) => {
+      console.log(response);
       let header = null;
       if(response != null) {
         header = response[0];
@@ -63,13 +65,14 @@ export class DataRequestorService {
 
   getStationData(properties: any, delay?: number): RequestResults {
     let query = this.propertiesToQuery("hcdp_station_value", properties);
+    console.log(query);
     let timingMessage = `Retreived station data for ${properties.date}`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     return response;
   }
 
   getStationMetadata(properties: any, delay?: number): RequestResults {
-    let query = this.propertiesToQuery("station_metadata", properties);
+    let query = this.propertiesToQuery("hcdp_station_metadata", properties);
     let timingMessage = `Retreived station metadata`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     return response
@@ -110,7 +113,7 @@ export class DataRequestorService {
   }
 
   private propertiesToQuery(name: string, properties: any): string {
-    let query = `{'name':${name}`
+    let query = `{'name':'${name}'`
     for(let property in properties) {
       let value = properties[property];
       query += `,'value.${property}':'${value}'`

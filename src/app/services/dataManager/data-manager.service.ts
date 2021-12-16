@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
-import { RasterData, IndexedValues, BandData, RasterHeader, UpdateFlags } from "../../models/RasterData";
-import {SiteMetadata, SiteValue, SiteInfo} from "../../models/SiteMetadata";
+import { RasterData, IndexedValues, BandData, RasterHeader } from "../../models/RasterData";
+import {SiteValue, SiteInfo} from "../../models/SiteMetadata";
 import {DataRequestorService, RequestResults} from "../dataLoader/data-requestor.service";
 import Moment from 'moment';
-import { MapComponent } from 'src/app/components/map/map.component';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
 import {Dataset} from "../../models/Dataset";
-import moment from 'moment';
 import { RequestReject } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
+import { DateManagerService } from '../dateManager/date-manager.service';
+import { LatLng } from 'leaflet';
 
 
 interface StagedTimeseriesData {
@@ -43,374 +43,496 @@ export class DataManagerService {
   //SCRAP, JUST ORDER BY DATES AND ADD SITE METADATA, EACH DATE HAS UNIQUE RASTER, MAKES EVERYTHING EASIER AND MORE ADAPTABLE
   //OVERHEAD SHOULD BE MINIMAL
 
-  constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService) {
+  constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
     this.throttles = {
       focus: null,
       cache: null
     };
 
-    let date: Moment.Moment;
-    //can't have a promise exist without a handler
-    this.header = dataRequestor.getRasterHeader({}).toPromise()
+    //use this for map bounds
+    //need to fix query for this, unused at the moment, deal with later
+    //is this even needed with file based stuff? maybe just to set map location?
+    // dataRequestor.getRasterHeader({}).toPromise()
+    // .then((header: RasterHeader) => {
+    //   console.log(header);
+    // })
+    // .catch((reason: RequestReject) => {
+    //   if(!reason.cancelled) {
+    //     console.error(reason.reason);
+    //     errorPop.notify("error", `Could not retreive map location data.`);
+    //   }
+    //   return null;
+    // });
+
+    dataRequestor.getStationMetadata({
+      station_group: "hawaii_climate_primary"
+    }).toPromise()
+    .then((data: any) => {
+      let metadata = {};
+      for(let item of data) {
+        let stationMetadata = item.value;
+        //quality of life
+        stationMetadata.location = stationMetadata.elevation_m ? new LatLng(stationMetadata.lat, stationMetadata.lng, stationMetadata.elevation_m) : new LatLng(stationMetadata.lat, stationMetadata.lng)
+        stationMetadata.value = null;
+        let id_field = item.id_field;
+        let id = stationMetadata[id_field];
+        metadata[id] = stationMetadata;
+      }
+      console.log(metadata);
+      
+    })
     .catch((reason: RequestReject) => {
       if(!reason.cancelled) {
         console.error(reason.reason);
-        errorPop.notify("error", `Could not retreive map location data.`);
+        errorPop.notify("error", `Could not retreive station metadata.`);
       }
-      return null;
     });
+
+    let data = {
+      dataset: null,
+      date: null,
+      selectedStation: null,
+      dateRange: null
+    }
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
-      this.dataset = dataset;
-      //bad, redo this
-      date = dataset.end;
-      this.updateStationTimeSeries();
-    });
-    //note this should push initial date, it doesnt...
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
-      date = date;
-    });
-    //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedSite, (station: SiteInfo) => {
-      if(station) {
-        let start = new Date().getTime();
-        let p = this.dataRequestor.getSiteTimeSeries(this.dataset.start, this.dataset.end, date, station.skn).month.toPromise();
-        p.then((result: SiteValue[]) => {
-          let time = new Date().getTime() - start;
-          let timeSec = time / 1000;
-          console.log(`Retreived timeseries data, time elapsed ${timeSec} seconds`);
-
-          paramService.pushSelectedSiteTimeSeries(result);
-        });
-        this.updateStationTimeSeries();
-      }
-
-    });
-
-  }
-
-
-
-
-
-  //TEMP PATCH
-  //all months for now
-  initDate = Moment("2019-12-01T00:00:00.000Z");
-  //only store 7 (focus +-3)
-  //map by date string to ensure access proper
-  cache = new Map<string, RequestResults>();
-  //timeseriesCache = new Map<StationData, >();
-
-  header: Promise<RasterHeader>;
-
-  //available movement 1 ahead of base granularity
-  granularities = ["day", "month", "year"];
-  granularityTranslation = {
-    day: "days",
-    month: "months",
-    year: "years"
-  };
-
-
-
-  //----------------------------------------------------------------------------
-
-  //how many station values timeseries cache?
-  timeseriesCacheSize = 25;
-  datasetCacheSize = 25;
-  timeseriesCache = new AccessWeightedCache<string, RequestResults>(this.timeseriesCacheSize);
-  datasetCache = new AccessWeightedCache<string, RequestResults>(this.timeseriesCacheSize);
-
-  //MAP OBJECTS MAINTAIN INSERTION ORDER, CAN USE FOR IMPLICIT TIME ORDERING!
-  requests = {
-    georef: null,
-    stationMetadata: null,
-    dates: [null, null],
-    focus: null,
-    cache: {},
-    timeseries: {
-
-    }
-  }
-
-
-
-  //----------------------------------------------------------------------------
-
-
-  private getRangeBreakdown(movementInfo: MovementVector): [number, string][] {
-    let cacheRange = [1, 3, 5];
-    //copy here so don't modify the original object if it was null
-    let magnitude = movementInfo;
-    //if null magnitude (moved to a set date using map navigation), just use +/-3 baseGranularity/other granularity
-    if(magnitude == null) {
-      //balance cache range in each direction if no directionality
-      cacheRange = [3, 3, 3];
-      //just set magnitude to a default value, all directions will be the same anyway
-      magnitude = {
-        direction: 1,
-        period: this.dataset.timestep
-      }
-    }
-    let baseI = this.granularities.indexOf(this.dataset.timestep);
-    if(baseI < 0 || baseI >= this.granularities.length - 1) {
-      throw new Error("Invalid base granularity.");
-    }
-    let info = {
-      magnitude: {
-        same: magnitude.direction,
-        opposite: -magnitude.direction
-      },
-      granularity: {
-        same: this.granularityTranslation[magnitude.period],
-        opposite: this.dataset.timestep == magnitude.period ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[this.dataset.timestep]
-      }
-    }
-    let toAdd: [number, string][] = [
-      [info.magnitude.same * cacheRange[2], info.granularity.same],
-      [info.magnitude.opposite * cacheRange[1], info.granularity.same],
-      [info.magnitude.same * cacheRange[1], info.granularity.opposite],
-      [info.magnitude.opposite * cacheRange[0], info.granularity.opposite]
-    ]
-
-    //list of add objects (magnitude, granularity)
-    return toAdd;
-  }
-
-
-  private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
-    let breakdown = this.getRangeBreakdown(movementInfo);
-    let dateCopy: Moment.Moment = null;
-    let range = [];
-    for(let item of breakdown) {
-      let v = Math.sign(item[0]);
-      let lim = Math.abs(item[0]);
-      //need to get magnitude!!!!
-      for(let i = 1; i <= lim; i++) {
-        // console.log(focus.toISOString());
-        dateCopy = Moment(focus);
-        // console.log(item[1]);
-        dateCopy = dateCopy.add(v * i, <Moment.unitOfTime.DurationConstructor>item[1]);
-        // console.log(v, i, item[1], dateCopy.toISOString());
-        //verify not out of range
-        if(dateCopy.isBetween(this.dataset.startDate, this.dataset.endDate, "day", "[]")) {
-          range.push(dateCopy);
-        }
-      }
-    }
-    return range;
-  }
-
-  private map: MapComponent;
-  setMap(map: MapComponent) {
-    this.map = map;
-  }
-  private loading: boolean;
-  setLoadingOnMap(loading: boolean) {
-    //only set loading once
-    //if(this.loading != loading) {
-    this.map.setLoad(loading);
-    //}
-  }
-
-
-
-  //should handler stuff as a transform
-  //nope because not necessaruly cancelling
-
-  //probably the easiest way is to just check if current date matches, if it doesn't then skip
-  //what about if move around and back? trigger multiple times?
-  focusDataRetreiverCanceller: (reason: string) => void = null;
-
-  // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
-  // //probably has to do with non-production running lifecycle hooks multiple times for change verification
-  getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 2000): void {
-
-    this.setLoadingOnMap(true);
-    //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
-    if(this.throttles.focus) {
-      clearTimeout(this.throttles.focus);
-      this.setLoadingOnMap(false);
-    }
-    if(this.throttles.cache) {
-      clearTimeout(this.throttles.cache);
-    }
-    if(this.focusDataRetreiverCanceller) {
-      //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
-      this.focusDataRetreiverCanceller(null);
-    }
-
-    //two different cases where this used (cache hit/miss), set as function
-    let focusedDataHandler = (dataRetreiver: RequestResults) => {
-      let start = new Date().getTime();
-      new Promise((resolve, reject) => {
-        this.focusDataRetreiverCanceller = reject;
-        return dataRetreiver.toPromise().then((data: InternalDataPack) => {
-          resolve(data)
+      if(dataset) {
+        console.log(dataset);
+        data.dataset = dataset
+        //get dataset range
+        let dateRangeRes = dataRequestor.getDateRange(dataset);
+        let dateRangePromise = dateRangeRes.toPromise();
+        dateRangePromise.then((dateRange: any) => {
+          //TEMP
+          dateRange = {
+            start: Moment("1990-12"),
+            end: Moment("2019-12")
+          }
+          paramService.pushDateRange(dateRange);
         })
         .catch((reason: RequestReject) => {
-          //cancelled or failed
-          reject(reason);
+          if(!reason.cancelled) {
+            console.error(reason.reason);
+            errorPop.notify("error", `Could not retreive date information.`);
+          }
         });
-      })
-      .then((data: InternalDataPack) => {
-        let time = new Date().getTime() - start;
-        let timeSec = time / 1000;
-        console.log(`Retreived focused data, time elapsed ${timeSec} seconds`);
-        //emit the data to the application
-        this.setFocusedData(date, data);
-      })
-      .catch((reason: RequestReject) => {
-        //request cancelled or failed upstream
-        if(reason && !reason.cancelled) {
-          console.error(reason);
-          //don't need to put error details to user, have those in console
-          let emsg = `There was an issue retreiving the requested climate data.`;
-          this.errorPop.notify("error", emsg);
-        }
-      })
-      //loading complete
-      .then(() => {
-        this.setLoadingOnMap(false);
-      });
-    };
-
-    let isoStr: string = date.toISOString();
-    let dataRetreiver: RequestResults = this.cache.get(isoStr);
-
-    let cacheDates = () => {
-      return;
-      this.throttles.cache = null;
-
-      /////////
-      //dates//
-      /////////
-
-      //get additional dates to pull data for cache
-      let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
-      //cache data for new dates and clear old entries
-      this.cacheDates(date, cacheDates);
-    }
-
-    if(dataRetreiver) {
-      this.throttles.focus = setTimeout(() => {
-        this.throttles.focus = null;
-        focusedDataHandler(dataRetreiver);
-        cacheDates();
-      }, 0)
-    }
-    else {
-      this.throttles.focus = setTimeout(() => {
-        this.throttles.focus = null;
-        dataRetreiver = this.dataRequestor.getDataPack(date);
-        this.cache.set(date.toISOString(), dataRetreiver);
-        focusedDataHandler(dataRetreiver);
-        cacheDates();
-      }, delay);
-    }
-
-
-
-  }
-
-  //caches set of dates and clears old values from cache
-  //require focusDate to prevent clearing it from the cache
-  private cacheDates(focusDate: Moment.Moment, dates: Moment.Moment[]) {
-    let cachedDates = this.cache.keys();
-    //should be more efficient to delete things from a set than array
-    let cachedDatesSet = new Set(cachedDates);
-    //remove focus date
-    cachedDatesSet.delete(focusDate.toISOString());
-    for(let date of dates) {
-      let dateString = date.toISOString();
-      //already in cache, just delete from set so not cleared
-      if(cachedDatesSet.has(dateString)) {
-        //console.log("hit!!!");
-        //remove from set, anything left over will be removed from cache
-        cachedDatesSet.delete(dateString);
+        //emit date range data to trigger other stuff
+        //should create emmitter for date range
+  
+        //reset selected station and timeseries data
+        paramService.pushSelectedStation(null);
+        paramService.pushStationTimeseries(null);
       }
-      //not in cache, need to retreive data
-      else {
-        //diffuse load by adding random delay up to five seconds
-        let delay = Math.round(Math.random() * 5000);
-        let cacheData = this.dataRequestor.getDataPack(date, delay);
-        this.cache.set(dateString, cacheData);
-
-      }
-    }
-    //remove old entries that weren't recached (anything still in cachedDatesSet)
-    cachedDatesSet.forEach((date: string) => {
-      //cancel queries before deleting
-      this.cache.get(date).cancel();
-      this.cache.delete(date);
     });
-  }
 
+    //TIMESERIES DATA SHOULD JUST BE PULLED REGARDLESS OF DATE (AT LEAST FOR NOW), THE TIMESERIES COMPONENT SHOULD GET DATE FOR ADJUSTING FOCUS AREAS
+    //DON'T HAVE TO DO ANYTHING HERE FOR TIMESERIES WHEN DATE CHANGES
 
+    //note this should push initial date, it doesnt...
+    //add delay/caching stuff, simple for now
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
+      if(date) {
+        data.date = date;
+  
+        let dataset = data.dataset;
+        let date_s: string = this.dateHandler.dateToString(date, data.dataset.period);
+        dataset.date = date_s;
+  
+        paramService.pushLoading({
+          tag: "vis",
+          loading: true
+        });
+  
+        let promises: [Promise<any>, Promise<any>] = [null, null];
 
-  //need to set something that cancels old calls on new data request to ensure synch
-  //should also add some sort of small delay or cancel logic to data request logic to prevent slow down on rapid input changes, some sort of input throttle
-  //sets the data focused by the application
-  private setFocusedData(date: Moment.Moment, internalData: InternalDataPack): void {
-    //need to wait for raster header if not already in
-    this.header.then((header: RasterHeader) => {
-      //if header null then couldn't get header from server (already pushed error message)
-      if(header) {
-        let focus: FocusedData = {
-          date: date,
-          data: null,
-        };
+        let stationRes = dataRequestor.getStationData(data.dataset);
+        let stationPromise = stationRes.toPromise();
+        promises[0] = stationPromise;
 
-        let data: DataPack = {
-          raster: null,
-          sites: null,
-          metrics: null
-        };
-        focus.data = data;
-        this.combineMetaWithValues(internalData.stations).then((info: SiteInfo[]) => {
-          data.sites = info;
-          //console.log(internalData.sites);
-          //wrap in rasterdata object
-          let raster: RasterData = new RasterData(header);
-          if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {
-            console.error(`Error setting bands, code: ${raster.addBands(internalData.bands).code}`);
-            this.errorPop.notify("error", "An unexpected error occured while handling the climate data.");
+        let mapRes = dataRequestor.getRaster(data.dataset);
+        let mapPromise = mapRes.toPromise();
+        promises[1] = mapPromise;
+        
+        //don't have to wait to set data for each
+        promises[0].then((stationData: any) => {
+          console.log(stationData);
+          //have to do combine with metadata
+          paramService.pushStations(stationData);
+        })
+        .catch((reason: RequestReject) => {
+          if(!reason.cancelled) {
+            console.error(reason.reason);
+            errorPop.notify("error", `Could not retreive station data.`);
           }
-          else {
-            data.raster = raster;
-            // this.data.focusedData = focus;
-            this.paramService.pushFocusedData(focus);
+        });
+        promises[1].then((raster: RasterData) => {
+          paramService.pushRaster(raster);
+        })
+        .catch((reason: RequestReject) => {
+          if(!reason.cancelled) {
+            console.error(reason.reason);
+            errorPop.notify("error", `Could not retreive raster data.`);
+            //should push out error raster (raster with empty data)
           }
+        });
+        Promise.all(promises).finally(() => {
+          paramService.pushLoading({
+            tag: "vis",
+            loading: false
+          });
         });
       }
     });
-  }
 
-
-  //combining metadata here instead of ahead of time cuts down on a lot of memory for redundant cached values in exchange for somewhat minor overhead
-  private combineMetaWithValues(values: SiteValue[]): Promise<SiteInfo[]> {
-    let resPromises: Promise<SiteInfo>[] = [];
-    for(let i = 0; i < values.length; i++) {
-      let value: SiteValue = values[i];
-      let skn: string = value.skn;
-      resPromises.push(this.dataRequestor.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
-        if(metadata != undefined) {
-          return new SiteInfo(metadata, value);
-        }
-        else {
-          //could not find metadata, print error
-          console.error(`Could not find metadata for site, skn: ${skn}.`);
-          return null;
-        }
-      }));
-    }
-    return Promise.all(resPromises).then((info: SiteInfo[]) => {
-      //console.log(info);
-      //filter out any instances where metadata could not be found to maintain consistency
-      return info.filter((si) => {
-        return si != null;
-      });
+    //track selected station and emit series data based on
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
+      if(station) {
+        paramService.pushLoading({
+          tag: "timeseries",
+          loading: true
+        });
+        let { includeStations, includeMap, ...params } = data.dataset;
+        let start_s: string = this.dateHandler.dateToString(data.date, params.period);
+        let end_s: string = this.dateHandler.dateToString(data.date, params.period);
+        let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, params);
+        let timeseriesPromise = timeseriesRes.toPromise();
+        timeseriesPromise.then((timeseriesData: any) => {
+          paramService.pushStationTimeseries(timeseriesData);
+          paramService.pushLoading({
+            tag: "timeseries",
+            loading: false
+          });
+        });
+      }
     });
+
   }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//   //TEMP PATCH
+//   //all months for now
+//   initDate = Moment("2019-12-01T00:00:00.000Z");
+//   //only store 7 (focus +-3)
+//   //map by date string to ensure access proper
+//   cache = new Map<string, RequestResults>();
+//   //timeseriesCache = new Map<StationData, >();
+
+//   header: Promise<RasterHeader>;
+
+//   //available movement 1 ahead of base granularity
+//   granularities = ["day", "month", "year"];
+//   granularityTranslation = {
+//     day: "days",
+//     month: "months",
+//     year: "years"
+//   };
+
+
+
+//   //----------------------------------------------------------------------------
+
+//   //how many station values timeseries cache?
+//   timeseriesCacheSize = 25;
+//   datasetCacheSize = 25;
+//   timeseriesCache = new AccessWeightedCache<string, RequestResults>(this.timeseriesCacheSize);
+//   datasetCache = new AccessWeightedCache<string, RequestResults>(this.timeseriesCacheSize);
+
+//   //MAP OBJECTS MAINTAIN INSERTION ORDER, CAN USE FOR IMPLICIT TIME ORDERING!
+//   requests = {
+//     georef: null,
+//     stationMetadata: null,
+//     dates: [null, null],
+//     focus: null,
+//     cache: {},
+//     timeseries: {
+
+//     }
+//   }
+
+
+
+//   //----------------------------------------------------------------------------
+
+
+//   private getRangeBreakdown(movementInfo: MovementVector): [number, string][] {
+//     let cacheRange = [1, 3, 5];
+//     //copy here so don't modify the original object if it was null
+//     let magnitude = movementInfo;
+//     //if null magnitude (moved to a set date using map navigation), just use +/-3 baseGranularity/other granularity
+//     if(magnitude == null) {
+//       //balance cache range in each direction if no directionality
+//       cacheRange = [3, 3, 3];
+//       //just set magnitude to a default value, all directions will be the same anyway
+//       magnitude = {
+//         direction: 1,
+//         period: this.dataset.timestep
+//       }
+//     }
+//     let baseI = this.granularities.indexOf(this.dataset.timestep);
+//     if(baseI < 0 || baseI >= this.granularities.length - 1) {
+//       throw new Error("Invalid base granularity.");
+//     }
+//     let info = {
+//       magnitude: {
+//         same: magnitude.direction,
+//         opposite: -magnitude.direction
+//       },
+//       granularity: {
+//         same: this.granularityTranslation[magnitude.period],
+//         opposite: this.dataset.timestep == magnitude.period ? this.granularityTranslation[this.granularities[baseI + 1]] : this.granularityTranslation[this.dataset.timestep]
+//       }
+//     }
+//     let toAdd: [number, string][] = [
+//       [info.magnitude.same * cacheRange[2], info.granularity.same],
+//       [info.magnitude.opposite * cacheRange[1], info.granularity.same],
+//       [info.magnitude.same * cacheRange[1], info.granularity.opposite],
+//       [info.magnitude.opposite * cacheRange[0], info.granularity.opposite]
+//     ]
+
+//     //list of add objects (magnitude, granularity)
+//     return toAdd;
+//   }
+
+
+//   private getAdditionalCacheDates(focus: Moment.Moment, movementInfo: MovementVector): Moment.Moment[] {
+//     let breakdown = this.getRangeBreakdown(movementInfo);
+//     let dateCopy: Moment.Moment = null;
+//     let range = [];
+//     for(let item of breakdown) {
+//       let v = Math.sign(item[0]);
+//       let lim = Math.abs(item[0]);
+//       //need to get magnitude!!!!
+//       for(let i = 1; i <= lim; i++) {
+//         // console.log(focus.toISOString());
+//         dateCopy = Moment(focus);
+//         // console.log(item[1]);
+//         dateCopy = dateCopy.add(v * i, <Moment.unitOfTime.DurationConstructor>item[1]);
+//         // console.log(v, i, item[1], dateCopy.toISOString());
+//         //verify not out of range
+//         if(dateCopy.isBetween(this.dataset.startDate, this.dataset.endDate, "day", "[]")) {
+//           range.push(dateCopy);
+//         }
+//       }
+//     }
+//     return range;
+//   }
+
+//   private map: MapComponent;
+//   setMap(map: MapComponent) {
+//     this.map = map;
+//   }
+//   private loading: boolean;
+//   setLoadingOnMap(loading: boolean) {
+//     //only set loading once
+//     //if(this.loading != loading) {
+//     this.map.setLoad(loading);
+//     //}
+//   }
+
+
+
+//   //should handler stuff as a transform
+//   //nope because not necessaruly cancelling
+
+//   //probably the easiest way is to just check if current date matches, if it doesn't then skip
+//   //what about if move around and back? trigger multiple times?
+//   focusDataRetreiverCanceller: (reason: string) => void = null;
+
+//   // //THIS IS BEING CALLED 3 TIMES AT INTIALIZATION, WHY???
+//   // //probably has to do with non-production running lifecycle hooks multiple times for change verification
+//   getData(date: Moment.Moment, movementInfo: MovementVector, delay: number = 2000): void {
+
+//     this.setLoadingOnMap(true);
+//     //use a throttle to prevent constant data pulls on fast date walk, set to 5 second (is there a better way to do this? probably not really)
+//     if(this.throttles.focus) {
+//       clearTimeout(this.throttles.focus);
+//       this.setLoadingOnMap(false);
+//     }
+//     if(this.throttles.cache) {
+//       clearTimeout(this.throttles.cache);
+//     }
+//     if(this.focusDataRetreiverCanceller) {
+//       //cancel old retreiver, if already finished should be fine (can reject an already resolved promise without issue)
+//       this.focusDataRetreiverCanceller(null);
+//     }
+
+//     //two different cases where this used (cache hit/miss), set as function
+//     let focusedDataHandler = (dataRetreiver: RequestResults) => {
+//       let start = new Date().getTime();
+//       new Promise((resolve, reject) => {
+//         this.focusDataRetreiverCanceller = reject;
+//         return dataRetreiver.toPromise().then((data: InternalDataPack) => {
+//           resolve(data)
+//         })
+//         .catch((reason: RequestReject) => {
+//           //cancelled or failed
+//           reject(reason);
+//         });
+//       })
+//       .then((data: InternalDataPack) => {
+//         let time = new Date().getTime() - start;
+//         let timeSec = time / 1000;
+//         console.log(`Retreived focused data, time elapsed ${timeSec} seconds`);
+//         //emit the data to the application
+//         this.setFocusedData(date, data);
+//       })
+//       .catch((reason: RequestReject) => {
+//         //request cancelled or failed upstream
+//         if(reason && !reason.cancelled) {
+//           console.error(reason);
+//           //don't need to put error details to user, have those in console
+//           let emsg = `There was an issue retreiving the requested climate data.`;
+//           this.errorPop.notify("error", emsg);
+//         }
+//       })
+//       //loading complete
+//       .then(() => {
+//         this.setLoadingOnMap(false);
+//       });
+//     };
+
+//     let isoStr: string = date.toISOString();
+//     let dataRetreiver: RequestResults = this.cache.get(isoStr);
+
+//     let cacheDates = () => {
+//       return;
+//       this.throttles.cache = null;
+
+//       /////////
+//       //dates//
+//       /////////
+
+//       //get additional dates to pull data for cache
+//       let cacheDates = this.getAdditionalCacheDates(date, movementInfo);
+//       //cache data for new dates and clear old entries
+//       this.cacheDates(date, cacheDates);
+//     }
+
+//     if(dataRetreiver) {
+//       this.throttles.focus = setTimeout(() => {
+//         this.throttles.focus = null;
+//         focusedDataHandler(dataRetreiver);
+//         cacheDates();
+//       }, 0)
+//     }
+//     else {
+//       this.throttles.focus = setTimeout(() => {
+//         this.throttles.focus = null;
+//         dataRetreiver = this.dataRequestor.getDataPack(date);
+//         this.cache.set(date.toISOString(), dataRetreiver);
+//         focusedDataHandler(dataRetreiver);
+//         cacheDates();
+//       }, delay);
+//     }
+
+
+
+//   }
+
+//   //caches set of dates and clears old values from cache
+//   //require focusDate to prevent clearing it from the cache
+//   private cacheDates(focusDate: Moment.Moment, dates: Moment.Moment[]) {
+//     let cachedDates = this.cache.keys();
+//     //should be more efficient to delete things from a set than array
+//     let cachedDatesSet = new Set(cachedDates);
+//     //remove focus date
+//     cachedDatesSet.delete(focusDate.toISOString());
+//     for(let date of dates) {
+//       let dateString = date.toISOString();
+//       //already in cache, just delete from set so not cleared
+//       if(cachedDatesSet.has(dateString)) {
+//         //console.log("hit!!!");
+//         //remove from set, anything left over will be removed from cache
+//         cachedDatesSet.delete(dateString);
+//       }
+//       //not in cache, need to retreive data
+//       else {
+//         //diffuse load by adding random delay up to five seconds
+//         let delay = Math.round(Math.random() * 5000);
+//         let cacheData = this.dataRequestor.getDataPack(date, delay);
+//         this.cache.set(dateString, cacheData);
+
+//       }
+//     }
+//     //remove old entries that weren't recached (anything still in cachedDatesSet)
+//     cachedDatesSet.forEach((date: string) => {
+//       //cancel queries before deleting
+//       this.cache.get(date).cancel();
+//       this.cache.delete(date);
+//     });
+//   }
+
+
+
+//   //need to set something that cancels old calls on new data request to ensure synch
+//   //should also add some sort of small delay or cancel logic to data request logic to prevent slow down on rapid input changes, some sort of input throttle
+//   //sets the data focused by the application
+//   private setFocusedData(date: Moment.Moment, internalData: InternalDataPack): void {
+//     //need to wait for raster header if not already in
+//     this.header.then((header: RasterHeader) => {
+//       //if header null then couldn't get header from server (already pushed error message)
+//       if(header) {
+//         let focus: FocusedData = {
+//           date: date,
+//           data: null,
+//         };
+
+//         let data: DataPack = {
+//           raster: null,
+//           sites: null,
+//           metrics: null
+//         };
+//         focus.data = data;
+//         this.combineMetaWithValues(internalData.stations).then((info: SiteInfo[]) => {
+//           data.sites = info;
+//           //console.log(internalData.sites);
+//           //wrap in rasterdata object
+//           let raster: RasterData = new RasterData(header);
+//           if(raster.addBands(internalData.bands).code != UpdateFlags.OK) {
+//             console.error(`Error setting bands, code: ${raster.addBands(internalData.bands).code}`);
+//             this.errorPop.notify("error", "An unexpected error occured while handling the climate data.");
+//           }
+//           else {
+//             data.raster = raster;
+//             // this.data.focusedData = focus;
+//             this.paramService.pushFocusedData(focus);
+//           }
+//         });
+//       }
+//     });
+//   }
+
+
+//   //combining metadata here instead of ahead of time cuts down on a lot of memory for redundant cached values in exchange for somewhat minor overhead
+//   private combineMetaWithValues(values: SiteValue[]): Promise<SiteInfo[]> {
+//     let resPromises: Promise<SiteInfo>[] = [];
+//     for(let i = 0; i < values.length; i++) {
+//       let value: SiteValue = values[i];
+//       let skn: string = value.skn;
+//       resPromises.push(this.dataRequestor.getMetaBySKN(skn).then((metadata: SiteMetadata) => {
+//         if(metadata != undefined) {
+//           return new SiteInfo(metadata, value);
+//         }
+//         else {
+//           //could not find metadata, print error
+//           console.error(`Could not find metadata for site, skn: ${skn}.`);
+//           return null;
+//         }
+//       }));
+//     }
+//     return Promise.all(resPromises).then((info: SiteInfo[]) => {
+//       //console.log(info);
+//       //filter out any instances where metadata could not be found to maintain consistency
+//       return info.filter((si) => {
+//         return si != null;
+//       });
+//     });
+//   }
 }
 
 interface CancellableQuery {

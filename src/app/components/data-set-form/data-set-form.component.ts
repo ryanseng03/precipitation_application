@@ -1,9 +1,10 @@
-import { Component, OnInit, AfterContentInit, AfterViewInit, NgZone, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import Moment from "moment";
-import "moment-timezone";
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
+import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
+import { Period } from 'src/app/models/types';
 
 @Component({
   selector: 'app-data-set-form',
@@ -12,29 +13,6 @@ import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-s
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataSetFormComponent implements OnInit, AfterViewInit {
-
-
-  // @Input() lower: Moment.Moment;
-  // @Input() upper: Moment.Moment;
-  // @Input() timestep: string;
-  // @Input() initDate: Moment.Moment;
-  // @Output() date
-
-
-
-
-  private static readonly GLOBAL_MAX = Moment();
-  //set global min to january first year 0 (null/undefined works but seems to break change detection for some reason)
-  private static readonly GLOBAL_MIN = Moment("0000-01-01T00:00:00.000Z").tz("utc");
-  private static readonly DEFAULT_TIMESTEP = "day";
-
-  // dataset: Dataset = {
-  //   startDate: null,
-  //   endDate: null,
-  //   timestep: null,
-  //   fill: null,
-  //   type: null
-  // };
 
   valid: boolean;
   validParts: {
@@ -45,21 +23,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     fill: boolean
   };
 
-  dataRange = {
-    min: DataSetFormComponent.GLOBAL_MIN,
-    max: DataSetFormComponent.GLOBAL_MAX
-  };
-  //how to deal with time zones? should it all be HST? local? UTC?
-  //this does affect what day it is, for now use utc, probably should change
-  //should probably store as UTC, provide as local
+  dateData: {
+    start: string,
+    end: string
+  } = null;
+
   min: Moment.Moment;
   max: Moment.Moment;
   timestep: string;
-
-  defaultLow: Moment.Moment = Moment("1990-12-01");
-  defaultHigh: Moment.Moment = Moment("2019-12-01");
-
-
 
   //choices should come from external object
   //date from indicator if NRT or updated if possible
@@ -69,28 +40,13 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
       value: "rainfall",
       control: new FormControl("rainfall")
     },
-    timestep: {
+    period: {
       label: "Monthly",
       value: "month",
       control: new FormControl("month")
     },
-    dateRange: {
-      low: {
-        label: null,
-        value: Moment("1990-12")
-      },
-      high: {
-        label: null,
-        value: Moment("2019-12")
-      }
-    },
     advanced: {
       control: new FormControl(false),
-      tier: {
-        label: "Tier 0",
-        value: 0,
-        control: new FormControl(0)
-      }
     },
     raster: null,
     station: {
@@ -104,25 +60,47 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
 
 
-  constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService) {
-    //remember change format day/month
-    this.dataset.dateRange.low.label = this.dataset.dateRange.low.value.format("MMMM YYYY");
-    this.dataset.dateRange.high.label = this.dataset.dateRange.high.value.format("MMMM YYYY");
+  constructor(private paramService: EventParamRegistrarService, private dateSelector: VisDateSelectService, dateManager: DateManagerService) {
 
-    // this.min = this.dataRange.min;
-    // this.max = this.dataRange.max
-    // this.timestep = "month";
-    // this.validParts = {
-    //   min: false,
-    //   max: false,
-    //   timeGranularity: false,
-    //   setType: false,
-    //   fill: false
-    // };
-    // this.valid = false;
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dateRange, (dateRange: any) => {
+      if(dateRange) {
+        let start = dateManager.dateToString(dateRange.start, <Period>this.dataset.period.value, true);
+        let end = dateManager.dateToString(dateRange.end, <Period>this.dataset.period.value, true);
+        this.dateData = {
+          start,
+          end
+        };
+      }
+    });
+
+
     this.valid = true;
 
-    // this.updateDataSet();
+    this.dataset.datatype.control.valueChanges.subscribe((value: string) => {
+      console.log(value);
+      //TEMP
+      switch(value) {
+        case "rainfall": {
+          this.dataset.period.label = "Monthly";
+          this.dataset.period.value = "month";
+          this.dataset.period.control.setValue("month");
+
+          this.dataset.station.fill.label = "Partial Fill";
+          this.dataset.station.fill.value = "partal";
+          this.dataset.station.fill.control.setValue("partial");
+        }
+        case "temperature": {
+          this.dataset.period.label = "Daily";
+          this.dataset.period.value = "day";
+          this.dataset.period.control.setValue("day");
+
+          this.dataset.station.fill.label = "Unfilled";
+          this.dataset.station.fill.value = "unfilled";
+          this.dataset.station.fill.control.setValue("unfilled");
+        }
+      }
+    });
+
   }
 
   ngOnInit() {
@@ -138,12 +116,10 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
   updateDataSet() {
     let dscp: any = {
-      startDate: this.dataset.dateRange.low.value,
-      endDate: this.dataset.dateRange.high.value,
-      timestep: this.dataset.timestep.control.value,
+      period: this.dataset.period.control.value,
       fill: this.dataset.station.fill.control.value,
-      type: this.dataset.datatype.control.value
+      datatype: this.dataset.datatype.control.value
     }
-    this.paramRegistrar.pushDataset(dscp);
+    this.paramService.pushDataset(dscp);
   }
 }

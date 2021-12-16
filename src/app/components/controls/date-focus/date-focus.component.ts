@@ -11,16 +11,13 @@ import { AssetManagerService } from 'src/app/services/util/asset-manager.service
 })
 export class DateFocusComponent implements OnInit {
 
-  //@Input() dataset: Dataset;
-  //@Input() map: MapComponent;
   @Input() lower: Moment.Moment;
   @Input() upper: Moment.Moment;
-  @Input() timestep: string;
-  @Input() initDate: Moment.Moment;
-  @Output() date: EventEmitter<Moment.Moment> = new EventEmitter<Moment.Moment>();
-  @Output() dateChangeInfo: EventEmitter<DateChangeInfo> = new EventEmitter<DateChangeInfo>();
+  @Input() period: string;
+  @Input() date: Moment.Moment;
+  @Output() dateChange: EventEmitter<DateChangeInfo> = new EventEmitter<DateChangeInfo>();
 
-  focusedDate: Moment.Moment;
+  
 
   controlData = {
     month: {
@@ -28,7 +25,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move forward one month",
           disabled: () => {
-            return this.upper.diff(this.focusedDate, "month", true) < 1;
+            return this.upper.diff(this.date, "month", true) < 1;
           },
           trigger: () => {
             this.moveDate(1, "month");
@@ -37,7 +34,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move forward one year",
           disabled: () => {
-            return this.upper.diff(this.focusedDate, "year", true) < 1;
+            return this.upper.diff(this.date, "year", true) < 1;
           },
           trigger: () => {
             this.moveDate(1, "year");
@@ -46,7 +43,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to last month in range",
           disabled: () => {
-            return this.upper.diff(this.focusedDate, "month", true) < 1;
+            return this.upper.diff(this.date, "month", true) < 1;
           },
           trigger: () => {
             this.setDate(this.upper);
@@ -57,7 +54,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move back one month",
           disabled: () => {
-            return this.focusedDate.diff(this.lower, "month", true) < 1;
+            return this.date.diff(this.lower, "month", true) < 1;
           },
           trigger: () => {
             this.moveDate(-1, "month");
@@ -66,7 +63,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move back one year",
           disabled: () => {
-            return this.focusedDate.diff(this.lower, "year", true) < 1;
+            return this.date.diff(this.lower, "year", true) < 1;
           },
           trigger: () => {
             this.moveDate(-1, "year");
@@ -75,7 +72,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to first month in range",
           disabled: () => {
-            return this.focusedDate.diff(this.lower, "month", true) < 1;
+            return this.date.diff(this.lower, "month", true) < 1;
           },
           trigger: () => {
             this.setDate(this.lower);
@@ -88,7 +85,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move forward one day",
           disabled: () => {
-            return this.upper.diff(this.focusedDate, "day", true) < 1;
+            return this.upper.diff(this.date, "day", true) < 1;
           },
           trigger: () => {
             this.moveDate(1, "day");
@@ -97,7 +94,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move forward one month",
           disabled: () => {
-            return this.upper.diff(this.focusedDate, "month", true) < 1;
+            return this.upper.diff(this.date, "month", true) < 1;
           },
           trigger: () => {
             this.moveDate(1, "month");
@@ -106,7 +103,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to last day in range",
           disabled: () => {
-            return this.upper.diff(this.focusedDate, "day", true) < 1;
+            return this.upper.diff(this.date, "day", true) < 1;
           },
           trigger: () => {
             this.setDate(this.upper);
@@ -117,7 +114,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move back one day",
           disabled: () => {
-            return this.focusedDate.diff(this.lower, "day", true) < 1;
+            return this.date.diff(this.lower, "day", true) < 1;
           },
           trigger: () => {
             this.moveDate(-1, "day");
@@ -126,7 +123,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move back one month",
           disabled: () => {
-            return this.focusedDate.diff(this.lower, "month", true) < 1;
+            return this.date.diff(this.lower, "month", true) < 1;
           },
           trigger: () => {
             this.moveDate(-1, "month");
@@ -135,7 +132,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to first day in range",
           disabled: () => {
-            return this.focusedDate.diff(this.lower, "day", true) < 1;
+            return this.date.diff(this.lower, "day", true) < 1;
           },
           trigger: () => {
             this.setDate(this.lower);
@@ -161,7 +158,6 @@ export class DateFocusComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.setDate(this.initDate);
   }
 
   // broadcast(date: Moment.Moment, movementInfo: MovementVector) {
@@ -169,32 +165,25 @@ export class DateFocusComponent implements OnInit {
   //   //note can't do loading here because of throttle, should create more robust loading and retreival cancel mechanisms (should also cancel old requests if a new one is submitted before load complete, just cache but don't emit)
   //   this.dataManager.getData(date, movementInfo);
   // }
+
+  vector: MovementVector = null;
+
+  dateChanged(date: Moment.Moment) {
+    let changeInfo: DateChangeInfo = {
+      magnitude: this.vector,
+      date: date
+    }
+    this.dateChange.emit(changeInfo);
+    //consume movement vector
+    this.vector = null;
+  }
 
   //should move this to param thing so dont have to pass through map
   setDate(date: Moment.Moment, movementInfo: MovementVector = null) {
-    this.focusedDate = date;
-    this.date.emit(date);
-    let changeInfo: DateChangeInfo = {
-      magnitude: movementInfo,
-      date: date
-    }
-    this.dateChangeInfo.emit(changeInfo);
-    //time zone things
-    // date.set({
-    //   hour: 0,
-    //   minute:0,
-    //   second:0,
-    //   millisecond:0
-    // });
-    // date.utcOffset(0);
-    //this.broadcast(date, movementInfo);
+    //set movemenet vector and set date in control
+    this.vector = movementInfo;
+    this.date = date;
   }
-
-  // broadcast(date: Moment.Moment, movementInfo: MovementVector) {
-  //   //the loading mechanism here is sketch at best, fix this
-  //   //note can't do loading here because of throttle, should create more robust loading and retreival cancel mechanisms (should also cancel old requests if a new one is submitted before load complete, just cache but don't emit)
-  //   this.dataManager.getData(date, movementInfo);
-  // }
 
   moveDate(change: number, unit: Moment.unitOfTime.DurationConstructor) {
     let magnitude = null;
@@ -209,7 +198,7 @@ export class DateFocusComponent implements OnInit {
     let movementInfo: MovementVector = magnitude;
     //add mutates date and returns old date (what a weird way of doing this)
     //doesn't work with binding properly since same object so clone, modify, then set
-    let newDate = this.focusedDate.clone();
+    let newDate = this.date.clone();
     newDate.add(change, unit);
     //verify bounds of new time and adjust to min or max
     if(newDate.diff(this.lower) < 0) {

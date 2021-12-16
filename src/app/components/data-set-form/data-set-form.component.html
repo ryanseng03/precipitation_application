@@ -25,6 +25,9 @@
             <mat-option [value]="dataset.datatype.value">
               {{dataset.datatype.label}}
             </mat-option>
+            <mat-option [value]="'temperature'">
+              Temperature
+            </mat-option>
           </mat-select>
         </mat-form-field>
       </div>
@@ -34,9 +37,9 @@
           <mat-label>Time Period</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="dataset.timestep.control">
-            <mat-option [value]="dataset.timestep.value">
-              {{dataset.timestep.label}}
+            [formControl]="dataset.period.control">
+            <mat-option [value]="dataset.period.value">
+              {{dataset.period.label}}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -46,8 +49,8 @@
         <h4>
           Dataset Coverage
         </h4>
-        <p>
-          {{dataset.dateRange.low.label}} - {{dataset.dateRange.high.label}}
+        <p *ngIf="dateData != null">
+          {{dateData.start}} - {{dateData.end}}
         </p>
       </div>
     </div>
