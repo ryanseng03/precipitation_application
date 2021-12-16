@@ -64,10 +64,13 @@ export class DataManagerService {
     //   return null;
     // });
 
-    dataRequestor.getStationMetadata({
+
+
+    let metadataReq: RequestResults = dataRequestor.getStationMetadata({
       station_group: "hawaii_climate_primary"
-    }).toPromise()
-    .then((data: any) => {
+    });
+
+    metadataReq.transform((data: any) => {
       let metadata = {};
       for(let item of data) {
         let stationMetadata = item.value;
@@ -76,17 +79,23 @@ export class DataManagerService {
         stationMetadata.value = null;
         let id_field = item.id_field;
         let id = stationMetadata[id_field];
+        //yay for inconsistent data
+        id = this.getStandardizedNumericString(id);
         metadata[id] = stationMetadata;
       }
-      console.log(metadata);
-      
-    })
-    .catch((reason: RequestReject) => {
-      if(!reason.cancelled) {
-        console.error(reason.reason);
-        errorPop.notify("error", `Could not retreive station metadata.`);
-      }
+      return metadata;
     });
+    metadataReq.toPromise()
+    .then((data: any) => {
+      console.log(data);
+    });
+    setTimeout(() => {
+      metadataReq.toPromise()
+      .then((data: any) => {
+        console.log(data);
+      });
+    }, 10000);
+    
 
     let data = {
       dataset: null,
@@ -153,10 +162,35 @@ export class DataManagerService {
         promises[1] = mapPromise;
         
         //don't have to wait to set data for each
-        promises[0].then((stationData: any) => {
-          console.log(stationData);
-          //have to do combine with metadata
-          paramService.pushStations(stationData);
+        promises[0].then((stationData: any[]) => {
+          //get metadata
+          metadataReq.toPromise()
+          .then((metadata: any) => {
+            stationData = stationData.map((stationVals: any) => {
+              let stationId = stationVals.station_id;
+              //yay for inconsistent data
+              stationId = this.getStandardizedNumericString(stationId);
+              let stationValue = stationVals.value;
+              let stationMetadata = metadata[stationId];
+              if(stationMetadata) {
+                stationMetadata.value = stationValue;
+                console.log(stationMetadata);
+              }
+              else {
+                console.error(`Could not find metadata for station, station ID: ${stationId}.`);
+              }
+              
+              return stationMetadata;
+            });
+            console.log(stationData);
+            paramService.pushStations(stationData);
+          })
+          .catch((reason: RequestReject) => {
+            if(!reason.cancelled) {
+              console.error(reason.reason);
+              errorPop.notify("error", `Could not retreive station metadata.`);
+            }
+          });
         })
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
@@ -174,6 +208,7 @@ export class DataManagerService {
             //should push out error raster (raster with empty data)
           }
         });
+        //when both done send loading complete signal
         Promise.all(promises).finally(() => {
           paramService.pushLoading({
             tag: "vis",
@@ -205,6 +240,17 @@ export class DataManagerService {
       }
     });
 
+  }
+
+  //of course the data has no standardization, so enforce a standard pattern for numeric strings here
+  getStandardizedNumericString(id: string): string {
+    //standardize numeric values by converting to a number and back to a string (will remove trailing .0 if exists)
+    let standardized = Number(id).toString();
+    //if non-numeric just reflect
+    if(standardized == "NaN") {
+      standardized = id;
+    }
+    return standardized;
   }
 
 
