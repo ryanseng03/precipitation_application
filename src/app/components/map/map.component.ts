@@ -248,7 +248,6 @@ export class MapComponent implements OnInit {
     //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
       if(stations) {
-        console.log(stations);
         this.active.data.stations = stations;
         this.constructMarkerLayerPopulateMarkerData(stations);
       }
@@ -277,14 +276,14 @@ export class MapComponent implements OnInit {
         }
         //add rainfall layer to map as default
         map.addLayer(this.dataLayers["0"]);
-  
+
         //for now at least only one layer, make sure to replace if multiple
         this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
-  
+
         //install hover handler (requires raster to be set to work)
         let hoverTag = this.paramService.registerMapHover(map);
         this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
-  
+
         //uninstall current hook and replace with update hook that updates raster
         rasterHook.uninstall();
         rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {

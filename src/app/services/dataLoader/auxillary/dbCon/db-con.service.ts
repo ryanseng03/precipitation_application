@@ -130,6 +130,13 @@ export abstract class RequestResults {
       //does this complete the stream?
       this.sub.unsubscribe();
     }
+    else {
+      let reject: RequestReject = {
+        cancelled: true,
+        reason: null
+      }
+      this.reject(reject);
+    }
     if(this.timeout) {
       clearTimeout(this.timeout);
     }

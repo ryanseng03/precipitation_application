@@ -1,4 +1,4 @@
-<div *ngIf="loading; else loaded">
+<div *ngIf="selectedStation === null; else loaded">
   <h2>
     Select a station to load time series data
   </h2>
@@ -6,8 +6,9 @@
 
 <ng-template #loaded>
   <app-rainfall-graph
-    [selected]="selected"
-    [data]="data"
+    [complete]="complete"
+    [station]="selectedStation"
+    [source]="source.asObservable()"
     [date]="date"
     [width]="width">
   </app-rainfall-graph>

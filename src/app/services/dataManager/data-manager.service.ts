@@ -89,13 +89,7 @@ export class DataManagerService {
     .then((data: any) => {
       console.log(data);
     });
-    setTimeout(() => {
-      metadataReq.toPromise()
-      .then((data: any) => {
-        console.log(data);
-      });
-    }, 10000);
-    
+
 
     let data = {
       dataset: null,
@@ -111,11 +105,13 @@ export class DataManagerService {
         let dateRangeRes = dataRequestor.getDateRange(dataset);
         let dateRangePromise = dateRangeRes.toPromise();
         dateRangePromise.then((dateRange: any) => {
+          console.log(dateRange);
           //TEMP
           dateRange = {
             start: Moment("1990-12"),
             end: Moment("2019-12")
           }
+          data.dateRange = dateRange;
           paramService.pushDateRange(dateRange);
         })
         .catch((reason: RequestReject) => {
@@ -126,7 +122,7 @@ export class DataManagerService {
         });
         //emit date range data to trigger other stuff
         //should create emmitter for date range
-  
+
         //reset selected station and timeseries data
         paramService.pushSelectedStation(null);
         paramService.pushStationTimeseries(null);
@@ -141,16 +137,16 @@ export class DataManagerService {
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
       if(date) {
         data.date = date;
-  
+
         let dataset = data.dataset;
         let date_s: string = this.dateHandler.dateToString(date, data.dataset.period);
         dataset.date = date_s;
-  
+
         paramService.pushLoading({
           tag: "vis",
           loading: true
         });
-  
+
         let promises: [Promise<any>, Promise<any>] = [null, null];
 
         let stationRes = dataRequestor.getStationData(data.dataset);
@@ -160,7 +156,7 @@ export class DataManagerService {
         let mapRes = dataRequestor.getRaster(data.dataset);
         let mapPromise = mapRes.toPromise();
         promises[1] = mapPromise;
-        
+
         //don't have to wait to set data for each
         promises[0].then((stationData: any[]) => {
           //get metadata
@@ -174,15 +170,13 @@ export class DataManagerService {
               let stationMetadata = metadata[stationId];
               if(stationMetadata) {
                 stationMetadata.value = stationValue;
-                console.log(stationMetadata);
               }
               else {
                 console.error(`Could not find metadata for station, station ID: ${stationId}.`);
               }
-              
+
               return stationMetadata;
             });
-            console.log(stationData);
             paramService.pushStations(stationData);
           })
           .catch((reason: RequestReject) => {
@@ -218,25 +212,79 @@ export class DataManagerService {
       }
     });
 
+    let test = {
+      stations: {
+        periods: ["month", "day"]
+      }
+    }
+
+    //NEED TO CANCEL QUERIES
+
     //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
+      data.selectedStation = station;
       if(station) {
         paramService.pushLoading({
           tag: "timeseries",
           loading: true
         });
-        let { includeStations, includeMap, ...params } = data.dataset;
-        let start_s: string = this.dateHandler.dateToString(data.date, params.period);
-        let end_s: string = this.dateHandler.dateToString(data.date, params.period);
-        let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, params);
-        let timeseriesPromise = timeseriesRes.toPromise();
-        timeseriesPromise.then((timeseriesData: any) => {
-          paramService.pushStationTimeseries(timeseriesData);
-          paramService.pushLoading({
-            tag: "timeseries",
-            loading: false
+        //let { includeStations, includeMap, ...params } = data.dataset;
+        let params = Object.assign(data.dataset);
+        delete params.date;
+        params.station_id = station.skn;
+        params.period = "day";
+        console.log(params, station);
+
+        //chunk queries by year
+        let startDate = data.dateRange.start;
+        let endDate = data.dateRange.end;
+        let date = startDate.clone();
+        while(date.isSameOrBefore(endDate)) {
+          let start_s: string = this.dateHandler.dateToString(date, params.period);
+          date.add(1, "year");
+          let end_s: string = this.dateHandler.dateToString(date, params.period);
+          //note query is [)
+          let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, params);
+
+          timeseriesRes.transform((timeseriesData: any[]) => {
+            if(timeseriesData.length > 0) {
+              let transformed = {
+                stationId: timeseriesData[0].station_id,
+                period: timeseriesData[0].period,
+                values: timeseriesData.map((item: any) => {
+                  return {
+                    value: item.value,
+                    date: Moment(item.date)
+                  }
+                })
+              }
+              return transformed;
+            }
+            else {
+              return null;
+            }
           });
-        });
+
+          let timeseriesPromise = timeseriesRes.toPromise();
+          timeseriesPromise.then((timeseriesData: any) => {
+            if(timeseriesData) {
+              console.log(timeseriesData);
+              paramService.pushStationTimeseries(timeseriesData);
+            }
+          })
+          .catch((reason: RequestReject) => {
+            //if failed not cancelled print reason to stderr
+            if(!reason.cancelled) {
+              console.error(reason.reason);
+            }
+          })
+          .finally(() => {
+            paramService.pushLoading({
+              tag: "timeseries",
+              loading: false
+            });
+          });
+        }
       }
     });
 
