@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import * as allSettled from "promise.allsettled";
+allSettled.shim();
 
 @Component({
   selector: 'app-root',

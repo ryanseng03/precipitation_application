@@ -23,6 +23,27 @@ export class DateManagerService {
     year: "YYYY"
   }];
 
+  private periodPrecedent = ["second", "minute", "hour", "day", "month", "year"]
+
+  getPeriodOffset(period: Period, offset: number) {
+    let offsetPeriod = null;
+    let periodIndex = this.periodPrecedent.indexOf(period);
+    let offsetIndex = periodIndex + offset;
+    if(periodIndex >= 0 && offsetIndex < this.periodPrecedent.length) {
+      offsetPeriod = this.periodPrecedent[offsetIndex];
+    }
+    return offsetPeriod;
+  }
+
+  getHigherPeriods(period: Period) {
+    let higherPeriods = [];
+    let periodIndex = this.periodPrecedent.indexOf(period);
+    if(periodIndex >= 0) {
+      higherPeriods = this.periodPrecedent.slice(periodIndex + 1);
+    }
+    return higherPeriods;
+  }
+
   dateToString(date: Moment, period: Period, fancy: boolean = false): string {
     let format = this.periodToFormat(period, fancy);
     return date.format(format);

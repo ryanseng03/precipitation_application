@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 import { SiteValue, SiteInfo } from 'src/app/models/SiteMetadata';
 import { FormControl } from '@angular/forms';
@@ -14,19 +14,48 @@ import { Observable } from 'rxjs';
 })
 export class RainfallGraphComponent implements OnInit {
   loading: boolean = false;
-  private data: any = {};
+  data: any = {};
+
+  w = 900;
+  h = 500;
+
+  rangeData = {
+    periodRanges: {
+      day: ["month", "year", "all"],
+      month: ["year", "all"]
+    },
+    buttonData: {
+      month: "Zoom to month",
+      year: "Zoom to year",
+      all: "All station data"
+    },
+    ranges: {
+      month: null,
+      year: null,
+      all: null
+    }
+  };
+
+  periodLableMap = {
+    day: "Daily",
+    month: "Monthly"
+  }
+
+  zoomData: any = {}
 
   @Input() set width(width: number) {
     let minWidth = 600;
     let h2wRat = 5/9;
-    let w = Math.max(minWidth, width);
-    let h = w * h2wRat;
-    this.graph.layout.height = h;
-    this.graph.layout.width = w;
+    this.w = Math.max(minWidth, width);
+    this.h = this.w * h2wRat;
+    for(let period in this.data) {
+      let graph = this.data[period].graph;
+      graph.layout.height = this.h;
+      graph.layout.width = this.w;
+    }
   }
 
   __station: any = null;
-
   @Input() set station(station: SiteInfo) {
     if(station) {
       //reset data
@@ -35,200 +64,51 @@ export class RainfallGraphComponent implements OnInit {
     this.__station = station;
   }
 
-  @Input() set complete(complete: boolean) {
-    let nullIndex = this.graph.data[0].y.findIndex((value) => value === null);
-    console.log(nullIndex);
-    console.log(this.graph.data[0].x[nullIndex]);
-  }
+  @Input() complete;
 
   @Input() source: Observable<any>;
 
-  // @Input() set ssource(source: Observable<any>) {
-
-
-  //   //the set range should be determined by the dataset, hardcode for now
-
-
-  //   if(data) {
-  //     this.value = data;
-
-  //     //range of dates for data set, this should be updated when data set changes
-  //     //hardcode for now
-  //     let dateRange = [Moment("1991-01-01"), Moment("2019-12-31")];
-
-
-  //     //need to map dates from total min and max, global min is beginning of year, global max is current date, rest can be taken as subsets
-  //     //total range
-
-  //     this.dates = this.dateHandler.expandDates(dateRange[0], dateRange[1], "day");
-
-  //     //map date strings to moments
-  //     //note the date field will probably be replaced with moments once settled
-  //     let valueDates = data.map((value: SiteValue) => {
-  //       return Moment(value.date);
-  //     });
-
-  //     //initialize values array with nulls
-  //     this.values = new Array(this.dates.length).fill(null);
-  //     //set values based on indexed dates from value docs
-  //     for(let item of data) {
-  //       let date = Moment(item.date);
-  //       let index = this.getDateIndex(date, "day");
-  //       this.values[index] = item.value;
-  //     }
-
-  //     //set station value range slice
-  //     let valueMin = Moment.min(valueDates);
-  //     let valueMax = Moment.max(valueDates);
-  //     let slice = this.getSliceRange(valueMin, valueMax, "day");
-  //     this.rangeOpts[this.rangeOpts.length - 1].dateSlice = slice;
-  //     //set focused slices
-  //     this.createFocusSlices();
-  //     //update the graph and unset loading flag
-  //     this.updateGraph();
-  //     this.loading = false;
-  //   }
-  // }
 
   __date: Moment.Moment = null;
   @Input() set date(date: Moment.Moment) {
     this.__date = date;
-    // //only if dates have been initialized
-    // if(this.dates) {
-    //   //update the date slices and graph when focus date changes
-    //   this.createFocusSlices();
-    //   this.updateGraph();
-    // }
-  }
-
-
-
-  config = {
-    responsive: true
-  }
-
-  public graph = {
-    data: [
-        {
-          x: [],
-          y: [],
-          type: "scatter",
-          mode: "lines+points",
-          connectgaps: false,
-          marker: {
-            color: "blue"
-          }
-        }
-    ],
-    layout: {
-      width: 900,
-      height: 500,
-      title: "",
-      xaxis: {
-        title: {
-          text: "Date",
-        },
-      },
-      yaxis: {
-        title: {
-          text: "Rainfall (mm)",
-        }
+    //just get current month, and year
+    //if subdaily data available need to swap this to get lowest available period as well and get all higher level periods
+    let monthRange = [date.startOf("month").toISOString(), date.endOf("month").toISOString()];
+    let yearRange = [date.startOf("year").toISOString(), date.endOf("year").toISOString()]
+    this.rangeData.ranges.month = monthRange;
+    this.rangeData.ranges.year = yearRange;
+    //set ranges for all graphs with zooms applied
+    for(let period in this.zoomData) {
+      //if there is data for the period apply zoom
+      if(this.data[period]) {
+        this.setRange(period, this.zoomData[period]);
       }
     }
-  };
-
-  control = new FormControl(0);
-
-  //remember to swtich this to multiple periods
-
-  //need to add gaps in data when no data
-  //have x axis pre-populated with dates (change when focused date changes)
-  public rangeOpts = [{
-    period: "month",
-    display: "Current Month",
-    dateSlice: [],
-    value: 0
-  },
-  {
-    period: "year",
-    display: "Current Year",
-    dateSlice: [],
-    value: 1
-  },
-  {
-    display: "All Values",
-    dateSlice: [],
-    value: 2
-  }];
-
-
-  // createFocusSlices(): void {
-  //   //exclude last entry for full range
-  //   for(let i = 0; i < this.rangeOpts.length - 1; i++) {
-  //     let rangePeriod: Moment.unitOfTime.StartOf = <Moment.unitOfTime.StartOf>this.rangeOpts[i].period;
-
-  //     //STARTOF AND ENDOF METHODS MUTATE MOMENT AND RETURNS ITSELF
-  //     //why? moment.js is so frustrating sometimes
-  //     //I'm all for mutability, but sometimes it just doesn't make sense...
-
-  //     //min date max of beginning of focused year or set min
-  //     let minDate = this.__date.clone().startOf(rangePeriod);
-  //     minDate = Moment.max(minDate, this.dates[0]);
-
-  //     //max date min of end of focused year or set range
-  //     let maxDate = this.__date.clone().endOf(rangePeriod);
-  //     maxDate = Moment.min([maxDate, this.dates[this.dates.length - 1]]);
-
-  //     //note day period temp, also need to implement monthly graphs
-  //     //use var for extensibility
-  //     let period: Moment.unitOfTime.Diff = "day";
-  //     let sliceRange = this.getSliceRange(minDate, maxDate, period);
-  //     this.rangeOpts[i].dateSlice = sliceRange;
-  //   }
-  // }
-
-  // getSliceRange(start: Moment.Moment, end: Moment.Moment, period: Moment.unitOfTime.Diff): [number, number] {
-  //   //start index based on period defference from range min to month min
-  //   let startIndex = this.getDateIndex(start, period);
-  //   //add one since will return index of last element, slice exclusive on right
-  //   let endIndex = this.getDateIndex(end, period) + 1;
-
-  //   return [startIndex, endIndex];
-  // }
-
-  // getDateIndex(date: Moment.Moment, period: Moment.unitOfTime.Diff): number {
-  //   let rangeMin = this.dates[0];
-  //   let dateIndex = date.diff(rangeMin, period);
-  //   return dateIndex;
-  // }
-
-
-
-
-  // value: SiteValue[] = null;
-
-  constructor(private paramService: EventParamRegistrarService, private dateHandler: DateManagerService) {
-    // this.control.valueChanges.subscribe((value: string) => {
-    //   this.updateGraph();
-    // });
   }
 
-  // updateGraph() {
-  //   if(this.value != null) {
-  //     this.graph.layout.title = `Station ${this.__selected.skn}`;
-  //     let index = this.control.value;
-  //     this.graph.data[0].y = this.values.slice(...this.rangeOpts[index].dateSlice);
-  //     //can make this more efficient by storing array of strings
-  //     this.graph.data[0].x = this.dates.slice(...this.rangeOpts[index].dateSlice).map((item) => item.format("YYYY-MM-DD"));
-  //     let nullI = this.graph.data[0].y.indexOf(null);
-  //     console.log(this.graph.data[0].x[nullI])
-  //   }
 
-  // }
+
+  setRange(dataPeriod: string, rangePeriod: string) {
+    //log zoom applied
+    this.zoomData[dataPeriod] = rangePeriod;
+    this.data[dataPeriod].graph.layout.xaxis = {
+      range: this.rangeData.ranges[rangePeriod],
+      title: {
+        text: "Date",
+      }
+    }
+  }
+
+
+  constructor(private dateHandler: DateManagerService, private cd: ChangeDetectorRef) {
+
+  }
+
+
 
   ngOnInit() {
     this.source.subscribe((data: any) => {
-      console.log(data);
       //deconstruct data
       const { period, stationId, values } = data;
       //ignore if station id is wrong
@@ -237,10 +117,38 @@ export class RainfallGraphComponent implements OnInit {
         if(periodData === undefined) {
           periodData = {
             dates: [],
-            dateStrings: [],
-            values: []
+            graph: {
+              data: [
+                  {
+                    x: [],
+                    y: [],
+                    type: "scatter",
+                    mode: "lines+points",
+                    connectgaps: false,
+                    marker: {
+                      color: "blue"
+                    }
+                  }
+              ],
+              layout: {
+                width: this.w,
+                height: this.h,
+                title: `${this.__station.name} ${this.periodLableMap[period]} Data`,
+                xaxis: {
+                  title: {
+                    text: "Date",
+                  },
+                },
+                yaxis: {
+                  title: {
+                    text: "Rainfall (mm)",
+                  }
+                }
+              }
+            }
           }
           this.data[period] = periodData;
+          this.setRange(period, this.zoomData[period]);
         }
 
         let chunkStartDate = null;
@@ -278,9 +186,9 @@ export class RainfallGraphComponent implements OnInit {
             let newValues = new Array(newDates.length).fill(null);
             //add new dates to start of date arrays
             periodData.dates = newDates.concat(periodData.dates);
-            periodData.dateStrings = newDateStrings.concat(periodData.dateStrings);
+            periodData.graph.data[0].x = newDateStrings.concat(periodData.graph.data[0].x);
             //extend values array
-            periodData.values = newValues.concat(periodData.values);
+            periodData.graph.data[0].y = newValues.concat(periodData.graph.data[0].y);
             startDate = chunkStartDate;
           }
           if(chunkEndDate.isAfter(endDate)) {
@@ -295,9 +203,9 @@ export class RainfallGraphComponent implements OnInit {
             let newValues = new Array(newDates.length).fill(null);
             //add new dates to end of date arrays
             periodData.dates = periodData.dates.concat(newDates);
-            periodData.dateStrings = periodData.dateStrings.concat(newDateStrings);
+            periodData.graph.data[0].x = periodData.graph.data[0].x.concat(newDateStrings);
             //extend values array
-            periodData.values = periodData.values.concat(newValues);
+            periodData.graph.data[0].y = periodData.graph.data[0].y.concat(newValues);
             endDate = chunkEndDate;
           }
         }
@@ -314,12 +222,10 @@ export class RainfallGraphComponent implements OnInit {
           let newValues = new Array(newDates.length).fill(null);
           //add new dates to start of date arrays
           periodData.dates = newDates;
-          periodData.dateStrings = newDateStrings;
+          periodData.graph.data[0].x = newDateStrings;
           //extend values array
-          periodData.values = newValues;
+          periodData.graph.data[0].y = newValues;
         }
-
-
 
         //set values
         for(let item of values) {
@@ -327,17 +233,8 @@ export class RainfallGraphComponent implements OnInit {
           const {value, date} = item;
           //get date index based on period offset from startDate
           let index = (<Moment.Moment>date).diff(startDate, period, false);
-          periodData.values[index] = value;
+          periodData.graph.data[0].y[index] = value;
         }
-
-        console.log(periodData);
-
-        //TEMP
-        this.graph.data[0].x = periodData.dateStrings;
-        this.graph.data[0].y = periodData.values;
-
-
-
       }
     });
   }

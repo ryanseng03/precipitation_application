@@ -68,6 +68,7 @@
     "ng-bootstrap": "^1.6.3",
     "patch-package": "^6.4.7",
     "plotly.js": "^1.57.0",
+    "promise.allsettled": "^1.0.5",
     "rasterizehtml": "^1.3.0",
     "rxjs": "~6.3.3",
     "stream": "0.0.2",

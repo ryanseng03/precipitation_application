@@ -64,8 +64,6 @@ export class EventParamRegistrarService {
   }
 
   pushFilteredStations(stations: any[]): void {
-    //reset selected site
-    this.pushSelectedStation(null);
     this.filteredStationsSource.next(stations);
   }
 

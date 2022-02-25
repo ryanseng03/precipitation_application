@@ -37,17 +37,21 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
         values: values
       });
     }
+    console.log(this.selectedStation);
+    //delay to give element refs time to update, then trigger station select in table if it exists
+    setTimeout(() => {
+      this.selected = this.selectedStation;
+    }, 0);
+
   }
 
-
+  selectedStation = null;
   @Input() set selected(station: SiteInfo) {
+    this.selectedStation = station;
     if(station) {
       let index = this.siteMap.get(station);
-      //can unfiltered elements be selected? if so remove error and just ignore
-      if(index === undefined) {
-        console.error(`No mapping for selected site in site table.`);
-      }
-      else {
+      //only select if station exists in table
+      if(index !== undefined) {
         this.selectFromTable(index);
         this.cdr.detectChanges();
       }

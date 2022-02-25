@@ -1,19 +1,10 @@
-
-<!-- <div *ngIf="loading; else loaded;">
-  <app-loading-component></app-loading-component>
+<app-loading-component *ngIf="!complete"></app-loading-component>
+<div *ngFor="let item of data | keyvalue">
+    <div class="button-container" *ngFor="let rangePeriod of rangeData.periodRanges[item.key]">
+      <button mat-flat-button color="primary" (click)="setRange(item.key, rangePeriod)">{{rangeData.buttonData[rangePeriod]}}</button>
+    </div>
+  <plotly-plot [data]="item.value.graph.data" [layout]="item.value.graph.layout"></plotly-plot>
 </div>
 
-<ng-template #loaded>
-  <div class="container">
-    <div class="time-range-dropdown">
-      <mat-select disableOptionCentering="true" [formControl]="control">
-        <mat-option *ngFor="let opt of rangeOpts" [value]="opt.value">{{opt.display}}</mat-option>
-      </mat-select>
-    </div>
-    <plotly-plot [data]="graph.data" [layout]="graph.layout"></plotly-plot>
-  </div>
-</ng-template> -->
 
-<div class="control-container"></div>
 
-<plotly-plot [data]="graph.data" [layout]="graph.layout"></plotly-plot>

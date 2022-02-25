@@ -97,9 +97,22 @@ export class DataManagerService {
       selectedStation: null,
       dateRange: null
     }
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
+      if(stations && data.selectedStation) {
+        let exists = false;
+        for(let station of stations) {
+          if(station.skn == data.selectedStation.skn) {
+            exists = true;
+            break;
+          }
+        }
+        if(!exists) {
+          paramService.pushSelectedStation(null);
+        }
+      }
+    });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
       if(dataset) {
-        console.log(dataset);
         data.dataset = dataset
         //get dataset range
         let dateRangeRes = dataRequestor.getDateRange(dataset);
@@ -125,7 +138,6 @@ export class DataManagerService {
 
         //reset selected station and timeseries data
         paramService.pushSelectedStation(null);
-        paramService.pushStationTimeseries(null);
       }
     });
 
@@ -212,79 +224,83 @@ export class DataManagerService {
       }
     });
 
-    let test = {
-      stations: {
-        periods: ["month", "day"]
-      }
-    }
 
-    //NEED TO CANCEL QUERIES
-
+    let timeseriesQueries = [];
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
+      //cancel outbound queries and reset query list
+      for(let query of timeseriesQueries) {
+        query.cancel();
+      }
+      timeseriesQueries = [];
       data.selectedStation = station;
       if(station) {
         paramService.pushLoading({
           tag: "timeseries",
           loading: true
         });
-        //let { includeStations, includeMap, ...params } = data.dataset;
-        let params = Object.assign(data.dataset);
-        delete params.date;
-        params.station_id = station.skn;
-        params.period = "day";
-        console.log(params, station);
-
-        //chunk queries by year
+        let timeseriesPromises = [];
         let startDate = data.dateRange.start;
         let endDate = data.dateRange.end;
-        let date = startDate.clone();
-        while(date.isSameOrBefore(endDate)) {
-          let start_s: string = this.dateHandler.dateToString(date, params.period);
-          date.add(1, "year");
-          let end_s: string = this.dateHandler.dateToString(date, params.period);
-          //note query is [)
-          let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, params);
+        let periods = ["month", "day"];
+        for(let period of periods) {
+          let params = Object.assign({}, data.dataset);
+          delete params.date;
+          params.station_id = station.skn;
+          params.period = period;
 
-          timeseriesRes.transform((timeseriesData: any[]) => {
-            if(timeseriesData.length > 0) {
-              let transformed = {
-                stationId: timeseriesData[0].station_id,
-                period: timeseriesData[0].period,
-                values: timeseriesData.map((item: any) => {
-                  return {
-                    value: item.value,
-                    date: Moment(item.date)
-                  }
-                })
+          //chunk queries by year
+          let date = startDate.clone();
+          while(date.isSameOrBefore(endDate)) {
+            let start_s: string = this.dateHandler.dateToString(date, params.period);
+            date.add(1, "year");
+            let end_s: string = this.dateHandler.dateToString(date, params.period);
+            //note query is [)
+            let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, params);
+
+            timeseriesRes.transform((timeseriesData: any[]) => {
+              if(timeseriesData.length > 0) {
+                let transformed = {
+                  stationId: timeseriesData[0].station_id,
+                  period: timeseriesData[0].period,
+                  values: timeseriesData.map((item: any) => {
+                    return {
+                      value: item.value,
+                      date: Moment(item.date)
+                    }
+                  })
+                }
+                return transformed;
               }
-              return transformed;
-            }
-            else {
-              return null;
-            }
-          });
-
-          let timeseriesPromise = timeseriesRes.toPromise();
-          timeseriesPromise.then((timeseriesData: any) => {
-            if(timeseriesData) {
-              console.log(timeseriesData);
-              paramService.pushStationTimeseries(timeseriesData);
-            }
-          })
-          .catch((reason: RequestReject) => {
-            //if failed not cancelled print reason to stderr
-            if(!reason.cancelled) {
-              console.error(reason.reason);
-            }
-          })
-          .finally(() => {
-            paramService.pushLoading({
-              tag: "timeseries",
-              loading: false
+              else {
+                return null;
+              }
             });
-          });
+            timeseriesQueries.push(timeseriesRes);
+
+            let timeseriesPromise = timeseriesRes.toPromise();
+            timeseriesPromise.then((timeseriesData: any) => {
+              if(timeseriesData) {
+                paramService.pushStationTimeseries(timeseriesData);
+              }
+            })
+            .catch((reason: RequestReject) => {
+              //if failed not cancelled print reason to stderr
+              if(!reason.cancelled) {
+                console.error(reason.reason);
+              }
+            });
+
+            timeseriesPromises.push(timeseriesPromise);
+          }
         }
+        //when all timeseries promises are complete push out loading complete signal
+        Promise.allSettled(timeseriesPromises).then(() => {
+          paramService.pushLoading({
+            tag: "timeseries",
+            loading: false
+          });
+        });
       }
     });
 

@@ -250,6 +250,10 @@ export class MapComponent implements OnInit {
       if(stations) {
         this.active.data.stations = stations;
         this.constructMarkerLayerPopulateMarkerData(stations);
+        //reset selected marker ref in case station does not exist
+        // this.selectedMarker = undefined;
+        //attempt to select station previously selected
+        this.selectStation(this.selectedStation);
       }
     });
 
@@ -301,9 +305,26 @@ export class MapComponent implements OnInit {
     });
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
-      if(station) {
-        let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
 
+        this.selectStation(station);
+
+    });
+
+    map.on("layeradd", (addData: any) => {
+      let layer = addData.layer;
+      if(layer.options && layer.options.maxZoom) {
+        map.setMaxZoom(layer.options.maxZoom);
+      }
+    });
+  }
+
+  selectedStation = null;
+  selectStation(station: SiteInfo) {
+    this.selectedStation = station;
+    if(station) {
+      let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
+      //ignore if station doesn't exist
+      if(marker) {
         //stationMarkers.zoomToShowLayer(marker, () => {
         if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
           this.selectedMarker.closePopup();
@@ -320,22 +341,16 @@ export class MapComponent implements OnInit {
         }, 300);
         //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
         //think something about it already moving interferes with the popup repositioning
-        map.once("moveend", () => {
+        this.map.once("moveend", () => {
           if(marker.isPopupOpen && this.selectedMarker === marker) {
             marker.openPopup();
           }
 
-        })
+        });
       }
 
-    });
 
-    map.on("layeradd", (addData: any) => {
-      let layer = addData.layer;
-      if(layer.options && layer.options.maxZoom) {
-        map.setMaxZoom(layer.options.maxZoom);
-      }
-    });
+    }
   }
 
 
