@@ -1,12 +1,12 @@
 <div class="container">
 
-  
+
 
   <!-- <hr> -->
 
   <div class="form-body">
     <h2>
-      Select The Dataset You Would Like to View.
+      Select The Dataset You Would Like to View and Click "Submit".
     </h2>
 
 
@@ -18,79 +18,110 @@
     <div class="control-group">
       <div class="control">
         <mat-form-field>
-          <mat-label>Data Type</mat-label>
+          <mat-label>Dataset</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="dataset.datatype.control">
-            <mat-option [value]="dataset.datatype.value">
-              {{dataset.datatype.label}}
-            </mat-option>
-            <mat-option [value]="'temperature'">
-              Temperature
+            [formControl]="controls.dataset">
+            <mat-option
+              *ngFor="let dataset of getDatasetData()"
+              [value]="dataset.value"
+              matTooltipPosition="right"
+              [matTooltip]="dataset.description">
+              {{dataset.label}}
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="right"
+          [matTooltip]="selectorDescriptions.dataset"
+          inline="true">
+          help
+        </mat-icon>
+        <!-- <div class="current-buffer">
+          Current: Test
+        </div> -->
+
       </div>
 
       <div class="control">
         <mat-form-field>
-          <mat-label>Time Period</mat-label>
+          <mat-label>{{periods.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="dataset.period.control">
-            <mat-option [value]="dataset.period.value">
-              {{dataset.period.label}}
+            [formControl]="controls.period">
+            <mat-option
+              *ngFor="let period of periodAvailability[controls.dataset.value]"
+              [value]="periods.values[period].value"
+              matTooltipPosition="right"
+              [matTooltip]="periods.values[period].description">
+              {{periods.values[period].label}}
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="right"
+          [matTooltip]="periods.description"
+          inline="true">
+          help
+        </mat-icon>
       </div>
 
+
+    </div>
+
+    <div *ngIf="getPeriodValid()">
       <div class="control">
         <h4>
           Dataset Coverage
         </h4>
-        <p *ngIf="dateData != null">
-          {{dateData.start}} - {{dateData.end}}
-        </p>
+        {{getDateRangeLabel()}}
       </div>
-    </div>
 
-    <div class="spacer"></div>
-
-    <!-- remember that all of this stuff needs to be genericized -->
-    <div class="control-group" *ngIf="dataset.raster">
-      <h3>
-        Data Grid
-      </h3>
       <div class="spacer"></div>
-    </div>
 
-
-
-    <div class="control-group" *ngIf="dataset.station">
-      <h3>
-        Data Stations
-      </h3>
-      <div class="control-subgroup">
-        <div class="control">
-          <mat-form-field>
-            <mat-label>Fill Type</mat-label>
-            <mat-select
-              disableOptionCentering="true"
-              [formControl]="dataset.station.fill.control">
-              <mat-option [value]="dataset.station.fill.value">
-                {{dataset.station.fill.label}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+      <div class="control-group" *ngIf="getDataStationsAvailable()">
+        <h3>
+          Data Stations
+        </h3>
+        <div class="control-subgroup">
+          <div class="control">
+            <mat-form-field>
+              <mat-label>{{fills.label}}</mat-label>
+              <mat-select
+                disableOptionCentering="true"
+                [formControl]="controls.fill">
+                <mat-option
+                  *ngFor="let fill of getFillData()"
+                  [value]="fill.value"
+                  matTooltipPosition="right"
+                  [matTooltip]="fill.description">
+                  {{fill.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="fills.description"
+              inline="true">
+              help
+            </mat-icon>
+          </div>
         </div>
+        <div class="spacer"></div>
       </div>
-      <div class="spacer"></div>
     </div>
+
+
   </div>
   <div class="spacer"></div>
 
-  <button mat-raised-button color="primary" (click)="updateDataSet()" [disabled]="!valid">
+  <button mat-raised-button color="primary" (click)="updateDataset()" [disabled]="!checkValid()">
     Submit
   </button>
 </div>

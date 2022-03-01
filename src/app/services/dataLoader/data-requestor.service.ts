@@ -32,12 +32,12 @@ export class DataRequestorService {
     return response;
   }
 
-  getDateRange(properties: any, delay?: number): RequestResults {
-    let query = this.propertiesToQuery("hcdp_station_value_range", properties);
-    let timingMessage = `Retreived raster data for ${properties.date}`;
-    let response = this.basicQueryDispatch(query, delay, timingMessage);
-    return response;
-  }
+  // getDateRange(properties: any, delay?: number): RequestResults {
+  //   let query = this.propertiesToQuery("hcdp_station_value_range", properties);
+  //   let timingMessage = `Retreived date range data`;
+  //   let response = this.basicQueryDispatch(query, delay, timingMessage);
+  //   return response;
+  // }
 
   getRaster(properties: any, delay?: number): RequestResults {
     let start = new Date().getTime();
@@ -64,6 +64,8 @@ export class DataRequestorService {
   }
 
   getStationData(properties: any, delay?: number): RequestResults {
+    properties = Object.assign({}, properties);
+    delete properties.dateRange;
     let query = this.propertiesToQuery("hcdp_station_value", properties);
     console.log(query);
     let timingMessage = `Retreived station data for ${properties.date}`;

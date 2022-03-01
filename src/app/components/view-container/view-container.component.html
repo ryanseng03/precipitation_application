@@ -2,9 +2,9 @@
   <div class="scroll-hide">
     <div #viewContainer class="view-container" (scroll)="containerScroll($event)">
       <div #dateControlComponent class="date-focus-control" [ngStyle]="{width: getDateControlWidth()}">
-        <app-date-focus *ngIf="dataset && dateRange"
-          [lower]="dateRange.start"
-          [upper]="dateRange.end"
+        <app-date-focus *ngIf="dataset"
+          [lower]="dataset.dateRange[0]"
+          [upper]="dataset.dateRange[1]"
           [period]="dataset.period"
           [date]="date"
           (dateChange)="setDate($event)">

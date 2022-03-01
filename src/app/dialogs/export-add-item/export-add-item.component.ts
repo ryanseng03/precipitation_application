@@ -2,33 +2,10 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import Moment from "moment";
-import { timestamp } from 'rxjs/operators';
-import { ValueData } from 'src/app/models/Dataset';
+
 import { ResourceReq, ExportData, ExportInfo } from 'src/app/models/exportData';
 import { Period, StringMap } from 'src/app/models/types';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
-
-// interface ExportData {
-//   datatype: string,
-//   dates: {
-//     period: Period,
-//     start: Moment.Moment,
-//     end: Moment.Moment
-//   },
-//   //this should be moved to variable stuff
-//   tier: string,
-//   //need to change this a bit for other groups
-//   files: {
-//     stations: {
-//       group: StringMap,
-//       data: StringMap[]
-//     },
-//     raster: {
-//       group: StringMap,
-//       data: StringMap[]
-//     }
-//   }
-// }
 
 @Component({
   selector: 'app-export-add-item',
@@ -37,402 +14,1023 @@ import { DateManagerService } from 'src/app/services/dateManager/date-manager.se
 })
 export class ExportAddItemComponent {
 
-  // item: ExportItem;
-  // exportItems: ExportItem[];
 
-  //choices should come from external object
-  //date from indicator if NRT or updated if possible
-  dataset = {
-    datatype: {
-      label: "Rainfall",
-      value: "rainfall",
-      control: new FormControl("rainfall")
-    },
-    period: {
-      options: [{
-        label: "Monthly",
-        value: "month"
-      }, {
-        label: "Daily",
-        value: "day"
-      }],
-      control: new FormControl("month")
-    },
-    dates: {
-      range: [Moment("1990-12"), Moment("2019-12")],
-      selected: [Moment("1990-12"), Moment("2019-12")]
-    },
-    advanced: {
-      control: new FormControl(false),
-      tier: {
-        label: "Tier 0",
-        value: "0",
-        control: new FormControl("0")
-      }
-    }
+  //always datatype obviously
+  //just expand out properties specific to a certain type of file for simplicity
+  //note should probably change dir mapping to do this too (group together different fill types), will streamline things a lot
+  properties = {
+    rainfall: ["production", "period", "extent"],
+    temperature: ["aggregation", "period", "extent"]
   }
 
-  //group all options
-  getExportInfo(): ExportInfo {
-    let period = this.dataset.period.control.value;
-    let periodLabel: string;
-    for(let item of this.dataset.period.options) {
-      if(item.value === period) {
-        periodLabel = item.label;
-        break;
-      }
-    }
-    //extent is the only base thing that doesnt have, other things are "types"
-    let info: ExportInfo = {
-      datatypeLabel: "Rainfall",
-      datatype: this.dataset.datatype.control.value,
-      dates: {
-        periodLabel: periodLabel,
-        period: period,
-        start: this.dataset.dates.selected[0],
-        end: this.dataset.dates.selected[1]
+  selectorDescriptions = {
+    dataset: "Select the type of data you would like to download. Hover over an option for a description of the data set.",
+    period: "The periodicity of data collection. For example, monthly data will be collected and aggregated for each month.",
+    dates: "Select the date range you are interested in. All available data files between the provided start and end dates (inclusive at both ends) will be provided.",
+    files: "These are the types of data files available for the selected dataset and period. Select the files you are interested in downloading.",
+    extent: "Select the spatial coverages of the file. Multiple extents may be selected where available"
+  }
+
+  test = {
+    rainfall: {
+      day: {
+        dates: [Moment("1990-01-01"), Moment("2019-01-01")],
+        files: {
+          station_data_raw: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          },
+          station_data_partial: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          }
+        }
       },
-      tier: this.dataset.advanced.tier.control.value,
-      files: {
-        stations: {
-          group: {
-            group: "stations",
-            type: "values"
+      month: {
+        dates: [Moment("1990-01"), Moment("2019-01")],
+        files: {
+          data_map: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
           },
-          data: []
+          se: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          },
+          anomaly: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          },
+          anomaly_se: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          },
+          metadata: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          },
+          station_data_raw: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          },
+          station_data_partial: {
+            extents: ["statewide", "bi", "mn", "oa", "ka"],
+            default: "statewide"
+          }
+        }
+      }
+    },
+    legacy_rainfall: {
+      month: {
+        data_map: {
+          extents: ["statewide"],
+          default: "statewide"
+        }
+      }
+    },
+    tmin: {},
+    tmax: {},
+    tmean: {}
+  }
+
+  data3 = {
+    rainfall: {
+      new: {
+        day: {
+          statewide: {
+            dates: [Moment("1990-01-01"), Moment("2019-01-01")],
+            files: ["station_data_raw", "station_data_partial"]
+          },
+          bi: ["station_data_raw", "station_data_partial"],
+          ka: ["station_data_raw", "station_data_partial"],
+          mn: ["station_data_raw", "station_data_partial"],
+          oa: ["station_data_raw", "station_data_partial"]
         },
-        raster: {
-          group: {
-            group: "raster",
-            type: "values"
-          },
-          data: []
+        month: {
+          statewide: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
+          bi: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
+          ka: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
+          mn: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
+          oa: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"]
+        }
+      },
+      legacy: {
+        month: {
+          statewide: ["data_map"]
+        }
+      }
+    },
+    temperature: {
+      min: {
+        day: {
+          statewide: ["station_data_raw", "metadata", "data_map", "se"],
+          bi: ["metadata", "data_map", "se"],
+          ka: ["metadata", "data_map", "se"],
+          mn: ["metadata", "data_map", "se"],
+          oa: ["metadata", "data_map", "se"]
+        },
+        month: {
+          statewide: ["station_data_raw", "metadata", "data_map", "se"]
+        }
+      },
+      max: {
+        day: {
+          statewide: ["station_data_raw", "metadata", "data_map", "se"],
+          bi: ["metadata", "data_map", "se"],
+          ka: ["metadata", "data_map", "se"],
+          mn: ["metadata", "data_map", "se"],
+          oa: ["metadata", "data_map", "se"]
+        },
+        month: {
+          statewide: ["station_data_raw", "metadata", "data_map", "se"]
+        }
+      },
+      mean: {
+        day: {
+          statewide: ["station_data_raw", "metadata", "data_map", "se"],
+          bi: ["metadata", "data_map", "se"],
+          ka: ["metadata", "data_map", "se"],
+          mn: ["metadata", "data_map", "se"],
+          oa: ["metadata", "data_map", "se"]
+        },
+        month: {
+          statewide: ["station_data_raw", "metadata", "data_map", "se"]
         }
       }
     }
-
-
-    for(let fill in this.stationFiles) {
-      let fileData = this.stationFiles[fill];
-      if(fileData.control.value && fileData.valid) {
-        let label = fileData.label;
-        info.files.stations.data.push({
-          label: label,
-          data: {
-            fill: fill
-          }
-        });
-      }
-    }
-    for(let type in this.rasterFiles) {
-      let fileData = this.rasterFiles[type];
-      if(fileData.control.value && fileData.valid) {
-        let label = fileData.label;
-        info.files.raster.data.push({
-          label: label,
-          data: {
-            extent: "state",
-            type: type
-          }
-        });
-      }
-      
-    }
-    return info;
   }
 
 
-  // datasets = [{
-  //   datatype: "rainfall",
-  //   timeperiod: "month",
-  //   tier: "t0",
-  //   dates: [Moment("1990-12"), Moment("2019-12")],
-  //   files: {
-  //     raster: ["partial"],
-  //     station: ["raster", "stderr", "anomaly", "loocv", "metadata"]
-  //   }
-  // },
-  // {
-  //   datatype: "rainfall",
-  //   timeperiod: "day",
-  //   tier: "t0",
-  //   dates: [Moment("1990-12"), Moment("2019-12")],
-  //   files: {
-  //     raster: ["partial", "unfilled"],
-  //     station: ["raster", "stderr", "anomaly", "loocv", "metadata"]
-  //   }
-  // }]
+  datasets = {
+    rainfall: {
+      label: "Rainfall",
+      value: "rainfall",
+      description: "Rainfall data"
+    },
+    legacy_rainfall: {
+      label: "Legacy Rainfall",
+      value: "legacy_rainfall",
+      description: "Legacy rainfall data based on older methods of production"
+    },
+    tmin: {
+      label: "Maximum Temperature",
+      value: "tmin",
+      description: "Temperature data aggregated to its maximum value over the time period."
+    },
+    tmax: {
+      label: "Minimum Temperature",
+      value: "tmax",
+      description: "Temperature data aggregated to its minimum value over the time period."
+    },
+    tmean: {
+      label: "Mean Temperature",
+      value: "tmean",
+      description: "Temperature data aggregated to its mean value over the time period."
+    }
+  };
 
-  // //use a temporary mapping of the only variable
-  // fileMap = {
-  //   month: {
-  //     station: ["partial"],
-  //     raster: ["raster", "stderr", "anomaly", "loocv", "metadata"]
-  //   },
-  //   day: {
-  //     station: ["partial", "unfilled"],
-  //     raster: []
-  //   }
+
+  periods = {
+    label: "Time Period",
+    values: {
+      day: {
+        label: "Daily",
+        value: "day",
+        description: "Data measured at a daily time scale."
+      },
+      month: {
+        label: "Monthly",
+        value: "month",
+        description: "Data measured at a monthly time scale."
+      }
+    },
+    description: "The time period each data point is measured over."
+  }
+
+  periodAvailability = {
+    rainfall: ["day", "month"],
+    legacy_rainfall: ["month"],
+    tmin: ["day", "month"],
+    tmax: ["day", "month"],
+    tmean: ["day", "month"]
+  }
+
+  extentData = {
+    label: "Spatial Extent",
+    values: {
+      statewide: {
+        label: "Statewide",
+        value: "statewide",
+        description: "Data covering the entire state of Hawaiʻi."
+      },
+      bi: {
+        label: "Hawaiʻi County",
+        value: "bi",
+        description: "Data covering the county of Hawaiʻi."
+      },
+      ka: {
+        label: "Kauai County",
+        value: "ka",
+        description: "Data covering the county of Kauai"
+      },
+      mn: {
+        label: "Maui County",
+        value: "mn",
+        description: "Data covering the county of Maui"
+      },
+      oa: {
+        label: "Honolulu County",
+        value: "oa",
+        description: "Data covering the county of Honolulu"
+      }
+    },
+    description: "The spatial extent the data covers"
+  }
+
+
+  //UPDATE DATES
+  ranges = {
+    rainfall: {
+      day: [Moment("1990-01-01"), Moment("2019-12-31")],
+      month: [Moment("1990-01"), Moment("2019-12")]
+    },
+    legacy_rainfall: {
+      month: [Moment("1990-01"), Moment("2019-12")]
+    },
+    tmin: {
+      day: [Moment("1990-01-01"), Moment("2019-12-31")],
+      month: [Moment("1990-01"), Moment("2019-12")]
+    },
+    tmax: {
+      day: [Moment("1990-01-01"), Moment("2019-12-31")],
+      month: [Moment("1990-01"), Moment("2019-12")]
+    },
+    tmean: {
+      day: [Moment("1990-01-01"), Moment("2019-12-31")],
+      month: [Moment("1990-01"), Moment("2019-12")]
+    }
+  }
+
+  //EXTENTS ALOW MULTIPLE, ADD METADATA, JUST SELECT EACH EXTENT FOR EVERY FILE SELECTED, YA KNOW, GET RID OF GROUPS, ADD FILE TYPES
+  files = {
+    rainfall: {
+      day: [
+        {
+          label: "Station Data (Partial Filled)",
+          value: "station_data_partial",
+          filetype: "csv",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Rainfall station data. This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing values. These are the values used to generate the rainfall maps.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Rainfall station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ],
+      month: [
+        {
+          label: "Rainfall Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded rainfall map representing estimated rainfall values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded rainfall map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Anomaly Map",
+          value: "anomaly",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the production's anomaly values.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Anomaly Standard Error",
+          value: "anomaly_se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the production's anomaly values.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Partial Filled)",
+          value: "station_data_partial",
+          filetype: "csv",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Rainfall station data. This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing values. These are the values used to generate the rainfall maps.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Rainfall station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ]
+    },
+    legacy_rainfall: {
+      month: [
+        {
+          label: "Rainfall Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "A gridded rainfall map representing estimated rainfall values over the area of coverage.",
+          requires: []
+        }
+      ]
+    },
+    tmin: {
+      day: [
+        {
+          label: "Minimum Temperature Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ],
+      month: [
+        {
+          label: "Minimum Temperature Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ]
+    },
+    tmax: {
+      day: [
+        {
+          label: "Minimum Temperature Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ],
+      month: [
+        {
+          label: "Minimum Temperature Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ]
+    },
+    tmean: {
+      day: [
+        {
+          label: "Minimum Temperature Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ],
+      month: [
+        {
+          label: "Minimum Temperature Map",
+          value: "data_map",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Standard Error Map",
+          value: "se",
+          filetype: "tif",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          requires: ["metadata"]
+        },
+        {
+          label: "Metadata and Error Metrics",
+          value: "metadata",
+          filetype: "txt",
+          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          default_extents: ["statewide"],
+          description: "Gridded map product metadata and error metrics.",
+          requires: []
+        },
+        {
+          label: "Station Data (Raw)",
+          value: "station_data_raw",
+          filetype: "csv",
+          extents: ["statewide"],
+          default_extents: ["statewide"],
+          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          requires: []
+        }
+      ]
+    }
+  }
+
+  // datasets = {
+  //   label: "Dataset",
+  //     values: ,
+  //     description: "The type of data you are interested in.",
   // }
 
-  /*
-  [
-    {
-      control: null,
-      default: true,
-      label: "Include Raster Data",
-      info: "Continuous rainfall map for the selected spatial extent at 250m resolution. Provided as a GeoTIFF."
+  fieldData = {
+    datatype: {
+      label: "Datatype",
+      values: {
+        rainfall: {
+          label: "Rainfall",
+          value: "rainfall",
+          description: "Rainfall data"
+        },
+        temperature: {
+          label: "Temperature",
+          value: "temperature",
+          description: "Temperature data"
+        }
+      },
+      description: "The type of data you are interested in.",
     },
-    {
-      control: null,
-      default: true,
-      label: "Include Station Data",
-      info: "Metadata and values for the rainfall stations used to collect data"
+
+    production: {
+      label: "Production",
+      values: {
+        new: {
+          label: "New",
+          value: "new",
+          description: "Current data using the latest methods of production.",
+        },
+        legacy: {
+          label: "Legacy",
+          value: "legacy",
+          description: "Legacy data sets based on older methods of production"
+        }
+      },
+      description: "The production method used to generate the data.",
     },
-    {
-      control: null,
-      default: false,
-      label: "Include Anomaly Map",
-      info: "The ratio of the observed value to the mean monthly value at the same location"
+
+    aggregation: {
+      label: "Aggregation",
+      values: {
+        min: {
+          label: "Minimum",
+          value: "min",
+          description: "Uses the minimum value of the data for the time period."
+        },
+        max: {
+          label: "Maximum",
+          value: "max",
+          description: "Uses the maximum value of the data for the time period."
+        },
+        mean: {
+          label: "Mean",
+          value: "mean",
+          description: "Uses the mean value of the data for the time period."
+        }
+      },
+      description: "The aggregation used for data that falls into a range for a given time period.",
     },
-    {
-      control: null,
-      default: false,
-      label: "Include Standard Error Map",
-      info: ""
+
+    period: {
+      label: "Period",
+      values: {
+        day: {
+          label: "Daily",
+          value: "day",
+          description: "Data measured at a daily time scale."
+        },
+        month: {
+          label: "Monthly",
+          value: "month",
+          description: "Data measured at a monthly time scale."
+        }
+      },
+      description: "The time period each data point is measured over.",
     },
-    {
-      control: null,
-      default: false,
-      label: "Include LOOCV Error Metrics",
-      info: "Leave one out cross-validation metrics."
-    },
-    {
-      control: null,
-      default: false,
-      label: "Include Metadata",
-      info: ""
+
+    extent: {
+      label: "Spatial Extent",
+      values: {
+        statewide: {
+          label: "Statewide",
+          value: "statewide",
+          description: "Data covering the entire state of Hawaiʻi."
+        },
+        bi: {
+          label: "Hawaiʻi County",
+          value: "bi",
+          description: "Data covering the county of Hawaiʻi."
+        },
+        ka: {
+          label: "Kauai County",
+          value: "ka",
+          description: "Data covering the county of Kauai"
+        },
+        mn: {
+          label: "Maui County",
+          value: "mn",
+          description: "Data covering the county of Maui"
+        },
+        oa: {
+          label: "Honolulu County",
+          value: "oa",
+          description: "Data covering the county of Honolulu"
+        }
+      },
+      description: "The spatial extent the data covers"
     }
-  ]
-  */
-
-
-  selected = {
-    raster: 0,
-    station: 0
   };
 
-  stationFileTags: string[];
-  stationFiles = {
-    partial: {
-      valid: false,
-      label: "Partial Filled Station Data",
-      control: new FormControl(false),
-      disabled: false
-    },
-    unfilled: {
-      valid: false,
-      label: "Unfilled Station Data",
-      control: new FormControl(false),
-      disabled: false
-    },
-    filled: {
-      valid: false,
-      label: "Filled Station Data",
-      control: new FormControl(false),
-      disabled: false
-    }
-  };
 
-  rasterFileTags: string[];
-  rasterFilesLessMetadata = 0;
-  rasterFiles = {
-    raster: {
-      valid: false,
-      label: "Gridded Data",
-      control: new FormControl(false),
-      disabled: false
-    },
-    stderr: {
-      valid: false,
-      label: "Gridded Standard Error",
-      control: new FormControl(false),
-      disabled: false
-    },
-    anomaly: {
-      valid: false,
-      label: "Gridded Anomaly",
-      control: new FormControl(false),
-      disabled: false
-    },
-    stderr_anomaly: {
-      valid: false,
-      label: "Gridded Standard Error Anomaly",
-      control: new FormControl(false),
-      disabled: false
-    },
-    metadata: {
-      valid: false,
-      label: "Metadata and Error Metrics",
-      control: new FormControl(false),
-      disabled: false
-    }
-  };
-
-  constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: ExportData, private dateManager: DateManagerService) {
-    // this.datasets = data.datasets;
-    // this.exportItems = data.items;
-
-    // this.item = {
-    //   datasetInfo: {
-    //     classification: null,
-    //     subclassification: null,
-    //     period: null
-    //   },
-    //   resources: []
-    // }
-
-    //temp
-    this.dataset.period.control.valueChanges.subscribe((value: Period) => {
-      // let files: string[] = validFiles.raster;
-      // console.log(files);
-      // for(let ftype in this.rasterFiles) {
-      //   if(files.includes(ftype)) {
-      //     this.rasterFiles[ftype].valid = true;
-      //   }
-      //   else {
-      //     this.rasterFiles[ftype].valid = false;
-      //   }
-      // }
-      // files = validFiles.station;
-      // console.log(files);
-      // for(let ftype in this.stationFiles) {
-      //   if(files.includes(ftype)) {
-      //     this.stationFiles[ftype].valid = true;
-      //   }
-      //   else {
-      //     this.stationFiles[ftype].valid = false;
-      //   }
-      // }
-      
-      
-      //temp
-      if(value == "month") {
-        this.rasterFiles.anomaly.valid = true;
-        this.rasterFiles.metadata.valid = true;
-        this.rasterFiles.raster.valid = true;
-        this.rasterFiles.stderr.valid = true;
-        this.rasterFiles.stderr_anomaly.valid = true;
-        this.stationFiles.filled.valid = false;
-        this.stationFiles.partial.valid = true;
-        this.stationFiles.unfilled.valid = false;
+  fileData = {
+    rainfall: {
+      data_map: {
+        label: "Rainfall Map",
+        properties: {
+          file: "data_map"
+        },
+        filetype: "tif",
+        description: "A gridded rainfall map representing estimated rainfall values over the area of coverage.",
+        requires: ["metadata"]
+      },
+      se: {
+        label: "Standard Error Map",
+        properties: {
+          file: "se"
+        },
+        filetype: "tif",
+        description: "A gridded map representing the standard error values for the gridded rainfall map.",
+        requires: ["metadata"]
+      },
+      anomaly: {
+        label: "Anomaly Map",
+        properties: {
+          file: "anomaly"
+        },
+        filetype: "tif",
+        description: "A gridded map representing the production's anomaly values.",
+        requires: ["metadata"]
+      },
+      anomaly_se: {
+        label: "Anomaly Standard Error",
+        properties: {
+          file: "anomaly_se"
+        },
+        filetype: "tif",
+        description: "A gridded map representing the standard error values for the production's anomaly values.",
+        requires: ["metadata"]
+      },
+      metadata: {
+        label: "Metadata and Error Metrics",
+        properties: {
+          file: "metadata"
+        },
+        filetype: "txt",
+        description: "Gridded map product metadata and error metrics.",
+        requires: []
+      },
+      station_data_partial: {
+        label: "Station Data (Partial Filled)",
+        properties: {
+          file: "station_data",
+          fill: "partial"
+        },
+        filetype: "csv",
+        description: "Rainfall station data. This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing values. These are the values used to generate the rainfall maps.",
+        requires: []
+      },
+      station_data_raw: {
+        label: "Station Data (Raw)",
+        properties: {
+          file: "station_data",
+          fill: "raw"
+        },
+        filetype: "csv",
+        description: "Rainfall station including only values provided by stations after going through QA/QC.",
+        requires: []
       }
-      else { 
-        this.rasterFiles.anomaly.valid = false;
-        this.rasterFiles.metadata.valid = false;
-        this.rasterFiles.raster.valid = false;
-        this.rasterFiles.stderr.valid = false;
-        this.rasterFiles.stderr_anomaly.valid = false;
-        this.stationFiles.filled.valid = false;
-        this.stationFiles.partial.valid = true;
-        this.stationFiles.unfilled.valid = true;
+    },
+
+    temperature: {
+      data_map: {
+        label: "Temperature Map",
+        properties: {
+          file: "data_map"
+        },
+        filetype: "tif",
+        description: "A gridded temperature map representing estimated temperature values over the area of coverage.",
+        requires: ["metadata"]
+      },
+      se: {
+        label: "Standard Error Map",
+        properties: {
+          file: "se"
+        },
+        filetype: "tif",
+        description: "A gridded map representing the standard error values for the gridded temperature map.",
+        requires: ["metadata"]
+      },
+      metadata: {
+        label: "Metadata and Error Metrics",
+        properties: {
+          file: "metadata"
+        },
+        filetype: "txt",
+        description: "Gridded map product metadata and error metrics.",
+        requires: []
+      },
+      station_data_partial: {
+        label: "Station Data (Partial Filled)",
+        properties: {
+          file: "station_data",
+          fill: "partial"
+        },
+        filetype: "csv",
+        description: "Temperature station data. This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing values. These are the values used to generate the rainfall maps.",
+        requires: []
+      },
+      station_data_raw: {
+        label: "Station Data (Raw)",
+        properties: {
+          file: "station_data",
+          fill: "raw"
+        },
+        filetype: "csv",
+        description: "Temperature station including only values provided by stations after going through QA/QC.",
+        requires: []
       }
+    }
+  };
+
+
+  controls = {
+    dataset: null,
+    period: null,
+    dates: null,
+    files: {}
+  }
+
+  constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: any, private dateManager: DateManagerService) {
+    let dataset = data ? data.dataset : "rainfall";
+    let period = data ? data.period : "month";
+    let dates = data ? data.range : null;
+    let fileExtents = data ? data.files : {};
+
+    this.controls.dataset = new FormControl(dataset);
+    this.controls.period = new FormControl(period);
+
+    this.setupForms();
+    this.setupFileData(fileExtents);
+    this.setupDates(dates);
+  }
+
+  getFileData(): any[] {
+    return Object.values(this.controls.files);
+  }
+
+  getDatasetData(): any[] {
+    return Object.values(this.datasets);
+  }
+
+  setupForms() {
+    this.controls.dataset.valueChanges.subscribe((dataset: string) => {
+      this.setupFileData({});
+      this.setupDates(null);
     });
-    this.dataset.period.control.setValue("month");
-    //
+    this.controls.period.valueChanges.subscribe((period: string) => {
+      this.setupFileData({});
+      this.setupDates(null);
+    });
 
-    this.rasterFileTags = [];
-    for(let ftype in this.rasterFiles) {
-      let fdata = this.rasterFiles[ftype];
-      let control: FormControl = fdata.control;
-      if(ftype == "metadata") {
-        control.valueChanges.subscribe((selected: boolean) => {
-          if(selected) {
-            this.selected.raster++;
-          }
-          else {
-            this.selected.raster--;
+  }
+
+  setupDates(dates: [Moment.Moment, Moment.Moment]) {
+    let dataset = this.controls.dataset.value;
+    let period = this.controls.period.value;
+    if(this.ranges[dataset][period]) {
+      let range = this.ranges[dataset][period];
+      let selected = dates;
+      if(!selected) {
+        selected = [range[0].clone(), range[1].clone()]
+      }
+      this.controls.dates = {
+        range: range,
+        selected: selected
+      };
+    }
+  }
+
+  setupFileData(fileExtents: {[file: string]: string[]}) {
+    let dataset = this.controls.dataset.value;
+    let period = this.controls.period.value;
+    if(this.files[dataset][period]) {
+      this.controls.files = {};
+      let fileData = this.files[dataset][period];
+      for(let item of fileData) {
+        let value = item.value;
+        let requires = item.requires;
+        let extents = fileExtents[value];
+        let selected = true;
+        //not in passed file extents set default values
+        if(extents === undefined) {
+          extents = item.default_extents;
+          selected = false;
+        }
+        let selectControl = new FormControl(selected);
+        let extentControl = new FormControl(extents);
+        let fileControl = {
+          label: item.label,
+          selectControl: selectControl,
+          extentControl: extentControl,
+          description: item.description,
+          filetype: item.filetype,
+          extents: item.extents,
+          requiredBy: new Set()
+        }
+        this.controls.files[value] = fileControl;
+        //if requires other items update any time value changes
+        if(requires.length > 0) {
+          selectControl.valueChanges.subscribe((selected: boolean) => {
+            let extents = extentControl.value;
+            if(selected && extents.length > 0) {
+              this.addRequireRefs(value, requires);
+              this.addRequiredItems(extents, requires);
+            }
+            else {
+              this.removeRequireRefs(value, requires);
+            }
+          });
+          extentControl.valueChanges.subscribe((extents: string[]) => {
+            if(extents.length > 0) {
+              this.addRequireRefs(value, requires);
+              this.addRequiredItems(extents, requires);
+            }
+            else {
+              this.removeRequireRefs(value, requires);
+            }
+          });
+        }
+        let debounce = false;
+        selectControl.valueChanges.subscribe((selected: boolean) => {
+          //if trying to deselect disallow if required by something (note don't need debounce since bounce select will be true)
+          if(!selected) {
+            let requiredBy = this.controls.files[value].requiredBy;
+            if(requiredBy.size > 0) {
+              selectControl.setValue(true);
+            }
           }
         });
-      }
-      else {
-        control.valueChanges.subscribe((selected: boolean) => {
-          if(selected) {
-            this.selected.raster++;
-            this.rasterFilesLessMetadata++;
-          }
-          else {
-            this.selected.raster--;
-            this.rasterFilesLessMetadata--;
-          }
-          let metadataData = this.rasterFiles.metadata;
-          let metadataControl: FormControl = metadataData.control;
-          if(this.rasterFilesLessMetadata > 0) {
-            metadataData.disabled = true;
-            if(!metadataControl.value) {
-              metadataControl.setValue(true);
+        extentControl.valueChanges.subscribe((extents: string[]) => {
+          //use debounce to prevent loop since setting value
+          if(!debounce) {
+            //check if required by anything
+            let requiredBy = this.controls.files[value].requiredBy;
+            if(requiredBy.size > 0) {
+              debounce = true;
+              //get smallest set of valid extents based on require items and append to value to ensure theyre still there
+              let extentList = extents;
+              for(let item of requiredBy) {
+                let requiredExtents = this.controls.files[item].extentControl.value;
+                extentList = extentList.concat(requiredExtents);
+              }
+              //strip dupes
+              extentList = Array.from(new Set(extentList));
+              extentControl.setValue(extentList);
             }
           }
           else {
-            metadataData.disabled = false;
+            debounce = false;
           }
+
         });
       }
-      this.rasterFileTags.push(ftype);
-    }
-
-    this.stationFileTags = [];
-    for(let ftype in this.stationFiles) {
-      let fdata = this.stationFiles[ftype];
-      let control: FormControl = fdata.control;
-      control.valueChanges.subscribe((selected: boolean) => {
-        if(selected) {
-          this.selected.station++;
-        }
-        else {
-          this.selected.station--;
-        }
-      });
-      this.stationFileTags.push(ftype);
-    }
-
-
-    //initialize from object if exist
-    if(data) {
-      let info: ExportInfo = data.getExportInfo();
-      //only need to do this one for now (note need to do all when fully implemented)
-      this.dataset.period.control.setValue(info.dates.period);
-      this.dataset.dates.selected = [info.dates.start, info.dates.end];
-      //set files
-      for(let file of info.files.raster.data) {
-        let ftype = file.data.type;
-        this.rasterFiles[ftype].control.setValue(true);
-      }
-      for(let file of info.files.stations.data) {
-        let ftype = file.data.fill;
-        this.stationFiles[ftype].control.setValue(true);
-      }
     }
   }
+
+  addRequireRefs(value: string, requires: string[]) {
+    for(let item of requires) {
+      this.controls.files[item].requiredBy.add(value);
+    }
+  }
+
+  removeRequireRefs(value: string, requires: string[]) {
+    for(let item of requires) {
+      this.controls.files[item].requiredBy.delete(value);
+    }
+  }
+
+  addRequiredItems(extents: string[], requires: string[]) {
+      for(let item of requires) {
+        let requireSelectControl = this.controls.files[item].selectControl;
+        let requireExtentControl = this.controls.files[item].extentControl;
+        let requireExtents = requireExtentControl.value;
+        //add extents to require extents list
+        requireExtents = requireExtents.concat(extents);
+        //remove duplicate values
+        requireExtents = Array.from(new Set(requireExtents));
+        //set require values
+        requireExtentControl.setValue(requireExtents);
+        requireSelectControl.setValue(true);
+      }
+  }
+
+
 
   filesSelected() {
-    let numFiles = this.selected.raster + this.selected.station;
-    let filesSelected = numFiles > 0;
-    return filesSelected;
+    let selected = false;
+    for(let value in this.controls.files) {
+      let fileData = this.controls.files[value];
+      if(fileData.selectControl.value) {
+        //make sure some extent is selected
+        if(fileData.extentControl.value.length > 0) {
+          selected = true;
+          break;
+        }
+      }
+    }
+    return selected;
   }
-
-
-  // getRasterFiles() {
-  //   let files = [];
-  //   for(let ftype in this.rasterFiles) {
-  //     let fdata = this.rasterFiles[ftype];
-  //     if(fdata.valid) {
-  //       files.push(fdata);
-  //     }
-  //   }
-  //   return files;
-  // }
-
 
   //return info about the export item
   cancel(): void {
@@ -440,113 +1038,112 @@ export class ExportAddItemComponent {
   }
 
   submit() {
-    // let data: ExportDataInfo = {
-    //   datatype: {
-    //     label: this.dataset.datatype.label,
-    //     value: this.dataset.datatype.control.value
+    let dataset = this.controls.dataset.value;
+    let period = this.controls.period.value;
+    let range = this.controls.dates.selected;
+    let data = {
+      data: {
+        dataset: dataset,
+        period: period,
+        range: range,
+        files: {}
+      },
+      labels: {
+        dataset: `${this.periods.values[period].label} ${this.datasets[dataset].label} ${this.dateManager.dateToString(range[0], period, true)} - ${this.dateManager.dateToString(range[1], period, true)}`,
+        files: []
+      }
+    };
+    for(let file in this.controls.files) {
+      let fileData = this.controls.files[file];
+      let selected = fileData.selectControl.value;
+      if(selected) {
+        let extents = fileData.extentControl.value;
+        data.data.files[file] = extents;
+        data.labels.files.push(fileData.label);
+      }
+    }
+    this.dialogRef.close(data);
+
+    //move translations
+
+    // let dataset2Prop = {
+    //   rainfall: {
+    //     datatype: "rainfall",
+    //     production: "new"
     //   },
-    //   //using label as value for now to avoid retranslation
-    //   timeperiod: {
-    //     label: null,
-    //     value: this.dataset.timestep.control.value
+    //   legacy_rainfall: {
+    //     datatype: "rainfall",
+    //     production: "legacy"
     //   },
-    //   tier: {
-    //     label: this.dataset.advanced.tier.label,
-    //     value: this.dataset.advanced.control.value
+    //   tmin: {
+    //     datatype: "temperature",
+    //     aggregation: "min"
     //   },
-    //   dates: [this.dataset.dates.selected[0], this.dataset.dates.selected[1]],
-    //   files: {
-    //     raster: [],
-    //     station: []
+    //   tmax: {
+    //     datatype: "temperature",
+    //     aggregation: "max"
+    //   },
+    //   tmean: {
+    //     datatype: "temperature",
+    //     aggregation: "mean"
+    //   }
+    // }
+
+    // let file2Prop = {
+    //   data_map: {
+    //     file: "data_map"
+    //   },
+    //   se: {
+    //     file: "se"
+    //   },
+    //   anomaly: {
+    //     file: "anomaly"
+    //   },
+    //   anomaly_se: {
+    //     file: "anomaly_se"
+    //   },
+    //   metadata: {
+    //     file: "metadata"
+    //   },
+    //   station_data_partial: {
+    //     file: "station_data",
+    //     fill: "partial"
+    //   },
+    //   station_data_raw: {
+    //     file: "station_data",
+    //     fill: "raw"
+    //   }
+    // }
+
+    // let period = this.controls.period.value
+
+    // let allData = [];
+    // let data = {
+    //   period: period,
+    //   dates: {
+    //     start: this.controls.dates.selected[0],
+    //     end: this.controls.dates.selected[1]
     //   }
     // };
-
-    // //how do you want to get the label from controls that actually have multiple values? just search for now
-    // let timeperiod = data.timeperiod.value;
-    // for(let opt of this.dataset.timestep.options) {
-    //   if(opt.value == timeperiod) {
-    //     data.timeperiod.label = opt.label;
-    //     break;
+    // let setfields = dataset2Prop[this.controls.dataset.value];
+    // data = Object.assign(data, setfields);
+    // for(let file in this.controls.files) {
+    //   let selected = this.controls.files[file].selectControl.value;
+    //   if(selected) {
+    //     //add each extent
+    //     for(let extent of this.controls.files[file].extentControl.value) {
+    //       let filefields = file2Prop[file];
+    //       let dataItem = Object.assign({}, data, filefields);
+    //       dataItem.extent = extent;
+    //       allData.push(dataItem);
+    //     }
     //   }
     // }
+    // console.log(allData);
 
-
-    // for(let ftype in this.stationFiles) {
-    //   let fdata = this.stationFiles[ftype];
-    //   if(fdata.valid && fdata.control.value) {
-    //     data.files.station.push({
-    //       label: this.stationFiles[ftype].label,
-    //       value: ftype
-    //     });
-    //   }
-    // }
-    // for(let ftype in this.rasterFiles) {
-    //   let fdata = this.rasterFiles[ftype];
-    //   if(fdata.valid && fdata.control.value) {
-    //     data.files.raster.push({
-    //       label: this.rasterFiles[ftype].label,
-    //       value: ftype
-    //     });
-    //   }
-    // }
-    let info: ExportInfo = this.getExportInfo();
-    let data: ExportData = new ExportData(info, this.dateManager);
-    this.dialogRef.close(data);
-  }
-
-  setDate(side: 0 | 1, date: Moment.Moment) {
-    this.dataset.dates.selected[side] = date;
   }
 
 
 }
-
-
-//what to select?
-//any of the items that are available for class,subclass,period set
-//item hierarchy class->subclass->period->other
-//only things that should affect set generation are these three things
-
-//THESE THREE THINGS DRIVE THE DATA SET, EVERYTHING ELSE (date range, units, etc) IS JUST A PROPERTY OF THE SET
-
-//"other" should have set definition
-
-
-//need date range, class, subclass
-
-// interface DatasetInfo {
-//   classification: string,
-//   subclassification: string,
-//   period: string
-// }
-
-// interface ExportItem {
-//   datasetInfo: DatasetInfo
-//   //info specific to file type for identifying resource
-//   resources: ResourceInfo[]
-// }
-
-// type ResourceType = "raster" | "station" | "anomaly" | "standard_error" | "LOOCV_error" | "metadata";
-
-// interface ResourceInfo {
-//   type: ResourceType
-// }
-
-
-// export interface ExportDataInfo {
-//   datatype: ValueData<string>,
-//   dates?: {
-//     start: Moment.Moment,
-//     end: Moment.Moment,
-//     period: Period
-//   },
-//   groupData: {
-
-//   }
-//   fileData: {
-//     raster: FieldInfo[],
-//     station: FieldInfo[]
-//   }
-// }
 
 

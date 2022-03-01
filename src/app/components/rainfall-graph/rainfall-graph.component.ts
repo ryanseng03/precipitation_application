@@ -64,7 +64,7 @@ export class RainfallGraphComponent implements OnInit {
     this.__station = station;
   }
 
-  @Input() complete;
+  @Input() complete: boolean;
 
   @Input() source: Observable<any>;
 

@@ -11,14 +11,14 @@
     <div class="item-tile" *ngFor="let item of exportItems; let i = index">
       <div class="export-item">
         <div class="text-block">
-          {{item.getLabelInfo().setLabel}}
+          {{item.labels.dataset}}
         </div>
         <div class="text-block">
           <h4>
             Files
           </h4>
           <div>
-            {{item.getLabelInfo().files.join(", ")}}
+            {{item.labels.files.join(", ")}}
           </div>
         </div>
       </div>
@@ -36,20 +36,29 @@
       <div>
         <mat-checkbox
           [formControl]="emailData.useEmailControl"
-          matTooltip="The download package is too large to be downloaded directly. Please enter an email address and a download link will be sent to you when ready."
+          matTooltip="The download package is too large to be downloaded directly. A download link will be sent to the provided email address when ready."
           [matTooltipDisabled]="!emailData.maxSizeExceeded"
           [disabled]="emailData.maxSizeExceeded">
           Send download package to email
         </mat-checkbox>
-        <mat-icon class="info-icon" [inline]="true" matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">info</mat-icon>
+        <mat-icon
+          inline="true"
+          matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">
+          help
+        </mat-icon>
       </div>
 
       <div class="email-input">
-        <mat-form-field *ngIf="emailData.useEmailControl.value" class="example-full-width">
+        <mat-form-field class="example-full-width">
           <mat-label>Email Address</mat-label>
           <input required matInput [formControl]="emailData.emailInputControl">
           <mat-error *ngIf="!emailData.emailInputControl.valid">Please enter a valid email address.</mat-error>
         </mat-form-field>
+        <mat-icon
+          inline="true"
+          matTooltip="Please enter your email address. This will be used to send you your data if the above box is selected, otherwise it will only be used for logging purposes.">
+          help
+        </mat-icon>
       </div>
     </div>
 
@@ -61,7 +70,7 @@
         </button>
       </div>
       <div class="control-button">
-        <button mat-button [disabled]="exportItems.length < 1 || (emailData.useEmailControl.value && !emailData.emailInputControl.valid)" (click)="export()">
+        <button mat-button [disabled]="exportItems.length < 1 || !emailData.emailInputControl.valid" (click)="export()">
           Export Items
         </button>
       </div>
@@ -74,7 +83,7 @@
           <mat-progress-bar [mode]="exportActivityMonitor.mode" [value]="exportActivityMonitor.value"></mat-progress-bar>
         </div>
       </div>
-      
+
 
     </div>
 

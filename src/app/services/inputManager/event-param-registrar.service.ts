@@ -20,7 +20,6 @@ export class EventParamRegistrarService {
     stationTimeseries: "stationTimeseries",
     loading: "loading",
     mapBounds: "mapBounds",
-    dateRange: "dateRange"
   };
 
   private datasetSource: BehaviorSubject<any>;
@@ -32,8 +31,6 @@ export class EventParamRegistrarService {
   private dateSource: BehaviorSubject<Moment.Moment>;
   private loadingSource: BehaviorSubject<LoadingData>;
   private mapBoundsSource: BehaviorSubject<L.LatLngBounds>;
-  private dateRangeSource: BehaviorSubject<any>;
-
   private tagGen: UniqueTagID;
 
   constructor(private paramService: ParameterStoreService) {
@@ -48,7 +45,6 @@ export class EventParamRegistrarService {
     this.dateSource = this.paramService.registerParameter<Moment.Moment>(EventParamRegistrarService.EVENT_TAGS.date);
     this.loadingSource = this.paramService.registerParameter<LoadingData>(EventParamRegistrarService.EVENT_TAGS.loading);
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
-    this.dateRangeSource = this.paramService.registerParameter<any>(EventParamRegistrarService.EVENT_TAGS.dateRange);
   }
 
   pushDataset(dataset: any): void {
@@ -85,10 +81,6 @@ export class EventParamRegistrarService {
 
   pushMapBounds(mapBounds: L.LatLngBounds): void {
     this.mapBoundsSource.next(mapBounds);
-  }
-
-  pushDateRange(dateRange: any): void {
-    this.dateRangeSource.next(dateRange);
   }
 
 

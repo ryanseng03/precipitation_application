@@ -71,7 +71,6 @@ export class ViewContainerComponent implements OnInit {
   scrollbarWidthPause: boolean = false;
 
   dataset: any;
-  dateRange: any
 
   upperBuffer: string;
 
@@ -84,12 +83,7 @@ export class ViewContainerComponent implements OnInit {
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
       if(dataset) {
         this.dataset = dataset;
-      }
-    });
-    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dateRange, (dateRange: any) => {
-      if(dateRange) {
-        this.dateRange = dateRange;
-        this.date = dateRange.end;
+        this.date = dataset.dateRange[1].clone();
       }
     });
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {
@@ -264,7 +258,7 @@ export class ViewContainerComponent implements OnInit {
   }
 
 
-  
+
 
   getDateControlWidth(): string {
     let components = [this.viewContainer, this.formComponent, this.tableComponent, this.timeseriesComponent];

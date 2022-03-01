@@ -119,6 +119,10 @@ export class DataViewsComponent implements OnInit {
           filterStations();
         }, 0);
       }
+      else {
+        //propogate null to filtered stations if no station data available
+        this.paramService.pushFilteredStations(stations);
+      }
     });
     this.fieldControl.valueChanges.subscribe((value: string) => {
       this.filterControl.setValue([]);
@@ -132,10 +136,8 @@ export class DataViewsComponent implements OnInit {
 
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
-      if(stations) {
-        this.loading = false;
-        this.stations = stations;
-      }
+      this.loading = false;
+      this.stations = stations;
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
       this.selectedStation = station;

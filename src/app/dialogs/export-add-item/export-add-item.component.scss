@@ -7,6 +7,37 @@
 
   }
 
+.downscale {
+  transform: scale(.9);
+}
+
+table {
+  width: 100%;
+}
+
+
+.hide {
+  visibility: hidden;
+}
+
+.label {
+  font-weight: bold;
+  display: inline-block;
+  padding-right: 10px;
+}
+
+  .control-group-label {
+    display: inline-block;
+    height: 30px;
+    font-weight: bold;
+  }
+
+  .extent-container {
+    display: inline-block;
+    height: 50px;
+    transform: translateY(-6px);
+  }
+
   .form-buttons {
     padding: 20px;
     //border-top: 1px solid;
@@ -63,9 +94,7 @@
 //     margin-bottom: 5px;
 //   }
 
-  .checkbox {
-      float: right;
-  }
+
 
 
   .control-subgroup h4 {

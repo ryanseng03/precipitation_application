@@ -35,7 +35,6 @@ import { DateFocusComponent } from './components/controls/date-focus/date-focus.
 import {MatTooltipModule} from '@angular/material/tooltip';
 
 import { AngularResizedEventModule } from 'angular-resize-event';
-import { ExportComponent } from './components/export/export.component';
 import { DataViewsComponent } from './components/data-views/data-views.component';
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import { SelectAutocompleteModule } from 'mat-select-autocomplete';
@@ -92,7 +91,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     SiteAvailabilityTableComponent,
     DataSetFormComponent,
     DateFocusComponent,
-    ExportComponent,
     DataViewsComponent,
     FilterPipe,
     NavbarComponent,

@@ -29,7 +29,7 @@ export class ExportInterfaceComponent implements OnInit {
     maxSizeExceeded: boolean
   };
 
-  exportItems: ExportData[] = [];
+  exportItems: any[] = [];
 
   constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService, private dateService: DateManagerService) {
     this.emailData = {
@@ -46,25 +46,18 @@ export class ExportInterfaceComponent implements OnInit {
     // });
   }
 
-  // checkExportSize() {
-  //   //size should be set to the export package size
-  //   let size = 0;
-  //   if(size < 100) {
-  //     this.emailData.maxSizeExceeded = false;
-  //   }
-  //   else {
-  //     this.emailData.maxSizeExceeded = true;
-  //     this.emailData.useEmailControl.setValue(true);
-  //   }
-  // }
-
   ngOnInit() {
-    //this.addExportData(-1);
+
   }
 
   checkEmailReq() {
-    let numFiles = this.exportItems.reduce((acc, item) => {
-      return acc + item.getNumFiles();
+    let numFiles: number = this.exportItems.reduce((acc: number, item: any) => {
+      let numDateFiles = item.data.range[1].diff(item.data.range[0], item.data.period) + 1;
+      let numExtentFiles: number = (<string[][]>Object.values(item.data.files)).reduce((acc: number, extents: string[]) => {
+        return acc + extents.length;
+      }, 0);
+      let numItemFiles = numDateFiles * numExtentFiles;
+      return acc + numItemFiles;
     }, 0);
     console.log(numFiles);
     this.emailData.maxSizeExceeded = numFiles > 150;
@@ -81,7 +74,8 @@ export class ExportInterfaceComponent implements OnInit {
 
 
   addExportData(i: number) {
-    let initData: ExportData = i < 0 ? null : this.exportItems[i];
+    let initData: any = i < 0 ? null : this.exportItems[i].data;
+    console.log("initdata", initData);
 
     //panelClass applies global class to form (styles.scss)
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
@@ -91,9 +85,8 @@ export class ExportInterfaceComponent implements OnInit {
       data: initData
     });
 
-    dialogRef.afterClosed().subscribe((data: ExportData) => {
-
-      console.log(data);
+    dialogRef.afterClosed().subscribe((data: any) => {
+      console.log("data", data);
       if(data) {
         if(i < 0) {
           this.exportItems.push(data);
@@ -103,35 +96,11 @@ export class ExportInterfaceComponent implements OnInit {
         }
         this.checkEmailReq();
       }
-      
+
     });
   }
 
-  // getExportedItemDataset(i: number) {
-  //   let data = this.exportItems[i];
-  //   let format: string;
-  //   if(data.timeperiod.value == "month") {
-  //     format = "MMMM YYYY";
-  //   }
-  //   else {
-  //     format = "MMMM DD YYYY";
-  //   }
-  //   let dataset = `${data.timeperiod.label} ${data.datatype.label} ${data.dates[0].format(format)} - ${data.dates[1].format(format)}`;
 
-  //   return dataset;
-  // }
-
-  // getExportedItemFiles(i: number) {
-  //   let data = this.exportItems[i];
-  //   let files = [];
-  //   for(let fileInfo of data.files.raster) {
-  //     files.push(fileInfo.label);
-  //   }
-  //   for(let fileInfo of data.files.station) {
-  //     files.push(fileInfo.label);
-  //   }
-  //   return files.join(", ");
-  // }
 
   export() {
     let reqs: ResourceReq[] = this.exportItems.reduce((acc: ResourceReq[], item: ExportData) => {

@@ -85,10 +85,6 @@ export class DataManagerService {
       }
       return metadata;
     });
-    metadataReq.toPromise()
-    .then((data: any) => {
-      console.log(data);
-    });
 
 
     let data = {
@@ -114,32 +110,33 @@ export class DataManagerService {
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
       if(dataset) {
         data.dataset = dataset
-        //get dataset range
-        let dateRangeRes = dataRequestor.getDateRange(dataset);
-        let dateRangePromise = dateRangeRes.toPromise();
-        dateRangePromise.then((dateRange: any) => {
-          console.log(dateRange);
-          //TEMP
-          dateRange = {
-            start: Moment("1990-12"),
-            end: Moment("2019-12")
-          }
-          data.dateRange = dateRange;
-          paramService.pushDateRange(dateRange);
-        })
-        .catch((reason: RequestReject) => {
-          if(!reason.cancelled) {
-            console.error(reason.reason);
-            errorPop.notify("error", `Could not retreive date information.`);
-          }
-        });
-        //emit date range data to trigger other stuff
-        //should create emmitter for date range
-
         //reset selected station and timeseries data
         paramService.pushSelectedStation(null);
       }
     });
+
+    let dataset2Prop = {
+      rainfall: {
+        datatype: "rainfall",
+        production: "new"
+      },
+      legacy_rainfall: {
+        datatype: "rainfall",
+        production: "legacy"
+      },
+      tmin: {
+        datatype: "temperature",
+        aggregation: "min"
+      },
+      tmax: {
+        datatype: "temperature",
+        aggregation: "max"
+      },
+      tmean: {
+        datatype: "temperature",
+        aggregation: "mean"
+      }
+    }
 
     //TIMESERIES DATA SHOULD JUST BE PULLED REGARDLESS OF DATE (AT LEAST FOR NOW), THE TIMESERIES COMPONENT SHOULD GET DATE FOR ADJUSTING FOCUS AREAS
     //DON'T HAVE TO DO ANYTHING HERE FOR TIMESERIES WHEN DATE CHANGES
@@ -150,53 +147,89 @@ export class DataManagerService {
       if(date) {
         data.date = date;
 
-        let dataset = data.dataset;
-        let date_s: string = this.dateHandler.dateToString(date, data.dataset.period);
-        dataset.date = date_s;
+        let datasetInfo = data.dataset;
+
+//         unit: "mm",
+// dataRange: [0, 650],
+// rangeAbsolute: [true, false],
+// stationData: true,
+// rasterData: true
+// let dataset = this.controls.dataset.value;
+// let period = this.controls.period.value;
+// let details = this.datasetDetails[dataset][period];
+// let label =  `${this.periods.values[period].label} ${this.datasets[dataset].label}`;
+// let fill = this.controls.fill.value;
+
+        const { stationData, rasterData, dataset, period, fill } = datasetInfo;
+
+
+        let date_s: string = this.dateHandler.dateToString(date, period);
 
         paramService.pushLoading({
           tag: "vis",
           loading: true
         });
 
-        let promises: [Promise<any>, Promise<any>] = [null, null];
+        let datasetProps = dataset2Prop[dataset];
 
-        let stationRes = dataRequestor.getStationData(data.dataset);
-        let stationPromise = stationRes.toPromise();
-        promises[0] = stationPromise;
+        let stationPromise = null;
+        let rasterPromise = null;
+        //if station data is available request station data, otherwise just send null
+        if(stationData) {
+          let properties = {
+            date: date_s,
+            period,
+            ...datasetProps
+          }
+          let stationRes = dataRequestor.getStationData(properties);
+          //transform by combining with station data
+          stationRes.transform((stationData: any[]) => {
+            //get metadata
+            return metadataReq.toPromise()
+            .then((metadata: any) => {
+              stationData = stationData.map((stationVals: any) => {
+                let stationId = stationVals.station_id;
+                //yay for inconsistent data
+                stationId = this.getStandardizedNumericString(stationId);
+                let stationValue = stationVals.value;
+                let stationMetadata = metadata[stationId];
+                if(stationMetadata) {
+                  stationMetadata.value = stationValue;
+                }
+                else {
+                  console.error(`Could not find metadata for station, station ID: ${stationId}.`);
+                }
 
-        let mapRes = dataRequestor.getRaster(data.dataset);
-        let mapPromise = mapRes.toPromise();
-        promises[1] = mapPromise;
+                return stationMetadata;
+              });
+              return stationData;
+            });
+          });
+          stationPromise = stationRes.toPromise();
+        }
+        else {
+          stationPromise = Promise.resolve(null);
+        }
+        //if raster data is available request raster data, otherwise just send null
+        if(rasterData) {
+          let properties = {
+            date: date_s,
+            period,
+            fill,
+            ...datasetProps
+          }
+          let rasterRes = dataRequestor.getRaster(properties);
+          rasterPromise = rasterRes.toPromise();
+        }
+        else {
+          rasterPromise = Promise.resolve(null);
+        }
+        let promises: [Promise<any>, Promise<any>] = [stationPromise, rasterPromise];
 
         //don't have to wait to set data for each
         promises[0].then((stationData: any[]) => {
-          //get metadata
-          metadataReq.toPromise()
-          .then((metadata: any) => {
-            stationData = stationData.map((stationVals: any) => {
-              let stationId = stationVals.station_id;
-              //yay for inconsistent data
-              stationId = this.getStandardizedNumericString(stationId);
-              let stationValue = stationVals.value;
-              let stationMetadata = metadata[stationId];
-              if(stationMetadata) {
-                stationMetadata.value = stationValue;
-              }
-              else {
-                console.error(`Could not find metadata for station, station ID: ${stationId}.`);
-              }
-
-              return stationMetadata;
-            });
-            paramService.pushStations(stationData);
-          })
-          .catch((reason: RequestReject) => {
-            if(!reason.cancelled) {
-              console.error(reason.reason);
-              errorPop.notify("error", `Could not retreive station metadata.`);
-            }
-          });
+          console.log(stationData);
+          paramService.pushStations(stationData);
         })
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
@@ -204,6 +237,7 @@ export class DataManagerService {
             errorPop.notify("error", `Could not retreive station data.`);
           }
         });
+
         promises[1].then((raster: RasterData) => {
           paramService.pushRaster(raster);
         })
@@ -239,24 +273,29 @@ export class DataManagerService {
           tag: "timeseries",
           loading: true
         });
+        const { dataset, fill } = data.dataset;
+        let datasetProps = dataset2Prop[dataset];
         let timeseriesPromises = [];
-        let startDate = data.dateRange.start;
-        let endDate = data.dateRange.end;
-        let periods = ["month", "day"];
+        let startDate = data.dataset.dateRange[0];
+        let endDate = data.dataset.dateRange[1];
+        let periods: any[] = ["month", "day"];
         for(let period of periods) {
-          let params = Object.assign({}, data.dataset);
-          delete params.date;
-          params.station_id = station.skn;
-          params.period = period;
+
+          let properties = {
+            station_id: station.skn,
+            period,
+            fill,
+            ...datasetProps
+          }
 
           //chunk queries by year
           let date = startDate.clone();
           while(date.isSameOrBefore(endDate)) {
-            let start_s: string = this.dateHandler.dateToString(date, params.period);
+            let start_s: string = this.dateHandler.dateToString(date, period);
             date.add(1, "year");
-            let end_s: string = this.dateHandler.dateToString(date, params.period);
+            let end_s: string = this.dateHandler.dateToString(date, period);
             //note query is [)
-            let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, params);
+            let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
 
             timeseriesRes.transform((timeseriesData: any[]) => {
               if(timeseriesData.length > 0) {

@@ -62,6 +62,8 @@ export class MapComponent implements OnInit {
 
   private selectedMarker: L.CircleMarker;
 
+  dataset: any = {};
+
 
 
   constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService, private assetService: AssetManagerService) {
@@ -117,7 +119,7 @@ export class MapComponent implements OnInit {
       if(data && data.tag == "vis") {
         this.setLoad(data.loading);
       }
-    })
+    });
   }
 
 
@@ -163,7 +165,6 @@ export class MapComponent implements OnInit {
   //use to prevent race conditions for xml loaded schemes
   colorSchemeType: string;
   setColorScheme(colorScheme: ColorScale) {
-    console.log(colorScheme);
     let layer: any = this.dataLayers[this.active.band];
     if(layer) {
       layer.setColorScale(colorScheme);
@@ -199,6 +200,7 @@ export class MapComponent implements OnInit {
   }
 
   onMapReady(map: L.Map) {
+    this.map = map;
 
     this.active = {
       data: {
@@ -209,21 +211,17 @@ export class MapComponent implements OnInit {
       band: "0",
     };
 
-
-
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
+      this.active.data.date = date;
+    });
 
     this.initMarkerInfo();
 
-
-    L.DomUtil.addClass(map.getContainer(), 'pointer-cursor')
+    L.DomUtil.addClass(this.map.getContainer(), 'pointer-cursor')
     L.control.scale({
       position: 'bottomleft',
       maxWidth: 200
-    }).addTo(map);
-
-
-
-    this.map = map;
+    }).addTo(this.map);
 
     //!!
     //arrow functions lexically bind this (bind to original context)
@@ -234,30 +232,46 @@ export class MapComponent implements OnInit {
     this.colorScheme = colorScale;
 
     this.map.on("zoomend", () => {
-      let bounds: L.LatLngBounds = map.getBounds();
+      let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);
       this.updateMarkers();
     });
 
     this.map.on("moveend", () => {
-      let bounds: L.LatLngBounds = map.getBounds();
+      let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);
     });
 
+    //set timeout to prevent issues with map not propogating to overlay extension
+    setTimeout(() => {
+      //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
+      this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
+        if(stations) {
+          this.active.data.stations = stations;
+          this.constructMarkerLayerPopulateMarkerData(stations);
+          //reset selected marker ref in case station does not exist
+          // this.selectedMarker = undefined;
+          //attempt to select station previously selected
+          this.selectStation(this.selectedStation);
+        }
+        //no station data available
+        else {
+          this.active.data.stations = [];
+          this.constructMarkerLayerPopulateMarkerData([]);
+          this.selectedStation = null;
+        }
+      });
+    }, 0);
 
-    //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
-      if(stations) {
-        this.active.data.stations = stations;
-        this.constructMarkerLayerPopulateMarkerData(stations);
-        //reset selected marker ref in case station does not exist
-        // this.selectedMarker = undefined;
-        //attempt to select station previously selected
-        this.selectStation(this.selectedStation);
-      }
-    });
+
 
     this.layerController.addLayers(this.baseLayers);
+
+    let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+      if(dataset) {
+        this.dataset = dataset;
+      }
+    });
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
       if(raster) {
@@ -279,13 +293,13 @@ export class MapComponent implements OnInit {
           rasterLayer.setOpacity(this.opacity);
         }
         //add rainfall layer to map as default
-        map.addLayer(this.dataLayers["0"]);
+        this.map.addLayer(this.dataLayers["0"]);
 
         //for now at least only one layer, make sure to replace if multiple
         this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
 
         //install hover handler (requires raster to be set to work)
-        let hoverTag = this.paramService.registerMapHover(map);
+        let hoverTag = this.paramService.registerMapHover(this.map);
         this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
 
         //uninstall current hook and replace with update hook that updates raster
@@ -300,23 +314,31 @@ export class MapComponent implements OnInit {
               this.dataLayers[band].setData(values);
             }
           }
+          //no raster data
+          else {
+            //only one band
+            //set data to empty
+            this.dataLayers["0"].setData(new Map<number, number>());
+          }
         });
       }
     });
 
+
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
-
         this.selectStation(station);
-
     });
 
-    map.on("layeradd", (addData: any) => {
+    this.map.on("layeradd", (addData: any) => {
       let layer = addData.layer;
       if(layer.options && layer.options.maxZoom) {
-        map.setMaxZoom(layer.options.maxZoom);
+        this.map.setMaxZoom(layer.options.maxZoom);
       }
     });
+
+    this.invalidateSize()
   }
+
 
   selectedStation = null;
   selectStation(station: SiteInfo) {
@@ -485,6 +507,8 @@ export class MapComponent implements OnInit {
       this.layerController.removeLayer(this.markerInfo.layer);
     }
     this.markerInfo.layer = markerLayer;
+
+    console.log(markerLayer);
 
     this.layerController.addOverlay(markerLayer, "Data Stations");
     this.map.addLayer(markerLayer);
