@@ -1,0 +1,20 @@
+<div class="nav-tile-container">
+  <div [@selectColor]="component == 'vis' ? 'selected' : 'deselected'" class="nav-tile" (click)="setComponent('vis')">
+    <h1>
+      Visualize Data
+    </h1>
+    <br>
+    <p>
+      Visualize available climate data in the portal.
+    </p>
+  </div>
+  <div [@selectColor]="component == 'export' ? 'selected' : 'deselected'" class="nav-tile" (click)="setComponent('export')">
+    <h1>
+      Export Data
+    </h1>
+    <br>
+    <p>
+      Generate customized packages of data to export from the portal.
+    </p>
+  </div>
+</div>

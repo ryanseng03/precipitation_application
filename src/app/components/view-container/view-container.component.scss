@@ -1,0 +1,96 @@
+.container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.view-nav {
+    height: 100%;
+    width: 30px;
+    display: flex;
+    flex-flow: row;
+    -webkit-text-orientation: upright;
+    text-orientation: upright;
+    writing-mode: vertical-lr;
+    font-weight: 500;
+    float: right;
+}
+
+.nav-tile {
+  overflow: hidden;
+  flex-grow: 1;
+  width: 100%;
+  padding: 5px;
+  padding-top: 15px;
+  //padding-bottom: 15px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.nav-tile:hover {
+  box-shadow: 2px -2px inset, -1px 1px inset;
+}
+
+.nav-tile-selected {
+  background-color: #175db6;
+}
+
+
+.view-component {
+  //box-sizing: border-box;
+  height: fit-content;
+  //min-height: 100vh;
+  width: fit-content;
+  //give a couple scrolls of padding at the top, and a screen of leeway at the bottom
+  padding: 240px 20px 100vh 20px;
+  // box-sizing: border-box;
+}
+
+.view-component:first-child {
+  padding-top: 20px;
+}
+
+.scroll-hide {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+
+.view-container {
+  overflow-y: scroll;
+  overflow-x: scroll;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  //min-width: 0;
+  // -ms-overflow-style: none;  /* IE and Edge */
+  // scrollbar-width: none;  /* Firefox */
+}
+
+// /* Hide scrollbar for Chrome, Safari and Opera */
+// .view-container::-webkit-scrollbar {
+//   display: none;
+// }
+
+
+.view-component-wrapper {
+  height: fit-content;
+  width: fit-content;
+}
+
+.date-focus-control {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1000;
+  height: fit-content;
+  padding: 20px;
+  border-bottom: 1px solid;
+  box-sizing: border-box;
+  min-width: fit-content;
+}

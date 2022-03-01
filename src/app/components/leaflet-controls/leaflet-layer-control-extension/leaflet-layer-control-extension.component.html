@@ -1,0 +1,43 @@
+<div id="opacity-control">
+  <div class="container">
+    <span class="opacity-label">
+      Map Opacity
+    </span>
+    <mat-slider thumbLabel step=".01" min="0" max="1" [value]="getOpacity()" (input)="setOpacity($event)" [disabled]="!layerReady()"></mat-slider>
+  </div>
+</div>
+
+<div id="color-control">
+  <div class="container">
+    <mat-form-field>
+      <mat-label>
+        Color Scheme
+      </mat-label>
+      <mat-select disableOptionCentering
+        [formControl]="schemeControl"
+        [disabled]="!layerReady()">
+        <div id="color-control-tiles">
+          <mat-option *ngFor="let scheme of baseColorSchemes | keyvalue" [value]="scheme.key">{{scheme.value}}</mat-option>
+          <div *ngFor="let scheme of customColorSchemes | keyvalue">
+            <mat-option [value]="scheme.key">
+              <div class="custom-select">
+                <span>
+                  {{scheme.value.name}}
+                </span>
+                <span></span>
+                <span class="delete-button" (click)="removeCustomColorScheme(scheme.key)">
+                  <mat-icon>clear</mat-icon>
+                </span>
+              </div>
+            </mat-option>
+        </div>
+
+
+        </div>
+
+        <mat-option value="custom">Upload Custom</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+</div>

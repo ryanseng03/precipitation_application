@@ -1,0 +1,56 @@
+.leaflet-verticalcenter {
+    position: absolute;
+    top: 0;
+    z-index: 1000;
+    pointer-events: none;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+// .leaflet-verticalcenter .leaflet-control {
+//     margin-bottom: 10px;
+// }
+
+.container {
+    height: fit-content;
+    width: fit-content;
+    background-color: #175db6;
+    margin-top: 10px;
+    border-radius: 10px;
+    font-family: "Roboto";
+    color: white;
+}
+
+.header-text-box {
+    padding: 10px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.header-text-box hr {
+    margin: 2px;
+}
+
+.header-text-box p {
+    display: inline-block;
+    margin: 0;
+    font-size:  16px;
+    font-weight: 300;
+}
+
+.header-text-box h3 {
+  font-size: 14px;
+  margin: 2px;
+  font-weight: 500;
+}
+
+// ::ng-deep header-wrapper .leaflet-left {
+//     left: 50%;
+//     transform: translate(-50%, 0%);
+// }
+
+// .leaflet-top {
+//     top: 50%;
+//     transform: translate(0%, -50%);
+// }
+

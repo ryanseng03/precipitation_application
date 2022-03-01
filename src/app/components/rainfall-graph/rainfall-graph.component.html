@@ -1,0 +1,10 @@
+<app-loading-component *ngIf="!complete"></app-loading-component>
+<div *ngFor="let item of data | keyvalue">
+    <div class="button-container" *ngFor="let rangePeriod of rangeData.periodRanges[item.key]">
+      <button mat-flat-button color="primary" (click)="setRange(item.key, rangePeriod)">{{rangeData.buttonData[rangePeriod]}}</button>
+    </div>
+  <plotly-plot [data]="item.value.graph.data" [layout]="item.value.graph.layout"></plotly-plot>
+</div>
+
+
+

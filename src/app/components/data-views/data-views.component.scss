@@ -1,0 +1,42 @@
+.filter-table {
+  display: inline-block;
+  width: 600px;
+  padding: 10px;
+}
+
+.site-data-table {
+  display: inline-block;
+  width: 300px;
+  padding: 10px;
+}
+
+.main-container {
+  display: inline-flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
+.multi-select-shift {
+  transform: translateY(calc(0.09375em + 1px));
+}
+
+.filter-container {
+  display: block;
+  clear: both;
+  min-width: 600px;
+}
+
+.filter-component {
+  display: inline-block;
+  padding: 20px;
+  padding-top: 0;
+}
+
+h4 {
+  margin-bottom: 0;
+  padding-left: 20px;
+}
+
+.tables {
+  display: block;
+}

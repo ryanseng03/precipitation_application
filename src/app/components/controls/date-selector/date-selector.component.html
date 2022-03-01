@@ -1,0 +1,21 @@
+<div>
+  <mat-form-field>
+    <mat-label>{{label}}</mat-label>
+
+    <input matInput
+      [formControl]="dateControl"
+      [matDatepicker]="datePicker"
+      [min]="_min"
+      [max]="_max"
+      [readonly]="readonly">
+
+    <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
+    <mat-datepicker #datePicker
+      (monthSelected)="monthSelectHandler($event)"
+      startView={{getDefaultView()}}>
+    </mat-datepicker>
+    <mat-error>Invalid Date</mat-error>
+  </mat-form-field>
+</div>
+
+

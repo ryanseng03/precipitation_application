@@ -1,0 +1,127 @@
+<div class="container">
+
+
+
+  <!-- <hr> -->
+
+  <div class="form-body">
+    <h2>
+      Select The Dataset You Would Like to View and Click "Submit".
+    </h2>
+
+
+    <!-- should create config json for this stuff to make it easy to update -->
+
+    <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
+
+    <!-- what type of data (rainfall, etc) -->
+    <div class="control-group">
+      <div class="control">
+        <mat-form-field>
+          <mat-label>Dataset</mat-label>
+          <mat-select
+            disableOptionCentering="true"
+            [formControl]="controls.dataset">
+            <mat-option
+              *ngFor="let dataset of getDatasetData()"
+              [value]="dataset.value"
+              matTooltipPosition="right"
+              [matTooltip]="dataset.description">
+              {{dataset.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="right"
+          [matTooltip]="selectorDescriptions.dataset"
+          inline="true">
+          help
+        </mat-icon>
+        <!-- <div class="current-buffer">
+          Current: Test
+        </div> -->
+
+      </div>
+
+      <div class="control">
+        <mat-form-field>
+          <mat-label>{{periods.label}}</mat-label>
+          <mat-select
+            disableOptionCentering="true"
+            [formControl]="controls.period">
+            <mat-option
+              *ngFor="let period of periodAvailability[controls.dataset.value]"
+              [value]="periods.values[period].value"
+              matTooltipPosition="right"
+              [matTooltip]="periods.values[period].description">
+              {{periods.values[period].label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="right"
+          [matTooltip]="periods.description"
+          inline="true">
+          help
+        </mat-icon>
+      </div>
+
+
+    </div>
+
+    <div *ngIf="getPeriodValid()">
+      <div class="control">
+        <h4>
+          Dataset Coverage
+        </h4>
+        {{getDateRangeLabel()}}
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="control-group" *ngIf="getDataStationsAvailable()">
+        <h3>
+          Data Stations
+        </h3>
+        <div class="control-subgroup">
+          <div class="control">
+            <mat-form-field>
+              <mat-label>{{fills.label}}</mat-label>
+              <mat-select
+                disableOptionCentering="true"
+                [formControl]="controls.fill">
+                <mat-option
+                  *ngFor="let fill of getFillData()"
+                  [value]="fill.value"
+                  matTooltipPosition="right"
+                  [matTooltip]="fill.description">
+                  {{fill.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="fills.description"
+              inline="true">
+              help
+            </mat-icon>
+          </div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+    </div>
+
+
+  </div>
+  <div class="spacer"></div>
+
+  <button mat-raised-button color="primary" (click)="updateDataset()" [disabled]="!checkValid()">
+    Submit
+  </button>
+</div>

@@ -1,0 +1,27 @@
+
+{
+    "datasets": [{
+        "datatype": "rainfall",
+        "period": "month",
+        "dates": ["", null],
+        "georef": "hcdp_hawaii_statewide",
+        "station_metadata": ["hcdp_hawaii_sensor_network"],
+        "raster_metadata": []
+    }],
+    "vis": {
+        "raster": {
+            "georef": ""
+        },
+        "station": {
+            "header": "",
+            "fill": "partial"
+        },
+        "timeseries": ["day", "month"]
+    },
+    "export": {
+        "raster": {
+            "bbox": ["hawaii", "maui", "oahu", "kauai", "statewide"]
+        },
+        "station": {}
+    }
+}

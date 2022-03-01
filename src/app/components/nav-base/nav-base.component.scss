@@ -1,0 +1,85 @@
+
+.nav-tile-container {
+    width: 100%;
+    height: 100%;
+}
+
+
+.nav-sub-tile {
+  height: 100%;
+  width: 100%;
+  padding: 5px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.nav-sub-tile:hover {
+  box-shadow: 2px -2px inset, -1px 1px inset;
+}
+
+
+.data-nav-trigger {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    -webkit-text-orientation: upright;
+    text-orientation: upright;
+    writing-mode: vertical-lr;
+    padding: 0px;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+}
+
+p {
+    margin: 0;
+    padding: 0px;
+}
+
+.nav-container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.selected {
+    background-color: #175db6;
+    color: white;
+}
+
+.sidebar-nav {
+    width: 100%;
+}
+
+
+.app-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+
+}
+
+.component-container {
+  height: 100%;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.vis-container {
+    height: 100%;
+    width: 100%;
+}
+
+.export-container {
+    height: 100%;
+    width: 100%;
+}
+
+//TEMP
+.hidden {
+    display: none;
+}
