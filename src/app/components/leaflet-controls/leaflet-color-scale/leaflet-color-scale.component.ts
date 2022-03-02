@@ -15,9 +15,41 @@ export class LeafletColorScaleComponent implements OnInit {
   control: Control;
   intervals: string[];
   numIntervals: number = 4;
+  colorGradient = "";
 
+  @Input() label: string;
+  @Input() rangeAbsolute: [boolean, boolean];
 
-  @Input() colorScale: ColorScale;
+  private __colorScale;
+  @Input() set colorScale(colorScale: ColorScale) {
+    this.__colorScale = colorScale
+    if(colorScale) {
+      let range = colorScale.getRange();
+      let parts = this.numIntervals - 1;
+      let span = range[1] - range[0];
+      let intervalSize = span / parts;
+      let intervals: number[] = [range[0]];
+      for(let i = 0; i < parts; i++) {
+        let interval = intervals[i] + intervalSize;
+        intervals.push(interval);
+      }
+      for(let i = 0; i < parts; i++) {
+        //round 2 decimal points
+        intervals[i] = Math.round(intervals[i]);
+      }
+      //reverse since populated from top to bottom
+      this.intervals = intervals.reverse().map((value: number) => {
+        return value.toString();
+      });
+      if(!this.rangeAbsolute[0]) {
+        this.intervals[this.intervals.length - 1] += "-";
+      }
+      if(!this.rangeAbsolute[1]) {
+        this.intervals[0] += "+";
+      }
+      this.getColorGradient();
+    }
+  }
   @Input() position: ControlPosition = "bottomright";
   @Input() set map(map: Map) {
     if(map) {
@@ -36,32 +68,14 @@ export class LeafletColorScaleComponent implements OnInit {
 
   //note that is the scale changes this won't update, maybe modify (this is static for now though)
   ngOnInit() {
-    let range = this.colorScale.getRange();
-    let parts = this.numIntervals - 1;
-    let span = range[1] - range[0];
-    let intervalSize = span / parts;
-    let intervals: number[] = [0];
-    for(let i = 0; i < parts; i++) {
-      let interval = intervals[i] + intervalSize;
-      intervals.push(interval);
-    }
-    for(let i = 0; i < parts; i++) {
-      //round 2 decimal points
-      intervals[i] = Math.round(intervals[i]);
-    }
-    //reverse since populated from top to bottom
-    this.intervals = intervals.reverse().map((value: number) => {
-      return value.toString();
-    });
-    this.intervals[0] += "+";
+
   }
 
   getColorGradient() {
-    let element: HTMLElement = this.colors.nativeElement;
-    let colors = this.colorScale.getColorsHex().reverse();
+    let colors = this.__colorScale.getColorsHex().reverse();
     let colorListString = colors.join(",");
     let gradient = `linear-gradient(${colorListString})`;
-    element.style.backgroundImage = gradient;
+    this.colorGradient = gradient;
   }
 
 

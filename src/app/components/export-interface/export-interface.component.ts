@@ -75,7 +75,6 @@ export class ExportInterfaceComponent implements OnInit {
 
   addExportData(i: number) {
     let initData: any = i < 0 ? null : this.exportItems[i].data;
-    console.log("initdata", initData);
 
     //panelClass applies global class to form (styles.scss)
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
@@ -86,7 +85,6 @@ export class ExportInterfaceComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((data: any) => {
-      console.log("data", data);
       if(data) {
         if(i < 0) {
           this.exportItems.push(data);
@@ -100,17 +98,89 @@ export class ExportInterfaceComponent implements OnInit {
     });
   }
 
-
+  dataset2Prop = {
+    rainfall: {
+      datatype: "rainfall",
+      production: "new"
+    },
+    legacy_rainfall: {
+      datatype: "rainfall",
+      production: "legacy"
+    },
+    tmin: {
+      datatype: "temperature",
+      aggregation: "min"
+    },
+    tmax: {
+      datatype: "temperature",
+      aggregation: "max"
+    },
+    tmean: {
+      datatype: "temperature",
+      aggregation: "mean"
+    }
+  }
+  file2Prop = {
+    data_map: {
+      files: ["data_map"]
+    },
+    se: {
+      files: ["se"]
+    },
+    anomaly: {
+      files: ["anomaly"]
+    },
+    anomaly_se: {
+      files: ["anomaly_se"]
+    },
+    metadata: {
+      files: ["metadata"]
+    },
+    station_data_partial: {
+      files: ["station_data"],
+      fill: "partial"
+    },
+    station_data_raw: {
+      files: ["station_data"],
+      fill: "raw"
+    }
+  }
 
   export() {
-    let reqs: ResourceReq[] = this.exportItems.reduce((acc: ResourceReq[], item: ExportData) => {
-      let sub = item.getResourceReqs();
+    let reqs: any[] = this.exportItems.reduce((acc: any[], item: any) => {
+      let sub = [];
+      //deconstruct data
+      const { dataset, files, period, range } = item.data;
+      //translate dates to strings
+      let start = this.dateService.dateToString(range[0], period);
+      let end = this.dateService.dateToString(range[0], period);
+      //expand dataset props
+      let datasetProps = this.dataset2Prop[dataset];
+      //expand file props and loop extents
+      for(let file in files) {
+        let fileProps = this.file2Prop[file];
+        let extents = files[file];
+        for(let extent of extents) {
+          let data = {
+            extent,
+            range: {
+              start,
+              end
+            },
+            period
+          };
+          //add dataset and file props
+          data = Object.assign(data, datasetProps, fileProps);
+          sub.push(data);
+        }
+      }
       return acc.concat(sub);
     }, []);
+    console.log(reqs);
+    let email = this.emailData.emailInputControl.value
     if(this.emailData.useEmailControl.value) {
       this.exportActivityMonitor.mode = "indeterminate"
       this.exportActivityMonitor.active = true;
-      let email = this.emailData.emailInputControl.value
       this.exportManager.submitEmailPackageReq(reqs, email).then(() => {
         let message = `A download request has been generated. You should receive an email at ${email} with your download package shortly. If you do not receive an email within 4 hours, please ensure the email address you entered is spelled correctly and try again or contact the site administrators.`;
         this.errorService.notify("info", message);
@@ -124,7 +194,7 @@ export class ExportInterfaceComponent implements OnInit {
     else {
       this.exportActivityMonitor.mode = "query"
       this.exportActivityMonitor.active = true;
-      this.exportManager.submitInstantDownloadReq(reqs).then((progress: Observable<number>) => {
+      this.exportManager.submitInstantDownloadReq(reqs, email).then((progress: Observable<number>) => {
         this.exportActivityMonitor.mode = "determinate";
         this.exportActivityMonitor.value = 0;
         progress.subscribe((percent: number) => {
@@ -143,6 +213,7 @@ export class ExportInterfaceComponent implements OnInit {
 
       })
       .catch((e) => {
+        console.error(e);
         this.errorService.notify("error", "An error occured while generating the download package.");
         this.exportActivityMonitor.active = false;
       });

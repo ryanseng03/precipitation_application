@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Subscription, throwError } from 'rxjs';
+import { Observable, Subscription, throwError } from 'rxjs';
 import { retry, catchError, take } from 'rxjs/operators';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { DataProcessorService } from 'src/app/services/dataProcessor/data-processor.service';
@@ -94,14 +94,6 @@ export abstract class RequestResults {
           reason: `Error in query, status: ${error.status}, message: ${error.message}`
         };
         this.reject(reject);
-      }, () => {
-        if(this.cancelled) {
-          let reject: RequestReject = {
-            cancelled: true,
-            reason: null
-          }
-          this.reject(reject);
-        }
       });
     }
 
@@ -130,13 +122,13 @@ export abstract class RequestResults {
       //does this complete the stream?
       this.sub.unsubscribe();
     }
-    else {
-      let reject: RequestReject = {
-        cancelled: true,
-        reason: null
-      }
-      this.reject(reject);
+
+    let reject: RequestReject = {
+      cancelled: true,
+      reason: null
     }
+    this.reject(reject);
+
     if(this.timeout) {
       clearTimeout(this.timeout);
     }
@@ -189,7 +181,7 @@ export class MetadataRequestResults extends RequestResults {
 }
 
 export class GeotiffRequestResults extends RequestResults {
-  static readonly ENDPOINT = "https://cistore.its.hawaii.edu/raster";
+  static readonly ENDPOINT = "https://cistore.its.hawaii.edu:8443/raster";
 
   get(params: GeotiffParams, delay?: number) {
     if(!this.cancelled && !this.sub) {

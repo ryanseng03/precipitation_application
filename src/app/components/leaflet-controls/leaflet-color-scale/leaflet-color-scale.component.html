@@ -1,10 +1,10 @@
 <div id="legend">
   <div class="title-container">
-    <span>Monthly Rainfall (mm)</span>
+    <span>{{label}}</span>
   </div>
   <div class="scale-container">
     <div class="label-buffer">
-      <div #colors class="colors" [style.background-image]="getColorGradient()"></div>
+      <div #colors class="colors" [style.background-image]="colorGradient"></div>
     </div>
     <div class="tick-marks">
       <span *ngFor="let interval of intervals">-</span>
@@ -12,8 +12,8 @@
     <div class="numeric-markers">
       <span *ngFor="let interval of intervals">{{interval}}</span>
     </div>
-    
+
   </div>
 </div>
-  
+
 

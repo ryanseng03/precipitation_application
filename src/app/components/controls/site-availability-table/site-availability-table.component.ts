@@ -37,7 +37,6 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
         values: values
       });
     }
-    console.log(this.selectedStation);
     //delay to give element refs time to update, then trigger station select in table if it exists
     setTimeout(() => {
       this.selected = this.selectedStation;
@@ -122,7 +121,6 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     if(position < viewRange[0] || position >= viewRange[1]) {
       tbodyEl.scrollTo(0, position);
     }
-    console.log(this.selectedRef);
     this.selectedRef.selected = true;
   }
 

@@ -70,7 +70,6 @@ export class UploadCustomColorSchemeComponent {
   }
 
   submit() {
-    console.log(this.fileData);
     //note if fileData is null then submit should be disabled
     this.fileData.then((data: string) => {
       console.log(data);
@@ -88,7 +87,7 @@ export class UploadCustomColorSchemeComponent {
       }, (e) => {
         this.error = e;
       });
-    });    
+    });
   }
 
 

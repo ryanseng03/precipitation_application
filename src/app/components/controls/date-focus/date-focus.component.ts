@@ -17,7 +17,7 @@ export class DateFocusComponent implements OnInit {
   @Input() date: Moment.Moment;
   @Output() dateChange: EventEmitter<DateChangeInfo> = new EventEmitter<DateChangeInfo>();
 
-  
+
 
   controlData = {
     month: {

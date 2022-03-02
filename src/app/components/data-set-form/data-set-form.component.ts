@@ -47,27 +47,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     dates: "The date range data for this dataset are available for (inclusive at both ends)",
   }
 
-  ranges = {
-    rainfall: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    legacy_rainfall: {
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    tmin: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    tmax: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    tmean: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    }
-  };
+  ranges: any;
 
   periodAvailability = {
     rainfall: ["day", "month"],
@@ -81,7 +61,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     rainfall: {
       day: {
         unit: "mm",
-        dataRange: [0, 650],
+        dataRange: [0, 20],
         rangeAbsolute: [true, false],
         stationData: true,
         rasterData: false
@@ -156,7 +136,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   fillAvailability = {
     rainfall: {
       day: ["partial", "raw"],
-      month: ["partial", "raw"]
+      month: ["partial"]
     },
     legacy_rainfall: {
       month: null
@@ -184,12 +164,12 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
         description: "This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing values."
       },
       raw: {
-        label: "Raw",
+        label: "Unfilled",
         value: "raw",
-        description: "Station data including only values provided by stations after going through QA/QC."
+        description: "Station data including only values provided by stations before going through QA/QC."
       }
     },
-    description: "Station data goes through quality assurance and quality control (QA/QC) measures then may have filling techniques applied to estimate missing values."
+    description: "The type of processing the station data goes through."
   };
 
   periods = {
@@ -226,7 +206,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   }
 
   constructor(private paramService: EventParamRegistrarService, private dateSelector: VisDateSelectService, private dateManager: DateManagerService) {
-
+    this.ranges = dateManager.getDatasetRanges();
   }
 
   ngOnInit() {

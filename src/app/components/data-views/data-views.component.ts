@@ -14,9 +14,6 @@ export class DataViewsComponent implements OnInit {
   stations: SiteInfo[];
   selectedStation: SiteInfo;
 
-
-
-
   filterControl: FormControl = new FormControl([]);
   fieldControl: FormControl = new FormControl(null);
   field2label = {

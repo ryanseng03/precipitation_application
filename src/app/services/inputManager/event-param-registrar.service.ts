@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import Moment from 'moment';
+import { ColorScale } from 'src/app/models/colorScale';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +21,7 @@ export class EventParamRegistrarService {
     stationTimeseries: "stationTimeseries",
     loading: "loading",
     mapBounds: "mapBounds",
+    colorScale: "colorScale"
   };
 
   private datasetSource: BehaviorSubject<any>;
@@ -31,6 +33,7 @@ export class EventParamRegistrarService {
   private dateSource: BehaviorSubject<Moment.Moment>;
   private loadingSource: BehaviorSubject<LoadingData>;
   private mapBoundsSource: BehaviorSubject<L.LatLngBounds>;
+  private colorScaleSource: BehaviorSubject<ColorScale>;
   private tagGen: UniqueTagID;
 
   constructor(private paramService: ParameterStoreService) {
@@ -45,10 +48,15 @@ export class EventParamRegistrarService {
     this.dateSource = this.paramService.registerParameter<Moment.Moment>(EventParamRegistrarService.EVENT_TAGS.date);
     this.loadingSource = this.paramService.registerParameter<LoadingData>(EventParamRegistrarService.EVENT_TAGS.loading);
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
+    this.colorScaleSource = this.paramService.registerParameter<ColorScale>(EventParamRegistrarService.EVENT_TAGS.colorScale);
   }
 
   pushDataset(dataset: any): void {
     this.datasetSource.next(dataset);
+  }
+
+  pushColorScale(colorScale: ColorScale): void {
+    this.colorScaleSource.next(colorScale);
   }
 
   pushRaster(raster: RasterData): void {

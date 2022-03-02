@@ -63,7 +63,7 @@ export class MapComponent implements OnInit {
   private selectedMarker: L.CircleMarker;
 
   dataset: any = {};
-
+  colorScaleLabel: string = "";
 
 
   constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService, private assetService: AssetManagerService) {
@@ -73,7 +73,6 @@ export class MapComponent implements OnInit {
       image: roseURL,
       position: "bottomleft"
     }
-
 
     this.baseLayers = {
       "Satellite (Google)": L.tileLayer("http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}", {
@@ -166,9 +165,9 @@ export class MapComponent implements OnInit {
   colorSchemeType: string;
   setColorScheme(colorScheme: ColorScale) {
     let layer: any = this.dataLayers[this.active.band];
+    this.colorScheme = colorScheme;
     if(layer) {
       layer.setColorScale(colorScheme);
-      this.colorScheme = colorScheme;
       //update marker colors
       for(let marker of this.markerInfo.markers) {
         let color = colorScheme.getColor(marker.metadata.value);
@@ -228,7 +227,7 @@ export class MapComponent implements OnInit {
     //have to use "function()" syntax if new context
 
 
-    let colorScale: ColorScale = this.colors.getViridisColorScale();
+    let colorScale: ColorScale;
     this.colorScheme = colorScale;
 
     this.map.on("zoomend", () => {
@@ -270,6 +269,7 @@ export class MapComponent implements OnInit {
     let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
       if(dataset) {
         this.dataset = dataset;
+        this.colorScaleLabel = `${dataset.label} (${dataset.unit})`
       }
     });
 
@@ -421,10 +421,35 @@ export class MapComponent implements OnInit {
 
           let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
 
+          //TEMP translations
+          let translations = {
+            mm: {
+              unit: "mm",
+              f: (value: number) => {
+                return value / 25.4;
+              },
+              translationUnit: "in"
+            },
+            C: {
+              unit: "&#176;C",
+              f: (value: number) => {
+                return (value * (9 / 5)) + 32;
+              },
+              translationUnit: "&#176;F"
+            }
+          };
+          let unit = this.dataset.unit;
+          let translationData = translations[unit];
+          let translationValue = translationData.f(value);
+          unit = translationData.unit;
+          let translationUnit = translationData.translationUnit;
+          let roundedValue = Math.round(value * 100) / 100;
+          let roundedTranslationValue = Math.round(translationValue * 100) / 100
+
           //popup cell value
           popupData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
-          let content = `${Math.round(value * 100) / 100}mm<br>${Math.round((value / 25.4) * 100) / 100}in<br>`;
+          let content = `${roundedValue}${unit}<br>${roundedTranslationValue}${translationUnit}<br>`;
           popupData.popup.setContent(content);
           popupData.popup.openOn(this.map);
         }
@@ -469,8 +494,12 @@ export class MapComponent implements OnInit {
       if(radius < minRadiusAtPivot) {
         minRadiusAtPivot = radius;
       }
-      let fill = this.colorScheme.getColor(station.value);
-      let hexFill = chroma([fill.r, fill.g, fill.b]).hex();
+      let hexFill = "#ffffff";
+      if(this.colorScheme) {
+        let fill = this.colorScheme.getColor(station.value);
+        hexFill = chroma([fill.r, fill.g, fill.b]).hex();
+      }
+
       let marker = L.circleMarker(station.location, {
         opacity: 1,
         fillOpacity: 1,
@@ -507,9 +536,6 @@ export class MapComponent implements OnInit {
       this.layerController.removeLayer(this.markerInfo.layer);
     }
     this.markerInfo.layer = markerLayer;
-
-    console.log(markerLayer);
-
     this.layerController.addOverlay(markerLayer, "Data Stations");
     this.map.addLayer(markerLayer);
   }
@@ -557,14 +583,17 @@ export class MapComponent implements OnInit {
   getMarkerRadiusAtPivot(station: SiteInfo): number {
     let min = 5;
     let max = 30;
-    let radius = min + station.value / 50;
+    let dataRange: [number, number] = this.dataset.dataRange;
+    let value = station.value;
+    let valueOffset = Math.max(value - dataRange[0], 0);
+    let span = dataRange[1] - dataRange[0];
+    let coef = 13 / span;
+    let radius = min + coef * valueOffset;
     radius = Math.min(radius, max);
     return radius;
   }
 
   setStaticMarkerRadius(marker: RainfallStationMarker) {
-    let zoom = this.map.getZoom();
-    let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, zoom);
     let radiusAtPivot = marker.metadata.pivotRadius;
     let radius = this.getStaticRadius(radiusAtPivot);
     marker.marker.setRadius(radius);

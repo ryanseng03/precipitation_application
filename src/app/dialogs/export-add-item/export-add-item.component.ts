@@ -248,30 +248,8 @@ export class ExportAddItemComponent {
   }
 
 
-  //UPDATE DATES
-  ranges = {
-    rainfall: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    legacy_rainfall: {
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    tmin: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    tmax: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    },
-    tmean: {
-      day: [Moment("1990-01-01"), Moment("2019-12-31")],
-      month: [Moment("1990-01"), Moment("2019-12")]
-    }
-  }
+  ranges: any
 
-  //EXTENTS ALOW MULTIPLE, ADD METADATA, JUST SELECT EACH EXTENT FOR EVERY FILE SELECTED, YA KNOW, GET RID OF GROUPS, ADD FILE TYPES
   files = {
     rainfall: {
       day: [
@@ -285,12 +263,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide", "bi", "mn", "oa", "ka"],
           default_extents: ["statewide"],
-          description: "Rainfall station data including only values provided by stations after going through QA/QC.",
+          description: "Rainfall station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ],
@@ -348,15 +326,6 @@ export class ExportAddItemComponent {
           default_extents: ["statewide"],
           description: "Rainfall station data. This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing values. These are the values used to generate the rainfall maps.",
           requires: []
-        },
-        {
-          label: "Station Data (Raw)",
-          value: "station_data_raw",
-          filetype: "csv",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
-          default_extents: ["statewide"],
-          description: "Rainfall station data including only values provided by stations after going through QA/QC.",
-          requires: []
         }
       ]
     },
@@ -403,12 +372,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ],
@@ -441,12 +410,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ]
@@ -481,12 +450,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ],
@@ -519,12 +488,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ]
@@ -559,12 +528,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ],
@@ -597,12 +566,12 @@ export class ExportAddItemComponent {
           requires: []
         },
         {
-          label: "Station Data (Raw)",
+          label: "Station Data (Unfilled)",
           value: "station_data_raw",
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations after going through QA/QC.",
+          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ]
@@ -781,7 +750,7 @@ export class ExportAddItemComponent {
         requires: []
       },
       station_data_raw: {
-        label: "Station Data (Raw)",
+        label: "Station Data (Unfilled)",
         properties: {
           file: "station_data",
           fill: "raw"
@@ -831,7 +800,7 @@ export class ExportAddItemComponent {
         requires: []
       },
       station_data_raw: {
-        label: "Station Data (Raw)",
+        label: "Station Data (Unfilled)",
         properties: {
           file: "station_data",
           fill: "raw"
@@ -852,6 +821,8 @@ export class ExportAddItemComponent {
   }
 
   constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: any, private dateManager: DateManagerService) {
+    this.ranges = dateManager.getDatasetRanges();
+
     let dataset = data ? data.dataset : "rainfall";
     let period = data ? data.period : "month";
     let dates = data ? data.range : null;

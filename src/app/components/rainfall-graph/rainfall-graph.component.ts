@@ -177,13 +177,15 @@ export class RainfallGraphComponent implements OnInit {
           endDate = periodData.dates[periodData.dates.length - 1];
           if(chunkStartDate.isBefore(startDate)) {
             let newDates = this.dateHandler.expandDates(chunkStartDate, startDate, period);
+            //strip the last value (current start date)
+            newDates.pop();
+            //create date strings
             let newDateStrings = newDates.map((date: Moment.Moment) => {
               return this.dateHandler.dateToString(date, period);
             });
-            //strip the last value (current start date)
-            newDates.pop();
             //create values to add, fill with null (note setting current date values will be handled in next part)
             let newValues = new Array(newDates.length).fill(null);
+
             //add new dates to start of date arrays
             periodData.dates = newDates.concat(periodData.dates);
             periodData.graph.data[0].x = newDateStrings.concat(periodData.graph.data[0].x);
@@ -194,13 +196,15 @@ export class RainfallGraphComponent implements OnInit {
           if(chunkEndDate.isAfter(endDate)) {
             //create dates to add
             let newDates = this.dateHandler.expandDates(endDate, chunkEndDate, period);
+            //strip the first value (current end date)
+            newDates.shift();
+            //create date strings
             let newDateStrings = newDates.map((date: Moment.Moment) => {
               return this.dateHandler.dateToString(date, period);
             });
-            //strip the first value (current end date)
-            newDates.shift();
             //create values to add, fill with null (note setting current date values will be handled in next part)
             let newValues = new Array(newDates.length).fill(null);
+
             //add new dates to end of date arrays
             periodData.dates = periodData.dates.concat(newDates);
             periodData.graph.data[0].x = periodData.graph.data[0].x.concat(newDateStrings);
@@ -216,8 +220,6 @@ export class RainfallGraphComponent implements OnInit {
           let newDateStrings = newDates.map((date: Moment.Moment) => {
             return this.dateHandler.dateToString(date, period);
           });
-          //strip the last value (current start date)
-          newDates.pop();
           //create values to add, fill with null (note setting current date values will be handled in next part)
           let newValues = new Array(newDates.length).fill(null);
           //add new dates to start of date arrays
@@ -238,8 +240,5 @@ export class RainfallGraphComponent implements OnInit {
       }
     });
   }
-
-
-
 
 }

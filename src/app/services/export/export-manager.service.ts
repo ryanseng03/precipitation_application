@@ -34,8 +34,8 @@ export class ExportManagerService {
   static readonly F_PART_SIZE_UL_MB = 4;
 
   ///////////////////////
-  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu/genzip/instant/splitlink";
-  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu/genzip/email/";
+  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu:8443/genzip/instant/splitlink";
+  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu:8443/genzip/email/";
   ///////////////////////
 
   constructor(private http: HttpClient, private dbcon: DbConService, private dateService: DateManagerService) {
@@ -44,7 +44,7 @@ export class ExportManagerService {
 
   async submitEmailPackageReq(reqs: ResourceReq[], email: string): Promise<void> {
     let reqBody = {
-      fileData: reqs,
+      data: reqs,
       email: email
     };
     let head = new HttpHeaders();
@@ -78,9 +78,10 @@ export class ExportManagerService {
   }
 
 
-  async submitInstantDownloadReq(reqs: ResourceReq[]): Promise<Observable<number>> {
+  async submitInstantDownloadReq(reqs: ResourceReq[], email: string): Promise<Observable<number>> {
     let reqBody = {
-      fileData: reqs
+      data: reqs,
+      email: email
     };
     let head = new HttpHeaders();
     const responseType: "json" = "json";

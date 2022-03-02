@@ -17,7 +17,6 @@ export class DataRequestorService {
 
   getRasterHeader(properties: any, delay?: number): RequestResults {
     let query = this.propertiesToQuery("prew1", properties);
-    console.log(query);
     let timingMessage = `Retreived raster header`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     //extract first document
@@ -67,7 +66,6 @@ export class DataRequestorService {
     properties = Object.assign({}, properties);
     delete properties.dateRange;
     let query = this.propertiesToQuery("hcdp_station_value", properties);
-    console.log(query);
     let timingMessage = `Retreived station data for ${properties.date}`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     return response;
@@ -83,8 +81,8 @@ export class DataRequestorService {
   getStationTimeSeries(start: string, end: string, properties: any, delay?: number): RequestResults {
     let query = this.propertiesToQuery("hcdp_station_value", properties);
     query = `{'$and':[${query},{'value.date':{'$gte':'${start}'}},{'value.date':{'$lt':'${end}'}}]}`;
-    let timingMessage = `Retreived station ${properties.skn} timeseries for ${start}-${end}`;
-    let response = this.basicQueryDispatch(query, delay, timingMessage);
+    //let timingMessage = `Retreived station ${properties.station_id} timeseries for ${start}-${end}`;
+    let response = this.basicQueryDispatch(query, delay);
     return response;
   }
 

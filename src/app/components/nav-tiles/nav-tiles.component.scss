@@ -1,30 +1,53 @@
 .nav-tile {
     width: 100%;
     height: 100%;
-    padding: 20px;
+    // padding: 20px;
     box-sizing: border-box;
     cursor: pointer;
     position: relative;
+    display: inline-flex;
+    flex-direction: row;
 }
 
 
-
 .nav-tile:hover {
-    // border-style: solid;
-    // border-width: 5px;
     box-shadow: 5px -5px inset, -1px 1px inset;
 }
 
 //semi-transparent color overlay on hover
-// .nav-tile:hover:after {
-//   content:"\A";
-//   width:100%;
-//   height:100%;
-//   background:rgba(23, 93, 182, 0.2);
-//   position: absolute;
-//   left: 0;
-//   top: 0;
-// }
+.nav-tile:hover:after {
+  content: "\A";
+  width: 100%;
+  height: 100%;
+  background: rgba(23, 93, 182, 0.1);
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+
+.tile-background {
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, 1.0) 25%, transparent 100%);
+  background-size: cover;
+}
+
+.text {
+  padding: 20px;
+}
+
+.export-background {
+  background-image: url("/assets/images/export_tile_background.jpg");
+}
+
+.vis-background {
+  background-image: url("/assets/images/vis_tile_background.png");
+}
+
+
 
 .nav-tile-container {
     display: flex;

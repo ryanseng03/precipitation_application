@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Moment } from "moment";
+import Moment from "moment";
 import { Period } from 'src/app/models/types';
 
 @Injectable({
@@ -44,7 +44,7 @@ export class DateManagerService {
     return higherPeriods;
   }
 
-  dateToString(date: Moment, period: Period, fancy: boolean = false): string {
+  dateToString(date: Moment.Moment, period: Period, fancy: boolean = false): string {
     let format = this.periodToFormat(period, fancy);
     return date.format(format);
   }
@@ -58,7 +58,7 @@ export class DateManagerService {
   }
 
   //inclusive
-  expandDates(start: Moment, end: Moment, period: Period): Moment[] {
+  expandDates(start: Moment.Moment, end: Moment.Moment, period: Period): Moment.Moment[] {
     let date = start.clone();
     let dates = [];
     while(date.isSameOrBefore(end)) {
@@ -68,7 +68,7 @@ export class DateManagerService {
     return dates;
   }
 
-  datesBetween(start: Moment, end: Moment, period: Period): number {
+  datesBetween(start: Moment.Moment, end: Moment.Moment, period: Period): number {
     let date = start.clone();
     let num = 0;
     while(date.isSameOrBefore(end)) {
@@ -76,6 +76,37 @@ export class DateManagerService {
       date.add(1, period);
     }
     return num;
+  }
+
+
+  //TEMP
+  getDatasetRanges() {
+    let now = Moment();
+    let lastMonth = now.clone().subtract(1, "month").startOf("month");
+    let lastDay = now.clone().subtract(1, "day").startOf("day");
+    //set end dates to previous period for everything but legacy rainfall
+    let ranges = {
+      rainfall: {
+        day: [Moment("1990-01-01"), lastDay.clone()],
+        month: [Moment("1990-01"), lastMonth.clone()]
+      },
+      legacy_rainfall: {
+        month: [Moment("1920-01"), Moment("2012-12")]
+      },
+      tmin: {
+        day: [Moment("1990-01-01"), lastDay.clone()],
+        month: [Moment("1990-01"), lastMonth.clone()]
+      },
+      tmax: {
+        day: [Moment("1990-01-01"), lastDay.clone()],
+        month: [Moment("1990-01"), lastMonth.clone()]
+      },
+      tmean: {
+        day: [Moment("1990-01-01"), lastDay.clone()],
+        month: [Moment("1990-01"), lastMonth.clone()]
+      }
+    };
+    return ranges;
   }
 
   constructor() { }

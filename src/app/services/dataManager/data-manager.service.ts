@@ -143,22 +143,19 @@ export class DataManagerService {
 
     //note this should push initial date, it doesnt...
     //add delay/caching stuff, simple for now
+    let stationRes: RequestResults = null;
+    let rasterRes: RequestResults = null;
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
       if(date) {
+        if(stationRes) {
+          stationRes.cancel();
+        }
+        if(rasterRes) {
+          rasterRes.cancel();
+        }
         data.date = date;
 
         let datasetInfo = data.dataset;
-
-//         unit: "mm",
-// dataRange: [0, 650],
-// rangeAbsolute: [true, false],
-// stationData: true,
-// rasterData: true
-// let dataset = this.controls.dataset.value;
-// let period = this.controls.period.value;
-// let details = this.datasetDetails[dataset][period];
-// let label =  `${this.periods.values[period].label} ${this.datasets[dataset].label}`;
-// let fill = this.controls.fill.value;
 
         const { stationData, rasterData, dataset, period, fill } = datasetInfo;
 
@@ -179,30 +176,32 @@ export class DataManagerService {
           let properties = {
             date: date_s,
             period,
+            fill,
             ...datasetProps
           }
-          let stationRes = dataRequestor.getStationData(properties);
+          stationRes = dataRequestor.getStationData(properties);
           //transform by combining with station data
-          stationRes.transform((stationData: any[]) => {
+          stationRes.transform((stationVals: any[]) => {
+            console.log(stationVals);
             //get metadata
             return metadataReq.toPromise()
             .then((metadata: any) => {
-              stationData = stationData.map((stationVals: any) => {
-                let stationId = stationVals.station_id;
+              let stations: any[] = stationVals.reduce((acc: any[], stationVal: any) => {
+                let stationId = stationVal.station_id;
                 //yay for inconsistent data
                 stationId = this.getStandardizedNumericString(stationId);
-                let stationValue = stationVals.value;
+                let stationValue = stationVal.value;
                 let stationMetadata = metadata[stationId];
                 if(stationMetadata) {
                   stationMetadata.value = stationValue;
+                  acc.push(stationMetadata);
                 }
                 else {
                   console.error(`Could not find metadata for station, station ID: ${stationId}.`);
                 }
-
-                return stationMetadata;
-              });
-              return stationData;
+                return acc;
+              }, []);
+              return stations;
             });
           });
           stationPromise = stationRes.toPromise();
@@ -215,10 +214,9 @@ export class DataManagerService {
           let properties = {
             date: date_s,
             period,
-            fill,
             ...datasetProps
           }
-          let rasterRes = dataRequestor.getRaster(properties);
+          rasterRes = dataRequestor.getRaster(properties);
           rasterPromise = rasterRes.toPromise();
         }
         else {
@@ -228,13 +226,13 @@ export class DataManagerService {
 
         //don't have to wait to set data for each
         promises[0].then((stationData: any[]) => {
-          console.log(stationData);
           paramService.pushStations(stationData);
         })
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
             console.error(reason.reason);
             errorPop.notify("error", `Could not retreive station data.`);
+            paramService.pushStations(null);
           }
         });
 
@@ -244,12 +242,13 @@ export class DataManagerService {
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
             console.error(reason.reason);
-            errorPop.notify("error", `Could not retreive raster data.`);
-            //should push out error raster (raster with empty data)
+            //Currently throws 404 on missing raster, can add this back later if remove 404
+            //errorPop.notify("error", `Could not retreive raster data.`);
+            paramService.pushRaster(null);
           }
         });
         //when both done send loading complete signal
-        Promise.all(promises).finally(() => {
+        Promise.allSettled(promises).finally(() => {
           paramService.pushLoading({
             tag: "vis",
             loading: false
@@ -287,6 +286,7 @@ export class DataManagerService {
             fill,
             ...datasetProps
           }
+          console.log(properties);
 
           //chunk queries by year
           let date = startDate.clone();

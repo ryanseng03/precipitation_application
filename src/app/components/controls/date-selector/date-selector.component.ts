@@ -49,7 +49,6 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   //set up initial form control starting with null value
   dateControl: FormControl = new FormControl(null);
-  debounce: boolean = false;
 
   constructor(private dateFormat: DateFormatHelperService) {
     //override the dumb default method that switches to random things and make it go up one level
@@ -68,6 +67,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
     //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
     //use map pipe to send null if invalid date
+    let dateChangeThrottle = null;
     this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
       if(this.dateControl.valid) {
         return date;
@@ -77,12 +77,11 @@ export class DateSelectorComponent implements OnInit, OnChanges {
       }
     }));
     this.dateControl.valueChanges.subscribe((date: Moment.Moment) => {
-      if(!this.debounce) {
+      clearTimeout(dateChangeThrottle);
+      //debounce not working for all cases, just throttle so only update once per cycle
+      dateChangeThrottle = setTimeout(() => {
         this.dateChange.emit(date);
-      }
-      else {
-        this.debounce = false;
-      }
+      }, 0);
     });
   }
 
@@ -90,9 +89,6 @@ export class DateSelectorComponent implements OnInit, OnChanges {
     //if period changed, run filter update
     if(changes.period) {
       this.setFormatUnit();
-      //trigger value change so formatting updates current input
-      //debounce, don't want to reemit date as change
-      this.debounce = true;
       this.dateControl.setValue(this.dateControl.value);
     }
     //set value to edge of range if out of new bounds

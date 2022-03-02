@@ -8,6 +8,7 @@ import { ColorGeneratorService, XMLColorSchemeData } from 'src/app/services/rast
 import { ColorScale } from 'src/app/models/colorScale';
 import { CustomColorSchemeService } from 'src/app/services/helpers/custom-color-scheme.service';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
+import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
   selector: 'app-leaflet-layer-control-extension',
@@ -88,13 +89,19 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     return this._map
   }
 
-  constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService) {
+  constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService, private paramService: EventParamRegistrarService) {
     this.opacity = new EventEmitter<number>();
     this.colorScheme = new EventEmitter<ColorScale>();
-    this.schemeControl = new FormControl();
+    this.schemeControl = new FormControl(this.defaultScheme);
     this.customColorSchemes = {};
     this.forbiddenNames = new Set<string>(Object.values(this.baseColorSchemes));
     this.debounce = false;
+
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+      if(dataset) {
+        this.schemeControl.setValue(this.schemeControl.value);
+      }
+    });
   }
 
   removeCustomColorScheme(tag: string) {
@@ -105,6 +112,9 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     if(this.schemeControl.value == tag) {
       this.schemeControl.setValue(this.defaultScheme);
     }
+    setTimeout(() => {
+      this.schemeControl.setValue(this.defaultScheme);
+    }, 0);
   }
 
   ngOnInit() {
@@ -151,7 +161,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
 
     });
 
-    this.schemeControl.setValue(this.defaultScheme);
   }
 
   ngOnDestroy() {
