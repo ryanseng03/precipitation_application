@@ -72,10 +72,11 @@ export class RainfallGraphComponent implements OnInit {
   __date: Moment.Moment = null;
   @Input() set date(date: Moment.Moment) {
     this.__date = date;
+    let clone = date.clone();
     //just get current month, and year
     //if subdaily data available need to swap this to get lowest available period as well and get all higher level periods
-    let monthRange = [date.startOf("month").toISOString(), date.endOf("month").toISOString()];
-    let yearRange = [date.startOf("year").toISOString(), date.endOf("year").toISOString()]
+    let monthRange = [clone.startOf("month").toISOString(), clone.endOf("month").toISOString()];
+    let yearRange = [clone.startOf("year").toISOString(), clone.endOf("year").toISOString()]
     this.rangeData.ranges.month = monthRange;
     this.rangeData.ranges.year = yearRange;
     //set ranges for all graphs with zooms applied

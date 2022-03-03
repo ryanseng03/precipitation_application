@@ -212,6 +212,9 @@ export class MapComponent implements OnInit {
     };
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
+      if(date) {
+        date = date.clone();
+      }
       this.active.data.date = date;
     });
 

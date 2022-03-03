@@ -136,6 +136,7 @@ export class DataManagerService {
     let rasterRes: RequestResults = null;
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
       if(date) {
+        date = date.clone();
         if(stationRes) {
           stationRes.cancel();
         }

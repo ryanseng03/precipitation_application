@@ -120,14 +120,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
         unit: "C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
-        stationData: true,
+        stationData: false,
         rasterData: true
       },
       month: {
         unit: "C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
-        stationData: true,
+        stationData: false,
         rasterData: true
       }
     }

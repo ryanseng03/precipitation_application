@@ -46,7 +46,7 @@ export class DateFocusComponent implements OnInit {
             return this.date.isSame(this.upper);
           },
           trigger: () => {
-            this.setDate(this.upper);
+            this.setDate(this.upper.clone());
           }
         }
       },
@@ -75,7 +75,7 @@ export class DateFocusComponent implements OnInit {
             return this.date.isSame(this.lower);
           },
           trigger: () => {
-            this.setDate(this.lower);
+            this.setDate(this.lower.clone());
           }
         }
       }
@@ -106,7 +106,7 @@ export class DateFocusComponent implements OnInit {
             return this.date.isSame(this.upper);
           },
           trigger: () => {
-            this.setDate(this.upper);
+            this.setDate(this.upper.clone());
           }
         }
       },
@@ -135,7 +135,7 @@ export class DateFocusComponent implements OnInit {
             return this.date.isSame(this.lower);
           },
           trigger: () => {
-            this.setDate(this.lower);
+            this.setDate(this.lower.clone());
           }
         }
       }

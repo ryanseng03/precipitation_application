@@ -31,135 +31,6 @@ export class ExportAddItemComponent {
     extent: "Select the spatial coverages of the file. Multiple extents may be selected where available"
   }
 
-  test = {
-    rainfall: {
-      day: {
-        dates: [Moment("1990-01-01"), Moment("2019-01-01")],
-        files: {
-          station_data_raw: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          station_data_partial: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          }
-        }
-      },
-      month: {
-        dates: [Moment("1990-01"), Moment("2019-01")],
-        files: {
-          data_map: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          se: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          anom: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          anom_se: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          metadata: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          station_data_raw: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          },
-          station_data_partial: {
-            extents: ["statewide", "bi", "mn", "oa", "ka"],
-            default: "statewide"
-          }
-        }
-      }
-    },
-    legacy_rainfall: {
-      month: {
-        data_map: {
-          extents: ["statewide"],
-          default: "statewide"
-        }
-      }
-    },
-    tmin: {},
-    tmax: {},
-    tmean: {}
-  }
-
-  data3 = {
-    rainfall: {
-      new: {
-        day: {
-          statewide: {
-            dates: [Moment("1990-01-01"), Moment("2019-01-01")],
-            files: ["station_data_raw", "station_data_partial"]
-          },
-          bi: ["station_data_raw", "station_data_partial"],
-          ka: ["station_data_raw", "station_data_partial"],
-          mn: ["station_data_raw", "station_data_partial"],
-          oa: ["station_data_raw", "station_data_partial"]
-        },
-        month: {
-          statewide: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
-          bi: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
-          ka: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
-          mn: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
-          oa: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"]
-        }
-      },
-      legacy: {
-        month: {
-          statewide: ["data_map"]
-        }
-      }
-    },
-    temperature: {
-      min: {
-        day: {
-          statewide: ["station_data_raw", "metadata", "data_map", "se"],
-          bi: ["metadata", "data_map", "se"],
-          ka: ["metadata", "data_map", "se"],
-          mn: ["metadata", "data_map", "se"],
-          oa: ["metadata", "data_map", "se"]
-        },
-        month: {
-          statewide: ["station_data_raw", "metadata", "data_map", "se"]
-        }
-      },
-      max: {
-        day: {
-          statewide: ["station_data_raw", "metadata", "data_map", "se"],
-          bi: ["metadata", "data_map", "se"],
-          ka: ["metadata", "data_map", "se"],
-          mn: ["metadata", "data_map", "se"],
-          oa: ["metadata", "data_map", "se"]
-        },
-        month: {
-          statewide: ["station_data_raw", "metadata", "data_map", "se"]
-        }
-      },
-      mean: {
-        day: {
-          statewide: ["station_data_raw", "metadata", "data_map", "se"],
-          bi: ["metadata", "data_map", "se"],
-          ka: ["metadata", "data_map", "se"],
-          mn: ["metadata", "data_map", "se"],
-          oa: ["metadata", "data_map", "se"]
-        },
-        month: {
-          statewide: ["station_data_raw", "metadata", "data_map", "se"]
-        }
-      }
-    }
-  }
-
 
   datasets = {
     rainfall: {
@@ -173,14 +44,14 @@ export class ExportAddItemComponent {
       description: "Legacy rainfall data based on older methods of production"
     },
     tmin: {
-      label: "Maximum Temperature",
+      label: "Minimum Temperature",
       value: "tmin",
-      description: "Temperature data aggregated to its maximum value over the time period."
+      description: "Temperature data aggregated to its minimum value over the time period."
     },
     tmax: {
-      label: "Minimum Temperature",
+      label: "Maximum Temperature",
       value: "tmax",
-      description: "Temperature data aggregated to its minimum value over the time period."
+      description: "Temperature data aggregated to its maximum value over the time period."
     },
     tmean: {
       label: "Mean Temperature",
@@ -348,7 +219,7 @@ export class ExportAddItemComponent {
           label: "Minimum Temperature Map",
           value: "data_map",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
           requires: ["metadata"]
@@ -357,7 +228,7 @@ export class ExportAddItemComponent {
           label: "Standard Error Map",
           value: "se",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
           requires: ["metadata"]
@@ -366,7 +237,7 @@ export class ExportAddItemComponent {
           label: "Metadata and Error Metrics",
           value: "metadata",
           filetype: "txt",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "Gridded map product metadata and error metrics.",
           requires: []
@@ -386,7 +257,7 @@ export class ExportAddItemComponent {
           label: "Minimum Temperature Map",
           value: "data_map",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
           requires: ["metadata"]
@@ -395,7 +266,7 @@ export class ExportAddItemComponent {
           label: "Standard Error Map",
           value: "se",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
           requires: ["metadata"]
@@ -404,7 +275,7 @@ export class ExportAddItemComponent {
           label: "Metadata and Error Metrics",
           value: "metadata",
           filetype: "txt",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "Gridded map product metadata and error metrics.",
           requires: []
@@ -423,28 +294,28 @@ export class ExportAddItemComponent {
     tmax: {
       day: [
         {
-          label: "Minimum Temperature Map",
+          label: "Maximum Temperature Map",
           value: "data_map",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          description: "A gridded temperature map representing estimated maximum temperature values over the area of coverage.",
           requires: ["metadata"]
         },
         {
           label: "Standard Error Map",
           value: "se",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          description: "A gridded map representing the standard error values for the gridded maximum temperature map.",
           requires: ["metadata"]
         },
         {
           label: "Metadata and Error Metrics",
           value: "metadata",
           filetype: "txt",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "Gridded map product metadata and error metrics.",
           requires: []
@@ -455,34 +326,34 @@ export class ExportAddItemComponent {
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
+          description: "Maximum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ],
       month: [
         {
-          label: "Minimum Temperature Map",
+          label: "Maximum Temperature Map",
           value: "data_map",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          description: "A gridded temperature map representing estimated maximum temperature values over the area of coverage.",
           requires: ["metadata"]
         },
         {
           label: "Standard Error Map",
           value: "se",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          description: "A gridded map representing the standard error values for the gridded maximum temperature map.",
           requires: ["metadata"]
         },
         {
           label: "Metadata and Error Metrics",
           value: "metadata",
           filetype: "txt",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
           description: "Gridded map product metadata and error metrics.",
           requires: []
@@ -493,7 +364,7 @@ export class ExportAddItemComponent {
           filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
+          description: "Maximum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ]
@@ -501,12 +372,12 @@ export class ExportAddItemComponent {
     tmean: {
       day: [
         {
-          label: "Minimum Temperature Map",
+          label: "Mean Temperature Map",
           value: "data_map",
           filetype: "tif",
           extents: ["statewide", "bi", "mn", "oa", "ka"],
           default_extents: ["statewide"],
-          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          description: "A gridded temperature map representing estimated mean temperature values over the area of coverage.",
           requires: ["metadata"]
         },
         {
@@ -515,7 +386,7 @@ export class ExportAddItemComponent {
           filetype: "tif",
           extents: ["statewide", "bi", "mn", "oa", "ka"],
           default_extents: ["statewide"],
-          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          description: "A gridded map representing the standard error values for the gridded mean temperature map.",
           requires: ["metadata"]
         },
         {
@@ -525,53 +396,35 @@ export class ExportAddItemComponent {
           extents: ["statewide", "bi", "mn", "oa", "ka"],
           default_extents: ["statewide"],
           description: "Gridded map product metadata and error metrics.",
-          requires: []
-        },
-        {
-          label: "Station Data (Unfilled)",
-          value: "station_data_raw",
-          filetype: "csv",
-          extents: ["statewide"],
-          default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
           requires: []
         }
       ],
       month: [
         {
-          label: "Minimum Temperature Map",
+          label: "Mean Temperature Map",
           value: "data_map",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "A gridded temperature map representing estimated minimum temperature values over the area of coverage.",
+          description: "A gridded temperature map representing estimated mean temperature values over the area of coverage.",
           requires: ["metadata"]
         },
         {
           label: "Standard Error Map",
           value: "se",
           filetype: "tif",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
+          extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "A gridded map representing the standard error values for the gridded minimum temperature map.",
+          description: "A gridded map representing the standard error values for the gridded mean temperature map.",
           requires: ["metadata"]
         },
         {
           label: "Metadata and Error Metrics",
           value: "metadata",
           filetype: "txt",
-          extents: ["statewide", "bi", "mn", "oa", "ka"],
-          default_extents: ["statewide"],
-          description: "Gridded map product metadata and error metrics.",
-          requires: []
-        },
-        {
-          label: "Station Data (Unfilled)",
-          value: "station_data_raw",
-          filetype: "csv",
           extents: ["statewide"],
           default_extents: ["statewide"],
-          description: "Minimum temperature station data including only values provided by stations before going through QA/QC.",
+          description: "Gridded map product metadata and error metrics.",
           requires: []
         }
       ]

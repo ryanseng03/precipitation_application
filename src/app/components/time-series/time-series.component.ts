@@ -37,6 +37,7 @@ export class TimeSeriesComponent implements OnInit {
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
       if(date) {
+        date = date.clone()
         this.date = date;
       }
     });

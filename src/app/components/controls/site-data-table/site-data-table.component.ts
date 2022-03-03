@@ -28,7 +28,17 @@ export class SiteDataTableComponent implements OnInit {
   site: SiteInfo;
   siteIndex: string[];
 
-  @Input() selected: SiteInfo;
+  private __selected = null;
+  dataMap: any = [];
+  @Input() set selected(selected: any) {
+    this.__selected = selected;
+    if(selected) {
+      this.dataMap = this.selected2datamap();
+    }
+    else {
+      this.dataMap = []
+    }
+  };
 
   focusedSiteValues: SiteValue[] = [];
   filteredFocusedSiteValues: SiteValue[] = [];
@@ -72,13 +82,14 @@ export class SiteDataTableComponent implements OnInit {
     observer: "Observer",
     network: "Network",
     island: "Island",
-    elevation: "Elevation",
+    elevation_m: "Elevation (m)",
     lat: "Latitude",
     lng: "Longitude",
-    nceiID: "NCEI ID",
-    nwsID: "NWS ID",
-    scanID: "Scan ID",
-    smartNodeRfID: "Smart Node RFID",
+    ncei_id: "NCEI ID",
+    nws_id: "NWS ID",
+    nesdis_id: "NESDIS ID",
+    scan_id: "Scan ID",
+    smart_node_rf_id: "Smart Node RFID",
     value: "Value",
   }
 
@@ -94,13 +105,13 @@ export class SiteDataTableComponent implements OnInit {
 
   selected2datamap() {
     let map = [];
-    for(let field of SiteInfo.getFields()) {
+    for(let field in this.field2label) {
       let fieldLabel = this.field2label[field];
-      let value = this.selected[field];
+      let value = this.__selected[field];
       if(field == "island") {
         value = this.islandNameMap[value];
       }
-      if(fieldLabel) {
+      if(value) {
         map.push({
           field: fieldLabel,
           value: value

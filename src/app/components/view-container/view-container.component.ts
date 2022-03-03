@@ -104,6 +104,7 @@ export class ViewContainerComponent implements OnInit {
     });
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {
       if(date) {
+        date = date.clone();
         if(!this.dateDebounce) {
           this.dateDebounce = true;
           this.date = date;
@@ -137,18 +138,13 @@ export class ViewContainerComponent implements OnInit {
     }];
     this.activeTileRef = this.navInfo[0];
 
-    // setTimeout(() => {
-    //   let dateControlElement: HTMLElement = this.dateControlComponent.nativeElement;
-    //   this.upperBuffer = dateControlElement.offsetHeight + "px";
-    //   console.log(this.upperBuffer);
-    // }, 1000);
-
     this.firstElement = this.formComponent.nativeElement;
   }
 
   setDate(changeInfo: DateChangeInfo) {
     if(!this.dateDebounce) {
       this.dateDebounce = true;
+      this.date = changeInfo.date;
       this.dateSelector.setDate(changeInfo.date, changeInfo.magnitude);
     }
     else {
