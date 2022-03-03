@@ -24,12 +24,12 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
       value: "legacy_rainfall",
       description: "Legacy rainfall data based on older methods of production (1920 - 2012)"
     },
-    tmin: {
+    tmax: {
       label: "Maximum Temperature",
       value: "tmax",
       description: "Temperature data aggregated to its maximum value over the time period."
     },
-    tmax: {
+    tmin: {
       label: "Minimum Temperature",
       value: "tmin",
       description: "Temperature data aggregated to its minimum value over the time period."
