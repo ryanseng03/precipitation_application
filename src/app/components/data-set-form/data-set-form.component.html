@@ -73,7 +73,7 @@
 
     </div>
 
-    <div *ngIf="getPeriodValid()">
+    <div>
       <div class="control">
         <h4>
           Dataset Coverage
@@ -121,7 +121,7 @@
   </div>
   <div class="spacer"></div>
 
-  <button mat-raised-button color="primary" (click)="updateDataset()" [disabled]="!checkValid()">
+  <button mat-raised-button color="primary" (click)="updateDataset()">
     Submit
   </button>
 </div>

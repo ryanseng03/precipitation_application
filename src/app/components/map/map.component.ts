@@ -17,6 +17,7 @@ import Moment from 'moment';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 // import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
+import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 
 @Component({
   selector: 'app-map',
@@ -66,7 +67,7 @@ export class MapComponent implements OnInit {
   colorScaleLabel: string = "";
 
 
-  constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService, private assetService: AssetManagerService) {
+  constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService, private assetService: AssetManagerService, private dateManager: DateManagerService) {
     let roseImage = "/arrows/nautical.svg";
     let roseURL = assetService.getAssetURL(roseImage);
     this.roseOptions = {
@@ -421,35 +422,12 @@ export class MapComponent implements OnInit {
 
           let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
 
-          //TEMP translations
-          let translations = {
-            mm: {
-              unit: "mm",
-              f: (value: number) => {
-                return value / 25.4;
-              },
-              translationUnit: "in"
-            },
-            C: {
-              unit: "&#176;C",
-              f: (value: number) => {
-                return (value * (9 / 5)) + 32;
-              },
-              translationUnit: "&#176;F"
-            }
-          };
-          let unit = this.dataset.unit;
-          let translationData = translations[unit];
-          let translationValue = translationData.f(value);
-          unit = translationData.unit;
-          let translationUnit = translationData.translationUnit;
-          let roundedValue = Math.round(value * 100) / 100;
-          let roundedTranslationValue = Math.round(translationValue * 100) / 100
+          let labels = this.getValueLabels(value);
 
           //popup cell value
           popupData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
-          let content = `${roundedValue}${unit}<br>${roundedTranslationValue}${translationUnit}<br>`;
+          let content = `${labels.value}<br>${labels.transValue}<br>`;
           popupData.popup.setContent(content);
           popupData.popup.openOn(this.map);
         }
@@ -466,7 +444,7 @@ export class MapComponent implements OnInit {
   getHeaderDate(): string {
     let formattedDate = "";
     if(this.active.data.date) {
-      formattedDate = this.active.data.date.format("MMMM YYYY");
+      formattedDate = this.dateManager.dateToString(this.active.data.date, this.dataset.period, true);
     }
     return formattedDate;
   }
@@ -541,12 +519,56 @@ export class MapComponent implements OnInit {
   }
 
   getMarkerPopupText(station: SiteInfo): string {
+    let labels = this.getCoordAndValueLabels(station);
     let stationDetails: string = "Name: " + station.name
     + "<br> SKN: " + station.skn
-    + "<br> Lat: " + station.lat + ", Lng: " + station.lng
-    + `<br> Value: ${Math.round(station.value * 100) / 100}mm`
-    + `, ${Math.round((station.value / 25.4) * 100) / 100}in`;
+    + "<br> Lat: " + labels.lat + ", Lon: " + labels.lng
+    + `<br> Value: ${labels.value}`
+    + `, ${labels.transValue}`;
     return stationDetails;
+  }
+
+  getCoordAndValueLabels(station) {
+    let lat = Math.round(station.lat * 100) / 100;
+    let lng = Math.round(station.lng * 100) / 100;
+    let valueLabels = this.getValueLabels(station.value);
+    return {
+      lat,
+      lng,
+      ...valueLabels
+    };
+  }
+
+  getValueLabels(value) {
+     //TEMP translations
+     let translations = {
+      mm: {
+        unit: "mm",
+        f: (value: number) => {
+          return value / 25.4;
+        },
+        translationUnit: "in"
+      },
+      C: {
+        unit: "&#176;C",
+        f: (value: number) => {
+          return (value * (9 / 5)) + 32;
+        },
+        translationUnit: "&#176;F"
+      }
+    };
+
+    let unit = this.dataset.unit;
+    let translationData = translations[unit];
+    let translationValue = translationData.f(value);
+    unit = translationData.unit;
+    let translationUnit = translationData.translationUnit;
+    let roundedValue = Math.round(value * 100) / 100;
+    let roundedTranslationValue = Math.round(translationValue * 100) / 100;
+    return {
+      value: `${roundedValue}${unit}`,
+      transValue: `${roundedTranslationValue}${translationUnit}`
+    };
   }
 
   updateMarkers(): void {

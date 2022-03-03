@@ -95,15 +95,15 @@ export class DateManagerService {
       },
       tmin: {
         day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), lastMonth.clone()]
+        month: [Moment("1990-01"), Moment("2018-12")]
       },
       tmax: {
         day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), lastMonth.clone()]
+        month: [Moment("1990-01"), Moment("2018-12")]
       },
       tmean: {
         day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), lastMonth.clone()]
+        month: [Moment("1990-01"), Moment("2018-12")]
       }
     };
     return ranges;

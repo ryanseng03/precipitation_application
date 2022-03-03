@@ -2,64 +2,7 @@ import { Period, StringMap } from "./types";
 import { Moment } from "moment";
 import { DateManagerService } from "../services/dateManager/date-manager.service";
 
-// let resourceInfo: ResourceInfo = {
-//   datatype: data.datatype.value,
-//   fileGroup: {
-//     group: "raster",
-//     type: "values"
-//   },
-//   fileData: {
-//     period: data.timeperiod.value,
-//     dates: [data.dates[0].format("YYYY-MM"), data.dates[1].format("YYYY-MM")],
-//     extent: "state",
-//     type: info.value,
-//     tier: data.tier.value
-//   },
-//   filterOpts: {}
-// }
 
-// let files: ValueData<ResourceReq>[] = [{
-//   tag: "raster",
-//   label: "Data Map",
-//   description: "",
-//   value: {}
-// },
-// {
-//   tag: "stderr",
-//   label: "Standard Error Map",
-//   description: "",
-//   value: {}
-// },
-// {
-//   tag: "anomaly",
-//   label: "Anomaly Map",
-//   description: "",
-//   value: {}
-// },
-// {
-//   tag: "se_anomaly",
-//   label: "Standard Error Anomaly Map",
-//   description: "",
-//   value: {}
-// },
-// {
-//   tag: "metadata",
-//   label: "Metadata and Error Metrics",
-//   description: "",
-//   value: {}
-// },
-// {
-//   tag: "raster",
-//   label: "",
-//   description: "",
-//   value: {}
-// },
-// {
-//   tag: "raster",
-//   label: "Data Map",
-//   description: "",
-//   value: {}
-// }]
 
 //use this for now
 let resourceMap: {[resource: string]: ResourceReq}

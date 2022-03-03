@@ -127,11 +127,11 @@ export class ExportInterfaceComponent implements OnInit {
     se: {
       files: ["se"]
     },
-    anomaly: {
-      files: ["anomaly"]
+    anom: {
+      files: ["anom"]
     },
-    anomaly_se: {
-      files: ["anomaly_se"]
+    anom_se: {
+      files: ["anom_se"]
     },
     metadata: {
       files: ["metadata"]
@@ -153,7 +153,7 @@ export class ExportInterfaceComponent implements OnInit {
       const { dataset, files, period, range } = item.data;
       //translate dates to strings
       let start = this.dateService.dateToString(range[0], period);
-      let end = this.dateService.dateToString(range[0], period);
+      let end = this.dateService.dateToString(range[1], period);
       //expand dataset props
       let datasetProps = this.dataset2Prop[dataset];
       //expand file props and loop extents

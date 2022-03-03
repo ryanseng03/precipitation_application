@@ -17,21 +17,21 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     rainfall: {
       label: "Rainfall",
       value: "rainfall",
-      description: "Rainfall data"
+      description: "Rainfall data (1990 - present)"
     },
     legacy_rainfall: {
       label: "Legacy Rainfall",
       value: "legacy_rainfall",
-      description: "Legacy rainfall data based on older methods of production"
+      description: "Legacy rainfall data based on older methods of production (1920 - 2012)"
     },
     tmin: {
       label: "Maximum Temperature",
-      value: "tmin",
+      value: "tmax",
       description: "Temperature data aggregated to its maximum value over the time period."
     },
     tmax: {
       label: "Minimum Temperature",
-      value: "tmax",
+      value: "tmin",
       description: "Temperature data aggregated to its minimum value over the time period."
     },
     tmean: {
@@ -86,14 +86,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     tmin: {
       day: {
         unit: "C",
-        dataRange: [-15, 40],
+        dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
       },
       month: {
         unit: "C",
-        dataRange: [-15, 40],
+        dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
@@ -102,14 +102,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     tmax: {
       day: {
         unit: "C",
-        dataRange: [-15, 40],
+        dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
       },
       month: {
         unit: "C",
-        dataRange: [-15, 40],
+        dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
@@ -118,14 +118,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     tmean: {
       day: {
         unit: "C",
-        dataRange: [-15, 40],
+        dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
       },
       month: {
         unit: "C",
-        dataRange: [-15, 40],
+        dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
@@ -139,7 +139,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
       month: ["partial"]
     },
     legacy_rainfall: {
-      month: null
+      month: []
     },
     tmin: {
       day: ["raw"],
@@ -207,6 +207,13 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
   constructor(private paramService: EventParamRegistrarService, private dateSelector: VisDateSelectService, private dateManager: DateManagerService) {
     this.ranges = dateManager.getDatasetRanges();
+    this.controls.dataset.valueChanges.subscribe(() => {
+      this.setValidPeriod();
+      this.setValidFill();
+    });
+    this.controls.period.valueChanges.subscribe(() => {
+      this.setValidFill();
+    });
   }
 
   ngOnInit() {
@@ -231,18 +238,24 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     return Object.values(this.datasets);
   }
 
-  getPeriodValid(): boolean {
+  setValidPeriod() {
     let dataset = this.controls.dataset.value;
     let period = this.controls.period.value;
-    return this.ranges[dataset][period] !== undefined;
+    if(this.ranges[dataset][period] === undefined) {
+      let firstValidPeriod = this.periodAvailability[dataset][0];
+      this.controls.period.setValue(firstValidPeriod);
+    }
   }
 
-  getFillValid(): boolean {
+  setValidFill() {
     let dataset = this.controls.dataset.value;
     let period = this.controls.period.value;
     let fill = this.controls.fill.value;
     let validFills: string[] = this.fillAvailability[dataset][period];
-    return validFills.includes(fill);
+    if(!validFills.includes(fill)) {
+      let firstValidFill = validFills[0];
+      this.controls.fill.setValue(firstValidFill);
+    }
   }
 
   getDateRangeLabel(): string {
@@ -257,14 +270,6 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     let dataset = this.controls.dataset.value;
     let period = this.controls.period.value;
     return this.datasetDetails[dataset][period].stationData;
-  }
-
-  checkValid() {
-    let valid = this.getPeriodValid();
-    if(valid && this.getDataStationsAvailable()) {
-      valid = this.getFillValid()
-    }
-    return valid;
   }
 
   updateDataset() {

@@ -1,6 +1,6 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
-import { Moment } from 'moment';
+import moment, { Moment } from 'moment';
 import { Dataset } from 'src/app/models/Dataset';
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
@@ -83,7 +83,23 @@ export class ViewContainerComponent implements OnInit {
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
       if(dataset) {
         this.dataset = dataset;
-        this.date = dataset.dateRange[1].clone();
+        if(this.date) {
+          //check if the date is out of range and set to end of range if it is
+          if(this.date.isBefore(dataset.dateRange[0])) {
+            this.date = dataset.dateRange[0].clone();
+          }
+          else if(this.date.isAfter(dataset.dateRange[1])) {
+            this.date = dataset.dateRange[1].clone();
+          }
+          //otherwise set date to current date clone so trigger updates for new dataset
+          else {
+            this.date = this.date.clone();
+          }
+        }
+        //set to end of range if date undefined
+        else {
+          this.date = dataset.dateRange[1].clone();
+        }
       }
     });
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {

@@ -25,7 +25,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move forward one month",
           disabled: () => {
-            return this.upper.diff(this.date, "month", true) < 1;
+            return this.date.isSame(this.upper);
           },
           trigger: () => {
             this.moveDate(1, "month");
@@ -34,7 +34,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move forward one year",
           disabled: () => {
-            return this.upper.diff(this.date, "year", true) < 1;
+            return this.date.isSame(this.upper);
           },
           trigger: () => {
             this.moveDate(1, "year");
@@ -43,7 +43,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to last month in range",
           disabled: () => {
-            return this.upper.diff(this.date, "month", true) < 1;
+            return this.date.isSame(this.upper);
           },
           trigger: () => {
             this.setDate(this.upper);
@@ -54,7 +54,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move back one month",
           disabled: () => {
-            return this.date.diff(this.lower, "month", true) < 1;
+            return this.date.isSame(this.lower);
           },
           trigger: () => {
             this.moveDate(-1, "month");
@@ -63,7 +63,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move back one year",
           disabled: () => {
-            return this.date.diff(this.lower, "year", true) < 1;
+            return this.date.isSame(this.lower);
           },
           trigger: () => {
             this.moveDate(-1, "year");
@@ -72,7 +72,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to first month in range",
           disabled: () => {
-            return this.date.diff(this.lower, "month", true) < 1;
+            return this.date.isSame(this.lower);
           },
           trigger: () => {
             this.setDate(this.lower);
@@ -85,7 +85,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move forward one day",
           disabled: () => {
-            return this.upper.diff(this.date, "day", true) < 1;
+            return this.date.isSame(this.upper);
           },
           trigger: () => {
             this.moveDate(1, "day");
@@ -94,7 +94,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move forward one month",
           disabled: () => {
-            return this.upper.diff(this.date, "month", true) < 1;
+            return this.date.isSame(this.upper);
           },
           trigger: () => {
             this.moveDate(1, "month");
@@ -103,7 +103,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to last day in range",
           disabled: () => {
-            return this.upper.diff(this.date, "day", true) < 1;
+            return this.date.isSame(this.upper);
           },
           trigger: () => {
             this.setDate(this.upper);
@@ -114,7 +114,7 @@ export class DateFocusComponent implements OnInit {
         "f": {
           tooltip: "Move back one day",
           disabled: () => {
-            return this.date.diff(this.lower, "day", true) < 1;
+            return this.date.isSame(this.lower);
           },
           trigger: () => {
             this.moveDate(-1, "day");
@@ -123,7 +123,7 @@ export class DateFocusComponent implements OnInit {
         "ff": {
           tooltip: "Move back one month",
           disabled: () => {
-            return this.date.diff(this.lower, "month", true) < 1;
+            return this.date.isSame(this.lower);
           },
           trigger: () => {
             this.moveDate(-1, "month");
@@ -132,7 +132,7 @@ export class DateFocusComponent implements OnInit {
         "e": {
           tooltip: "Skip to first day in range",
           disabled: () => {
-            return this.date.diff(this.lower, "day", true) < 1;
+            return this.date.isSame(this.lower);
           },
           trigger: () => {
             this.setDate(this.lower);
@@ -201,11 +201,11 @@ export class DateFocusComponent implements OnInit {
     let newDate = this.date.clone();
     newDate.add(change, unit);
     //verify bounds of new time and adjust to min or max
-    if(newDate.diff(this.lower) < 0) {
-      newDate = this.lower;
+    if(newDate.isBefore(this.lower)) {
+      newDate = this.lower.clone();
     }
-    else if(this.upper.diff(newDate) < 0) {
-      newDate = this.upper;
+    else if(newDate.isAfter(this.upper)) {
+      newDate = this.upper.clone();
     }
 
     this.setDate(newDate, movementInfo);

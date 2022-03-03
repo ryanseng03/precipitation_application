@@ -57,11 +57,11 @@ export class ExportAddItemComponent {
             extents: ["statewide", "bi", "mn", "oa", "ka"],
             default: "statewide"
           },
-          anomaly: {
+          anom: {
             extents: ["statewide", "bi", "mn", "oa", "ka"],
             default: "statewide"
           },
-          anomaly_se: {
+          anom_se: {
             extents: ["statewide", "bi", "mn", "oa", "ka"],
             default: "statewide"
           },
@@ -107,11 +107,11 @@ export class ExportAddItemComponent {
           oa: ["station_data_raw", "station_data_partial"]
         },
         month: {
-          statewide: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
-          bi: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
-          ka: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
-          mn: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"],
-          oa: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anomaly", "anomaly_se"]
+          statewide: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
+          bi: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
+          ka: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
+          mn: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"],
+          oa: ["station_data_raw", "station_data_partial", "metadata", "data_map", "se", "anom", "anom_se"]
         }
       },
       legacy: {
@@ -293,7 +293,7 @@ export class ExportAddItemComponent {
         },
         {
           label: "Anomaly Map",
-          value: "anomaly",
+          value: "anom",
           filetype: "tif",
           extents: ["statewide", "bi", "mn", "oa", "ka"],
           default_extents: ["statewide"],
@@ -302,7 +302,7 @@ export class ExportAddItemComponent {
         },
         {
           label: "Anomaly Standard Error",
-          value: "anomaly_se",
+          value: "anom_se",
           filetype: "tif",
           extents: ["statewide", "bi", "mn", "oa", "ka"],
           default_extents: ["statewide"],
@@ -712,19 +712,19 @@ export class ExportAddItemComponent {
         description: "A gridded map representing the standard error values for the gridded rainfall map.",
         requires: ["metadata"]
       },
-      anomaly: {
+      anom: {
         label: "Anomaly Map",
         properties: {
-          file: "anomaly"
+          file: "anom"
         },
         filetype: "tif",
         description: "A gridded map representing the production's anomaly values.",
         requires: ["metadata"]
       },
-      anomaly_se: {
+      anom_se: {
         label: "Anomaly Standard Error",
         properties: {
-          file: "anomaly_se"
+          file: "anom_se"
         },
         filetype: "tif",
         description: "A gridded map representing the standard error values for the production's anomaly values.",
@@ -1034,84 +1034,6 @@ export class ExportAddItemComponent {
       }
     }
     this.dialogRef.close(data);
-
-    //move translations
-
-    // let dataset2Prop = {
-    //   rainfall: {
-    //     datatype: "rainfall",
-    //     production: "new"
-    //   },
-    //   legacy_rainfall: {
-    //     datatype: "rainfall",
-    //     production: "legacy"
-    //   },
-    //   tmin: {
-    //     datatype: "temperature",
-    //     aggregation: "min"
-    //   },
-    //   tmax: {
-    //     datatype: "temperature",
-    //     aggregation: "max"
-    //   },
-    //   tmean: {
-    //     datatype: "temperature",
-    //     aggregation: "mean"
-    //   }
-    // }
-
-    // let file2Prop = {
-    //   data_map: {
-    //     file: "data_map"
-    //   },
-    //   se: {
-    //     file: "se"
-    //   },
-    //   anomaly: {
-    //     file: "anomaly"
-    //   },
-    //   anomaly_se: {
-    //     file: "anomaly_se"
-    //   },
-    //   metadata: {
-    //     file: "metadata"
-    //   },
-    //   station_data_partial: {
-    //     file: "station_data",
-    //     fill: "partial"
-    //   },
-    //   station_data_raw: {
-    //     file: "station_data",
-    //     fill: "raw"
-    //   }
-    // }
-
-    // let period = this.controls.period.value
-
-    // let allData = [];
-    // let data = {
-    //   period: period,
-    //   dates: {
-    //     start: this.controls.dates.selected[0],
-    //     end: this.controls.dates.selected[1]
-    //   }
-    // };
-    // let setfields = dataset2Prop[this.controls.dataset.value];
-    // data = Object.assign(data, setfields);
-    // for(let file in this.controls.files) {
-    //   let selected = this.controls.files[file].selectControl.value;
-    //   if(selected) {
-    //     //add each extent
-    //     for(let extent of this.controls.files[file].extentControl.value) {
-    //       let filefields = file2Prop[file];
-    //       let dataItem = Object.assign({}, data, filefields);
-    //       dataItem.extent = extent;
-    //       allData.push(dataItem);
-    //     }
-    //   }
-    // }
-    // console.log(allData);
-
   }
 
 

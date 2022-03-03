@@ -21,15 +21,7 @@ interface StagedTimeseriesData {
   providedIn: 'root'
 })
 export class DataManagerService {
-  //this will be replaced with some result from initialization that indicates newest data date
-  public static readonly DEFAULT_TYPE = "rainfall";
-  public static readonly DATA_TYPES: DataType[] = ["rainfall", "anomaly", "se_rainfall", "se_anomaly"];
-  public static readonly FALLBACK_DATE: string = "1970-01-01T00:00:00.000Z";
 
-  private throttles: {
-    focus: NodeJS.Timer,
-    cache: NodeJS.Timer
-  };
 
 
   //use manager to mitigate issues with changing data structure
@@ -44,10 +36,7 @@ export class DataManagerService {
   //OVERHEAD SHOULD BE MINIMAL
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
-    this.throttles = {
-      focus: null,
-      cache: null
-    };
+
 
     //use this for map bounds
     //need to fix query for this, unused at the moment, deal with later
@@ -182,17 +171,20 @@ export class DataManagerService {
           stationRes = dataRequestor.getStationData(properties);
           //transform by combining with station data
           stationRes.transform((stationVals: any[]) => {
-            console.log(stationVals);
             //get metadata
             return metadataReq.toPromise()
             .then((metadata: any) => {
               let stations: any[] = stationVals.reduce((acc: any[], stationVal: any) => {
                 let stationId = stationVal.station_id;
                 //yay for inconsistent data
-                stationId = this.getStandardizedNumericString(stationId);
+                let standardizedStationId = this.getStandardizedNumericString(stationId);
                 let stationValue = stationVal.value;
-                let stationMetadata = metadata[stationId];
+                let stationMetadata = metadata[standardizedStationId];
                 if(stationMetadata) {
+                  //TEMP
+                  //set station id (SKN) to id non-standardized id from incoming document so timeseries ret works properly (skn needs to match dataset documents)
+                  //uggh
+                  stationMetadata.skn = stationId;
                   stationMetadata.value = stationValue;
                   acc.push(stationMetadata);
                 }
@@ -214,7 +206,9 @@ export class DataManagerService {
           let properties = {
             date: date_s,
             period,
-            ...datasetProps
+            extent: "statewide",
+            ...datasetProps,
+            returnEmptyNotFound: true
           }
           rasterRes = dataRequestor.getRaster(properties);
           rasterPromise = rasterRes.toPromise();
@@ -242,8 +236,7 @@ export class DataManagerService {
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
             console.error(reason.reason);
-            //Currently throws 404 on missing raster, can add this back later if remove 404
-            //errorPop.notify("error", `Could not retreive raster data.`);
+            errorPop.notify("error", `Could not retreive raster data.`);
             paramService.pushRaster(null);
           }
         });
