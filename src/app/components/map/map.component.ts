@@ -8,7 +8,7 @@ import { DataRetreiverService } from "../../services/util/data-retreiver.service
 import { R, RasterOptions, LeafletRasterLayerService } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
 import { EventParamRegistrarService, LoadingData, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";
-import { RasterData } from 'src/app/models/RasterData.js';
+import { RasterData, RasterHeader } from 'src/app/models/RasterData.js';
 import { SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
 import {DataManagerService} from "../../services/dataManager/data-manager.service";
@@ -124,7 +124,9 @@ export class MapComponent implements OnInit {
 
 
   invalidateSize() {
-    this.map.invalidateSize();
+    if(this.map) {
+      this.map.invalidateSize();
+    }
   }
 
   focusedBoundary = null
@@ -309,20 +311,19 @@ export class MapComponent implements OnInit {
         //uninstall current hook and replace with update hook that updates raster
         rasterHook.uninstall();
         rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
-          if(raster) {
+          //no raster for dataset, produce an empty raster
+          if(raster === null) {
+            //note should change this to grab the header from the emitter, not used for now
+            raster = new RasterData(this.active.data.raster.getHeader());
+            raster.addBand("0", new Map<number, number>());
             this.active.data.raster = raster;
-            bands = raster.getBands();
-            //set layer data
-            for(let band in bands) {
-              let values = bands[band];
-              this.dataLayers[band].setData(values);
-            }
           }
-          //no raster data
-          else {
-            //only one band
-            //set data to empty
-            this.dataLayers["0"].setData(new Map<number, number>());
+          this.active.data.raster = raster;
+          bands = raster.getBands();
+          //set layer data
+          for(let band in bands) {
+            let values = bands[band];
+            this.dataLayers[band].setData(values);
           }
         });
       }

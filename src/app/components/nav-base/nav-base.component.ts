@@ -42,7 +42,7 @@ export class NavBaseComponent implements OnInit {
   @Output() componentChange: EventEmitter<string> = new EventEmitter<string>();
   @Input() component: string;
 
-  navCollapsed: boolean = true;
+  navCollapsed: boolean = false;
 
   collapseTimer: NodeJS.Timer = null;
 
@@ -61,7 +61,7 @@ export class NavBaseComponent implements OnInit {
       this.collapseTimer = setTimeout(() => {
         this.navCollapsed = value;
         this.collapseTimer = null;
-      }, 200);
+      }, 500);
     }
 
 

@@ -1,7 +1,7 @@
 
 <div class="app-container">
   <div class="nav-container" [@navSize]="getNavState()" (mouseenter)="changeNavExpand(false)" (mouseleave)="changeNavExpand(true)">
-    <div *ngIf="getNavExpanded(); else collapsedNav" class="nav-tile-container">
+    <div *ngIf="!navCollapsed; else collapsedNav" class="nav-tile-container">
       <app-nav-tiles [(component)]="component"></app-nav-tiles>
     </div>
 
@@ -29,7 +29,8 @@
     <!-- maybe a better way to do this? -->
     <div [ngClass]="{hidden: component != 'vis'}" class="vis-container">
       <app-vis
-        [visible]="component == 'vis'">
+        [visible]="component == 'vis'"
+        [navCollapsed]="navCollapsed">
       </app-vis>
     </div>
     <div [ngClass]="{hidden: component != 'export'}" class="export-container">

@@ -151,7 +151,9 @@ export class ColorGeneratorService {
 
         resolve({
           name: name,
-          colors: colorScale
+          colors: colorScale,
+          xml: xmlData,
+          reverse: reverse
         });
       });
     });
@@ -266,4 +268,6 @@ export class ColorGeneratorService {
 export interface XMLColorSchemeData {
   name: string;
   colors: ColorScale;
+  xml: string;
+  reverse: boolean;
 }

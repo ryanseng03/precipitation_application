@@ -32,7 +32,6 @@ export class UploadCustomColorSchemeComponent {
   // }
 
   handleFileInput(files: FileList) {
-    console.log(files);
     //single input, get first item
     //use any type to prevent typing error (text does not exist on type File)
     let file: any = files.item(0);
@@ -72,7 +71,6 @@ export class UploadCustomColorSchemeComponent {
   submit() {
     //note if fileData is null then submit should be disabled
     this.fileData.then((data: string) => {
-      console.log(data);
       //verify validity
       this.colors.getColorSchemeFromXML(data, this.reverseScheme.value).then((colorSchemeData: XMLColorSchemeData) => {
         //replace name with custom name or default name if name null/already taken
@@ -102,7 +100,6 @@ export class UploadCustomColorSchemeComponent {
 
   nameFieldValidator(): ValidatorFn {
     return (control: AbstractControl): {[key: string]: any} | null => {
-      console.log("validating");
       let name = control.value;
       let valid = this.validateName(name);
       return valid ? null : {forbiddenName: {value: name}};

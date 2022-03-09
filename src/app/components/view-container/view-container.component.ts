@@ -4,7 +4,6 @@ import moment, { Moment } from 'moment';
 import { Dataset } from 'src/app/models/Dataset';
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
-import { DateChangeInfo } from '../controls/date-focus/date-focus.component';
 
 @Component({
   selector: 'app-view-container',
@@ -141,11 +140,10 @@ export class ViewContainerComponent implements OnInit {
     this.firstElement = this.formComponent.nativeElement;
   }
 
-  setDate(changeInfo: DateChangeInfo) {
+  setDate(date: Moment) {
     if(!this.dateDebounce) {
       this.dateDebounce = true;
-      this.date = changeInfo.date;
-      this.dateSelector.setDate(changeInfo.date, changeInfo.magnitude);
+      this.dateSelector.setDate(date);
     }
     else {
       this.dateDebounce = false;

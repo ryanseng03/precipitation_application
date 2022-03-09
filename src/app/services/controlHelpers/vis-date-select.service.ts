@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import Moment from "moment";
-import { MovementVector } from '../dataManager/data-manager.service';
 import { EventParamRegistrarService } from '../inputManager/event-param-registrar.service';
 
 @Injectable({
@@ -12,7 +11,7 @@ export class VisDateSelectService {
   constructor(private paramService: EventParamRegistrarService) { }
 
 
-  setDate(date: Moment.Moment, movementInfo: MovementVector) {
+  setDate(date: Moment.Moment) {
     this.paramService.pushDate(date);
   }
 }

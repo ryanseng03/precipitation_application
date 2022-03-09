@@ -1,15 +1,7 @@
 <div class="main-container">
   <div class="button-container">
-    <button mat-icon-button [matTooltip]="controlData[period].back.e.tooltip" [disabled]="controlData[period].back.e.disabled()" (click)="controlData[period].back.e.trigger()">
-      <mat-icon svgIcon="el"></mat-icon>
-    </button>
-
-    <button mat-icon-button [matTooltip]="controlData[period].back.ff.tooltip" [disabled]="controlData[period].back.ff.disabled()" (click)="controlData[period].back.ff.trigger()">
-      <mat-icon svgIcon="ffl"></mat-icon>
-    </button>
-
-    <button mat-icon-button [matTooltip]="controlData[period].back.f.tooltip" [disabled]="controlData[period].back.f.disabled()" (click)="controlData[period].back.f.trigger()">
-      <mat-icon svgIcon="fl"></mat-icon>
+    <button *ngFor="let control of controlData[period].back" mat-icon-button [matTooltip]="control.tooltip" [disabled]="control.disabled" (click)="control.trigger()">
+      <mat-icon [svgIcon]="control.icon"></mat-icon>
     </button>
   </div>
 
@@ -26,14 +18,8 @@
   </div>
 
   <div class="button-container">
-    <button mat-icon-button [matTooltip]="controlData[period].forward.f.tooltip" [disabled]="controlData[period].forward.f.disabled()" (click)="controlData[period].forward.f.trigger()">
-      <mat-icon svgIcon="fr"></mat-icon>
-    </button>
-    <button mat-icon-button [matTooltip]="controlData[period].forward.ff.tooltip" [disabled]="controlData[period].forward.ff.disabled()" (click)="controlData[period].forward.ff.trigger()">
-      <mat-icon svgIcon="ffr"></mat-icon>
-    </button>
-    <button mat-icon-button [matTooltip]="controlData[period].forward.e.tooltip" [disabled]="controlData[period].forward.e.disabled()" (click)="controlData[period].forward.e.trigger()">
-      <mat-icon svgIcon="er"></mat-icon>
+    <button *ngFor="let control of controlData[period].forward" mat-icon-button [matTooltip]="control.tooltip" [disabled]="control.disabled" (click)="control.trigger()">
+      <mat-icon [svgIcon]="control.icon"></mat-icon>
     </button>
   </div>
 </div>

@@ -112,9 +112,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     if(this.schemeControl.value == tag) {
       this.schemeControl.setValue(this.defaultScheme);
     }
-    setTimeout(() => {
-      this.schemeControl.setValue(this.defaultScheme);
-    }, 0);
   }
 
   ngOnInit() {
@@ -199,7 +196,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
         data: this.forbiddenNames
       });
       dialogRef.afterClosed().toPromise().then((data: XMLColorSchemeData) => {
-
         if(data) {
           let colorScheme = data.colors;
           let name = data.name;
@@ -217,8 +213,9 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
 
   }
 
+  //note you are recomputing the color scheme every time one is selected, only really need to compute all of them once when the dataset changes, maybe should change this
+  //also wouldn't need promise chaining and all that if precomputed
   getColorScheme(scheme: string): Promise<[string, ColorScale]> {
-
     let getColorSchemeFromAssetFile = (fname: string, reverse?: boolean): Promise<ColorScale> => {
       return this.colors.getColorSchemeFromAssetFile(fname, reverse).then((data: XMLColorSchemeData) => {
         return data.colors;
@@ -312,14 +309,21 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       //any other value should be custom color scheme
       default: {
         //get color scheme from map
-        let colorScheme = this.customColorSchemes[scheme].colors;
+        let schemeData = this.customColorSchemes[scheme];
+        if(schemeData) {
+          const { xml, reverse } = schemeData;
+          //reload to ensure scale data is updated when changed
+          p = this.colors.getColorSchemeFromXML(xml, reverse).then((schemeData: XMLColorSchemeData) => {
+            let colorScale = schemeData.colors;
+            let data: [string, ColorScale] = [scheme, colorScale];
+            return data;
+          });
+        }
         //failsafe, should never happen (should only happen if reverting after deletion, before default loads, which should be pretty much impossible in practice), but keep just in case
         //just return recursive call with default scheme
-        if(colorScheme === undefined) {
+        else {
           p = this.getColorScheme(this.defaultScheme);
         }
-        let data: [string, ColorScale] = [scheme, colorScheme];
-        p = Promise.resolve(data);
       }
     }
 

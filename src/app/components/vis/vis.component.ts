@@ -10,10 +10,26 @@ import { MapComponent } from '../map/map.component';
 export class VisComponent implements OnInit, AfterViewInit {
 
   _visible: boolean;
+  
   @Input() set visible(state: boolean) {
     this._visible = state;
     if(state) {
+      //timeout so set after animation
       setTimeout(() => {
+        this.checkMoveInfo();
+      }, 500);
+      
+    }
+  }
+  //this works, but is a bit sketchy, marks as visible after nav closed and waits for animation before triggering
+  //should probably have a better way of indicating component sizes like linking in to param service, fine for now though
+  @Input() set navCollapsed(state: boolean) {
+    if(state && this._visible) {
+      //timeout so set after animation
+      setTimeout(() => {
+        //set static map width for sizing
+        let mapElement: HTMLElement = this.mapContainerRef.nativeElement;
+        this.mapWidth = `${mapElement.clientWidth}px`;
         this.checkMoveInfo();
       }, 500);
     }
@@ -63,16 +79,6 @@ export class VisComponent implements OnInit, AfterViewInit {
   checkMoveInfo() {
     this.map.invalidateSize();
     this.setViewWidth();
-    // let parent: HTMLElement;
-    // if(this.viewContainer.nativeElement.offsetWidth < 500) {
-    //   parent = this.p1.nativeElement;
-    // }
-    // else {
-    //   parent = this.p2.nativeElement;
-    // }
-    // if(this.dsInfo.nativeElement.parentElement != parent) {
-    //   this.moveChild(this.dsInfo.nativeElement, parent);
-    // }
   }
 
   moveChild(child, parent) {
