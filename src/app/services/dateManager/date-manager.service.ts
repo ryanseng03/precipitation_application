@@ -15,11 +15,11 @@ export class DateManagerService {
     year: "YYYY"
   },
   {
-    second: "MMMM DD YYYY h:mm:ss a",
-    minute: "MMMM DD YYYY h:mm a",
-    hour: "MMMM DD YYYY h a",
-    day: "MMMM DD YYYY",
-    month: "MMMM YYYY",
+    second: "MMMM DD, YYYY h:mm:ss a",
+    minute: "MMMM DD, YYYY h:mm a",
+    hour: "MMMM DD, YYYY h a",
+    day: "MMMM DD, YYYY",
+    month: "MMMM, YYYY",
     year: "YYYY"
   }];
 

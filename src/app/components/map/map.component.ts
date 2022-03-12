@@ -254,16 +254,11 @@ export class MapComponent implements OnInit {
         if(stations) {
           this.active.data.stations = stations;
           this.constructMarkerLayerPopulateMarkerData(stations);
-          //reset selected marker ref in case station does not exist
-          // this.selectedMarker = undefined;
-          //attempt to select station previously selected
-          this.selectStation(this.selectedStation);
         }
         //no station data available
         else {
           this.active.data.stations = [];
           this.constructMarkerLayerPopulateMarkerData([]);
-          this.selectedStation = null;
         }
       });
     }, 0);
@@ -330,8 +325,8 @@ export class MapComponent implements OnInit {
     });
 
 
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
-        this.selectStation(station);
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
+      this.selectStation(station);
     });
 
     this.map.on("layeradd", (addData: any) => {
@@ -375,8 +370,6 @@ export class MapComponent implements OnInit {
 
         });
       }
-
-
     }
   }
 
@@ -408,8 +401,6 @@ export class MapComponent implements OnInit {
 
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
-        // console.log(this.active);
-        // console.log(data);
 
         let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
@@ -465,6 +456,7 @@ export class MapComponent implements OnInit {
     }
   }
 
+  //why is this called three times at init?
   constructMarkerLayerPopulateMarkerData(stations: SiteInfo[]): void {
     let markers: RainfallStationMarker[] = [];
     this.markerInfo.markerMap.clear();
@@ -547,25 +539,22 @@ export class MapComponent implements OnInit {
      //TEMP translations
      let translations = {
       mm: {
-        unit: "mm",
         f: (value: number) => {
           return value / 25.4;
         },
         translationUnit: "in"
       },
-      C: {
-        unit: "&#176;C",
+      "°C": {
         f: (value: number) => {
           return (value * (9 / 5)) + 32;
         },
-        translationUnit: "&#176;F"
+        translationUnit: "°F"
       }
     };
 
     let unit = this.dataset.unit;
     let translationData = translations[unit];
     let translationValue = translationData.f(value);
-    unit = translationData.unit;
     let translationUnit = translationData.translationUnit;
     let roundedValue = Math.round(value * 100) / 100;
     let roundedTranslationValue = Math.round(translationValue * 100) / 100;

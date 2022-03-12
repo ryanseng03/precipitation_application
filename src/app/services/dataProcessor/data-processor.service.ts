@@ -59,7 +59,8 @@ export class DataProcessorService {
             let j: number;
             for(j = 0; j < raster.length; j++) {
               let value = raster[j];
-              if(value != noData && value != customNoData) {
+              //the nodata values are all kinds of messed up, these need to be fixed
+              if(value != noData && value != customNoData && !isNaN(value)) {
                 values.set(j, value);
               }
             }

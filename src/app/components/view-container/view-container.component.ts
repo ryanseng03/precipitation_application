@@ -83,6 +83,7 @@ export class ViewContainerComponent implements OnInit {
       if(dataset) {
         this.dataset = dataset;
         if(this.date) {
+          console.log(this.date.toISOString());
           //check if the date is out of range and set to end of range if it is
           if(this.date.isBefore(dataset.dateRange[0])) {
             this.date = dataset.dateRange[0].clone();

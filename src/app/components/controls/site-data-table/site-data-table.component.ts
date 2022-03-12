@@ -36,7 +36,7 @@ export class SiteDataTableComponent implements OnInit {
       this.dataMap = this.selected2datamap();
     }
     else {
-      this.dataMap = []
+      this.dataMap = [];
     }
   };
 
@@ -117,8 +117,6 @@ export class SiteDataTableComponent implements OnInit {
           value: value
         });
       }
-      //console.log(field);
-
     }
     return map;
   }
