@@ -93,6 +93,8 @@ export class SiteDataTableComponent implements OnInit {
     value: "Value",
   }
 
+  roundedFields = new Set(["elevation_m", "lat", "lng", "value"]);
+
   islandNameMap = {
     BI: "Big Island",
     OA: "Oʻahu",
@@ -101,17 +103,20 @@ export class SiteDataTableComponent implements OnInit {
     MO: "Molokaʻi",
     KO: "Kahoʻolawe"
   }
-  //
 
   selected2datamap() {
     let map = [];
     for(let field in this.field2label) {
       let fieldLabel = this.field2label[field];
       let value = this.__selected[field];
-      if(field == "island") {
-        value = this.islandNameMap[value];
-      }
       if(value) {
+        if(field == "island") {
+          value = this.islandNameMap[value];
+        }
+        if(this.roundedFields.has(field)) {
+          value = this.roundValue(value);
+        }
+
         map.push({
           field: fieldLabel,
           value: value
@@ -119,6 +124,11 @@ export class SiteDataTableComponent implements OnInit {
       }
     }
     return map;
+  }
+
+  roundValue(value: number) {
+    let rounded = Math.round(value * 100) / 100;
+    return rounded;
   }
 
 }

@@ -38,13 +38,11 @@
 
 
 .view-component {
-  //box-sizing: border-box;
   height: fit-content;
-  //min-height: 100vh;
+  min-height: 100vh;
   width: fit-content;
   //give a couple scrolls of padding at the top, and a screen of leeway at the bottom
   padding: 240px 20px 100vh 20px;
-  // box-sizing: border-box;
 }
 
 .view-component:first-child {
