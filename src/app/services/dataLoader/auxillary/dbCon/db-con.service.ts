@@ -44,7 +44,18 @@ export class DbConService {
 
   getRaster(params: StringMap, nodata?: number, delay?: number): GeotiffRequestResults {
     let response = new GeotiffRequestResults(this.http);
-    response.get(params, delay);
+
+    this.initPromise.then((config: Config) => {
+      let data = {
+        config,
+        data: params
+      }
+     response.get(data, delay);
+    })
+    .catch((e: any) => {
+      console.error(`Error getting config: ${e}`);
+    });
+    
 
     return response;
   }
@@ -141,10 +152,6 @@ export abstract class RequestResults {
       promises.push(link.toPromise());
     }
     this.data = Promise.all(promises);
-    // this.data.catch((reason: RequestReject) => {
-    //   console.log(reason);
-    //   return Promise.reject(reason);
-    // });
   }
 
   toPromise(): Promise<any> {
@@ -186,14 +193,15 @@ export class GeotiffRequestResults extends RequestResults {
   get(params: GeotiffParams, delay?: number) {
     if(!this.cancelled && !this.sub) {
       let urlParams = [];
-      for(let key in params) {
-        let value = params[key];
+      for(let key in params.data) {
+        let value = params.data[key];
         urlParams.push(`${key}=${value}`);
       }
       let urlSuffix = `${GeotiffRequestResults.ENDPOINT}?${urlParams.join("&")}`;
       let url = `${urlSuffix}`;
       let head = new HttpHeaders()
-      .set("Cache-Control", "public, max-age=31536000");
+      .set("Cache-Control", "public, max-age=31536000")
+      .set("Authorization", "Bearer " + params.config.oAuthAccessToken);
 
       let responseType: "arraybuffer" = "arraybuffer";
       let options = {
@@ -207,7 +215,10 @@ export class GeotiffRequestResults extends RequestResults {
 }
 
 
-type GeotiffParams  = StringMap;
+type GeotiffParams = {
+  config: Config,
+  data: StringMap
+};
 
 interface MetadataParams {
   query: string,
