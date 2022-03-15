@@ -6,7 +6,7 @@
           [lower]="dataset.dateRange[0]"
           [upper]="dataset.dateRange[1]"
           [period]="dataset.period"
-          [date]="date"
+          [(date)]="date"
           (dateChange)="setDate($event)">
         </app-date-focus>
       </div>

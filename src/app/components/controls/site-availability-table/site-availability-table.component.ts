@@ -103,9 +103,9 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
   }
 
   setSelected(selected: ElementRef, i: number) {
-    let site = this.tableData.rows[i].station;
+    let station = this.tableData.rows[i].station;
     // this.paramService.pushSiteSelect(site);
-    this.selectedChange.emit(site);
+    this.selectedChange.emit(station);
   }
 
   selectFromTable(rowIndex: number) {

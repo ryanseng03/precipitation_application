@@ -19,6 +19,7 @@ export class TimeSeriesComponent implements OnInit {
   selected: SiteInfo;
   source: Subject<any>;
   date: Moment.Moment;
+  axisLabel: string;
 
   constructor(private paramService: EventParamRegistrarService) {
     this.source = new Subject<any>();
@@ -39,6 +40,15 @@ export class TimeSeriesComponent implements OnInit {
       if(date) {
         date = date.clone()
         this.date = date;
+      }
+    });
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+      if(dataset) {
+        let labelParts = dataset.label.split(" ");
+        labelParts.shift();
+        let datasetLabel = labelParts.join(" ");
+        let axisLabel = `${datasetLabel} (${dataset.unit})`;
+        this.axisLabel = axisLabel;
       }
     });
   }

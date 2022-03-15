@@ -85,14 +85,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     },
     tmin: {
       day: {
-        unit: "C",
+        unit: "°C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
       },
       month: {
-        unit: "C",
+        unit: "°C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
@@ -101,14 +101,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     },
     tmax: {
       day: {
-        unit: "C",
+        unit: "°C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
         rasterData: true
       },
       month: {
-        unit: "C",
+        unit: "°C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: true,
@@ -117,14 +117,14 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     },
     tmean: {
       day: {
-        unit: "C",
+        unit: "°C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: false,
         rasterData: true
       },
       month: {
-        unit: "C",
+        unit: "°C",
         dataRange: [-10, 35],
         rangeAbsolute: [false, false],
         stationData: false,

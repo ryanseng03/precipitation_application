@@ -1,5 +1,4 @@
 
-
 <div *ngIf="loading; else data">
   <app-loading-component></app-loading-component>
 </div>
@@ -35,11 +34,9 @@
           [placeholder]="'Values'"
           [options]="values"
           [multiple]="true"
-
           ngDefaultControl
           [formControl]="filterControl"
           [disabled]="!fieldControl.value">
-
         </mat-select-autocomplete>
       </div>
       <div class="filter-component">
@@ -66,4 +63,8 @@
 
 
 </ng-template>
+
+
+
+
 

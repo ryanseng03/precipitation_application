@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { Moment } from 'moment';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
@@ -11,8 +12,8 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 export class DataViewsComponent implements OnInit {
 
   loading = true;
-  stations: SiteInfo[];
-  selectedStation: SiteInfo;
+  stations: SiteInfo[] = null;
+  selectedStation: any;
 
   filterControl: FormControl = new FormControl([]);
   fieldControl: FormControl = new FormControl(null);
@@ -47,14 +48,13 @@ export class DataViewsComponent implements OnInit {
     scanID: new Set<string>(),
     smartNodeRfID: new Set<string>()
   }
-  unfilteredStations: SiteInfo[];
+  unfilteredStations: SiteInfo[] = null;
   values: string[] = [];
 
 
   getFieldData(field: string) {
     let data = [];
     if(field) {
-      //console.log(this.field2Data[field]);
       data = Array.from(this.field2Data[field]);
       data = data.map((value: string) => {
         let label = value;
@@ -74,6 +74,20 @@ export class DataViewsComponent implements OnInit {
     this.fieldControl.setValue(null);
   }
 
+  filterStations() {
+    let values: string = this.filterControl.value;
+    let filteredStations = this.unfilteredStations;
+    let field = this.fieldControl.value;
+    if(values.length > 0 && field) {
+      filteredStations = this.unfilteredStations.filter((station: SiteInfo) => {
+        let value = station[field];
+        let inFilter = values.includes(value);
+        return inFilter;
+      });
+    }
+    this.paramService.pushFilteredStations(filteredStations);
+  }
+
   constructor(private paramService: EventParamRegistrarService) {
     for(let field in this.field2label) {
       let fieldData = {
@@ -88,20 +102,6 @@ export class DataViewsComponent implements OnInit {
       value: null
     });
 
-    let filterStations = () => {
-      let values: string = this.filterControl.value;
-      let filteredStations = this.unfilteredStations;
-      let field = this.fieldControl.value;
-      if(values.length > 0 && field) {
-        filteredStations = this.unfilteredStations.filter((station: SiteInfo) => {
-          let value = station[field];
-          let inFilter = values.includes(value);
-          return inFilter;
-        });
-      }
-      this.paramService.pushFilteredStations(filteredStations);
-    }
-
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
       if(stations) {
         this.unfilteredStations = stations;
@@ -112,22 +112,14 @@ export class DataViewsComponent implements OnInit {
             this.field2Data[field].add(value);
           }
         }
-        setTimeout(() => {
-          filterStations();
-        }, 0);
+        this.filterStations();
       }
       else {
         //propogate null to filtered stations if no station data available
-        this.paramService.pushFilteredStations(stations);
+        this.paramService.pushFilteredStations(null);
       }
     });
-    this.fieldControl.valueChanges.subscribe((value: string) => {
-      this.filterControl.setValue([]);
-      this.values = this.getFieldData(value);
-    });
-    this.filterControl.valueChanges.subscribe((values: string[]) => {
-      filterStations();
-    });
+    
 
 
 
@@ -139,9 +131,26 @@ export class DataViewsComponent implements OnInit {
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
       this.selectedStation = station;
     });
+
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+      if(dataset) {
+        this.clearFilter();
+      }
+    });
+
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {
+      this.loading = true;
+    });
   }
 
   ngOnInit() {
+    this.fieldControl.valueChanges.subscribe((value: string) => {
+      this.filterControl.setValue([]);
+      this.values = this.getFieldData(value);
+    });
+    this.filterControl.valueChanges.subscribe((values: string[]) => {
+      this.filterStations();
+    });
   }
 
   selectStation(station: SiteInfo) {

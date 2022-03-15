@@ -68,16 +68,17 @@ export class DataManagerService {
     }
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
       if(stations && data.selectedStation) {
-        let exists = false;
+        let selected = null;
         for(let station of stations) {
-          if(station.skn == data.selectedStation.skn) {
-            exists = true;
+          if(station.skn == data.selectedStation.skn) { 
+            selected = station;
             break;
           }
         }
-        if(!exists) {
-          paramService.pushSelectedStation(null);
-        }
+        //delay to allow filtered station propogation before emitting
+        setTimeout(() => {
+          paramService.pushSelectedStation(selected);
+        }, 0);
       }
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
@@ -171,6 +172,8 @@ export class DataManagerService {
                   //uggh
                   stationMetadata.skn = stationId;
                   stationMetadata.value = stationValue;
+                  //copy the station data to a new object to prevent comparison issues (won't trigger change detection because it's the same object)
+                  stationMetadata = Object.assign({}, stationMetadata);
                   acc.push(stationMetadata);
                 }
                 else {
@@ -239,86 +242,89 @@ export class DataManagerService {
     let timeseriesQueries = [];
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
-      //cancel outbound queries and reset query list
-      for(let query of timeseriesQueries) {
-        query.cancel();
-      }
-      timeseriesQueries = [];
-      data.selectedStation = station;
-      if(station) {
-        paramService.pushLoading({
-          tag: "timeseries",
-          loading: true
-        });
-        const { dataset, fill } = data.dataset;
-        let datasetProps = dataset2Prop[dataset];
-        let timeseriesPromises = [];
-        let startDate = data.dataset.dateRange[0];
-        let endDate = data.dataset.dateRange[1];
-        let periods: any[] = ["month", "day"];
-        for(let period of periods) {
-
-          let properties = {
-            station_id: station.skn,
-            period,
-            fill,
-            ...datasetProps
-          }
-          console.log(properties);
-
-          //chunk queries by year
-          let date = startDate.clone();
-          while(date.isSameOrBefore(endDate)) {
-            let start_s: string = this.dateHandler.dateToString(date, period);
-            date.add(1, "year");
-            let end_s: string = this.dateHandler.dateToString(date, period);
-            //note query is [)
-            let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
-
-            timeseriesRes.transform((timeseriesData: any[]) => {
-              if(timeseriesData.length > 0) {
-                let transformed = {
-                  stationId: timeseriesData[0].station_id,
-                  period: timeseriesData[0].period,
-                  values: timeseriesData.map((item: any) => {
-                    return {
-                      value: item.value,
-                      date: Moment(item.date)
-                    }
-                  })
-                }
-                return transformed;
-              }
-              else {
-                return null;
-              }
-            });
-            timeseriesQueries.push(timeseriesRes);
-
-            let timeseriesPromise = timeseriesRes.toPromise();
-            timeseriesPromise.then((timeseriesData: any) => {
-              if(timeseriesData) {
-                paramService.pushStationTimeseries(timeseriesData);
-              }
-            })
-            .catch((reason: RequestReject) => {
-              //if failed not cancelled print reason to stderr
-              if(!reason.cancelled) {
-                console.error(reason.reason);
-              }
-            });
-
-            timeseriesPromises.push(timeseriesPromise);
-          }
+      //don't trigger again if already handling this station
+      if(!station || !data.selectedStation || data.selectedStation.skn !== station.skn) {
+        //cancel outbound queries and reset query list
+        for(let query of timeseriesQueries) {
+          query.cancel();
         }
-        //when all timeseries promises are complete push out loading complete signal
-        Promise.allSettled(timeseriesPromises).then(() => {
+        timeseriesQueries = [];
+        data.selectedStation = station;
+        if(station) {
           paramService.pushLoading({
             tag: "timeseries",
-            loading: false
+            loading: true
           });
-        });
+          const { dataset, fill } = data.dataset;
+          let datasetProps = dataset2Prop[dataset];
+          let timeseriesPromises = [];
+          let startDate = data.dataset.dateRange[0];
+          let endDate = data.dataset.dateRange[1];
+          let periods: any[] = ["month", "day"];
+          for(let period of periods) {
+
+            let properties = {
+              station_id: station.skn,
+              period,
+              fill,
+              ...datasetProps
+            }
+
+            //chunk queries by year
+            let date = startDate.clone();
+            while(date.isSameOrBefore(endDate)) {
+              let start_s: string = this.dateHandler.dateToString(date, period);
+              date.add(1, "year");
+              let end_s: string = this.dateHandler.dateToString(date, period);
+              //note query is [)
+              let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
+
+              timeseriesRes.transform((timeseriesData: any[]) => {
+                if(timeseriesData.length > 0) {
+                  let transformed = {
+                    stationId: timeseriesData[0].station_id,
+                    period: timeseriesData[0].period,
+                    values: timeseriesData.map((item: any) => {
+                      return {
+                        value: item.value,
+                        date: Moment(item.date)
+                      }
+                    })
+                  }
+                  return transformed;
+                }
+                else {
+                  return null;
+                }
+              });
+              timeseriesQueries.push(timeseriesRes);
+
+              let timeseriesPromise = timeseriesRes.toPromise();
+              timeseriesPromise.then((timeseriesData: any) => {
+                if(timeseriesData) {
+                  paramService.pushStationTimeseries(timeseriesData);
+                }
+              })
+              .catch((reason: RequestReject) => {
+                //if failed not cancelled print reason to stderr
+                if(!reason.cancelled) {
+                  console.error(reason.reason);
+                }
+              });
+
+              timeseriesPromises.push(timeseriesPromise);
+            }
+          }
+          //when all timeseries promises are complete push out loading complete signal
+          Promise.allSettled(timeseriesPromises).then(() => {
+            paramService.pushLoading({
+              tag: "timeseries",
+              loading: false
+            });
+          });
+        }
       }
+      
     });
 
   }

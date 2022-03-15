@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse, HttpEventType } from '@angular/common/http';
-import { DbConService } from '../dataLoader/auxillary/dbCon/db-con.service';
+import { Config, DbConService } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { retry, catchError, take } from 'rxjs/operators';
 import { Observable, Subject, throwError } from "rxjs";
 import * as Moment from 'moment';
@@ -8,6 +8,7 @@ import { ValueData } from 'src/app/models/Dataset';
 import { Period } from 'src/app/models/types';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
+import { AssetManagerService } from '../util/asset-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -38,16 +39,20 @@ export class ExportManagerService {
   static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu/genzip/email/";
   ///////////////////////
 
-  constructor(private http: HttpClient, private dbcon: DbConService, private dateService: DateManagerService) {
-
+  private initPromise: Promise<Config>;
+  constructor(private http: HttpClient, private dbcon: DbConService, private dateService: DateManagerService, assetService: AssetManagerService) {
+    let url = assetService.getAssetURL(DbConService.CONFIG_FILE);
+    this.initPromise = <Promise<Config>>(this.http.get(url, { responseType: "json" }).toPromise());
   }
 
   async submitEmailPackageReq(reqs: ResourceReq[], email: string): Promise<void> {
+    let config: Config = await this.initPromise;
     let reqBody = {
       data: reqs,
       email: email
     };
-    let head = new HttpHeaders();
+    let head = new HttpHeaders()
+    .set("Authorization", "Bearer " + config.oAuthAccessToken);
     const responseType: "text" = "text";
     let reqOpts = {
       headers: head,
@@ -79,11 +84,13 @@ export class ExportManagerService {
 
 
   async submitInstantDownloadReq(reqs: ResourceReq[], email: string): Promise<Observable<number>> {
+    let config: Config = await this.initPromise;
     let reqBody = {
       data: reqs,
       email: email
     };
-    let head = new HttpHeaders();
+    let head = new HttpHeaders()
+    .set("Authorization", "Bearer " + config.oAuthAccessToken);
     const responseType: "json" = "json";
     let reqOpts = {
       headers: head,
@@ -106,7 +113,6 @@ export class ExportManagerService {
           let timeSec = time / 1000;
           console.log(`Got generated file names, time elapsed ${timeSec} seconds`);
           let files: string[] = response.files;
-          console.log(files);
           let downloadData: DownloadData = this.getFiles(files);
           //resolve with data monitor
           resolve(downloadData.progress);
@@ -144,7 +150,6 @@ export class ExportManagerService {
     let fileBaseSize = ExportManagerService.F_PART_SIZE_UL_MB * 1024 * 1024;
     let sizeUL = files.length * fileBaseSize;
     let percentCoeff = 100 / sizeUL;
-    console.log(sizeUL, percentCoeff);
 
     let data: Promise<Blob> = new Promise((resolve, reject) => {
       let responses: ArrayBuffer[] = new Array(files.length);
@@ -174,6 +179,7 @@ export class ExportManagerService {
             let loaded = progressStore.reduce((acc, value) => acc + value, 0);
             //convert to percent
             loaded *= percentCoeff;
+            console.log(loaded);
             progress.next(loaded);
           }
           else if(event.type === HttpEventType.Response) {
@@ -215,8 +221,6 @@ export class ExportManagerService {
       reportProgress: true,
       observe: observe
     };
-
-    console.log(url);
 
     return this.http.get(url, options)
     .pipe(

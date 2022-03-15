@@ -15,6 +15,7 @@ export class InfoPopupComponent implements OnInit {
   }
 
   close() {
+    console.log("CLOSE!!!!");
     this.dialogRef.close();
   }
 

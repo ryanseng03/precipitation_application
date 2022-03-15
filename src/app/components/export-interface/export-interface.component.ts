@@ -1,5 +1,5 @@
 
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, NgZone } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ExportAddItemComponent } from 'src/app/dialogs/export-add-item/export-add-item.component';
@@ -31,7 +31,7 @@ export class ExportInterfaceComponent implements OnInit {
 
   exportItems: any[] = [];
 
-  constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService, private dateService: DateManagerService) {
+  constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService, private dateService: DateManagerService, private ngZone: NgZone) {
     this.emailData = {
       useEmailControl: new FormControl(false),
       emailInputControl: new FormControl(),
@@ -47,7 +47,6 @@ export class ExportInterfaceComponent implements OnInit {
   }
 
   ngOnInit() {
-
   }
 
   checkEmailReq() {
@@ -176,7 +175,6 @@ export class ExportInterfaceComponent implements OnInit {
       }
       return acc.concat(sub);
     }, []);
-    console.log(reqs);
     let email = this.emailData.emailInputControl.value
     if(this.emailData.useEmailControl.value) {
       this.exportActivityMonitor.mode = "indeterminate"
@@ -198,17 +196,22 @@ export class ExportInterfaceComponent implements OnInit {
         this.exportActivityMonitor.mode = "determinate";
         this.exportActivityMonitor.value = 0;
         progress.subscribe((percent: number) => {
-          //console.log(percent);
-          this.exportActivityMonitor.value = percent;
+          //wrap everything in subscription in zone for change detection and to prevent bug where dialog won't close
+          this.ngZone.run(() => {
+            this.exportActivityMonitor.value = percent;
+          });
         }, (e: any) => {
-          this.errorService.notify("error", "An error occured while retreiving the download package.");
-          //does complete still trigger on error?
-          this.exportActivityMonitor.active = false;
+          this.ngZone.run(() => {
+            this.errorService.notify("error", "An error occured while retreiving the download package.");
+            this.exportActivityMonitor.active = false;
+          });
         }, () => {
-          //if this triggers on error need to set flag or something
-          let message = `Your download package has been generated. Check your browser for the downloaded file.`;
-          this.errorService.notify("info", message);
-          this.exportActivityMonitor.active = false;
+          this.ngZone.run(() => {
+            let message = `Your download package has been generated. Check your browser for the downloaded file.`;
+            this.errorService.notify("info", message);
+            this.exportActivityMonitor.active = false;
+          });
+          
         });
 
       })

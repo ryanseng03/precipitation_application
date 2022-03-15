@@ -3,7 +3,6 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 import { SiteValue, SiteInfo } from 'src/app/models/SiteMetadata';
 import { FormControl } from '@angular/forms';
 import Moment  from 'moment';
-import { Dataset } from 'src/app/models/Dataset';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { Observable } from 'rxjs';
 
@@ -15,6 +14,12 @@ import { Observable } from 'rxjs';
 export class RainfallGraphComponent implements OnInit {
   loading: boolean = false;
   data: any = {};
+
+  yaxis = {
+    title: {
+      text: "",
+    }
+  };
 
   w = 900;
   h = 500;
@@ -55,9 +60,13 @@ export class RainfallGraphComponent implements OnInit {
     }
   }
 
+  @Input() set axisLabel(axisLabel: string) {
+    this.yaxis.title.text = axisLabel;
+  }
+
   __station: any = null;
   @Input() set station(station: SiteInfo) {
-    if(station) {
+    if(station && this.__station && this.__station.skn !== station.skn) {
       //reset data
       this.data = {};
     }
@@ -140,11 +149,7 @@ export class RainfallGraphComponent implements OnInit {
                     text: "Date",
                   },
                 },
-                yaxis: {
-                  title: {
-                    text: "Rainfall (mm)",
-                  }
-                }
+                yaxis: this.yaxis
               }
             }
           }
