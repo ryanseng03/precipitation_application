@@ -58,7 +58,6 @@ export class ExportInterfaceComponent implements OnInit {
       let numItemFiles = numDateFiles * numExtentFiles;
       return acc + numItemFiles;
     }, 0);
-    console.log(numFiles);
     this.emailData.maxSizeExceeded = numFiles > 150;
     if(this.emailData.maxSizeExceeded) {
       this.emailData.useEmailControl.setValue(true);
@@ -211,7 +210,7 @@ export class ExportInterfaceComponent implements OnInit {
             this.errorService.notify("info", message);
             this.exportActivityMonitor.active = false;
           });
-          
+
         });
 
       })

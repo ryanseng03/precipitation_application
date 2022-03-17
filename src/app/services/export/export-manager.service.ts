@@ -164,14 +164,12 @@ export class ExportManagerService {
       for(let i = files.length - 1; i >= 0; i--) {
         let file = files[i];
         this.getFile(file).subscribe((event: HttpEvent<ArrayBuffer>) => {
-          // console.log(event);
           if(event.type === HttpEventType.DownloadProgress) {
             //if this is the last file (odd man out) and the total size field in the event is populated then adjust the total package size and percent coeff
             if(!actualSizeFound && i == files.length - 1 && event.total) {
               actualSize += event.total;
               //recompute coeff
               percentCoeff = 100 / actualSize;
-              // console.log(actualSize, percentCoeff);
               actualSizeFound = true;
             }
             progressStore[i] = event.loaded;
@@ -179,7 +177,6 @@ export class ExportManagerService {
             let loaded = progressStore.reduce((acc, value) => acc + value, 0);
             //convert to percent
             loaded *= percentCoeff;
-            console.log(loaded);
             progress.next(loaded);
           }
           else if(event.type === HttpEventType.Response) {

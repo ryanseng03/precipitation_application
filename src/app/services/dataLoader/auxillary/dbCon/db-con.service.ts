@@ -55,7 +55,7 @@ export class DbConService {
     .catch((e: any) => {
       console.error(`Error getting config: ${e}`);
     });
-    
+
 
     return response;
   }

@@ -58,10 +58,11 @@ export class NavBaseComponent implements OnInit {
       if(this.collapseTimer) {
         clearTimeout(this.collapseTimer);
       }
+      let timeout = value ? 0 : 500;
       this.collapseTimer = setTimeout(() => {
         this.navCollapsed = value;
         this.collapseTimer = null;
-      }, 500);
+      }, timeout);
     }
 
 
