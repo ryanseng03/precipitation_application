@@ -14,6 +14,7 @@ export class DataViewsComponent implements OnInit {
   loading = true;
   stations: SiteInfo[] = null;
   selectedStation: any;
+  unit: string;
 
   filterControl: FormControl = new FormControl([]);
   fieldControl: FormControl = new FormControl(null);
@@ -136,6 +137,9 @@ export class DataViewsComponent implements OnInit {
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
       if(dataset) {
+        //WHY ISNT THIS UPDATE BEING PROPOGATED???
+        //not a zoning issue tried that, plus all param service execs are run through a zone anyway
+        this.unit = dataset.unit;
         this.clearFilter();
       }
     });

@@ -53,6 +53,7 @@
       </div>
       <div *ngIf="selectedStation" class="site-data-table">
         <app-site-data-table
+          [unit]="unit"
           [selected]="selectedStation">
         </app-site-data-table>
       </div>
