@@ -44,13 +44,17 @@ export class DataManagerService {
     });
 
     metadataReq.transform((data: any) => {
+      console.log(data);
       let metadata = {};
       for(let item of data) {
-        let stationMetadata = item.value;
+        //deconstruct
+        let { station_group, id_field, ...stationMetadata } = item
+        if(stationMetadata.value) {
+          stationMetadata = stationMetadata.value;
+        }
         //quality of life
         stationMetadata.location = stationMetadata.elevation_m ? new LatLng(stationMetadata.lat, stationMetadata.lng, stationMetadata.elevation_m) : new LatLng(stationMetadata.lat, stationMetadata.lng)
         stationMetadata.value = null;
-        let id_field = item.id_field;
         let id = stationMetadata[id_field];
         //yay for inconsistent data
         id = this.getStandardizedNumericString(id);
@@ -70,7 +74,7 @@ export class DataManagerService {
       if(stations && data.selectedStation) {
         let selected = null;
         for(let station of stations) {
-          if(station.skn == data.selectedStation.skn) { 
+          if(station.skn == data.selectedStation.skn) {
             selected = station;
             break;
           }
@@ -157,9 +161,11 @@ export class DataManagerService {
           stationRes = dataRequestor.getStationData(properties);
           //transform by combining with station data
           stationRes.transform((stationVals: any[]) => {
+            console.log(stationVals);
             //get metadata
             return metadataReq.toPromise()
             .then((metadata: any) => {
+              console.log(metadata);
               let stations: any[] = stationVals.reduce((acc: any[], stationVal: any) => {
                 let stationId = stationVal.station_id;
                 //yay for inconsistent data
@@ -182,6 +188,11 @@ export class DataManagerService {
                 return acc;
               }, []);
               return stations;
+            })
+            .catch((e) => {
+              console.error(e);
+              errorPop.notify("error", `Could not retreive station metadata.`);
+              return [];
             });
           });
           stationPromise = stationRes.toPromise();
@@ -324,7 +335,7 @@ export class DataManagerService {
           });
         }
       }
-      
+
     });
 
   }

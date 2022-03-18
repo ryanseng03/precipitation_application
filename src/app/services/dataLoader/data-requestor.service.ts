@@ -75,7 +75,7 @@ export class DataRequestorService {
     let query = this.propertiesToQuery("hcdp_station_metadata", properties);
     let timingMessage = `Retreived station metadata`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
-    return response
+    return response;
   }
 
   getStationTimeSeries(start: string, end: string, properties: any, delay?: number): RequestResults {
