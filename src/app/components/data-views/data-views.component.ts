@@ -23,10 +23,10 @@ export class DataViewsComponent implements OnInit {
     observer: "Observer",
     network: "Network",
     island: "Island",
-    nceiID: "NCEI ID",
-    nwsID: "NWS ID",
-    scanID: "Scan ID",
-    smartNodeRfID: "Smart Node RFID"
+    ncei_id: "NCEI ID",
+    nws_id: "NWS ID",
+    scan_id: "Scan ID",
+    smart_node_rf_id: "Smart Node RFID"
   }
   islandNameMap = {
     BI: "Big Island",
@@ -43,10 +43,10 @@ export class DataViewsComponent implements OnInit {
     observer: new Set<string>(),
     network: new Set<string>(),
     island: new Set<string>(),
-    nceiID: new Set<string>(),
-    nwsID: new Set<string>(),
-    scanID: new Set<string>(),
-    smartNodeRfID: new Set<string>()
+    ncei_id: new Set<string>(),
+    nws_id: new Set<string>(),
+    scan_id: new Set<string>(),
+    smart_node_rf_id: new Set<string>()
   }
   unfilteredStations: SiteInfo[] = null;
   values: string[] = [];
@@ -109,7 +109,9 @@ export class DataViewsComponent implements OnInit {
           this.field2Data[field] = new Set<string>();
           for(let station of stations) {
             let value = station[field];
-            this.field2Data[field].add(value);
+            if(value) {
+              this.field2Data[field].add(value);
+            }
           }
         }
         this.filterStations();
@@ -119,7 +121,7 @@ export class DataViewsComponent implements OnInit {
         this.paramService.pushFilteredStations(null);
       }
     });
-    
+
 
 
 

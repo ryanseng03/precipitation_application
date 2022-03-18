@@ -37,25 +37,30 @@ export class DataManagerService {
     //   return null;
     // });
 
+    let data = {
+      dataset: null,
+      date: null,
+      selectedStation: null,
+      dateRange: null
+    }
 
-
+    //change to use station group listed in dataset
     let metadataReq: RequestResults = dataRequestor.getStationMetadata({
       station_group: "hawaii_climate_primary"
     });
 
     metadataReq.transform((data: any) => {
-      console.log(data);
       let metadata = {};
       for(let item of data) {
         //deconstruct
-        let { station_group, id_field, ...stationMetadata } = item
-        if(stationMetadata.value) {
-          stationMetadata = stationMetadata.value;
-        }
+        let { station_group, ...stationMetadata } = item;
+        //move id_field to some kind of header describing station group to avoid duplication?
+        let idField = stationMetadata.id_field;
+        //move this to some kind of header describing station group to avoid duplication?
         //quality of life
         stationMetadata.location = stationMetadata.elevation_m ? new LatLng(stationMetadata.lat, stationMetadata.lng, stationMetadata.elevation_m) : new LatLng(stationMetadata.lat, stationMetadata.lng)
         stationMetadata.value = null;
-        let id = stationMetadata[id_field];
+        let id = stationMetadata[idField];
         //yay for inconsistent data
         id = this.getStandardizedNumericString(id);
         metadata[id] = stationMetadata;
@@ -64,17 +69,13 @@ export class DataManagerService {
     });
 
 
-    let data = {
-      dataset: null,
-      date: null,
-      selectedStation: null,
-      dateRange: null
-    }
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
+
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: any[]) => {
       if(stations && data.selectedStation) {
         let selected = null;
         for(let station of stations) {
-          if(station.skn == data.selectedStation.skn) {
+          let idField = station.id_field;
+          if(station[idField] == data.selectedStation[idField]) {
             selected = station;
             break;
           }
@@ -116,11 +117,8 @@ export class DataManagerService {
       }
     }
 
-    //TIMESERIES DATA SHOULD JUST BE PULLED REGARDLESS OF DATE (AT LEAST FOR NOW), THE TIMESERIES COMPONENT SHOULD GET DATE FOR ADJUSTING FOCUS AREAS
-    //DON'T HAVE TO DO ANYTHING HERE FOR TIMESERIES WHEN DATE CHANGES
 
-    //note this should push initial date, it doesnt...
-    //add delay/caching stuff, simple for now
+
     let stationRes: RequestResults = null;
     let rasterRes: RequestResults = null;
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
@@ -137,7 +135,6 @@ export class DataManagerService {
         let datasetInfo = data.dataset;
 
         const { stationData, rasterData, dataset, period, fill } = datasetInfo;
-
 
         let date_s: string = this.dateHandler.dateToString(date, period);
 
@@ -161,11 +158,9 @@ export class DataManagerService {
           stationRes = dataRequestor.getStationData(properties);
           //transform by combining with station data
           stationRes.transform((stationVals: any[]) => {
-            console.log(stationVals);
             //get metadata
             return metadataReq.toPromise()
             .then((metadata: any) => {
-              console.log(metadata);
               let stations: any[] = stationVals.reduce((acc: any[], stationVal: any) => {
                 let stationId = stationVal.station_id;
                 //yay for inconsistent data
@@ -173,10 +168,11 @@ export class DataManagerService {
                 let stationValue = stationVal.value;
                 let stationMetadata = metadata[standardizedStationId];
                 if(stationMetadata) {
+                  let idField = stationMetadata.id_field;
                   //TEMP
                   //set station id (SKN) to id non-standardized id from incoming document so timeseries ret works properly (skn needs to match dataset documents)
                   //uggh
-                  stationMetadata.skn = stationId;
+                  stationMetadata[idField] = stationId;
                   stationMetadata.value = stationValue;
                   //copy the station data to a new object to prevent comparison issues (won't trigger change detection because it's the same object)
                   stationMetadata = Object.assign({}, stationMetadata);
@@ -189,10 +185,12 @@ export class DataManagerService {
               }, []);
               return stations;
             })
-            .catch((e) => {
-              console.error(e);
-              errorPop.notify("error", `Could not retreive station metadata.`);
-              return [];
+            .catch((reason: RequestReject) => {
+              if(!reason.cancelled) {
+                console.error(reason);
+                errorPop.notify("error", `Could not retreive station metadata.`);
+                return [];
+              }
             });
           });
           stationPromise = stationRes.toPromise();
@@ -254,7 +252,7 @@ export class DataManagerService {
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
       //don't trigger again if already handling this station
-      if(!station || !data.selectedStation || data.selectedStation.skn !== station.skn) {
+      if(!station || !data.selectedStation || data.selectedStation[station.id_field] !== station[station.id_field]) {
         //cancel outbound queries and reset query list
         for(let query of timeseriesQueries) {
           query.cancel();
@@ -275,7 +273,7 @@ export class DataManagerService {
           for(let period of periods) {
 
             let properties = {
-              station_id: station.skn,
+              station_id: station[station.id_field],
               period,
               fill,
               ...datasetProps

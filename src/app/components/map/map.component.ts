@@ -514,10 +514,10 @@ export class MapComponent implements OnInit {
     this.map.addLayer(markerLayer);
   }
 
-  getMarkerPopupText(station: SiteInfo): string {
+  getMarkerPopupText(station: any): string {
     let labels = this.getCoordAndValueLabels(station);
     let stationDetails: string = "Name: " + station.name
-    + "<br> SKN: " + station.skn
+    + "<br> Station ID: " + station[station.id_field]
     + "<br> Lat: " + labels.lat + ", Lon: " + labels.lng
     + `<br> Value: ${labels.value}`
     + `, ${labels.transValue}`;

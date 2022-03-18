@@ -106,8 +106,12 @@ export class SiteDataTableComponent implements OnInit {
 
   selected2datamap() {
     let map = [];
-    for(let field in this.field2label) {
-      let fieldLabel = this.field2label[field];
+    const { id_field, location, ...properties } = this.__selected;
+    for(let field in properties) {
+      let fieldLabel = this.field2label[field] || field;
+      if(field == id_field) {
+        fieldLabel += " (Station ID)";
+      }
       let value = this.__selected[field];
       if(value) {
         if(field == "island") {

@@ -22,12 +22,12 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     KO: "Kahoʻolawe"
   }
 
-  @Input() set stations(stations: SiteInfo[]) {
+  @Input() set stations(stations: any[]) {
     this.tableData.rows = [];
     for(let station of stations) {
       let values = [];
       values.push(station.name);
-      values.push(station.skn);
+      values.push(station[station.id_field]);
       let island = this.islandNameMap[station.island];
       values.push(island);
       this.tableData.rows.push({
@@ -73,7 +73,7 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
   constructor(private cdr: ChangeDetectorRef) {
     this.siteMap = new Map<SiteInfo, number>();
     this.tableData = {
-      header: ["Name", "SKN", "Island"],
+      header: ["Name", "Station ID", "Island"],
       rows: []
     }
 

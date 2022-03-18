@@ -66,7 +66,7 @@ export class RainfallGraphComponent implements OnInit {
 
   __station: any = null;
   @Input() set station(station: SiteInfo) {
-    if(station && this.__station && this.__station.skn !== station.skn) {
+    if(station && this.__station && this.__station[this.__station.id_field] !== station[this.__station.id_field]) {
       //reset data
       this.data = {};
     }
@@ -122,7 +122,7 @@ export class RainfallGraphComponent implements OnInit {
       //deconstruct data
       const { period, stationId, values } = data;
       //ignore if station id is wrong
-      if(stationId == this.__station.skn) {
+      if(stationId == this.__station[this.__station.id_field]) {
         let periodData = this.data[period];
         if(periodData === undefined) {
           periodData = {
