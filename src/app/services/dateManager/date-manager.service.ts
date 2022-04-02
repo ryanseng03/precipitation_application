@@ -87,7 +87,7 @@ export class DateManagerService {
     //set end dates to previous period for everything but legacy rainfall
     let ranges = {
       rainfall: {
-        day: [Moment("1990-01-01"), Moment("2022-02-28")],
+        day: [Moment("1990-01-01"), Moment("2022-03-31")],
         month: [Moment("1990-01"), lastMonth.clone()]
       },
       legacy_rainfall: {

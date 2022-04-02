@@ -126,8 +126,6 @@ export class ExportManagerService {
           reject(error);
         });
     });
-
-
   }
 
 
