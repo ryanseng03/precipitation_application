@@ -34,7 +34,7 @@ export class ViewContainerComponent implements OnInit {
   //set scrollbar width the first time becomes visible
   // scrollbarSet: boolean = false;
   scrollBarWidth: number = -1;
-  //just set scrollbar width once for efficiency, on macs it's fine to have the scrollbar visible while sscrolling
+  //just set scrollbar width once for efficiency, on macs it's fine to have the scrollbar visible while scrolling
   //also it seems like getting the scrollbar width on a mac might not work even while scrolling
   @Input() set visible(state: boolean) {
     if(state && this.scrollBarWidth < 0) {
@@ -82,6 +82,15 @@ export class ViewContainerComponent implements OnInit {
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
       if(dataset) {
         this.dataset = dataset;
+
+        //TESTING//
+
+        // this.dataset = Object.apply({}, dataset);
+        // this.dataset.period = null;
+
+        ///////////
+
+        
         if(this.date) {
           console.log(this.date.toISOString());
           //check if the date is out of range and set to end of range if it is

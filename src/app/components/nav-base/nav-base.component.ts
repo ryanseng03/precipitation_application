@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { trigger, state, style, transition, animate } from "@angular/animations"
 
 @Component({
@@ -22,7 +22,7 @@ import { trigger, state, style, transition, animate } from "@angular/animations"
         animate("0.2s")
       ]),
       transition("fullscreen => *", [
-        animate("0.2s")
+        animate("0.3s")
       ])
     ]),
     trigger("selectColor", [
@@ -37,24 +37,32 @@ import { trigger, state, style, transition, animate } from "@angular/animations"
     ])
   ]
 })
-export class NavBaseComponent implements OnInit {
+export class NavBaseComponent implements OnInit, OnChanges {
 
   @Output() componentChange: EventEmitter<string> = new EventEmitter<string>();
   @Input() component: string;
 
+  
   navCollapsed: boolean = false;
-
   collapseTimer: NodeJS.Timer = null;
 
   constructor() {}
 
 
   ngOnInit() {
+    this.componentChange.subscribe((value) => {
+      console.log(value);
+    });
   }
 
-  changeNavExpand(value: boolean) {
+  ngOnChanges(changes: SimpleChanges) {
+    console.log(changes);
+  }
+
+  changeNavExpand(event: PointerEvent, value: boolean) {
     //if nav component (initial state) ignore this
     if(this.component != "nav") {
+      
       if(this.collapseTimer) {
         clearTimeout(this.collapseTimer);
       }
@@ -69,6 +77,10 @@ export class NavBaseComponent implements OnInit {
   }
 
   selectComponent(component: string) {
+    if(this.component == "nav") {
+      this.navCollapsed = true;
+    }
+    
     this.component = component;
   }
 

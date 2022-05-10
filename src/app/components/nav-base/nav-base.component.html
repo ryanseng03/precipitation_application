@@ -1,8 +1,8 @@
 
 <div class="app-container">
-  <div class="nav-container" [@navSize]="getNavState()" (mouseenter)="changeNavExpand(false)" (mouseleave)="changeNavExpand(true)">
+  <div class="nav-container" [@navSize]="getNavState()" (pointerenter)="changeNavExpand($event, false)" (pointerleave)="changeNavExpand($event, true)">
     <div *ngIf="!navCollapsed; else collapsedNav" class="nav-tile-container">
-      <app-nav-tiles [(component)]="component"></app-nav-tiles>
+      <app-nav-tiles [component]="component" (componentChange)="selectComponent($event)"></app-nav-tiles>
     </div>
 
     <ng-template #collapsedNav>

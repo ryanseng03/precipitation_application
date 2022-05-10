@@ -87,14 +87,14 @@ export class VisComponent implements OnInit, AfterViewInit {
   }
 
   startResize(touch: boolean): boolean {
-
-    let moveHandler = (event: MouseEvent) => {
+    let moveHandler = (event: MouseEvent | TouchEvent) => {
+      let clientX = touch ? (<TouchEvent>event).touches[0].clientX : (<MouseEvent>event).clientX;
       let dragbar: HTMLElement = this.dragbar.nativeElement;
       let mapContainer: HTMLElement = this.mapContainerRef.nativeElement;
       //offset to midpoint of dragbar
       let dragbarOffset = dragbar.clientWidth / 2;
       let left = mapContainer.getBoundingClientRect().left;
-      let x = event.clientX - left - dragbarOffset;
+      let x = clientX - left - dragbarOffset;
       x = Math.max(0, x);
       this.mapWidth = x + "px";
       return false;
