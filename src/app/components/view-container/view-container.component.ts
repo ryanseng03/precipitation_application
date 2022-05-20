@@ -4,6 +4,7 @@ import moment, { Moment } from 'moment';
 import { Dataset } from 'src/app/models/Dataset';
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
+import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
 
 @Component({
   selector: 'app-view-container',
@@ -33,15 +34,13 @@ export class ViewContainerComponent implements OnInit {
 
   //set scrollbar width the first time becomes visible
   // scrollbarSet: boolean = false;
-  scrollBarWidth: number = -1;
   //just set scrollbar width once for efficiency, on macs it's fine to have the scrollbar visible while scrolling
   //also it seems like getting the scrollbar width on a mac might not work even while scrolling
   @Input() set visible(state: boolean) {
-    if(state && this.scrollBarWidth < 0) {
+    if(state) {
       let element: HTMLElement = this.viewContainer.nativeElement;
-      let scrollbarWidth = element.offsetWidth - element.clientWidth;
+      let scrollbarWidth: number = this.scrollWidthService.getScrollbarWidth();
       element.style.paddingRight = scrollbarWidth + "px";
-      this.scrollBarWidth = scrollbarWidth;
     }
   }
   _width: number;
@@ -66,9 +65,6 @@ export class ViewContainerComponent implements OnInit {
   navInfo: NavData[];
   activeTileRef: NavData;
 
-  scrollbarWidthThrottle: NodeJS.Timer;
-  scrollbarWidthPause: boolean = false;
-
   dataset: any;
 
   upperBuffer: string;
@@ -77,7 +73,7 @@ export class ViewContainerComponent implements OnInit {
   dateDebounce: boolean = false;
 
 
-  constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService) {
+  constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService, private scrollWidthService: ScrollbarWidthCalcService) {
     this.scrollTimeoutHandle = null;
     this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
       if(dataset) {
@@ -90,7 +86,7 @@ export class ViewContainerComponent implements OnInit {
 
         ///////////
 
-        
+
         if(this.date) {
           console.log(this.date.toISOString());
           //check if the date is out of range and set to end of range if it is
@@ -168,23 +164,6 @@ export class ViewContainerComponent implements OnInit {
   }
 
 
-  // getScrollBarWidth(element: HTMLElement): string {
-  //   let scrollbarWidth: string;
-  //   //weird workaround for ExpressionChangedAfterItHasBeenCheckedError in dev (also potentially good for performance in prod for changing scrollbars)
-  //   if(this.scrollbarWidthPause) {
-  //     scrollbarWidth = this.scrollbarWidth;
-  //   }
-  //   else {
-  //     this.scrollbarWidthPause = true;
-  //     let throttle = 10;
-  //     setTimeout(() => {
-  //       this.scrollbarWidthPause = false;
-  //     }, throttle);
-  //     scrollbarWidth = element.offsetWidth - element.clientWidth + "px";
-  //     this.scrollbarWidth = scrollbarWidth;
-  //   }
-  //   return scrollbarWidth;
-  // }
 
   //note removed debounce because weird offsets make it difficult to debounce where not actually scrolling, should be fine without debounce given offset to prevent boundary issues
   goToNav(nav: NavData) {

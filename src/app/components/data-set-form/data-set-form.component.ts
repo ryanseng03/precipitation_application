@@ -1,10 +1,8 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
-import Moment from "moment";
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
 import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
-import { Period } from 'src/app/models/types';
 
 @Component({
   selector: 'app-data-set-form',
@@ -38,8 +36,84 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
       label: "Mean Temperature",
       value: "tmean",
       description: "Temperature data aggregated to its mean value over the time period."
+    },
+
+    temperature: {
+      label: "temperature",
+      value: "temperature",
+
+    },
+    downscale_temperature: {
+      label: "Statistical Downscaling Temperature",
+      value: "downscale_temperature",
+      description: "No idea"
+    },
+    downscale_rainfall: {
+      label: "Statistical Downscaling Rainfall",
+      value: "downscale_rainfall",
+      description: "No idea"
     }
   };
+
+  datasetOpts = {
+    rainfall: {
+      selectors: ["fill", "period"],
+      dateType: "series",
+      values: {
+        partial: []
+      }
+    },
+
+    set: {
+
+    },
+    stations: {
+
+    },
+    raster: {
+
+    }
+  }
+
+  cap = {
+    raster: true,
+    stations: true,
+    //raster and station exclusive
+    //
+
+    //string or moment range
+    dates: []
+  }
+
+  //the ability to lookup is useful for attempting to set to current value rather than just first index default
+  setup = {
+
+    value: "",
+    next_default: "",
+    next: ""
+  }
+
+  abc = {
+    default: "rainfall",
+    values: {
+      rainfall: {
+        value: "rainfall",
+        date_type: "series",
+        selectors: ["period"],
+        selector_data: {
+          //should have info on what stuff available (raster or station), and the cooresponding selectors
+          //then at the end of all selectors dates and additional static properties
+          day: {},
+          month: {}
+        }
+      }
+    }
+  }
+  //
+
+
+  //each control populated by previous control velue on select
+
 
   selectorDescriptions = {
     dataset: "Select the type of data you would like to download. Hover over an option for a description of the data set.",

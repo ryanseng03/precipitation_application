@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import {EventParamRegistrarService} from "src/app/services/inputManager/event-param-registrar.service";
 import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
 import {trigger, state, style, animate, transition} from "@angular/animations";
-import Moment from "moment";
 
 @Component({
   selector: 'app-site-data-table',
@@ -51,6 +50,7 @@ export class SiteDataTableComponent implements OnInit {
   labelR = "\u25BE";
 
   constructor(private paramService: EventParamRegistrarService) {
+
   }
 
   setFocusedSiteFilter() {

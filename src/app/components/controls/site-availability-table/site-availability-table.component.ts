@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, AfterContentInit, ChangeDetectorRef, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
 import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
 
 @Component({
   selector: 'app-site-availability-table',
@@ -69,8 +70,10 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
   tableData: TableFormat;
   siteMap: Map<SiteInfo, number>;
   selectedRef: RowRef;
+  scrollbarWidth: number;
 
-  constructor(private cdr: ChangeDetectorRef) {
+  constructor(private cdr: ChangeDetectorRef, scrollWidthService: ScrollbarWidthCalcService) {
+    this.scrollbarWidth = scrollWidthService.getScrollbarWidth();
     this.siteMap = new Map<SiteInfo, number>();
     this.tableData = {
       header: ["Name", "Station ID", "Island"],

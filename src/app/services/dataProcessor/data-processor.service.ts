@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { SiteMetadata, SiteValue } from "../../models/SiteMetadata";
-import {RasterData, RasterHeader, BandData, IndexedValues, UpdateFlags, UpdateStatus} from "../../models/RasterData";
-import {LatLng, latLng} from "leaflet";
+import {RasterData, RasterHeader, IndexedValues, UpdateFlags} from "../../models/RasterData";
+
 import * as geotiff from "geotiff";
 
 @Injectable({
