@@ -6,15 +6,16 @@
 }
 
 .view-nav {
-    height: 100%;
-    width: 30px;
-    display: flex;
-    flex-flow: row;
-    -webkit-text-orientation: upright;
-    text-orientation: upright;
-    writing-mode: vertical-lr;
-    font-weight: 500;
-    float: right;
+  z-index: 10000;
+  height: 100%;
+  width: 30px;
+  display: flex;
+  flex-flow: row;
+  -webkit-text-orientation: upright;
+  text-orientation: upright;
+  writing-mode: vertical-lr;
+  font-weight: 500;
+  float: right;
 }
 
 .nav-tile {

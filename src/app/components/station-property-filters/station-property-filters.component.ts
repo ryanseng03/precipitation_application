@@ -368,7 +368,6 @@ class FilterFormData {
 
     this.controls.valueControl.valueChanges.subscribe((value: any) => {
       //what is the type for value?
-      console.log(value);
       //OUTPUT TO FILTER
       let type = this.setProperty.type
     });
