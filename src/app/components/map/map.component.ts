@@ -173,7 +173,7 @@ export class MapComponent implements OnInit {
       layer.setColorScale(colorScheme);
       //update marker colors
       for(let marker of this.markerInfo.markers) {
-        let color = colorScheme.getColor(marker.metadata.value);
+        let color = colorScheme.getColor(marker.value);
         let hex = chroma([color.r, color.g, color.b]).hex();
         marker.marker.setStyle({
           fillColor: hex
@@ -450,8 +450,8 @@ export class MapComponent implements OnInit {
       markers: [],
       layer: null,
       pivotZoom: 10,
-      weightToMinRadiusFactor: 0.4,
-      minRadiusAtPivot: 0,
+      weightToRadiusFactor: 0.4,
+      pivotRadius: 7,
       markerMap: new Map<SiteInfo, L.CircleMarker>()
     }
   }
@@ -462,12 +462,7 @@ export class MapComponent implements OnInit {
     this.markerInfo.markerMap.clear();
 
     let markerLayer = L.layerGroup();
-    let minRadiusAtPivot = Number.POSITIVE_INFINITY;
     stations.forEach((station: SiteInfo) => {
-      let radius = this.getMarkerRadiusAtPivot(station);
-      if(radius < minRadiusAtPivot) {
-        minRadiusAtPivot = radius;
-      }
       let hexFill = "#ffffff";
       if(this.colorScheme) {
         let fill = this.colorScheme.getColor(station.value);
@@ -491,14 +486,10 @@ export class MapComponent implements OnInit {
       markerLayer.addLayer(marker);
       let stationMarker: RainfallStationMarker = {
         marker: marker,
-        metadata: {
-          pivotRadius: radius,
-          value: station.value
-        }
+        value: station.value
       }
       markers.push(stationMarker);
     });
-    this.markerInfo.minRadiusAtPivot = minRadiusAtPivot;
 
     this.markerInfo.markers = markers;
 
@@ -565,91 +556,39 @@ export class MapComponent implements OnInit {
   }
 
   updateMarkers(): void {
-    let zoom = this.map.getZoom();
-    // console.log(zoom);
     let markers = this.markerInfo.markers;
-    if(zoom < this.markerInfo.pivotZoom) {
-      let weight = this.getWeightScaledRadius();
-      for(let marker of markers) {
-        this.setScaledMarkerRadius(marker);
-        marker.marker.setStyle({weight: weight});
-      }
-    }
-    else {
-      let weight = this.getWeightStaticRadius();
-      for(let marker of markers) {
-        this.setStaticMarkerRadius(marker);
-        marker.marker.setStyle({weight: weight});
-      }
+    let sizingData = this.getMarkerSizing();
+    for(let marker of markers) {
+      marker.marker.setStyle({weight: sizingData.weight});
+      marker.marker.setRadius(sizingData.radius);
     }
   }
 
-  getWeightStaticRadius(): number {
-    let radius = this.getStaticRadius(this.markerInfo.minRadiusAtPivot);
-    let weight = this.markerInfo.weightToMinRadiusFactor * radius;
-    return weight;
-  }
-  getWeightScaledRadius(): number {
-    let radius = this.getScaledRadius(this.markerInfo.minRadiusAtPivot);
-    let weight = this.markerInfo.weightToMinRadiusFactor * radius;
-    return weight;
-  }
 
-  getMarkerRadiusAtPivot(station: SiteInfo): number {
-    let min = 5;
-    let max = 30;
-    let dataRange: [number, number] = this.dataset.dataRange;
-    let value = station.value;
-    let valueOffset = Math.max(value - dataRange[0], 0);
-    let span = dataRange[1] - dataRange[0];
-    let coef = 13 / span;
-    let radius = min + coef * valueOffset;
-    radius = Math.min(radius, max);
-    return radius;
-  }
 
-  setStaticMarkerRadius(marker: RainfallStationMarker) {
-    let radiusAtPivot = marker.metadata.pivotRadius;
-    let radius = this.getStaticRadius(radiusAtPivot);
-    marker.marker.setRadius(radius);
-  }
-  getStaticRadius(radiusAtPivot: number) {
+
+//   marker.marker.setStyle({weight: weight});
+  //marker.marker.setRadius(radius);
+
+
+
+  getMarkerSizing() {
+    let radius: number;
     let zoom = this.map.getZoom();
-    let scale = this.map.getZoomScale(this.markerInfo.pivotZoom, zoom);
-    let scaledRadius = radiusAtPivot * scale;
-    let radius = 0;
-    //note this is diferent from marker info var with same name
-    let minRadiusAtPivot = 0.1
-    if(scaledRadius < minRadiusAtPivot) {
-      radius = minRadiusAtPivot / scale;
+    //scaled
+    if(zoom < this.markerInfo.pivotZoom) {
+      let scale = this.map.getZoomScale(this.map.getZoom(), this.markerInfo.pivotZoom);
+      radius = this.markerInfo.pivotRadius * scale;
     }
+    //static
     else {
-      radius = radiusAtPivot;
+      radius = this.markerInfo.pivotRadius;
     }
-    return radius;
-  }
-
-  setScaledMarkerRadius(marker: RainfallStationMarker): void {
-    let radius = this.getScaledRadius(marker.metadata.pivotRadius);
-    //console.log(radius);
-    marker.marker.setRadius(radius);
-  }
-  getScaledRadius(radiusAtPivot: number): number {
-    let scale = this.map.getZoomScale(this.map.getZoom(), this.markerInfo.pivotZoom);
-    //console.log(scale);
-    let radius = radiusAtPivot * scale;
-    return radius;
-  }
-
-  //for now just set boundaries on size at pivot, have radius not change if above pivot zoom
-
-  //should make this global, will look better if consistent
-  setMarkerWeight(marker: RainfallStationMarker): void {
-    //set weight to 5% of radius
-    let weight = marker.marker.getRadius() * this.markerInfo.weightToMinRadiusFactor;
-    let max = 2;
-    weight = Math.min(weight, max);
-    marker.marker.setStyle({weight: 1});
+    let weight = radius * this.markerInfo.weightToRadiusFactor;
+    return {
+      radius: radius,
+      weight: weight
+    };
   }
 }
 
@@ -658,19 +597,13 @@ interface RainfallStationMarkerInfo {
   markers: RainfallStationMarker[],
   layer: L.LayerGroup,
   pivotZoom: number,
-  weightToMinRadiusFactor: number,
-  minRadiusAtPivot: number,
+  weightToRadiusFactor: number,
+  pivotRadius: number,
   markerMap: Map<SiteInfo, L.CircleMarker>
 }
 
 interface RainfallStationMarker {
   marker: L.CircleMarker,
-  metadata: MarkerMetadata
-}
-
-//scale everything from pivot radius to prevent rounding issues and reduce complexity
-interface MarkerMetadata {
-  pivotRadius: number,
   value: number
 }
 

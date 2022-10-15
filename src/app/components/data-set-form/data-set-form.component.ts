@@ -36,22 +36,6 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
       label: "Mean Temperature",
       value: "tmean",
       description: "Temperature data aggregated to its mean value over the time period."
-    },
-
-    temperature: {
-      label: "temperature",
-      value: "temperature",
-
-    },
-    downscale_temperature: {
-      label: "Statistical Downscaling Temperature",
-      value: "downscale_temperature",
-      description: "No idea"
-    },
-    downscale_rainfall: {
-      label: "Statistical Downscaling Rainfall",
-      value: "downscale_rainfall",
-      description: "No idea"
     }
   };
 
