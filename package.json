@@ -14,8 +14,7 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "build-prod": "ng build --prod",
-    "config-deploy": "cp CNAME dist/CNAME",
-    "push-deploy": "git subtree push --prefix dist origin deploy",
+    "config-dist": "copy CNAME dist/CNAME",
     "postinstall": "npx patch-package"
   },
   "private": true,

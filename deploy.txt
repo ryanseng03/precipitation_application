@@ -1,0 +1,9 @@
+ng build --prod
+copy CNAME dist/CNAME
+cd dist
+git init
+git add -A
+git commit -m "commit message"
+git branch -M main
+git remote add origin https://github.com/ikewai/hcdp_deploy.git
+git push -u origin main --force
