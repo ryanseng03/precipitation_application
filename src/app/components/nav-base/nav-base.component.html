@@ -1,4 +1,3 @@
-
 <div class="app-container">
   <div class="nav-container" [@navSize]="getNavState()" (pointerenter)="changeNavExpand($event, false)" (pointerleave)="changeNavExpand($event, true)">
     <div *ngIf="!navCollapsed; else collapsedNav" class="nav-tile-container">

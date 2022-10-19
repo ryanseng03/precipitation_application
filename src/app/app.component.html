@@ -1,7 +1,19 @@
 
 <div class="container">
 
-  <app-nav-base [(component)]="component"></app-nav-base>
+  <div class="banner" [ngClass]="{'banner-open': bannerOpen}">
+    <div class="banner-content">
+      <mat-icon color="warn" class="banner-warn-icon">warning</mat-icon>
+      <p class="banner-text">
+        Your browser may not support all features of the Data Portal. We recommend using an up-to-date version of Chrome, Firefox, Edge, or Opera. Other browsers or browsers that are not up-to date may not work properly.
+      </p>
+      <button mat-button mat-mini-fab class="banner-close-button" (click)="closeBanner()" color="primary">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <app-nav-base class="app-space"></app-nav-base>
 
 </div>
 

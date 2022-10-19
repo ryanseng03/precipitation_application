@@ -39,8 +39,7 @@ import { trigger, state, style, transition, animate } from "@angular/animations"
 })
 export class NavBaseComponent implements OnInit {
 
-  @Output() componentChange: EventEmitter<string> = new EventEmitter<string>();
-  @Input() component: string;
+  component: string = "nav";
 
 
   navCollapsed: boolean = false;
@@ -50,9 +49,6 @@ export class NavBaseComponent implements OnInit {
 
 
   ngOnInit() {
-    this.componentChange.subscribe((value) => {
-      console.log(value);
-    });
   }
 
   changeNavExpand(event: PointerEvent, value: boolean) {

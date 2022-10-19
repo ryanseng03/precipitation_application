@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnInit, ViewChild, Input, Output, OnChanges, S
 import {MAT_DATE_FORMATS} from '@angular/material/core';
 import {DateFormatHelperService, DateUnit} from "../../../services/controlHelpers/date-format-helper.service";
 import {FormControl} from '@angular/forms';
-import {MatCalendarHeader} from "@angular/material/datepicker";
+import {MatCalendarHeader, MatDatepicker} from "@angular/material/datepicker";
 import Moment from "moment";
 import { map } from 'rxjs/operators';
 
@@ -24,6 +24,8 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   @ViewChild("datePicker") datePicker;
 
+  lastValidValue: Moment.Moment;
+
   _min: Moment.Moment = null;
   _max: Moment.Moment = null;
 
@@ -40,6 +42,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   @Input()
   set date(date: Moment.Moment) {
     this.dateControl.setValue(date);
+    this.setDate();
   }
   @Output() dateChange: EventEmitter<Moment.Moment> = new EventEmitter<Moment.Moment>();
 
@@ -63,26 +66,17 @@ export class DateSelectorComponent implements OnInit, OnChanges {
         }
       }
     };
+  }
 
-
-    //dateChange event doesn't trigger on form field when closed early, so use this to monitor changes
-    //use map pipe to send null if invalid date
-    let dateChangeThrottle = null;
-    this.dateControl.valueChanges.pipe(map((date: Moment.Moment) => {
-      if(this.dateControl.valid) {
-        return date;
-      }
-      else {
-        return null;
-      }
-    }));
-    this.dateControl.valueChanges.subscribe((date: Moment.Moment) => {
-      clearTimeout(dateChangeThrottle);
-      //debounce not working for all cases, just throttle so only update once per cycle
-      dateChangeThrottle = setTimeout(() => {
-        this.dateChange.emit(date);
-      }, 0);
-    });
+  setDate() {
+    let value = this.dateControl.value;
+    if(value) {
+      this.lastValidValue = value;
+      this.dateChange.emit(value);
+    }
+    else {
+      this.dateControl.setValue(this.lastValidValue);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {

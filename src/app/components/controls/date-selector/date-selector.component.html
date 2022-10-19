@@ -7,12 +7,14 @@
       [matDatepicker]="datePicker"
       [min]="_min"
       [max]="_max"
-      [readonly]="readonly">
+      [readonly]="readonly"
+      (blur)="setDate()">
 
     <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
     <mat-datepicker #datePicker
       (monthSelected)="monthSelectHandler($event)"
-      startView={{getDefaultView()}}>
+      startView={{getDefaultView()}}
+      (closed)="setDate()">
     </mat-datepicker>
     <mat-error>Invalid Date</mat-error>
   </mat-form-field>
