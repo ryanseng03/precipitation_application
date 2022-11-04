@@ -35,6 +35,18 @@ export interface Color {
     }
 
     getColor(value: number): Color {
+      let index = this.getColorIndex(value);
+      let color = this.colors[index];
+      return color;
+    }
+
+    getColorHex(value: number): string {
+      let index = this.getColorIndex(value);
+      let hex = this.hexColors[index];
+      return hex;
+    }
+
+    private getColorIndex(value: number): number {
       let span = this.range[1] - this.range[0];
 
       let offset: number;
@@ -58,9 +70,7 @@ export interface Color {
       let pos = scale * (values - 1);
       //get nearest index
       let index = Math.round(pos);
-      let color = this.colors[index];
-
-      return color;
+      return index;
     }
 
     getRange(): [number, number] {
@@ -68,10 +78,10 @@ export interface Color {
     }
 
     getColors(): Color[] {
-      return this.colors;
+      return [...this.colors];
     }
 
     getColorsHex(): string[] {
-      return this.hexColors;
+      return [...this.hexColors];
     }
   }

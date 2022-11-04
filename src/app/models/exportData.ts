@@ -1,6 +1,7 @@
-import { Period, StringMap } from "./types";
+import { StringMap } from "./types";
 import { Moment } from "moment";
 import { DateManagerService } from "../services/dateManager/date-manager.service";
+import { UnitOfTime } from "../services/dataset-form-manager.service";
 
 
 
@@ -13,7 +14,7 @@ export interface ResourceReq {
   dates?: {
     start: string,
     end: string,
-    period: Period
+    period: UnitOfTime
   },
   group: StringMap,
   data: StringMap,
@@ -26,7 +27,7 @@ export interface ExportInfo {
   datatypeLabel: string,
   dates: {
     periodLabel: string,
-    period: Period,
+    period: UnitOfTime,
     start: Moment,
     end: Moment
   },

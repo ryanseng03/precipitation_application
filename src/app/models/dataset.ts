@@ -1,10 +1,11 @@
 import {Moment} from 'moment';
+import { UnitOfTime } from '../services/dataset-form-manager.service';
 
 export interface Dataset {
   //have to include any type for compatibility with arbitrary fields, why typescript
   includes: Set<IncludeTypes> | any,
   datatype: string,
-  period: Period,
+  period: UnitOfTime,
   start: Moment | any,
   end: Moment | any,
   focus: Moment | any,
@@ -54,6 +55,4 @@ export interface ValueData<T> {
   value: T
 }
 
-
-export type Period = "month" | "day";
 export type IncludeTypes = "raster" | "station";

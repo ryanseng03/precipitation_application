@@ -13,15 +13,11 @@ export class DataProcessorService {
   //need custom no data for now since geotiffs appear to have rounding error
   getRasterDataFromGeoTIFFArrayBuffer(data: ArrayBuffer, customNoData?: number, bands?: string[]): Promise<RasterData> {
     return geotiff.fromArrayBuffer(data).then((tiff: geotiff.GeoTIFF) => {
-      //console.log(tiff);
       return tiff.getImage().then((image: geotiff.GeoTIFFImage) => {
-        //console.log(image);
         //are tiepoints indexed by cooresponding band?
         //assume just at index 0 like example for now, maybe ask matt
         let tiepoint = image.getTiePoints()[0];
-        //console.log(image.getTiePoints());
         let fileDirectory = image.getFileDirectory();
-        //console.log(rasters, tiepoint, fileDirectory);
         return image.readRasters().then((rasters: any) => {
           //get scales from file directory
           let [xScale, yScale] = fileDirectory.ModelPixelScale;
@@ -46,7 +42,6 @@ export class DataProcessorService {
 
           //package data
           let i: number;
-          //console.log(bands);
           for(i = 0; i < bands.length; i++) {
             let band = bands[i];
             let raster = rasters[band];

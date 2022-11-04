@@ -4,11 +4,13 @@ import {SiteValue, SiteInfo} from "../../models/SiteMetadata";
 import {DataRequestorService, RequestResults} from "../dataLoader/data-requestor.service";
 import Moment from 'moment';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
-import {Dataset} from "../../models/Dataset";
+
 import { RequestReject } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { LatLng } from 'leaflet';
+import { DatasetItem, FocusData, TimeseriesData } from '../dataset-form-manager.service';
+import moment from 'moment';
 
 
 
@@ -20,29 +22,9 @@ export class DataManagerService {
 
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
-
-
-    //use this for map bounds
-    //need to fix query for this, unused at the moment, deal with later
-    //is this even needed with file based stuff? maybe just to set map location?
-    // dataRequestor.getRasterHeader({}).toPromise()
-    // .then((header: RasterHeader) => {
-    //   console.log(header);
-    // })
-    // .catch((reason: RequestReject) => {
-    //   if(!reason.cancelled) {
-    //     console.error(reason.reason);
-    //     errorPop.notify("error", `Could not retreive map location data.`);
-    //   }
-    //   return null;
-    // });
-
-    let data = {
-      dataset: null,
-      date: null,
-      selectedStation: null,
-      dateRange: null
-    }
+    let selectedDataset: DatasetItem;
+    let focusData: FocusData<unknown>;
+    let selectedStation: any;
 
     //change to use station group listed in dataset
     let metadataReq: RequestResults = dataRequestor.getStationMetadata({
@@ -71,11 +53,11 @@ export class DataManagerService {
 
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: any[]) => {
-      if(stations && data.selectedStation) {
+      if(stations && selectedStation) {
         let selected = null;
         for(let station of stations) {
           let idField = station.id_field;
-          if(station[idField] == data.selectedStation[idField]) {
+          if(station[idField] == selectedStation[idField]) {
             selected = station;
             break;
           }
@@ -86,74 +68,40 @@ export class DataManagerService {
         }, 0);
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: Dataset) => {
-      if(dataset) {
-        data.dataset = dataset
-        //reset selected station and timeseries data
-        paramService.pushSelectedStation(null);
-      }
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+      selectedDataset = dataset;
+      //reset selected station and timeseries data
+      paramService.pushSelectedStation(null);
     });
-
-    let dataset2Prop = {
-      rainfall: {
-        datatype: "rainfall",
-        production: "new"
-      },
-      legacy_rainfall: {
-        datatype: "rainfall",
-        production: "legacy"
-      },
-      tmin: {
-        datatype: "temperature",
-        aggregation: "min"
-      },
-      tmax: {
-        datatype: "temperature",
-        aggregation: "max"
-      },
-      tmean: {
-        datatype: "temperature",
-        aggregation: "mean"
-      }
-    }
-
 
 
     let stationRes: RequestResults = null;
     let rasterRes: RequestResults = null;
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
-      if(date) {
-        date = date.clone();
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
+      if(focus) {
         if(stationRes) {
           stationRes.cancel();
         }
         if(rasterRes) {
           rasterRes.cancel();
         }
-        data.date = date;
 
-        let datasetInfo = data.dataset;
+        let datasetInfo: DatasetItem = selectedDataset;
 
-        const { stationData, rasterData, dataset, period, fill } = datasetInfo;
-
-        let date_s: string = this.dateHandler.dateToString(date, period);
+        const { includeStations, includeRaster, rasterParams, stationParams } = datasetInfo;
 
         paramService.pushLoading({
           tag: "vis",
           loading: true
         });
 
-        let datasetProps = dataset2Prop[dataset];
-
         let stationPromise = null;
         let rasterPromise = null;
         //if station data is available request station data, otherwise just send null
-        if(stationData) {
+        if(includeStations) {
           let properties = {
-            date: date_s,
-            period,
-            fill,
-            ...datasetProps
+            ...focus.paramData,
+            ...stationParams
           }
           stationRes = dataRequestor.getStationData(properties);
           //transform by combining with station data
@@ -199,13 +147,12 @@ export class DataManagerService {
           stationPromise = Promise.resolve(null);
         }
         //if raster data is available request raster data, otherwise just send null
-        if(rasterData) {
+        if(includeRaster) {
           let properties = {
-            date: date_s,
-            period,
+            returnEmptyNotFound: true,
             extent: "statewide",
-            ...datasetProps,
-            returnEmptyNotFound: true
+            ...focus.paramData,
+            ...rasterParams
           }
           rasterRes = dataRequestor.getRaster(properties);
           rasterPromise = rasterRes.toPromise();
@@ -252,39 +199,40 @@ export class DataManagerService {
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
       //don't trigger again if already handling this station
-      if(!station || !data.selectedStation || data.selectedStation[station.id_field] !== station[station.id_field]) {
+      if(!station || !selectedStation || selectedStation[station.id_field] !== station[station.id_field]) {
         //cancel outbound queries and reset query list
         for(let query of timeseriesQueries) {
           query.cancel();
         }
         timeseriesQueries = [];
-        data.selectedStation = station;
-        if(station) {
+        selectedStation = station;
+        //dispatch query if the dataset has a timeseries component and the selected station is not null
+        if(station && selectedDataset.focusManager.type == "timeseries") {
+          let timeseriesData: TimeseriesData = <TimeseriesData>selectedDataset.focusManager;
           paramService.pushLoading({
             tag: "timeseries",
             loading: true
           });
-          const { dataset, fill } = data.dataset;
-          let datasetProps = dataset2Prop[dataset];
+          let datasetInfo: DatasetItem = selectedDataset;
+          const { stationParams } = datasetInfo;
           let timeseriesPromises = [];
-          let startDate = data.dataset.dateRange[0];
-          let endDate = data.dataset.dateRange[1];
-          let periods: any[] = ["month", "day"];
-          for(let period of periods) {
-
+          let startDate = timeseriesData.start;
+          let endDate = timeseriesData.end;
+          let periods = timeseriesData.timeseriesPeriods;
+          for(let periodData of periods) {
             let properties = {
               station_id: station[station.id_field],
-              period,
-              fill,
-              ...datasetProps
+              ...stationParams
             }
+            //make sure to overwrite period from params
+            properties["period"] = periodData.tag;
 
             //chunk queries by year
             let date = startDate.clone();
             while(date.isSameOrBefore(endDate)) {
-              let start_s: string = this.dateHandler.dateToString(date, period);
+              let start_s: string = this.dateHandler.dateToString(date, periodData.unit);
               date.add(1, "year");
-              let end_s: string = this.dateHandler.dateToString(date, period);
+              let end_s: string = this.dateHandler.dateToString(date, periodData.unit);
               //note query is [)
               let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
 

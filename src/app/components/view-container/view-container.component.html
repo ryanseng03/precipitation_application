@@ -1,25 +1,9 @@
 <div class="container">
   <div class="scroll-hide">
     <div #viewContainer class="view-container" (scroll)="containerScroll($event)">
-      <div #dateControlComponent class="date-focus-control" [ngStyle]="{width: getDateControlWidth()}">
-        <div *ngIf="dataset && dataset.period; else groupSelector">
-          <app-date-focus *ngIf="dataset"
-            [lower]="dataset.dateRange[0]"
-            [upper]="dataset.dateRange[1]"
-            [period]="dataset.period"
-            [(date)]="date"
-            (dateChange)="setDate($event)">
-          </app-date-focus>
-        </div>
-        <ng-template #groupSelector>
-          <app-date-group-selector></app-date-group-selector>
-        </ng-template>
-  
-        
+      <div #dateControlComponent class="focus-control" [ngStyle]="{width: getDateControlWidth()}">
+        <app-focus-control></app-focus-control>
       </div>
-
-      
-      
 
       <div class="view-component-wrapper">
         <div #formComponent class="view-component">
@@ -44,14 +28,6 @@
           {{nav.label}}
         </text>
       </svg>
-      <!-- <div>
-        telephone
-      </div> -->
-      <!-- <div style="overflow:none;">
-        telephone
-      </div> -->
-
-
     </div>
   </div>
 </div>

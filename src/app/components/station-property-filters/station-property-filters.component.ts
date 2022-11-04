@@ -68,9 +68,7 @@ export class StationPropertyFiltersComponent implements OnInit {
   availableProperties: Set<string>;
   propertyData: PropertyData;
 
-  // testMove() {
-  //   console.log("exit!");
-  // }
+
 
   stopEvent(e) {
     //e.preventDefault();
@@ -523,7 +521,6 @@ class DiscreetPropertyData extends Property {
 
 
   removeState(state: StateInstance): void {
-    console.log(this.name);
     //add back to valid state list
     //sanity check, the list should not contain the state already
     if(this.validStatesList.includes(state)) {

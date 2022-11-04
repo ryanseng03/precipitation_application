@@ -5,10 +5,10 @@ import { retry, catchError, take } from 'rxjs/operators';
 import { Observable, Subject, throwError } from "rxjs";
 import * as Moment from 'moment';
 import { ValueData } from 'src/app/models/Dataset';
-import { Period } from 'src/app/models/types';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
 import { AssetManagerService } from '../util/asset-manager.service';
+import { UnitOfTime } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -279,7 +279,7 @@ interface ConvertedDateInfo {
     start: string,
     end: string
   },
-  period: Period
+  period: UnitOfTime
 }
 
 // export interface ResourceInfo {
@@ -299,7 +299,7 @@ export interface DateInfo {
     start: Moment.Moment,
     end: Moment.Moment
   },
-  period: Period
+  period: UnitOfTime
 }
 
 // export interface ResourceOptions {

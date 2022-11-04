@@ -108,18 +108,18 @@ table {
       padding-right: 10px;
   }
 
-  .control-subgroup /deep/ .mat-checkbox-frame {
+  .control-subgroup ::ng-deep .mat-checkbox-frame {
     border-color: white
   }
 
 
 
-.control-subgroup /deep/  .mat-checkbox-checked.mat-accent .mat-checkbox-background {
+.control-subgroup ::ng-deep  .mat-checkbox-checked.mat-accent .mat-checkbox-background {
   background-color: white !important;
   color: black !important;
 }
 
-.control-subgroup /deep/  .mat-checkbox-checkmark-path {
+.control-subgroup ::ng-deep  .mat-checkbox-checkmark-path {
     stroke: black !important;
 }
 

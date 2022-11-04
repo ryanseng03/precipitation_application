@@ -10,7 +10,7 @@ import { MapComponent } from '../map/map.component';
 export class VisComponent implements OnInit, AfterViewInit {
 
   _visible: boolean;
-  
+
   @Input() set visible(state: boolean) {
     this._visible = state;
     if(state) {
@@ -18,7 +18,7 @@ export class VisComponent implements OnInit, AfterViewInit {
       setTimeout(() => {
         this.checkMoveInfo();
       }, 500);
-      
+
     }
   }
   //this works, but is a bit sketchy, marks as visible after nav closed and waits for animation before triggering
@@ -136,7 +136,6 @@ export class VisComponent implements OnInit, AfterViewInit {
 
   viewNavClick(value: string) {
     this.view = value;
-    console.log(this.viewNav);
     this.viewNav.close();
   }
 

@@ -1,9 +1,6 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 import moment, { Moment } from 'moment';
-import { Dataset } from 'src/app/models/Dataset';
-import { VisDateSelectService } from 'src/app/services/controlHelpers/vis-date-select.service';
-import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
 
 @Component({
@@ -65,60 +62,18 @@ export class ViewContainerComponent implements OnInit {
   navInfo: NavData[];
   activeTileRef: NavData;
 
-  dataset: any;
-
   upperBuffer: string;
 
   firstElement: HTMLElement;
   dateDebounce: boolean = false;
 
+  temp_start = moment("1990-01-01");
+  temp_end = moment("2022-01-01");
+  temp_period = "month";
 
-  constructor(private paramRegistrar: EventParamRegistrarService, private dateSelector: VisDateSelectService, private scrollWidthService: ScrollbarWidthCalcService) {
+
+  constructor(private scrollWidthService: ScrollbarWidthCalcService) {
     this.scrollTimeoutHandle = null;
-    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
-      if(dataset) {
-        this.dataset = dataset;
-
-        //TESTING//
-
-        // this.dataset = Object.apply({}, dataset);
-        // this.dataset.period = null;
-
-        ///////////
-
-
-        if(this.date) {
-          console.log(this.date.toISOString());
-          //check if the date is out of range and set to end of range if it is
-          if(this.date.isBefore(dataset.dateRange[0])) {
-            this.date = dataset.dateRange[0].clone();
-          }
-          else if(this.date.isAfter(dataset.dateRange[1])) {
-            this.date = dataset.dateRange[1].clone();
-          }
-          //otherwise set date to current date clone so trigger updates for new dataset
-          else {
-            this.date = this.date.clone();
-          }
-        }
-        //set to end of range if date undefined
-        else {
-          this.date = dataset.dateRange[1].clone();
-        }
-      }
-    });
-    this.paramRegistrar.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {
-      if(date) {
-        date = date.clone();
-        if(!this.dateDebounce) {
-          this.dateDebounce = true;
-          this.date = date;
-        }
-        else {
-          this.dateDebounce = false;
-        }
-      }
-    });
   }
 
   ngOnInit() {
@@ -146,15 +101,7 @@ export class ViewContainerComponent implements OnInit {
     this.firstElement = this.formComponent.nativeElement;
   }
 
-  setDate(date: Moment) {
-    if(!this.dateDebounce) {
-      this.dateDebounce = true;
-      this.dateSelector.setDate(date);
-    }
-    else {
-      this.dateDebounce = false;
-    }
-  }
+
 
   //resizing the window can scroll the container div causing it to trigger on another element, so fix that
 

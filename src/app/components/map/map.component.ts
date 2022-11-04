@@ -1,23 +1,21 @@
 import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
 import * as L from "leaflet";
 import "leaflet-spin";
-import * as chroma from "chroma-js";
 import { ColorScale } from "../../models/colorScale";
-import { ColorGeneratorService } from "../../services/rasterLayerGeneration/color-generator.service";
 import { DataRetreiverService } from "../../services/util/data-retreiver.service";
-import { R, RasterOptions, LeafletRasterLayerService } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
+import { LeafletRasterLayerService, R, RasterOptions } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
 import { EventParamRegistrarService, LoadingData, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";
 import { RasterData, RasterHeader } from 'src/app/models/RasterData.js';
 import { SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
-import {DataManagerService} from "../../services/dataManager/data-manager.service";
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import Moment from 'moment';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 // import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
+import { DatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
+import { DataManagerService } from 'src/app/services/dataManager/data-manager.service';
 
 @Component({
   selector: 'app-map',
@@ -63,11 +61,9 @@ export class MapComponent implements OnInit {
 
   private selectedMarker: L.CircleMarker;
 
-  dataset: any = {};
-  colorScaleLabel: string = "";
+  dataset: DatasetItem;
 
-
-  constructor(private dataManager: DataManagerService, private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private colors: ColorGeneratorService, private rasterLayerService: LeafletRasterLayerService, private assetService: AssetManagerService, private dateManager: DateManagerService) {
+  constructor(private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private assetService: AssetManagerService, private dataManager: DataManagerService, private layerService: LeafletRasterLayerService) {
     let roseImage = "/arrows/nautical.svg";
     let roseURL = assetService.getAssetURL(roseImage);
     this.roseOptions = {
@@ -156,14 +152,6 @@ export class MapComponent implements OnInit {
     }
   }
 
-  getOpacity(): number {
-    return this.opacity;
-  }
-
-  layerReady(): boolean {
-    return this.dataLayers[this.active.band] != undefined;
-  }
-
   //use to prevent race conditions for xml loaded schemes
   colorSchemeType: string;
   setColorScheme(colorScheme: ColorScale) {
@@ -173,8 +161,7 @@ export class MapComponent implements OnInit {
       layer.setColorScale(colorScheme);
       //update marker colors
       for(let marker of this.markerInfo.markers) {
-        let color = colorScheme.getColor(marker.value);
-        let hex = chroma([color.r, color.g, color.b]).hex();
+        let hex = colorScheme.getColorHex(marker.value);
         marker.marker.setStyle({
           fillColor: hex
         });
@@ -208,16 +195,13 @@ export class MapComponent implements OnInit {
       data: {
         stations: null,
         raster: null,
-        date: null
+        focus: null
       },
       band: "0",
     };
 
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
-      if(date) {
-        date = date.clone();
-      }
-      this.active.data.date = date;
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
+      this.active.data.focus = focus;
     });
 
     this.initMarkerInfo();
@@ -251,15 +235,8 @@ export class MapComponent implements OnInit {
     setTimeout(() => {
       //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
       this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
-        if(stations) {
-          this.active.data.stations = stations;
-          this.constructMarkerLayerPopulateMarkerData(stations);
-        }
-        //no station data available
-        else {
-          this.active.data.stations = [];
-          this.constructMarkerLayerPopulateMarkerData([]);
-        }
+        this.active.data.stations = stations;
+        this.constructMarkerLayerPopulateMarkerData(stations);
       });
     }, 0);
 
@@ -267,11 +244,8 @@ export class MapComponent implements OnInit {
 
     this.layerController.addLayers(this.baseLayers);
 
-    let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
-      if(dataset) {
-        this.dataset = dataset;
-        this.colorScaleLabel = `${dataset.label} (${dataset.unit})`
-      }
+    let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+      this.dataset = dataset;
     });
 
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
@@ -295,30 +269,37 @@ export class MapComponent implements OnInit {
         }
         //add rainfall layer to map as default
         this.map.addLayer(this.dataLayers["0"]);
-
         //for now at least only one layer, make sure to replace if multiple
         this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
 
         //install hover handler (requires raster to be set to work)
         let hoverTag = this.paramService.registerMapHover(this.map);
         this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
-
         //uninstall current hook and replace with update hook that updates raster
         rasterHook.uninstall();
+        let rasterLayerActive = true;
         rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
-          //no raster for dataset, produce an empty raster
-          if(raster === null) {
-            //note should change this to grab the header from the emitter, not used for now
-            raster = new RasterData(this.active.data.raster.getHeader());
-            raster.addBand("0", new Map<number, number>());
-            this.active.data.raster = raster;
+          //no raster for dataset, remove layers
+          if(rasterLayerActive && raster === null) {
+            this.map.removeLayer(this.dataLayers["0"]);
+            this.layerController.removeLayer(this.dataLayers["0"]);
+            rasterLayerActive = false
           }
-          this.active.data.raster = raster;
-          bands = raster.getBands();
-          //set layer data
-          for(let band in bands) {
-            let values = bands[band];
-            this.dataLayers[band].setData(values);
+          else if(raster !== null) {
+            this.active.data.raster = raster;
+            bands = raster.getBands();
+            //set layer data
+            for(let band in bands) {
+              let values = bands[band];
+              this.dataLayers[band].setData(values);
+            }
+            if(!rasterLayerActive) {
+              //add rainfall layer to map as default
+              this.map.addLayer(this.dataLayers["0"]);
+              //for now at least only one layer, make sure to replace if multiple
+              this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
+              rasterLayerActive = true;
+            }
           }
         });
       }
@@ -352,7 +333,6 @@ export class MapComponent implements OnInit {
           this.selectedMarker.closePopup();
         }
         this.map.panTo(station.location, {animate: true});
-        //console.log(map.panTo);
         this.selectedMarker = marker;
         //popup sometimes still closes when moving mouse for some reason, but this helps some
         //moveend isn't always triggered when finished, so use this as a fallback
@@ -436,15 +416,6 @@ export class MapComponent implements OnInit {
 
   }
 
-  getHeaderDate(): string {
-    let formattedDate = "";
-    if(this.active.data.date) {
-      formattedDate = this.dateManager.dateToString(this.active.data.date, this.dataset.period, true);
-    }
-    return formattedDate;
-  }
-
-
   initMarkerInfo() {
     this.markerInfo = {
       markers: [],
@@ -458,51 +429,51 @@ export class MapComponent implements OnInit {
 
   //why is this called three times at init?
   constructMarkerLayerPopulateMarkerData(stations: SiteInfo[]): void {
-    let markers: RainfallStationMarker[] = [];
-    this.markerInfo.markerMap.clear();
-
-    let markerLayer = L.layerGroup();
-    stations.forEach((station: SiteInfo) => {
-      let hexFill = "#ffffff";
-      if(this.colorScheme) {
-        let fill = this.colorScheme.getColor(station.value);
-        hexFill = chroma([fill.r, fill.g, fill.b]).hex();
-      }
-
-      let marker = L.circleMarker(station.location, {
-        opacity: 1,
-        fillOpacity: 1,
-        color: "black",
-        fillColor: hexFill
-      });
-
-      let stationDetails = this.getMarkerPopupText(station);
-      marker.bindPopup(stationDetails, { autoPan: false, autoClose: false});
-      marker.on("click", () => {
-        this.paramService.pushSelectedStation(station);
-      });
-      this.markerInfo.markerMap.set(station, marker);
-      //console.log(stationDetails);
-      markerLayer.addLayer(marker);
-      let stationMarker: RainfallStationMarker = {
-        marker: marker,
-        value: station.value
-      }
-      markers.push(stationMarker);
-    });
-
-    this.markerInfo.markers = markers;
-
-    //adjust markers
-    this.updateMarkers();
-
     if(this.markerInfo.layer) {
       this.map.removeLayer(this.markerInfo.layer);
       this.layerController.removeLayer(this.markerInfo.layer);
     }
-    this.markerInfo.layer = markerLayer;
-    this.layerController.addOverlay(markerLayer, "Data Stations");
-    this.map.addLayer(markerLayer);
+    if(stations !== null) {
+      let markers: RainfallStationMarker[] = [];
+      this.markerInfo.markerMap.clear();
+      let markerLayer = L.layerGroup();
+      stations.forEach((station: SiteInfo) => {
+        let hexFill = "#ffffff";
+        if(this.colorScheme) {
+          hexFill = this.colorScheme.getColorHex(station.value);
+        }
+
+        let marker = L.circleMarker(station.location, {
+          opacity: 1,
+          fillOpacity: 1,
+          color: "black",
+          fillColor: hexFill
+        });
+
+        let stationDetails = this.getMarkerPopupText(station);
+        marker.bindPopup(stationDetails, { autoPan: false, autoClose: false});
+        marker.on("click", () => {
+          this.paramService.pushSelectedStation(station);
+        });
+        this.markerInfo.markerMap.set(station, marker);
+        markerLayer.addLayer(marker);
+        let stationMarker: RainfallStationMarker = {
+          marker: marker,
+          value: station.value
+        }
+        markers.push(stationMarker);
+      });
+
+      this.markerInfo.markers = markers;
+
+      //adjust markers
+      this.updateMarkers();
+
+
+      this.markerInfo.layer = markerLayer;
+      this.layerController.addOverlay(markerLayer, "Data Stations");
+      this.map.addLayer(markerLayer);
+    }
   }
 
   getMarkerPopupText(station: any): string {
@@ -543,7 +514,7 @@ export class MapComponent implements OnInit {
       }
     };
 
-    let unit = this.dataset.unit;
+    let unit = this.dataset.unitsShort;
     let translationData = translations[unit];
     let translationValue = translationData.f(value);
     let translationUnit = translationData.translationUnit;
@@ -615,7 +586,7 @@ interface ActiveData {
 interface DataPack {
   stations: SiteInfo[],
   raster: RasterData,
-  date: Moment.Moment
+  focus: FocusData<unknown>
 }
 
 interface PopupData {

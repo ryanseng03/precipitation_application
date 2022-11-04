@@ -1,6 +1,6 @@
 <div class="main-container">
   <div class="button-container">
-    <button *ngFor="let control of controlData[period].back" mat-icon-button [matTooltip]="control.tooltip" [disabled]="control.disabled" (click)="control.trigger()">
+    <button *ngFor="let control of controlData[_timeseriesData.period.unit].back" mat-icon-button [matTooltip]="control.tooltip" [disabled]="control.disabled" (click)="control.trigger()">
       <mat-icon [svgIcon]="control.icon"></mat-icon>
     </button>
   </div>
@@ -8,17 +8,17 @@
   <div class="date-container">
     <app-date-selector
       label="Map Date"
-      [min]="lower"
-      [max]="upper"
-      [period]="period"
-      [(date)]="date"
+      [min]="_timeseriesData.start"
+      [max]="_timeseriesData.end"
+      [period]="_timeseriesData.period.unit"
+      [date]="controlDate"
       (dateChange)="dateChanged($event)"
       [readonly]="true">
     </app-date-selector>
   </div>
 
   <div class="button-container">
-    <button *ngFor="let control of controlData[period].forward" mat-icon-button [matTooltip]="control.tooltip" [disabled]="control.disabled" (click)="control.trigger()">
+    <button *ngFor="let control of controlData[_timeseriesData.period.unit].forward" mat-icon-button [matTooltip]="control.tooltip" [disabled]="control.disabled" (click)="control.trigger()">
       <mat-icon [svgIcon]="control.icon"></mat-icon>
     </button>
   </div>

@@ -21,7 +21,6 @@ export class DataRequestorService {
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     //extract first document
     response.transform((response: any[]) => {
-      console.log(response);
       let header = null;
       if(response != null) {
         header = response[0];

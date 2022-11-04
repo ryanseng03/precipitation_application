@@ -2,9 +2,6 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import Moment from "moment";
-
-import { ResourceReq, ExportData, ExportInfo } from 'src/app/models/exportData';
-import { Period, StringMap } from 'src/app/models/types';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 
 @Component({

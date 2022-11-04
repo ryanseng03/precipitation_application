@@ -2,6 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import Moment from 'moment';
 import {MatIconRegistry} from "@angular/material/icon";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
+import { TimeseriesData } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-date-focus',
@@ -10,14 +11,25 @@ import { AssetManagerService } from 'src/app/services/util/asset-manager.service
 })
 export class DateFocusComponent implements OnInit {
 
-  @Input() lower: Moment.Moment;
-  @Input() upper: Moment.Moment;
-  @Input() period: string;
-  @Input() date: Moment.Moment;
+  _timeseriesData: TimeseriesData;
+  @Input() set timeseriesData(data: TimeseriesData) {
+    this._timeseriesData = data;
+    //trigger recompute
+    if(this.controlDate) {
+      this.controlDate = this.setDate.clone();
+    }
+  };
+  @Input() initValue: Moment.Moment;
   @Output() dateChange: EventEmitter<Moment.Moment> = new EventEmitter<Moment.Moment>();
+
+  //decouple to prevent rebound when date corrected in date component
+  setDate: Moment.Moment;
+  controlDate: Moment.Moment;
 
   controls = null;
 
+  //NEED TO UPDATE THIS TO USE PERIODS, E.G. MOVE ONE PERIOD FOR FIRST, ONE NEXT PERIOD UP FOR SECOND (should we extend this for lower time periods?)
+  //timeseriesData has all the stuff in it for validation and whatnot, need to implement using all this
   controlData = {
     month: {
       forward: [
@@ -26,7 +38,7 @@ export class DateFocusComponent implements OnInit {
           icon: "fr",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.upper);
+            return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
             this.moveDate(1, "month");
@@ -37,9 +49,10 @@ export class DateFocusComponent implements OnInit {
           icon: "ffr",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.upper);
+            return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
+            console.log("year");
             this.moveDate(1, "year");
           }
         },
@@ -48,10 +61,10 @@ export class DateFocusComponent implements OnInit {
           icon: "er",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.upper);
+            return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
-            this.setDate(this.upper.clone());
+            this.controlDate = this._timeseriesData.end.clone();
           }
         }
       ],
@@ -61,10 +74,10 @@ export class DateFocusComponent implements OnInit {
           icon: "el",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.lower);
+            return this.setDate.isSame(this._timeseriesData.start);
           },
           trigger: () => {
-            this.setDate(this.lower.clone());
+            this.controlDate = this._timeseriesData.start.clone();
           }
         },
         {
@@ -72,7 +85,7 @@ export class DateFocusComponent implements OnInit {
           icon: "ffl",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.lower);
+            return this.setDate.isSame(this._timeseriesData.start);
           },
           trigger: () => {
             this.moveDate(-1, "year");
@@ -83,7 +96,7 @@ export class DateFocusComponent implements OnInit {
           icon: "fl",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.lower);
+            return this.setDate.isSame(this._timeseriesData.start);
           },
           trigger: () => {
             this.moveDate(-1, "month");
@@ -98,7 +111,7 @@ export class DateFocusComponent implements OnInit {
           icon: "fr",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.upper);
+            return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
             this.moveDate(1, "day");
@@ -109,7 +122,7 @@ export class DateFocusComponent implements OnInit {
           icon: "ffr",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.upper);
+            return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
             this.moveDate(1, "month");
@@ -120,10 +133,10 @@ export class DateFocusComponent implements OnInit {
           icon: "er",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.upper);
+            return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
-            this.setDate(this.upper.clone());
+            this.controlDate = this._timeseriesData.end.clone();
           }
         }
       ],
@@ -133,10 +146,10 @@ export class DateFocusComponent implements OnInit {
           icon: "el",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.lower);
+            return this.setDate.isSame(this._timeseriesData.start);
           },
           trigger: () => {
-            this.setDate(this.lower.clone());
+            this.controlDate = this._timeseriesData.start.clone();
           }
         },
         {
@@ -144,7 +157,7 @@ export class DateFocusComponent implements OnInit {
           icon: "ffl",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.lower);
+            return this.setDate.isSame(this._timeseriesData.start);
           },
           trigger: () => {
             this.moveDate(-1, "month");
@@ -155,7 +168,7 @@ export class DateFocusComponent implements OnInit {
           icon: "fl",
           disabled: false,
           checkDisabled: () => {
-            return this.date.isSame(this.lower);
+            return this.setDate.isSame(this._timeseriesData.start);
           },
           trigger: () => {
             this.moveDate(-1, "day");
@@ -181,16 +194,23 @@ export class DateFocusComponent implements OnInit {
   }
 
   ngOnInit() {
+    let initDate = this.initValue ? this.initValue : this._timeseriesData.defaultValue;
+    this.setDate = initDate;
+    this.controlDate = initDate;
   }
 
   dateChanged(date: Moment.Moment) {
-    this.dateChange.emit(date);
+    this.setDate = date;
     //check if any controls are disabled
     this.setDisabled();
+    //delay so change goes through
+    setTimeout(() => {
+      this.dateChange.emit(date);
+    }, 0);
   }
 
   setDisabled() {
-    let period = this.period;
+    let period = this._timeseriesData.period.unit;
     let controlData = this.controlData[period];
     let directions = ["forward", "back"];
     for(let direction of directions) {
@@ -200,25 +220,10 @@ export class DateFocusComponent implements OnInit {
     }
   }
 
-  //should move this to param thing so dont have to pass through map
-  setDate(date: Moment.Moment) {
-    this.date = date;
-  }
-
   moveDate(change: number, unit: Moment.unitOfTime.DurationConstructor) {
-    //add mutates date and returns old date (what a weird way of doing this)
-    //doesn't work with binding properly since same object so clone, modify, then set
-    let newDate = this.date.clone();
+    let newDate = this.setDate.clone();
     newDate.add(change, unit);
-    //verify bounds of new time and adjust to min or max
-    if(newDate.isBefore(this.lower)) {
-      newDate = this.lower.clone();
-    }
-    else if(newDate.isAfter(this.upper)) {
-      newDate = this.upper.clone();
-    }
-
-    this.setDate(newDate);
+    this.controlDate = newDate;
   }
 
 }

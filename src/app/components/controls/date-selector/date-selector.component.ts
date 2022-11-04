@@ -2,9 +2,8 @@ import { Component, EventEmitter, OnInit, ViewChild, Input, Output, OnChanges, S
 import {MAT_DATE_FORMATS} from '@angular/material/core';
 import {DateFormatHelperService, DateUnit} from "../../../services/controlHelpers/date-format-helper.service";
 import {FormControl} from '@angular/forms';
-import {MatCalendarHeader, MatDatepicker} from "@angular/material/datepicker";
+import {MatCalendarHeader} from "@angular/material/datepicker";
 import Moment from "moment";
-import { map } from 'rxjs/operators';
 
 export let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
   return formatHelper.getDateFormat();
@@ -26,24 +25,11 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   lastValidValue: Moment.Moment;
 
-  _min: Moment.Moment = null;
-  _max: Moment.Moment = null;
-
   @Input() label: string;
-  @Input()
-  set min(date: Moment.Moment) {
-    this._min = date;
-  }
-  @Input()
-  set max(date: Moment.Moment) {
-    this._max = date;
-  }
+  @Input() min: Moment.Moment;
+  @Input() max: Moment.Moment;
 
-  @Input()
-  set date(date: Moment.Moment) {
-    this.dateControl.setValue(date);
-    this.setDate();
-  }
+  @Input() date: Moment.Moment;
   @Output() dateChange: EventEmitter<Moment.Moment> = new EventEmitter<Moment.Moment>();
 
   @Input() period: string;
@@ -74,33 +60,16 @@ export class DateSelectorComponent implements OnInit, OnChanges {
       this.lastValidValue = value;
       this.dateChange.emit(value);
     }
-    else {
+    else if(!value) {
       this.dateControl.setValue(this.lastValidValue);
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    //if period changed, run filter update
-    if(changes.period) {
-      this.setFormatUnit();
-      this.dateControl.setValue(this.dateControl.value);
-    }
-    //set value to edge of range if out of new bounds
-    if(changes.min) {
-      if(this._min.isAfter(this.dateControl.value)) {
-        this.dateControl.setValue(this._min);
-      }
-    }
-    if(changes.max) {
-      if(this._max.isBefore(this.dateControl.value)) {
-        this.dateControl.setValue(this._max);
-      }
     }
   }
 
   setFormatUnit() {
     let unit: DateUnit = <DateUnit>this.period;
     this.dateFormat.setDateMinUnit(unit);
+    //reset value to get formatting correct
+    this.dateControl.setValue(this.dateControl.value);
   }
 
   getDefaultView() {
@@ -118,7 +87,38 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
-    this.setFormatUnit();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    let dateChanged = false;
+    if(changes.date) {
+      let date = changes.date.currentValue
+      if(date.isBefore(this.min)) {
+        date = this.min.clone();
+      }
+      if(date.isAfter(this.max)) {
+        date = this.max.clone();
+      }
+      this.dateControl.setValue(date);
+      dateChanged = true;
+    }
+    //only need to check min and max if date wasn't changed, otherwise already handled
+    else if(changes.min && this.dateControl.value.isBefore(this.min)) {
+      this.dateControl.setValue(this.min.clone());
+      dateChanged = true;
+    }
+    else if(changes.max && this.dateControl.value.isAfter(this.max)) {
+      this.dateControl.setValue(this.max.clone());
+      dateChanged = true;
+    }
+
+    if(changes.period) {
+      this.setFormatUnit();
+      this.dateControl.setValue(this.dateControl.value);
+    }
+    if(dateChanged) {
+      this.setDate();
+    }
   }
 
   monthSelectHandler(event: Moment.Moment) {

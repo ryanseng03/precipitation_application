@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Moment } from 'moment';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { DatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
@@ -135,14 +136,14 @@ export class DataViewsComponent implements OnInit {
       this.selectedStation = station;
     });
 
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
       if(dataset) {
-        this.unit = dataset.unit;
+        this.unit = dataset.unitsShort;
         this.clearFilter();
       }
     });
 
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
       this.loading = true;
     });
   }

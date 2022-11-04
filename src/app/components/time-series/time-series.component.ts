@@ -1,8 +1,9 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { SiteInfo, SiteValue } from 'src/app/models/SiteMetadata';
+import { SiteInfo } from 'src/app/models/SiteMetadata';
 import Moment from "moment";
 import { EventParamRegistrarService, LoadingData } from 'src/app/services/inputManager/event-param-registrar.service';
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
+import { DatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-time-series',
@@ -36,18 +37,15 @@ export class TimeSeriesComponent implements OnInit {
         this.source.next(data);
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.date, (date: Moment.Moment) => {
-      if(date) {
-        date = date.clone()
-        this.date = date;
-      }
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
+      // if(date) {
+      //   date = date.clone()
+      //   this.date = date;
+      // }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
       if(dataset) {
-        let labelParts = dataset.label.split(" ");
-        labelParts.shift();
-        let datasetLabel = labelParts.join(" ");
-        let axisLabel = `${datasetLabel} (${dataset.unit})`;
+        let axisLabel = `${dataset.datatype} (${dataset.units})`;
         this.axisLabel = axisLabel;
       }
     });

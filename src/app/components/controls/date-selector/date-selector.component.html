@@ -5,8 +5,8 @@
     <input matInput
       [formControl]="dateControl"
       [matDatepicker]="datePicker"
-      [min]="_min"
-      [max]="_max"
+      [min]="min"
+      [max]="max"
       [readonly]="readonly"
       (blur)="setDate()">
 

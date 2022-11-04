@@ -18,7 +18,7 @@ export class UploadCustomColorSchemeComponent {
   error: any;
   defaultName: string;
 
-  constructor(public helper: CustomColorSchemeService, private colors: ColorGeneratorService, public dialogRef: MatDialogRef<UploadCustomColorSchemeComponent>, @Inject(MAT_DIALOG_DATA) public invalidNames: Set<string>) {
+  constructor(public helper: CustomColorSchemeService, private colors: ColorGeneratorService, public dialogRef: MatDialogRef<UploadCustomColorSchemeComponent>, @Inject(MAT_DIALOG_DATA) public data: {forbiddenNames: Set<string>, range: [number, number]}) {
     this.defaultName = helper.getDefaultName();
     this.customName = new FormControl(this.defaultName, this.nameFieldValidator());
     this.reverseScheme = new FormControl(false);
@@ -26,10 +26,6 @@ export class UploadCustomColorSchemeComponent {
     this.fileData = null;
     this.error = null;
   }
-
-  // exit(): void {
-  //   this.dialogRef.close(null);
-  // }
 
   handleFileInput(files: FileList) {
     //single input, get first item
@@ -72,7 +68,7 @@ export class UploadCustomColorSchemeComponent {
     //note if fileData is null then submit should be disabled
     this.fileData.then((data: string) => {
       //verify validity
-      this.colors.getColorSchemeFromXML(data, this.reverseScheme.value).then((colorSchemeData: XMLColorSchemeData) => {
+      this.colors.getColorSchemeFromXML(data, this.data.range, this.reverseScheme.value).then((colorSchemeData: XMLColorSchemeData) => {
         //replace name with custom name or default name if name null/already taken
         if(this.useCustomName.value) {
           colorSchemeData.name = this.customName.value;
@@ -107,7 +103,7 @@ export class UploadCustomColorSchemeComponent {
   }
 
   validateName(name: string) {
-    return !this.invalidNames.has(name);
+    return !this.data.forbiddenNames.has(name);
   }
 }
 

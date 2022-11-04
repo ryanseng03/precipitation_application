@@ -53,7 +53,7 @@
   justify-content: center;
 }
 
-:host /deep/ .mat-form-field-label {
+:host ::ng-deep .mat-form-field-label {
   font-size: 22px;
   font-weight: bold;
 }

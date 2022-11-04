@@ -1,13 +1,10 @@
 import { Injectable } from '@angular/core';
 import * as L from "leaflet";
-import { DataRetreiverService, DecoupledCoords } from "../util/data-retreiver.service";
+import { DataRetreiverService } from "../util/data-retreiver.service";
 import { ColorScale } from '../../models/colorScale';
 import { RasterHeader, IndexedValues } from '../../models/RasterData';
 
 export let R: any = L;
-//export type RasterLayer = R.GridLayer.RasterLayer;
-
-// export type test extends L.GridLayer
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +12,6 @@ export let R: any = L;
 export class LeafletRasterLayerService {
   //if rendered tiles should be limited to a relatively small set, no reason to add overhead on tiles that contain no data
   private emptyTileCache: Set<string> = new Set<string>();
-  // private data: IndexedValues;
-  // private header: RasterHeader;
 
   constructor(private dataRetreiver: DataRetreiverService) {
     let __this = this;

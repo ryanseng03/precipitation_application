@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import Moment from "moment";
-import { Period } from 'src/app/models/types';
+import { UnitOfTime } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +25,7 @@ export class DateManagerService {
 
   private periodPrecedent = ["second", "minute", "hour", "day", "month", "year"]
 
-  getPeriodOffset(period: Period, offset: number) {
+  getPeriodOffset(period: UnitOfTime, offset: number) {
     let offsetPeriod = null;
     let periodIndex = this.periodPrecedent.indexOf(period);
     let offsetIndex = periodIndex + offset;
@@ -35,7 +35,7 @@ export class DateManagerService {
     return offsetPeriod;
   }
 
-  getHigherPeriods(period: Period) {
+  getHigherPeriods(period: UnitOfTime) {
     let higherPeriods = [];
     let periodIndex = this.periodPrecedent.indexOf(period);
     if(periodIndex >= 0) {
@@ -44,12 +44,12 @@ export class DateManagerService {
     return higherPeriods;
   }
 
-  dateToString(date: Moment.Moment, period: Period, fancy: boolean = false): string {
+  dateToString(date: Moment.Moment, period: UnitOfTime, fancy: boolean = false): string {
     let format = this.periodToFormat(period, fancy);
     return date.format(format);
   }
 
-  periodToFormat(period: Period, fancy: boolean = false): string {
+  periodToFormat(period: UnitOfTime, fancy: boolean = false): string {
     let index = 0;
     if(fancy) {
       index = 1;
@@ -58,7 +58,7 @@ export class DateManagerService {
   }
 
   //inclusive
-  expandDates(start: Moment.Moment, end: Moment.Moment, period: Period): Moment.Moment[] {
+  expandDates(start: Moment.Moment, end: Moment.Moment, period: UnitOfTime): Moment.Moment[] {
     let date = start.clone();
     let dates = [];
     while(date.isSameOrBefore(end)) {
@@ -68,7 +68,7 @@ export class DateManagerService {
     return dates;
   }
 
-  datesBetween(start: Moment.Moment, end: Moment.Moment, period: Period): number {
+  datesBetween(start: Moment.Moment, end: Moment.Moment, period: UnitOfTime): number {
     let date = start.clone();
     let num = 0;
     while(date.isSameOrBefore(end)) {

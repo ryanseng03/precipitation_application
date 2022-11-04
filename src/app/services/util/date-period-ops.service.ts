@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
 import * as Moment from 'moment';
+import { UnitOfTime } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DatePeriodOpsService {
 
-  periodProgression: Period[] = ["second", "minute", "hour", "day", "month", "year"];
+  periodProgression: UnitOfTime[] = ["second", "minute", "hour", "day", "month", "year"];
 
   constructor() { }
 
-  date2String(date: Moment.Moment, period: Period, expand: number): string {
+  date2String(date: Moment.Moment, period: UnitOfTime, expand: number): string {
     let formats = [{
       year: "YYYY",
       month: "YYYY-MM",
@@ -34,7 +35,7 @@ export class DatePeriodOpsService {
     return dateString;
   }
 
-  getRelativePeriod(relative: Period, diff: number): Period {
+  getRelativePeriod(relative: UnitOfTime, diff: number): UnitOfTime {
     let newPeriod = null;
     let relativeIndex = this.periodProgression.indexOf(relative);
     let newIndex = relativeIndex + diff;
@@ -45,7 +46,3 @@ export class DatePeriodOpsService {
   }
 }
 
-
-
-
-type Period = "second" | "minute" | "hour" | "day" | "month" | "year";

@@ -1,3 +1,22 @@
-<p>
-  date-group-selector works!
-</p>
+<mat-form-field>
+  <mat-label>{{timeSelectorData.formData.label}}</mat-label>
+  <mat-select
+    disableOptionCentering="true"
+    [formControl]="control">
+    <mat-option
+      *ngFor="let value of timeSelectorData.formData.values"
+      [value]="value"
+      matTooltipPosition="right"
+      [matTooltip]="value.description">
+      {{value.label}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-icon
+  aria-hidden="false"
+  aria-label="Tooltip"
+  matTooltipPosition="right"
+  [matTooltip]="timeSelectorData.formData.description"
+  inline="true">
+  help
+</mat-icon>

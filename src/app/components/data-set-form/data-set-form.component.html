@@ -10,96 +10,122 @@
     </h2>
 
 
-    <!-- should create config json for this stuff to make it easy to update -->
-
-    <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
-
-    <!-- what type of data (rainfall, etc) -->
     <div class="control-group">
       <div class="control">
         <mat-form-field>
-          <mat-label>Dataset</mat-label>
+          <mat-label>{{formData.datasetFormData.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
             [formControl]="controls.dataset">
             <mat-option
-              *ngFor="let dataset of getDatasetData()"
-              [value]="dataset.value"
+              *ngFor="let dataset of formData.datasetFormData.datasetValues"
+              [value]="dataset.tag"
               matTooltipPosition="right"
               [matTooltip]="dataset.description">
               {{dataset.label}}
             </mat-option>
+            <mat-optgroup
+              *ngFor="let group of formData.datasetFormData.datasetGroups"
+              [label]="group.label">
+              <mat-option
+                *ngFor="let dataset of group.values"
+                [value]="dataset.tag"
+                matTooltipPosition="right"
+                [matTooltip]="dataset.description">
+                {{dataset.label}}
+              </mat-option>
+            </mat-optgroup>
           </mat-select>
         </mat-form-field>
         <mat-icon
           aria-hidden="false"
           aria-label="Tooltip"
           matTooltipPosition="right"
-          [matTooltip]="selectorDescriptions.dataset"
+          [matTooltip]="formData.datasetFormData.description"
           inline="true">
           help
         </mat-icon>
-        <!-- <div class="current-buffer">
-          Current: Test
-        </div> -->
-
       </div>
-
-      <div class="control">
-        <mat-form-field>
-          <mat-label>{{periods.label}}</mat-label>
-          <mat-select
-            disableOptionCentering="true"
-            [formControl]="controls.period">
-            <mat-option
-              *ngFor="let period of periodAvailability[controls.dataset.value]"
-              [value]="periods.values[period].value"
-              matTooltipPosition="right"
-              [matTooltip]="periods.values[period].description">
-              {{periods.values[period].label}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+    </div>
+    <div class="control-group control-subgroup">
+      <div
+        *ngFor="let field of formData.paramFormData.default"
+        class="control">
+        <div *ngIf="field.values.length > 1;else single">
+          <mat-form-field>
+            <mat-label>{{field.label}}</mat-label>
+            <mat-select
+              disableOptionCentering="true"
+              [formControl]="controls[field.tag]">
+              <mat-option
+                *ngFor="let value of field.values"
+                [value]="value.tag"
+                matTooltipPosition="right"
+                [matTooltip]="value.description">
+                {{value.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-icon
+            aria-hidden="false"
+            aria-label="Tooltip"
+            matTooltipPosition="right"
+            [matTooltip]="field.description"
+            inline="true">
+            help
+          </mat-icon>
+        </div>
+       <ng-template #single>
+        <!-- make sure there is one to prevent oob error (should always be one though) -->
+        <ng-container *ngIf="field.values.length == 1">
+          <mat-label
+          [matTooltip]="field.values[0].description"
+          matTooltipPosition="right">
+          {{field.label}}: {{field.values[0].label}}
+        </mat-label>
         <mat-icon
-          aria-hidden="false"
-          aria-label="Tooltip"
-          matTooltipPosition="right"
-          [matTooltip]="periods.description"
-          inline="true">
-          help
-        </mat-icon>
+            aria-hidden="false"
+            aria-label="Tooltip"
+            matTooltipPosition="right"
+            [matTooltip]="field.description"
+            inline="true">
+            help
+          </mat-icon>
+        </ng-container>
+       </ng-template>
       </div>
-
-
     </div>
 
-    <div>
-      <div class="control">
-        <h4>
-          Dataset Coverage
-        </h4>
-        {{getDateRangeLabel()}}
-      </div>
-
-      <div class="spacer"></div>
-
-      <div class="control-group" *ngIf="getDataStationsAvailable()">
-        <h3>
-          Station Data
-        </h3>
-        <div class="control-subgroup">
-          <div class="control">
+    <div
+      *ngFor="let category of formData.paramFormData.categorized"
+      class="control-group">
+      <h3>
+        {{category.label}}
+      </h3>
+      <mat-icon
+        aria-hidden="false"
+        aria-label="Tooltip"
+        matTooltipPosition="right"
+        [matTooltip]="category.description"
+        inline="true">
+        help
+      </mat-icon>
+      <div class="control-subgroup">
+        <div
+          *ngFor="let field of category.nodes"
+          class="control">
+          <div *ngIf="field.values.length > 1;else singleCat">
             <mat-form-field>
-              <mat-label>{{fills.label}}</mat-label>
+              <mat-label>{{field.label}}</mat-label>
               <mat-select
                 disableOptionCentering="true"
-                [formControl]="controls.fill">
+                [formControl]="controls[field.tag]">
                 <mat-option
-                  *ngFor="let fill of getFillData()"
-                  [value]="fill.value"
+                  *ngFor="let value of field.values"
+                  [value]="value.tag"
                   matTooltipPosition="right"
-                  [matTooltip]="fill.description">
-                  {{fill.label}}
+                  [matTooltip]="value.description">
+                  {{value.label}}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -107,17 +133,38 @@
               aria-hidden="false"
               aria-label="Tooltip"
               matTooltipPosition="right"
-              [matTooltip]="fills.description"
+              [matTooltip]="field.description"
               inline="true">
               help
             </mat-icon>
           </div>
+         <ng-template #singleCat>
+          <!-- make sure there is one to prevent oob error (should always be one though) -->
+          <ng-container *ngIf="field.values.length == 1">
+            <mat-label
+            [matTooltip]="field.values[0].description"
+            matTooltipPosition="right">
+            {{field.label}}: {{field.values[0].label}}
+          </mat-label>
+          <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="field.description"
+              inline="true">
+              help
+            </mat-icon>
+          </ng-container>
+         </ng-template>
         </div>
-        <div class="spacer"></div>
       </div>
     </div>
-
-
+    <div *ngIf="formData.coverageLabel" class="control-group">
+      <div class="control">
+        <h4>Dataset Coverage</h4>
+        {{formData.coverageLabel}}
+      </div>
+    </div>
   </div>
   <div class="spacer"></div>
 

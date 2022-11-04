@@ -152,7 +152,6 @@ export class FilterMapComponent implements OnInit {
     setTimeout(() => {
       map.invalidateSize();
     }, 1000);
-    //map.once("moveend zoomend", () => {console.log("!");map.invalidateSize()});
     this.map = map;
     this.drawnItems.addTo(map);
     L.control.scale({
@@ -250,7 +249,6 @@ export class FilterMapComponent implements OnInit {
 
 
   deleteDrawnFilter(deletedLayers: any) {
-    console.log(deletedLayers);
     deletedLayers.layers.eachLayer((layer: L.Layer) => {
       let layerInfo = this.drawnFilters.get(layer);
       //this.filterService.removeFilter(layerInfo.filter);

@@ -12,7 +12,6 @@ export class DataRetreiverService {
 
 
   constructor(private util: UtilityService) {
-
   }
 
   tileXYToFlat(x: number, y: number, tileSize: L.Point): number {
@@ -146,7 +145,6 @@ export class DataRetreiverService {
   }
 
   getGeoJSONBBox(geojson: any) {
-    console.log(geojson.geometry);
     //get outer ring(s) and perform basic coordinate depth validation
     //if multiple polygons/features, get bounding box of all shapes and subshapes
     //evaluate if in outer bounding box, if is evaluate if in any inner bounding boxes, parse indices in inner bounding boxes that intersected

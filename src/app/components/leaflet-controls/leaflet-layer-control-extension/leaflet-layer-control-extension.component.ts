@@ -9,6 +9,7 @@ import { ColorScale } from 'src/app/models/colorScale';
 import { CustomColorSchemeService } from 'src/app/services/helpers/custom-color-scheme.service';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
+import { DatasetItem } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-leaflet-layer-control-extension',
@@ -21,8 +22,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   public control: Control.Layers;
   private layers: Layer;
   public schemeControl: FormControl;
-  //change to input?
-  private defaultScheme: string = "viridis";
   baseColorSchemes = {
     mono: "Monochromatic",
     usgs: "USGS",
@@ -37,13 +36,20 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   private forbiddenNames: Set<string>;
   private debounce: boolean;
 
-  @Output() opacity: EventEmitter<number>;
+  @Input() opacity: number;
+  @Output() opacityChange: EventEmitter<number>;
+
   @Output() colorScheme: EventEmitter<ColorScale>;
 
-  //should probably replace these with simple value inputs
-  @Input() mapGetOpacity: () => number;
-  @Input() mapLayerReady: () => boolean;
-  //
+  @Input() defaultScheme: string;
+
+  private _dataset: DatasetItem;
+  @Input() set dataset(dataset: DatasetItem) {
+    this._dataset = dataset;
+    this.schemeControl.setValue(this.schemeControl.value);
+  }
+
+
   @Input() set map(map: Map) {
     if(map) {
       this._map = map;
@@ -66,12 +72,12 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
           let control = DomUtil.get("color-control");
           controlContainer.appendChild(control);
           DomEvent.disableClickPropagation(controlContainer);
-          //reopen control on click after close (selectors new context causes the control to close, need timeout 0 to delegate to after control closure)
+          //reopen control on click after close (selectors new context causes the control to close, need timeout to delegate to after control closure)
+          //note control closure is not always immediate, so just set to 10ms delay to catch most instances
           DomEvent.addListener(control, "click", () => {
-          //note setimmediate is non-standard and is not defined naturally
           setTimeout(() => {
             this.expand();
-          }, 0);
+          }, 10);
 
           });
         },
@@ -90,18 +96,12 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   }
 
   constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService, private paramService: EventParamRegistrarService) {
-    this.opacity = new EventEmitter<number>();
+    this.opacityChange = new EventEmitter<number>();
     this.colorScheme = new EventEmitter<ColorScale>();
-    this.schemeControl = new FormControl(this.defaultScheme);
+    this.schemeControl = new FormControl();
     this.customColorSchemes = {};
     this.forbiddenNames = new Set<string>(Object.values(this.baseColorSchemes));
     this.debounce = false;
-
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: any) => {
-      if(dataset) {
-        this.schemeControl.setValue(this.schemeControl.value);
-      }
-    });
   }
 
   removeCustomColorScheme(tag: string) {
@@ -117,7 +117,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   ngOnInit() {
     let chain = new RevertableCancellationChain();
     //seed chain with first value and dummy promise
-    chain.addNode(() => {return this.schemeControl.value}, new CancellablePromise(Promise.resolve()));
+    //chain.addNode(() => {return this.schemeControl.value}, new CancellablePromise(Promise.resolve()));
     this.schemeControl.valueChanges.subscribe((scheme: string) => {
       //if debounce set just reset debounce flag
       if(this.debounce) {
@@ -157,7 +157,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
 
     });
-
+    this.schemeControl.setValue(this.defaultScheme);
   }
 
   ngOnDestroy() {
@@ -165,35 +165,29 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   }
 
   setOpacity(event: MatSliderChange): void {
-    this.opacity.emit(event.value);
-  }
-
-  getOpacity(): number {
-    return this.mapGetOpacity();
-  }
-
-  layerReady(): boolean {
-    return this.mapLayerReady();
-  }
-
-  addLayers(layers: Layer) {
-    this.layers = layers;
-
-  }
-
-  addOverlay(overlay: Layer, name: string) {
-    this.control.addOverlay(overlay, name);
+    this.opacityChange.emit(event.value);
   }
 
   removeLayer(layer: Layer) {
     this.control.removeLayer(layer);
   }
 
+  addLayers(layers: Layer) {
+    this.layers = layers;
+  }
+
+  addOverlay(overlay: Layer, name: string) {
+    this.control.addOverlay(overlay, name);
+  }
+
   //returns tag that references the color scheme and the ColorScale object
   getCustomColorScheme(): Promise<[string, ColorScale]> {
     return new Promise((resolve, reject) => {
       let dialogRef = this.dialog.open(UploadCustomColorSchemeComponent, {
-        data: this.forbiddenNames
+        data: {
+          forbiddenNames: this.forbiddenNames,
+          range: this._dataset.dataRange
+        }
       });
       dialogRef.afterClosed().toPromise().then((data: XMLColorSchemeData) => {
         if(data) {
@@ -217,7 +211,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   //also wouldn't need promise chaining and all that if precomputed
   getColorScheme(scheme: string): Promise<[string, ColorScale]> {
     let getColorSchemeFromAssetFile = (fname: string, reverse?: boolean): Promise<ColorScale> => {
-      return this.colors.getColorSchemeFromAssetFile(fname, reverse).then((data: XMLColorSchemeData) => {
+      return this.colors.getColorSchemeFromAssetFile(fname, this._dataset.dataRange, reverse).then((data: XMLColorSchemeData) => {
         return data.colors;
       });
     }
@@ -225,38 +219,38 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     let p: Promise<[string, ColorScale]>;
     switch(scheme) {
       case "mono": {
-        let colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale();
+        let colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale(this._dataset.dataRange, this._dataset.reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "rainbow": {
-        let colorScheme = this.colors.getDefaultRainbowRainfallColorScale();
+        let colorScheme = this.colors.getDefaultRainbowRainfallColorScale(this._dataset.dataRange, this._dataset.reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "turbo": {
-        let colorScheme = this.colors.getTurboColorScale();
+        let colorScheme = this.colors.getTurboColorScale(this._dataset.dataRange, this._dataset.reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "usgs": {
-        let colorScheme = this.colors.getUSGSColorScale();
+        let colorScheme = this.colors.getUSGSColorScale(this._dataset.dataRange, this._dataset.reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "viridis": {
-        let colorScheme = this.colors.getViridisColorScale();
+        let colorScheme = this.colors.getViridisColorScale(this._dataset.dataRange, this._dataset.reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "tacc1": {
         let url = this.assetService.getAssetURL("/colorschemes/1-3wbgy.xml")
-        p = getColorSchemeFromAssetFile(url, true).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, !this._dataset.reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -264,7 +258,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc2": {
         let url = this.assetService.getAssetURL("/colorschemes/1-bluegary1.xml");
-        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -272,7 +266,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc3": {
         let url = this.assetService.getAssetURL("/colorschemes/4-3wbgy.xml");
-        p = getColorSchemeFromAssetFile(url, true).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, !this._dataset.reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -280,7 +274,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc4": {
         let url = this.assetService.getAssetURL("/colorschemes/13-4w_grphgrnl.xml");
-        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -288,7 +282,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc5": {
         let url = this.assetService.getAssetURL("/colorschemes/17-5wdkcool.xml");
-        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -296,7 +290,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc6": {
         let url = this.assetService.getAssetURL("/colorschemes/18-5w_coolcrisp2.xml");
-        p = getColorSchemeFromAssetFile(url).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -313,7 +307,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
         if(schemeData) {
           const { xml, reverse } = schemeData;
           //reload to ensure scale data is updated when changed
-          p = this.colors.getColorSchemeFromXML(xml, reverse).then((schemeData: XMLColorSchemeData) => {
+          p = this.colors.getColorSchemeFromXML(xml, this._dataset.dataRange, reverse).then((schemeData: XMLColorSchemeData) => {
             let colorScale = schemeData.colors;
             let data: [string, ColorScale] = [scheme, colorScale];
             return data;

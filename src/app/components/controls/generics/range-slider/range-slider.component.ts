@@ -187,7 +187,6 @@ export class RangeSliderComponent implements OnInit {
         //lastX = x;
         //just set the slider left position to the computed position, the slider logic will handle bounding
         let data = this.sliderController.updateSlider(side, "left", x);
-        //console.log(data);
         this.updateFromSliderData(side, data);
       }
       window.addEventListener("mousemove", movFunct);

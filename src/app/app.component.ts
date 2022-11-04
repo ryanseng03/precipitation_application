@@ -22,27 +22,26 @@ export class AppComponent {
     let browser = "";
     //if none of the supported browsers are found in the user agent then open banner
     if(agent.indexOf("opera") >= 0 || agent.indexOf("opr") >= 0) {
-      browser = "opera"
+      browser = "opera";
     }
     else if(agent.indexOf("edge") >= 0) {
-      browser = "edge"
+      browser = "edge";
     }
     else if(agent.indexOf("edg/") >= 0) {
-      browser = "chromium_edge"
+      browser = "chromium_edge";
     }
     else if(agent.indexOf("chrome") >= 0) {
-      browser = "chrome"
+      browser = "chrome";
     }
     else if(agent.indexOf("safari") >= 0) {
       browser = "safari";
     }
     else if(agent.indexOf("firefox") >= 0) {
-      browser = "firefox"
+      browser = "firefox";
     }
     else if(agent.indexOf("msie") >= 0) {
-      browser = "ie"
+      browser = "ie";
     }
-    console.log(browser);
     if(!this.supportedBrowsers.has(browser)) {
       this.bannerOpen = true;
     }

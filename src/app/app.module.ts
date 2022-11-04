@@ -75,6 +75,7 @@ import {MatProgressBarModule} from '@angular/material/progress-bar';
 import { InfoPopupComponent } from './dialogs/info-popup/info-popup.component';
 import { LeafletImageExportComponent } from './components/leaflet-controls/leaflet-image-export/leaflet-image-export.component';
 import { DateGroupSelectorComponent } from './components/controls/date-group-selector/date-group-selector.component';
+import { FocusControlComponent } from './components/controls/focus-control/focus-control.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -115,7 +116,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     ErrorPopupComponent,
     InfoPopupComponent,
     LeafletImageExportComponent,
-    DateGroupSelectorComponent
+    DateGroupSelectorComponent,
+    FocusControlComponent
   ],
   imports: [
     MatProgressBarModule,

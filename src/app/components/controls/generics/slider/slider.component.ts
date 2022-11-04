@@ -21,8 +21,6 @@ export class SliderComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
-
-    console.log(this.track.nativeElement.offsetWidth);
     this.trackWidth = this.track.nativeElement.offsetWidth;
     if(this.intervals > 0) {
       this.intervalsWidth = this.trackWidth / this.intervals;
@@ -32,7 +30,6 @@ export class SliderComponent implements OnInit {
     let getMovFunct = (mouseInit: MouseEvent) => {
       let initPos = this.slider.nativeElement.offsetLeft;
       return (e: MouseEvent) => {
-        //console.log(e);
         e.stopPropagation();
         e.preventDefault();
 
@@ -49,7 +46,6 @@ export class SliderComponent implements OnInit {
         else if(newSliderPos > this.leftRange[1]) {
           newSliderPos = this.leftRange[1];
         }
-        //console.log(newSliderPos);
         this.slider.nativeElement.style.left = newSliderPos + "px";
       }
     }

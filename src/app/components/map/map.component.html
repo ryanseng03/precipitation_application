@@ -4,15 +4,17 @@
 </div>
 <app-leaflet-layer-control-extension #layerController
   [map]="map"
-  (opacity)="setOpacity($event)"
+  [opacity]="opacity"
+  (opacityChange)="setOpacity($event)"
   (colorScheme)="setColorScheme($event)"
-  [mapGetOpacity]="getOpacity.bind(this)"
-  [mapLayerReady]="layerReady.bind(this)"
+  [dataset]="dataset"
+  defaultScheme="viridis"
 ></app-leaflet-layer-control-extension>
 <app-leaflet-color-scale
   [map]="map"
   [colorScale]="colorScheme"
-  [label]="colorScaleLabel"
+  [datatype]="dataset.datatype"
+  [units]="dataset.unitsShort"
   [rangeAbsolute]="dataset.rangeAbsolute"
 ></app-leaflet-color-scale>
 <app-leaflet-compass-rose
@@ -22,7 +24,7 @@
 <app-header-control
   [map]="map"
   [dataset]="dataset.label"
-  [date]="getHeaderDate()">
+  [date]="active.data.focus?.label">
 </app-header-control>
 <app-leaflet-image-export
   [map]="map"
