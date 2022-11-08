@@ -52,7 +52,6 @@ export class DateFocusComponent implements OnInit {
             return this.setDate.isSame(this._timeseriesData.end);
           },
           trigger: () => {
-            console.log("year");
             this.moveDate(1, "year");
           }
         },

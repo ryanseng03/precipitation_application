@@ -49,7 +49,6 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes.active);
     if(changes.active && this.active && this.exportItems.length == 0) {
       this.addExportData(-1);
     }
