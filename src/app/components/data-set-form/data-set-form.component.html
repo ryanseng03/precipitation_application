@@ -5,10 +5,13 @@
   <!-- <hr> -->
 
   <div class="form-body">
-    <h2>
-      Select The Dataset You Would Like to View and Click "Submit".
-    </h2>
+    <h3>
+      Active Dataset: {{label}}
+    </h3>
 
+    <h3>
+      Select The Dataset You Would Like to View.
+    </h3>
 
     <div class="control-group">
       <div class="control">
@@ -99,9 +102,9 @@
     <div
       *ngFor="let category of formData.paramFormData.categorized"
       class="control-group">
-      <h3>
+      <h4 class="inline-block">
         {{category.label}}
-      </h3>
+      </h4>
       <mat-icon
         aria-hidden="false"
         aria-label="Tooltip"
@@ -161,7 +164,7 @@
     </div>
     <div *ngIf="formData.coverageLabel" class="control-group">
       <div class="control">
-        <h4>Dataset Coverage</h4>
+        <h4 class="coverage-label">Dataset Coverage</h4>
         {{formData.coverageLabel}}
       </div>
     </div>
@@ -171,4 +174,7 @@
   <button mat-raised-button color="primary" (click)="updateDataset()">
     Submit
   </button>
+  <p *ngIf="changes" class="submit-note">
+    Click Submit to Apply These Changes
+  </p>
 </div>

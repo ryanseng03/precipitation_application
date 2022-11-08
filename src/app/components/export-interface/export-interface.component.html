@@ -3,7 +3,7 @@
   <h2>
     Select what data to export
   </h2>
-  <h3 *ngIf="exportItems.length < 1">
+  <h3>
     Click the "+" button to add a set of files
   </h3>
   <!-- <app-station-filter-interface></app-station-filter-interface> -->
@@ -32,6 +32,12 @@
       </div>
     </div>
 
+    <div class="add-button">
+      <button mat-icon-button (click)="addExportData(-1)">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+
     <div class="email-container" *ngIf="exportItems.length > 0">
       <div>
         <mat-checkbox
@@ -42,6 +48,7 @@
           Send download package to email
         </mat-checkbox>
         <mat-icon
+          class="help-icon"
           inline="true"
           matTooltip="Package the requested items and email a download link to you. This is required if requesting a large amount of data.">
           help
@@ -55,36 +62,37 @@
           <mat-error *ngIf="!emailData.emailInputControl.valid">Please enter a valid email address.</mat-error>
         </mat-form-field>
         <mat-icon
+          class="help-icon"
           inline="true"
           matTooltip="Please enter your email address. This will be used to send you your data if the above box is selected, otherwise it will only be used for logging purposes.">
           help
         </mat-icon>
       </div>
+
+      <div class="disclaimer-container">
+        <mat-checkbox
+          [formControl]="acknowledgeControl">
+        </mat-checkbox>
+        <p>
+          All data is covered under the <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="blank">Attribution-NonCommercial-NoDerivatives 4.0 International</a> licensing agreement. By checking this box, I acknowledge and agree to adhere to the terms of this license in my use of any data provided by this application.
+        </p>
+      </div>
+
+      <button mat-raised-button color="primary" [disabled]="exportItems.length < 1 || !emailData.emailInputControl.valid || !acknowledgeControl.value" (click)="export()">
+        Export Items
+      </button>
     </div>
 
 
-    <div class="control-button-container">
-      <div class="control-button">
-        <button mat-icon-button (click)="addExportData(-1)">
-          <mat-icon>add</mat-icon>
-        </button>
-      </div>
-      <div class="control-button">
-        <button mat-button [disabled]="exportItems.length < 1 || !emailData.emailInputControl.valid" (click)="export()">
-          Export Items
-        </button>
-      </div>
-
-      <div class="loading-bar">
-        <div *ngIf="exportActivityMonitor.active">
-          <p>
-            Creating Export Package...
-          </p>
-          <mat-progress-bar [mode]="exportActivityMonitor.mode" [value]="exportActivityMonitor.value"></mat-progress-bar>
-        </div>
-      </div>
 
 
+    <div class="loading-bar">
+      <div *ngIf="exportActivityMonitor.active">
+        <p>
+          Creating Export Package...
+        </p>
+        <mat-progress-bar [mode]="exportActivityMonitor.mode" [value]="exportActivityMonitor.value"></mat-progress-bar>
+      </div>
     </div>
 
   </div>

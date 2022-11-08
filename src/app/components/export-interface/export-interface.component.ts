@@ -1,5 +1,5 @@
 
-import { Component, OnInit, Inject, NgZone } from '@angular/core';
+import { Component, OnInit, Inject, NgZone, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ExportAddItemComponent } from 'src/app/dialogs/export-add-item/export-add-item.component';
@@ -15,7 +15,9 @@ import { ExportData, ResourceReq } from 'src/app/models/exportData';
   templateUrl: './export-interface.component.html',
   styleUrls: ['./export-interface.component.scss']
 })
-export class ExportInterfaceComponent implements OnInit {
+export class ExportInterfaceComponent implements OnInit, OnChanges {
+
+  @Input() active: boolean;
 
   exportActivityMonitor = {
     active: false,
@@ -29,6 +31,8 @@ export class ExportInterfaceComponent implements OnInit {
     maxSizeExceeded: boolean
   };
 
+  acknowledgeControl: FormControl;
+
   exportItems: any[] = [];
 
   constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService, private dateService: DateManagerService, private ngZone: NgZone) {
@@ -38,15 +42,17 @@ export class ExportInterfaceComponent implements OnInit {
       maxSizeExceeded: false
     }
     this.emailData.emailInputControl.setValidators(Validators.email);
-    // this.emailData.useEmailControl.valueChanges.subscribe((value: boolean) => {
-    //   let emailControl = this.emailData.emailInputControl;
-    //   if(!value) {
-    //     emailControl.setValidators(Validators.email);
-    //   }
-    // });
+    this.acknowledgeControl = new FormControl(false);
   }
 
   ngOnInit() {
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes.active);
+    if(changes.active && this.active && this.exportItems.length == 0) {
+      this.addExportData(-1);
+    }
   }
 
   checkEmailReq() {

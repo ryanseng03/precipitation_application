@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FormNode, FormValue, TimeSelectorData } from 'src/app/services/dataset-form-manager.service';
 
@@ -7,7 +7,7 @@ import { FormNode, FormValue, TimeSelectorData } from 'src/app/services/dataset-
   templateUrl: './date-group-selector.component.html',
   styleUrls: ['./date-group-selector.component.scss']
 })
-export class DateGroupSelectorComponent implements OnInit {
+export class DateGroupSelectorComponent implements OnInit, OnChanges {
 
   @Input() timeSelectorData: TimeSelectorData;
   @Input() initValue: FormValue;
@@ -23,8 +23,34 @@ export class DateGroupSelectorComponent implements OnInit {
   }
 
   ngOnInit() {
-    let initValue = this.initValue ? this.initValue : this.timeSelectorData.defaultValue;
-    this.control.setValue(initValue);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if(changes.timeSelectorData) {
+      this.validateForm();
+    }
+  }
+
+  validateForm() {
+    let value: FormValue;
+    //if control already has a value make sure it is valid and use that if it is
+    if(this.control.value) {
+      value = this.timeSelectorData.formData.values.find((value: FormValue) => {
+        return value.tag == this.control.value.tag;
+      });
+    }
+    //otherwise if there is an initial value provided make sure that is valid and use if it is
+    else if(this.initValue) {
+      value = this.timeSelectorData.formData.values.find((value: FormValue) => {
+        return value.tag == this.initValue.tag;
+      });
+    }
+    //if neither case is true or value set was invalid (set to undefined) use default value
+    if(!value) {
+      value = this.timeSelectorData.defaultValue;
+    }
+    //set form value
+    this.control.setValue(value);
   }
 
 }

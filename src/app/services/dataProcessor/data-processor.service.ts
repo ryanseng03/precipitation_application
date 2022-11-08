@@ -39,7 +39,6 @@ export class DataProcessorService {
           }
 
           let geotiffData: RasterData = new RasterData(header);
-
           //package data
           let i: number;
           for(i = 0; i < bands.length; i++) {

@@ -3,6 +3,9 @@ import { DbConService, RequestResults } from "./auxillary/dbCon/db-con.service";
 import { RasterData } from '../../models/RasterData';
 import {DataProcessorService} from "../dataProcessor/data-processor.service";
 
+//import { WebWorkerService } from 'ngx-web-worker';
+//import {workerGetInternalIndices} from "../../workers/geotiff_worker";
+
 export { RequestResults };
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
@@ -43,7 +46,7 @@ export class DataRequestorService {
     response.transform((data: ArrayBuffer) => {
       let time = new Date().getTime() - start;
       let timeSec = time / 1000;
-      console.log(`Retreived raster data for ${properties.date}, time elapsed ${timeSec} seconds`);
+      console.log(`Retreived raster data for ${properties.date || properties.period}, time elapsed ${timeSec} seconds`);
 
       let handler = null;
       //if query wasn't cancelled process array buffer to raster data

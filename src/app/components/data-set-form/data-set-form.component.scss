@@ -12,7 +12,7 @@
 //   margin: 0;
 // }
 
-h3 {
+.inline-block {
   display: inline-block;
 }
 
@@ -36,7 +36,7 @@ p {
   clear: both;
 }
 
-h4 {
+.coverage-label {
   font-size: small;
   font-weight: 500;
   margin-bottom: 5px;
@@ -49,5 +49,11 @@ h4 {
 
 mat-icon {
   padding-left: 5px;
+}
+
+.submit-note {
+  font-weight: bold;
+  display: inline;
+  padding-left: 10px;
 }
 

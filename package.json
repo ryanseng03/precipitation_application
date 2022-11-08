@@ -67,6 +67,7 @@
     "moment-round": "^1.0.1",
     "moment-timezone": "^0.5.28",
     "ng-bootstrap": "^1.6.3",
+    "ngx-web-worker": "^8.0.0",
     "patch-package": "^6.4.7",
     "plotly.js": "^1.57.0",
     "promise.allsettled": "^1.0.5",

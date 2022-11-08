@@ -38,10 +38,10 @@ export class TimeSeriesComponent implements OnInit {
       }
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
-      // if(date) {
-      //   date = date.clone()
-      //   this.date = date;
-      // }
+      //should only handle if timeseries type
+      if(focus?.type == "timeseries") {
+        this.date = <Moment.Moment>focus.data;
+      }
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
       if(dataset) {

@@ -14,7 +14,8 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   formData: AllFormData;
   controls: {[field: string]: FormControl};
   debounce: boolean = false;
-
+  changes: boolean = false;
+  label: string = "";
 
   constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService) {
     let formData = formService.getAllFormData();
@@ -41,6 +42,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
             this.formData.paramFormData = formData.formData;
             this.formData.coverageLabel = formData.coverageLabel;
             this.setControlValues(formData.values);
+            this.changes = true;
           }
         });
       }
@@ -61,7 +63,9 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
 
   updateDataset() {
+    this.changes = false;
     let dataset: DatasetItem = this.formService.getDatasetItem();
+    this.label = dataset.label;
     this.paramService.pushDataset(dataset);
   }
 }

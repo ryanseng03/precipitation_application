@@ -33,7 +33,7 @@
       </app-vis>
     </div>
     <div [ngClass]="{hidden: component != 'export'}" class="export-container">
-      <app-export-interface></app-export-interface>
+      <app-export-interface [active]="component == 'export'"></app-export-interface>
     </div>
   </div>
 </div>

@@ -60,7 +60,7 @@ export class DatasetFormManagerService {
     //////DS period
     let periodPresent = new FormValue(new DisplayData("Present day baseline values based on recorded climate data.", "Present Day", "present"), {period: "present"}, [true, true]);
     let periodMid = new FormValue(new DisplayData("Mid-century (2040-2069) projections.", "Mid-Century (2040-2069)", "mid"), {period: "mid"}, [true, true]);
-    let periodLate = new FormValue(new DisplayData("Late-century (2070-2099) projections.", "Late-Century (2070-2099)", "late"), {period: "late"}, [true, true]);
+    let periodLate = new FormValue(new DisplayData("Late-century (2070-2099) projections.", "Late-Century (2070-2099)", "late"), {period: "end"}, [true, true]);
 
     let periodNode = new FormNode(new DisplayData("The time period over which the data is measured.", "Time Period", "period"), [
       periodDay,
@@ -83,9 +83,13 @@ export class DatasetFormManagerService {
       seasonDry,
       seasonWet
     ]);
-    let dsPeriodNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
+    let dsPeriodStatisticalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
       periodPresent,
       periodMid,
+      periodLate
+    ]);
+    let dsPeriodDynamicalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
+      periodPresent,
       periodLate
     ]);
 
@@ -135,7 +139,8 @@ export class DatasetFormManagerService {
     let temperatureRainfallDayFocusManager = new TimeseriesData(date1990, lastDay, dayPeriod, [dayPeriod], this.dateHandler, lastDay);
     let legacyRainfallFocusManager = new TimeseriesData(date1920, date2012, monthPeriod, [monthPeriod], this.dateHandler, date2012);
     let temperatureMonthFocusManager = new TimeseriesData(date1990, date2018, monthPeriod, [monthPeriod, dayPeriod], this.dateHandler, date2018);
-    let dsFocusManager = new TimeSelectorData(dsPeriodNode, periodPresent);
+    let dsDynamicalFocusManager = new TimeSelectorData(dsPeriodDynamicalNode, periodPresent);
+    let dsStatisticalFocusManager = new TimeSelectorData(dsPeriodStatisticalNode, periodPresent);
 
     //Create Datasets
     ////Dataset Items
@@ -148,7 +153,7 @@ export class DatasetFormManagerService {
       period: "day",
       fill: "partial"
     });
-    let rainfallDayUnfilled = new DatasetItem(true, false, "Millimeters", "Rainfall", "Daily Rainfall", "mm", [0, 20], [true, false], temperatureRainfallDayFocusManager, false, {
+    let rainfallDayUnfilled = new DatasetItem(true, false, "Millimeters", "mm", "Rainfall", "Daily Rainfall", [0, 20], [true, false], temperatureRainfallDayFocusManager, false, {
       period: "day",
       fill: "unfilled"
     });
@@ -182,80 +187,80 @@ export class DatasetFormManagerService {
       period: "day"
     });
     //////DS Rainfall
-    let dsRainfallStatisticalRcp45Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallStatisticalRcp45Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "annual"
     });
-    let dsRainfallStatisticalRcp45Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallStatisticalRcp45Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "wet"
     });
-    let dsRainfallStatisticalRcp45Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallStatisticalRcp45Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "dry"
     });
-    let dsRainfallStatisticalRcp85Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallStatisticalRcp85Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "annual"
     });
-    let dsRainfallStatisticalRcp85Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallStatisticalRcp85Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "wet"
     });
-    let dsRainfallStatisticalRcp85Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallStatisticalRcp85Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp45Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallDynamicalRcp45Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "annual"
     });
-    let dsRainfallDynamicalRcp45Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallDynamicalRcp45Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "wet"
     });
-    let dsRainfallDynamicalRcp45Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallDynamicalRcp45Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp85Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallDynamicalRcp85Annual = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "annual"
     });
-    let dsRainfallDynamicalRcp85Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallDynamicalRcp85Wet = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "wet"
     });
-    let dsRainfallDynamicalRcp85Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 650], [true, false], dsFocusManager, false, {
+    let dsRainfallDynamicalRcp85Dry = new DatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "dry"
     });
     //////DS Temperature
-    let dsTemperatureStatisticalRcp45 = new DatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsFocusManager, false, {
+    let dsTemperatureStatisticalRcp45 = new DatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp45"
     });
-    let dsTemperatureStatisticalRcp85 = new DatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsFocusManager, false, {
+    let dsTemperatureStatisticalRcp85 = new DatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp85"
     });
-    let dsTemperatureDynamicalRcp45 = new DatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsFocusManager, false, {
+    let dsTemperatureDynamicalRcp45 = new DatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp45"
     });
-    let dsTemperatureDynamicalRcp85 = new DatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsFocusManager, false, {
+    let dsTemperatureDynamicalRcp85 = new DatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp85"
     });
@@ -297,7 +302,7 @@ export class DatasetFormManagerService {
       meanTemperatureMonthUnfilled
     ]);
     let dsRainfallDataset = new Dataset(new DisplayData("Downscaled future projections for rainfall data.", "Rainfall Projections", "ds_rainfall"), {
-      datatype: "ds_rainfall"
+      datatype: "downscaling_rainfall"
     }, dsRainfallFormData, [
       dsRainfallStatisticalRcp45Annual,
       dsRainfallStatisticalRcp45Dry,
@@ -313,7 +318,7 @@ export class DatasetFormManagerService {
       dsRainfallDynamicalRcp85Wet
     ]);
     let dsTemperatureDataset = new Dataset(new DisplayData("Downscaled future projections for temperature data.", "Temperature Projections", "ds_temp"), {
-      datatype: "ds_temp"
+      datatype: "downscaling_temperature"
     }, dsTemperatureFormData, [
       dsTemperatureStatisticalRcp45,
       dsTemperatureStatisticalRcp85,
@@ -749,11 +754,17 @@ export class FocusData<T> {
   private _paramData: StringMap;
   private _label: string;
   private _data: T;
+  private _type: string
 
-  constructor(label: string, paramData: StringMap, data: T) {
+  constructor(type: string, label: string, paramData: StringMap, data: T) {
     this._label = label;
     this._paramData = paramData;
     this._data = data;
+    this._type = type;
+  }
+
+  get type(): string {
+    return this._type;
   }
 
   get label(): string {
@@ -812,7 +823,7 @@ export class TimeSelectorData extends FocusManager<FormValue> {
   }
 
   getFocusData(value: FormValue): FocusData<FormValue> {
-    return new FocusData(value.label, value.paramData, value);
+    return new FocusData(this.type, value.label, value.paramData, value);
   }
 }
 
@@ -886,7 +897,7 @@ export class TimeseriesData extends FocusManager<Moment> {
   }
 
   getFocusData(time: Moment): FocusData<Moment> {
-    return new FocusData(this._dateHandler.dateToString(time, this.unit, true), {date: this._dateHandler.dateToString(time, this.unit, false)}, time);
+    return new FocusData(this.type, this._dateHandler.dateToString(time, this.unit, true), {date: this._dateHandler.dateToString(time, this.unit, false)}, time);
   }
 
   get start(): Moment {

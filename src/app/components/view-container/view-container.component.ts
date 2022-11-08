@@ -1,6 +1,8 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 import moment, { Moment } from 'moment';
+import { DatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
 
 @Component({
@@ -71,12 +73,20 @@ export class ViewContainerComponent implements OnInit {
   temp_end = moment("2022-01-01");
   temp_period = "month";
 
+  includeStations: boolean;
 
-  constructor(private scrollWidthService: ScrollbarWidthCalcService) {
+
+  constructor(private scrollWidthService: ScrollbarWidthCalcService, private paramService: EventParamRegistrarService) {
     this.scrollTimeoutHandle = null;
+    this.navInfo = [];
   }
 
   ngOnInit() {
+    let defaultActive = {
+      label: "Dataset",
+      element: this.formComponent.nativeElement
+    };
+    this.activeTileRef = defaultActive;
     this.nav2Component = {
       form: this.formComponent,
       table: this.tableComponent,
@@ -84,21 +94,32 @@ export class ViewContainerComponent implements OnInit {
     };
     let containerElement: HTMLElement = this.viewContainer.nativeElement;
     this.lastScrollPos = containerElement.scrollTop;
-    this.navInfo = [{
-      label: "Dataset",
-      element: this.formComponent.nativeElement
-    },
-    {
-      label: "Stations",
-      element: this.tableComponent.nativeElement
-    },
-    {
-      label: "Time Series",
-      element: this.timeseriesComponent.nativeElement
-    }];
-    this.activeTileRef = this.navInfo[0];
 
     this.firstElement = this.formComponent.nativeElement;
+
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+      if(dataset) {
+        if(dataset.includeStations) {
+          this.includeStations = true;
+          setTimeout(() => {
+            this.navInfo = [defaultActive,
+            {
+              label: "Stations",
+              element: this.tableComponent.nativeElement
+            },
+            {
+              label: "Time Series",
+              element: this.timeseriesComponent.nativeElement
+            }];
+          }, 0);
+        }
+        else {
+          this.navInfo = [];
+          this.includeStations = false;
+        }
+        this.activeTileRef = defaultActive;
+      }
+    });
   }
 
 
@@ -137,26 +158,29 @@ export class ViewContainerComponent implements OnInit {
 
   // [ngStyle]="{'padding-right': getScrollBarWidth(viewContainer)}"
   containerScroll(e: Event): void {
-    let containerElement: HTMLElement = this.viewContainer.nativeElement;
-    let lastScrollLocal = this.lastScrollPos;
-    this.lastScrollPos = containerElement.scrollTop;
-    clearTimeout(this.scrollTimeoutHandle);
-    this.scrollTimeoutHandle = setTimeout(() => {
-      let scrollDelta = this.lastScrollPos - lastScrollLocal;
-      let inContainer = this.divsInContainer();
-      if(inContainer.between) {
-        let scrollDir = "upper";
-        if(scrollDelta > 0) {
-          scrollDir = "lower";
+    //only manage scroll logic if there are navs
+    if(this.navInfo.length > 0) {
+      let containerElement: HTMLElement = this.viewContainer.nativeElement;
+      let lastScrollLocal = this.lastScrollPos;
+      this.lastScrollPos = containerElement.scrollTop;
+      clearTimeout(this.scrollTimeoutHandle);
+      this.scrollTimeoutHandle = setTimeout(() => {
+        let scrollDelta = this.lastScrollPos - lastScrollLocal;
+        let inContainer = this.divsInContainer();
+        if(inContainer.between) {
+          let scrollDir = "upper";
+          if(scrollDelta > 0) {
+            scrollDir = "lower";
+          }
+          this.goToNav(inContainer.between[scrollDir]);
         }
-        this.goToNav(inContainer.between[scrollDir]);
-      }
-      //set active tile to item in container if completely contained (otherwise handled by goToNav)
-      else {
-        this.activeTileRef = inContainer.focus;
-      }
+        //set active tile to item in container if completely contained (otherwise handled by goToNav)
+        else {
+          this.activeTileRef = inContainer.focus;
+        }
 
-    }, this.scrollTimeout);
+      }, this.scrollTimeout);
+    }
   }
 
   //check if view container between component divs
@@ -210,10 +234,12 @@ export class ViewContainerComponent implements OnInit {
     let components = [this.viewContainer, this.formComponent, this.tableComponent, this.timeseriesComponent];
     let max = 0;
     for(let component of components) {
-      let element: HTMLElement = component.nativeElement;
-      let width = element.clientWidth;
-      if(width > max) {
-        max = width;
+      if(component) {
+        let element: HTMLElement = component.nativeElement;
+        let width = element.clientWidth;
+        if(width > max) {
+          max = width;
+        }
       }
     }
     return max + "px";
