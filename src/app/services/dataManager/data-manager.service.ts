@@ -23,9 +23,7 @@ export class DataManagerService {
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
     let selectedDataset: DatasetItem;
-    let focusData: FocusData<unknown>;
     let selectedStation: any;
-
     //change to use station group listed in dataset
     let metadataReq: RequestResults = dataRequestor.getStationMetadata({
       station_group: "hawaii_climate_primary"

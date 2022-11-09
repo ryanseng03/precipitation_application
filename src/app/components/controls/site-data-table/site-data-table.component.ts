@@ -125,10 +125,6 @@ export class SiteDataTableComponent implements OnInit {
         if(this.roundedFields.has(field)) {
           value = this.roundValue(value);
         }
-        //UNIT ISN'T PROPOGATING FOR SOME REASON, FIX
-        // if(field == "value") {
-        //   value = `${value}${this.unit}`;
-        // }
         map.push({
           field: fieldLabel,
           value: value
@@ -138,9 +134,9 @@ export class SiteDataTableComponent implements OnInit {
     return map;
   }
 
-  roundValue(value: number) {
+  roundValue(value: number): string {
     let rounded = Math.round(value * 100) / 100;
-    return rounded;
+    return rounded.toLocaleString();
   }
 
 }

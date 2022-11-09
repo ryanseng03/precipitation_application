@@ -521,8 +521,8 @@ export class MapComponent implements OnInit {
     let roundedValue = Math.round(value * 100) / 100;
     let roundedTranslationValue = Math.round(translationValue * 100) / 100;
     return {
-      value: `${roundedValue}${unit}`,
-      transValue: `${roundedTranslationValue}${translationUnit}`
+      value: `${roundedValue.toLocaleString()}${unit}`,
+      transValue: `${roundedTranslationValue.toLocaleString()}${translationUnit}`
     };
   }
 
