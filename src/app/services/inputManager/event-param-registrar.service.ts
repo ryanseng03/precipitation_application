@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { ColorScale } from 'src/app/models/colorScale';
-import { DatasetItem, FocusData } from '../dataset-form-manager.service';
+import { VisDatasetItem, FocusData } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +24,7 @@ export class EventParamRegistrarService {
     colorScale: "colorScale"
   };
 
-  private datasetSource: BehaviorSubject<DatasetItem>;
+  private datasetSource: BehaviorSubject<VisDatasetItem>;
   private rasterSource: BehaviorSubject<RasterData>;
   private stationsSource: BehaviorSubject<any[]>;
   private filteredStationsSource: BehaviorSubject<any[]>;
@@ -51,7 +51,7 @@ export class EventParamRegistrarService {
     this.colorScaleSource = this.paramService.registerParameter<ColorScale>(EventParamRegistrarService.EVENT_TAGS.colorScale);
   }
 
-  pushDataset(dataset: DatasetItem): void {
+  pushDataset(dataset: VisDatasetItem): void {
     this.datasetSource.next(dataset);
   }
 

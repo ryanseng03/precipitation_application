@@ -1,7 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import {Map, Control, DomUtil, ControlPosition} from 'leaflet';
 import { ColorScale } from 'src/app/models/colorScale';
-import { DatasetItem } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-leaflet-color-scale',

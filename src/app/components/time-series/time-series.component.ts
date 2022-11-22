@@ -3,7 +3,7 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
 import Moment from "moment";
 import { EventParamRegistrarService, LoadingData } from 'src/app/services/inputManager/event-param-registrar.service';
 import { Subject } from 'rxjs';
-import { DatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
+import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-time-series',
@@ -43,7 +43,7 @@ export class TimeSeriesComponent implements OnInit {
         this.date = <Moment.Moment>focus.data;
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
         let axisLabel = `${dataset.datatype} (${dataset.units})`;
         this.axisLabel = axisLabel;

@@ -14,7 +14,7 @@ import Moment from 'moment';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 // import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-import { DatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
+import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { DataManagerService } from 'src/app/services/dataManager/data-manager.service';
 
 @Component({
@@ -61,7 +61,7 @@ export class MapComponent implements OnInit {
 
   private selectedMarker: L.CircleMarker;
 
-  dataset: DatasetItem;
+  dataset: VisDatasetItem;
 
   constructor(private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private assetService: AssetManagerService, private dataManager: DataManagerService, private layerService: LeafletRasterLayerService) {
     let roseImage = "/arrows/nautical.svg";
@@ -244,7 +244,7 @@ export class MapComponent implements OnInit {
 
     this.layerController.addLayers(this.baseLayers);
 
-    let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+    let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       this.dataset = dataset;
     });
 

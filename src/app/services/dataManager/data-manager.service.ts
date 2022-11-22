@@ -9,7 +9,7 @@ import { RequestReject } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { LatLng } from 'leaflet';
-import { DatasetItem, FocusData, TimeseriesData } from '../dataset-form-manager.service';
+import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
 import moment from 'moment';
 
 
@@ -22,7 +22,7 @@ export class DataManagerService {
 
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
-    let selectedDataset: DatasetItem;
+    let selectedDataset: VisDatasetItem;
     let selectedStation: any;
     //change to use station group listed in dataset
     let metadataReq: RequestResults = dataRequestor.getStationMetadata({
@@ -66,7 +66,7 @@ export class DataManagerService {
         }, 0);
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       selectedDataset = dataset;
       //reset selected station and timeseries data
       paramService.pushSelectedStation(null);
@@ -84,7 +84,7 @@ export class DataManagerService {
           rasterRes.cancel();
         }
 
-        let datasetInfo: DatasetItem = selectedDataset;
+        let datasetInfo: VisDatasetItem = selectedDataset;
 
         const { includeStations, includeRaster, rasterParams, stationParams } = datasetInfo;
 
@@ -211,7 +211,7 @@ export class DataManagerService {
             tag: "timeseries",
             loading: true
           });
-          let datasetInfo: DatasetItem = selectedDataset;
+          let datasetInfo: VisDatasetItem = selectedDataset;
           const { stationParams } = datasetInfo;
           let timeseriesPromises = [];
           let startDate = timeseriesData.start;

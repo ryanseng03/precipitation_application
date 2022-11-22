@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
-import { AllFormData, DatasetFormManagerService, DatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { AllFormData, DatasetFormManagerService, FormManager, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 @Component({
@@ -17,8 +17,11 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   changes: boolean = false;
   label: string = "";
 
+  private _formManager: FormManager<VisDatasetItem>;
+
   constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService) {
-    let formData = formService.getAllFormData();
+    this._formManager = formService.visFormManager;
+    let formData = this._formManager.getAllFormData();
     this.formData = formData;
     //set up form controls
     this.controls = {}
@@ -38,7 +41,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
         control.valueChanges.subscribe((value: string) => {
           //make sure not being changed by control correction
           if(!this.debounce) {
-            let formData = this.formService.setValue(field, value);
+            let formData = this._formManager.setValue(field, value);
             this.formData.paramFormData = formData.formData;
             this.formData.coverageLabel = formData.coverageLabel;
             this.setControlValues(formData.values);
@@ -64,7 +67,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
   updateDataset() {
     this.changes = false;
-    let dataset: DatasetItem = this.formService.getDatasetItem();
+    let dataset: VisDatasetItem = this._formManager.getDatasetItem();
     this.label = dataset.label;
     this.paramService.pushDataset(dataset);
   }

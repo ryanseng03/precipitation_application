@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Moment } from 'moment';
-import { DatasetItem, FocusData, FocusManager, FormValue, TimeSelectorData, TimeseriesData } from 'src/app/services/dataset-form-manager.service';
+import { VisDatasetItem, FocusData, FocusManager, FormValue, TimeSelectorData, TimeseriesData } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
@@ -15,7 +15,7 @@ export class FocusControlComponent implements OnInit {
   lastFocus: FocusData<unknown>;
 
   constructor(private paramService: EventParamRegistrarService) {
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
         //if same focus manager used between sets won't trigger update since not changing focusManager, so re-push last focus data to trigger updates
         if(dataset.focusManager == this.focusManager) {

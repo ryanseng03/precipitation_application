@@ -9,7 +9,7 @@ import { ColorScale } from 'src/app/models/colorScale';
 import { CustomColorSchemeService } from 'src/app/services/helpers/custom-color-scheme.service';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
-import { DatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-leaflet-layer-control-extension',
@@ -43,8 +43,8 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
 
   @Input() defaultScheme: string;
 
-  private _dataset: DatasetItem;
-  @Input() set dataset(dataset: DatasetItem) {
+  private _dataset: VisDatasetItem;
+  @Input() set dataset(dataset: VisDatasetItem) {
     this._dataset = dataset;
     this.schemeControl.setValue(this.schemeControl.value);
   }

@@ -1,7 +1,7 @@
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@angular/core';
 import moment, { Moment } from 'moment';
-import { DatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
 
@@ -97,7 +97,7 @@ export class ViewContainerComponent implements OnInit {
 
     this.firstElement = this.formComponent.nativeElement;
 
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: DatasetItem) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
         if(dataset.includeStations) {
           this.includeStations = true;

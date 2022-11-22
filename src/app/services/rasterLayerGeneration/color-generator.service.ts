@@ -3,8 +3,6 @@ import * as chroma from "chroma-js";
 import {Color, ColorScale} from "../../models/colorScale";
 import xml2js from "xml2js";
 import { HttpClient } from '@angular/common/http';
-import { EventParamRegistrarService } from '../inputManager/event-param-registrar.service';
-import { DatasetItem } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
