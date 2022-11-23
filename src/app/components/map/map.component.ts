@@ -206,7 +206,7 @@ export class MapComponent implements OnInit {
 
     this.initMarkerInfo();
 
-    L.DomUtil.addClass(this.map.getContainer(), 'pointer-cursor')
+    //L.DomUtil.addClass(this.map.getContainer(), 'pointer-cursor');
     L.control.scale({
       position: 'bottomleft',
       maxWidth: 200
@@ -226,6 +226,7 @@ export class MapComponent implements OnInit {
       this.updateMarkers();
     });
 
+    //L.DomUtil.addClass(this.map.getContainer(), 'grabbing');
     this.map.on("moveend", () => {
       let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);

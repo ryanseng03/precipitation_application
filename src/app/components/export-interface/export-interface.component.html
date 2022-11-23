@@ -23,17 +23,17 @@
         </div>
       </div>
       <div class="tile-button-container">
-        <button mat-icon-button (click)="removeExportItem(i)">
-          <mat-icon>clear</mat-icon>
-        </button>
-        <button mat-icon-button (click)="addExportData(i)">
+        <button mat-mini-fab (click)="addExportData(i)">
           <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-mini-fab color="warn" (click)="removeExportItem(i)">
+          <mat-icon>clear</mat-icon>
         </button>
       </div>
     </div>
 
     <div class="add-button">
-      <button mat-icon-button (click)="addExportData(-1)">
+      <button mat-mini-fab color="primary" (click)="addExportData(-1)">
         <mat-icon>add</mat-icon>
       </button>
     </div>

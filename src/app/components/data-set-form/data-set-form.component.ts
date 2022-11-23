@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
-import { AllFormData, DatasetFormManagerService, FormManager, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { ActiveFormData, DatasetFormManagerService, FormManager, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 @Component({
@@ -11,7 +11,7 @@ import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataSetFormComponent implements OnInit, AfterViewInit {
-  formData: AllFormData;
+  formData: ActiveFormData<VisDatasetItem>;
   controls: {[field: string]: FormControl};
   debounce: boolean = false;
   changes: boolean = false;
@@ -21,7 +21,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
   constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService) {
     this._formManager = formService.visFormManager;
-    let formData = this._formManager.getAllFormData();
+    let formData = this._formManager.getFormData();
     this.formData = formData;
     //set up form controls
     this.controls = {}
@@ -41,10 +41,10 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
         control.valueChanges.subscribe((value: string) => {
           //make sure not being changed by control correction
           if(!this.debounce) {
-            let formData = this._formManager.setValue(field, value);
-            this.formData.paramFormData = formData.formData;
-            this.formData.coverageLabel = formData.coverageLabel;
-            this.setControlValues(formData.values);
+            console.log(value);
+            this.formData = this._formManager.setValue(field, value);
+            console.log(this.formData);
+            this.setControlValues(this.formData.values);
             this.changes = true;
           }
         });
@@ -67,7 +67,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
   updateDataset() {
     this.changes = false;
-    let dataset: VisDatasetItem = this._formManager.getDatasetItem();
+    let dataset: VisDatasetItem = this.formData.datasetItem;
     this.label = dataset.label;
     this.paramService.pushDataset(dataset);
   }

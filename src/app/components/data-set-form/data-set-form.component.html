@@ -19,7 +19,7 @@
           <mat-label>{{formData.datasetFormData.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="controls.dataset">
+            [formControl]="controls.datatype">
             <mat-option
               *ngFor="let dataset of formData.datasetFormData.datasetValues"
               [value]="dataset.tag"
@@ -52,7 +52,7 @@
     </div>
     <div class="control-group control-subgroup">
       <div
-        *ngFor="let field of formData.paramFormData.default"
+        *ngFor="let field of formData.datasetItem.formData.default"
         class="control">
         <div *ngIf="field.values.length > 1;else single">
           <mat-form-field>
@@ -100,7 +100,7 @@
     </div>
 
     <div
-      *ngFor="let category of formData.paramFormData.categorized"
+      *ngFor="let category of formData.datasetItem.formData.categorized"
       class="control-group">
       <h4 class="inline-block">
         {{category.label}}
@@ -162,10 +162,10 @@
         </div>
       </div>
     </div>
-    <div *ngIf="formData.coverageLabel" class="control-group">
+    <div *ngIf="formData.datasetItem.coverageLabel" class="control-group">
       <div class="control">
         <h4 class="coverage-label">Dataset Coverage</h4>
-        {{formData.coverageLabel}}
+        {{formData.datasetItem.coverageLabel}}
       </div>
     </div>
   </div>

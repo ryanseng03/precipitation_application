@@ -1,13 +1,11 @@
-.pointer-cursor {
-    cursor: pointer;
-}
-
 .map {
     height: 100%;
     width: 100%;
 }
 
-
+.grabbing {
+    cursor: grabbing;
+}
 
 ::ng-deep .leaflet-control-scale-line {
     font-size: 15px;

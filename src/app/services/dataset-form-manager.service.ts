@@ -681,16 +681,10 @@ export class DatasetFormManagerService {
 }
 
 
-type ParamFormData = {
-  formData: FormData,
-  values: StringMap,
-  coverageLabel: string
-};
-export type AllFormData = {
+export type ActiveFormData<T extends DatasetItem> = {
   datasetFormData: DatasetFormData,
-  paramFormData: FormData,
-  values: StringMap,
-  coverageLabel: string
+  datasetItem: T,
+  values: StringMap
 }
 
 
@@ -831,7 +825,6 @@ class Dataset<T extends DatasetItem> {
   }
 
   private addItem(item: T) {
-    console.log(this.displayData, item);
     item.dataset = this;
     let values = item.values;
     let tree = this._itemMap;
@@ -971,7 +964,6 @@ abstract class DatasetItem {
   }
 
   private _setNodeData(node: FormNode) {
-    console.log(node, this.values);
     let valueTag = this.values[node.tag];
     //get value data for item that matches the tag for this item
     let valueData = node.values.find((value: FormValue) => {
@@ -1528,7 +1520,7 @@ export class ExportDatasetItem extends DatasetItem {
 export class FormManager<T extends DatasetItem> {
   private _datasetFormData: DatasetFormData;
   private _datasets: {[tag: string]: Dataset<T>};
-
+  private _values: StringMap;
   private _activeItem: T;
   private _state: StringMap;
 
@@ -1547,36 +1539,28 @@ export class FormManager<T extends DatasetItem> {
     let stateData = dataset.getStateData(this._state);
     this._state = stateData.state;
     this._activeItem = stateData.item;
+    this._values = Object.assign({
+      datatype: dataset.tag
+    }, this._activeItem.values)
   }
 
-  public setValue(field: string, tag: string): ParamFormData {
+  public setValue(field: string, tag: string): ActiveFormData<T> {
+    console.log(field, tag);
     this._state[field] = tag;
     this.updateState();
-
-    return {
-      formData: this._activeItem.formData,
-      values: this._activeItem.values,
-      coverageLabel: this._activeItem.coverageLabel
-    };
+    return this.getFormData();
   }
 
-  public setDataset(tag: string): ParamFormData {
+  public setDataset(tag: string): ActiveFormData<T> {
     return this.setValue("datatype", tag);
   }
 
-  public getDatasetItem(): T {
-    return this._activeItem;
-  }
-
-  public getAllFormData(): AllFormData {
-    let dataset = this._datasets[this._state.datatype];
+  public getFormData(): ActiveFormData<T> {
+    console.log(this._datasetFormData);
     return {
       datasetFormData: this._datasetFormData,
-      paramFormData: this._activeItem.formData,
-      values: Object.assign({
-        dataset: dataset.tag
-      }, this._activeItem.values),
-      coverageLabel: this._activeItem.coverageLabel
+      datasetItem: this._activeItem,
+      values: this._values
     };
   }
 }

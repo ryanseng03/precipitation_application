@@ -11,6 +11,7 @@
 .export-item {
   display: inline-block;
   padding: 25px;
+  //padding-top: 15px;
   flex-grow: 1;
 }
 
@@ -29,6 +30,10 @@ h4 {
   width: 100%;
   height: fit-content;
   display: flex;
+  border-radius: 10px;
+  //border: 1px solid gray;
+  box-shadow: 5px 3px 4px lightgray;
+  margin: 15px;
 }
 
 .control-container {
@@ -39,9 +44,10 @@ h4 {
   //position: absolute;
   display: flex;
   flex-direction: row;
-  align-items: flex-end;
-  padding-bottom: 20px;
+  align-items: center;
+  // padding-bottom: 20px;
   width: fit-content;
+  justify-content: center;
 }
 
 .control-button-container {
@@ -83,4 +89,8 @@ h4 {
 
 .help-icon {
   padding-left: 5px;
+}
+
+.tile-button-container button {
+  margin-right: 10px;
 }
