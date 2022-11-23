@@ -40,7 +40,7 @@
         </mat-select-autocomplete>
       </div>
       <div class="filter-component">
-        <button mat-button (click)="clearFilter()">Clear Filter</button>
+        <button mat-raised-button color="warn" (click)="clearFilter()" [disabled]="!filterControl.value || filterControl.value.length < 1">Clear Filter</button>
       </div>
     </div>
     <div class="main-container">
