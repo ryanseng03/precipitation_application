@@ -41,9 +41,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
         control.valueChanges.subscribe((value: string) => {
           //make sure not being changed by control correction
           if(!this.debounce) {
-            console.log(value);
             this.formData = this._formManager.setValue(field, value);
-            console.log(this.formData);
             this.setControlValues(this.formData.values);
             this.changes = true;
           }

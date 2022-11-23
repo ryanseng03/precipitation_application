@@ -194,18 +194,16 @@ export class DateFocusComponent implements OnInit {
 
   ngOnInit() {
     let initDate = this.initValue ? this.initValue : this._timeseriesData.defaultValue;
-    this.setDate = initDate;
     this.controlDate = initDate;
   }
 
   dateChanged(date: Moment.Moment) {
-    this.setDate = date;
-    //check if any controls are disabled
-    this.setDisabled();
-    //delay so change goes through
-    setTimeout(() => {
+    if(!date.isSame(this.setDate)) {
+      this.setDate = date;
+      //check if any controls are disabled
+      this.setDisabled();
       this.dateChange.emit(date);
-    }, 0);
+    }
   }
 
   setDisabled() {
