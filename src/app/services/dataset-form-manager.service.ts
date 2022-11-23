@@ -1545,7 +1545,6 @@ export class FormManager<T extends DatasetItem> {
   }
 
   public setValue(field: string, tag: string): ActiveFormData<T> {
-    console.log(field, tag);
     this._state[field] = tag;
     this.updateState();
     return this.getFormData();
@@ -1556,7 +1555,6 @@ export class FormManager<T extends DatasetItem> {
   }
 
   public getFormData(): ActiveFormData<T> {
-    console.log(this._datasetFormData);
     return {
       datasetFormData: this._datasetFormData,
       datasetItem: this._activeItem,
