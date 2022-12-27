@@ -377,7 +377,7 @@ export class DatasetFormManagerService {
     let kUnits = new FormValue(new DisplayData("Values in kelvin", "K", "k"), {
       units: "k"
     }, null);
-    let percentUnits = new FormValue(new DisplayData("Percent change", "Percent", "percent"), {
+    let percentUnits = new FormValue(new DisplayData("Percent change", "%", "percent"), {
       units: "percent"
     }, null);
     ////nodes
@@ -1534,7 +1534,7 @@ export class FormManager<T extends DatasetItem> {
     this.updateState();
   }
 
-  private updateState() {
+  private updateState(): void {
     let dataset = this._datasets[this._state.datatype];
     let stateData = dataset.getStateData(this._state);
     this._state = stateData.state;

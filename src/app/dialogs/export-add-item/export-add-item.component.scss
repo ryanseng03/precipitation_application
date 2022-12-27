@@ -4,7 +4,6 @@
     width: 100%;
     height: 100%;
     font-family: Roboto;
-
   }
 
 .downscale {
@@ -26,68 +25,76 @@ table {
   padding-right: 10px;
 }
 
-  .control-group-label {
-    display: inline-block;
-    height: 30px;
-    font-weight: bold;
-  }
+.control-group-label {
+  display: inline-block;
+  height: 30px;
+  font-weight: bold;
+}
 
-  .extent-container {
-    display: inline-block;
-    height: 50px;
-    transform: translateY(-6px);
-  }
+.extent-container {
+  display: inline-block;
+  height: 50px;
+  transform: translateY(-6px);
+}
 
-  .form-buttons {
-    padding: 20px;
-    //border-top: 1px solid;
-  }
+.form-buttons {
+  padding: 20px;
+  //border-top: 1px solid;
+}
 
-  //flex
-  .control {
-    clear: right;
-  }
+//flex
+.control {
+  clear: right;
+}
 
-  .header {
-    padding: 20px;
-    //border-bottom: 1px solid;
-  }
+.header {
+  padding: 20px;
+  //border-bottom: 1px solid;
+}
 
-  .header h3 {
-    margin: 0;
-  }
+.header h3 {
+  margin: 0;
+}
 
-  // .control h4 {
-  //   margin: 0;
-  // }
+// .control h4 {
+//   margin: 0;
+// }
 
-  p {
-    margin-top: 0;
-  }
+p {
+  margin-top: 0;
+}
 
-  .form-body {
-    overflow-y: auto;
-    padding-left: 20px;
-  }
+.form-body {
+  overflow-y: auto;
+  padding-left: 20px;
+}
+
+.control-subgroup {
+  padding-left: 20px;
+}
+
+.control-group {
+  padding-top: 20px;
+}
 
 
-  .control-subgroup {
-    padding-left: 20px;
-    width: 400px;
-    background-color: #175db6;
-    color: white;
-    padding: 10px;
-    border-radius: 10px;
-  }
+// .control-subgroup {
+//   padding-left: 20px;
+//   width: 400px;
+//   background-color: #175db6;
+//   color: white;
+//   padding: 10px;
+//   border-radius: 10px;
+// }
 
-  // .control-group {
-  //   padding-top: 20px;
-  // }
+// .control-group {
+//   padding-top: 20px;
+// }
 
-  .spacer {
-    height: 20px;
-    clear: both;
-  }
+.spacer {
+  height: 20px;
+  clear: both;
+}
 
 //   h4 {
 //     font-weight: 500;
@@ -97,34 +104,59 @@ table {
 
 
 
-  .control-subgroup h4 {
-      margin-top: 0;
-      margin-bottom: 10px;
-      font-weight: 500;
-  }
+// .control-subgroup h4 {
+//     margin-top: 0;
+//     margin-bottom: 10px;
+//     font-weight: 500;
+// }
 
-  .file-tile {
-      padding-bottom: 10px;
-      padding-right: 10px;
-  }
-
-  .control-subgroup ::ng-deep .mat-checkbox-frame {
-    border-color: white
-  }
-
-
-
-.control-subgroup ::ng-deep  .mat-checkbox-checked.mat-accent .mat-checkbox-background {
-  background-color: white !important;
-  color: black !important;
+.file-tile {
+    padding-bottom: 10px;
+    padding-right: 10px;
 }
 
-.control-subgroup ::ng-deep  .mat-checkbox-checkmark-path {
-    stroke: black !important;
-}
 
 .cancel-button {
-    float: right
+  float: right
+}
+
+.inline-control {
+  display: inline-block;
+  padding-right: 20px;
+}
+
+table {
+  width: 100%;
+}
+
+td {
+  padding: 5px;
+}
+
+h4 {
+  margin: 0;
+}
+
+h3 {
+  margin: 0;
+}
+
+.file-group-control-block {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+}
+
+.file-group {
+  padding: 20px;
+  padding-left: 0;
+  width: 90%;
+  min-width: 600px;
+  box-shadow: 5px 3px 4px lightgray;
+  margin: 10px;
+  border-radius: 10px;
+  
 }
 
 //this would modify all dialogs, since in upper class have to use global class and pass in on form creation

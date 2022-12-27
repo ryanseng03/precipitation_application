@@ -2,16 +2,300 @@
 <div class="container">
   <div class="header">
     <h3>
-      Select the type of data you would like to export from the options below then click "Add Files"
+      Select the dataset and files you would like to export then click "Add Files"
     </h3>
   </div>
 
   <div class="form-body">
-    <!-- should create config json for this stuff to make it easy to update -->
+    <div class="control-group">
+      <div class="control">
+        <mat-form-field>
+          <mat-label>{{formData.datasetFormData.label}}</mat-label>
+          <mat-select
+            disableOptionCentering="true"
+            [formControl]="controls.datatype">
+            <mat-option
+              *ngFor="let dataset of formData.datasetFormData.datasetValues"
+              [value]="dataset.tag"
+              matTooltipPosition="right"
+              [matTooltip]="dataset.description">
+              {{dataset.label}}
+            </mat-option>
+            <mat-optgroup
+              *ngFor="let group of formData.datasetFormData.datasetGroups"
+              [label]="group.label">
+              <mat-option
+                *ngFor="let dataset of group.values"
+                [value]="dataset.tag"
+                matTooltipPosition="right"
+                [matTooltip]="dataset.description">
+                {{dataset.label}}
+              </mat-option>
+            </mat-optgroup>
+          </mat-select>
+        </mat-form-field>
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="right"
+          [matTooltip]="formData.datasetFormData.description"
+          inline="true">
+          help
+        </mat-icon>
+      </div>
+    </div>
+    <div class="control-group control-subgroup">
+      <div
+        *ngFor="let field of formData.datasetItem.formData.default"
+        class="control">
+        <div *ngIf="field.values.length > 1;else single">
+          <mat-form-field>
+            <mat-label>{{field.label}}</mat-label>
+            <mat-select
+              disableOptionCentering="true"
+              [formControl]="controls[field.tag]">
+              <mat-option
+                *ngFor="let value of field.values"
+                [value]="value.tag"
+                matTooltipPosition="right"
+                [matTooltip]="value.description">
+                {{value.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-icon
+            aria-hidden="false"
+            aria-label="Tooltip"
+            matTooltipPosition="right"
+            [matTooltip]="field.description"
+            inline="true">
+            help
+          </mat-icon>
+        </div>
+       <ng-template #single>
+        <!-- make sure there is one to prevent oob error (should always be one though) -->
+        <ng-container *ngIf="field.values.length == 1">
+          <mat-label
+            [matTooltip]="field.values[0].description"
+            matTooltipPosition="right">
+            {{field.label}}: {{field.values[0].label}}
+          </mat-label>
+          <mat-icon
+            aria-hidden="false"
+            aria-label="Tooltip"
+            matTooltipPosition="right"
+            [matTooltip]="field.description"
+            inline="true">
+            help
+          </mat-icon>
+        </ng-container>
+       </ng-template>
+      </div>
+    </div>
 
-    <!-- single list of objects, when option selected filter by ones that match, should update rest of fields automatically, easy peasy -->
+    <div
+      *ngFor="let category of formData.datasetItem.formData.categorized"
+      class="control-group">
+      <h4 class="inline-block">
+        {{category.label}}
+      </h4>
+      <mat-icon
+        aria-hidden="false"
+        aria-label="Tooltip"
+        matTooltipPosition="right"
+        [matTooltip]="category.description"
+        inline="true">
+        help
+      </mat-icon>
+      <div class="control-subgroup">
+        <div
+          *ngFor="let field of category.nodes"
+          class="control">
+          <div *ngIf="field.values.length > 1; else singleCat">
+            <mat-form-field>
+              <mat-label>{{field.label}}</mat-label>
+              <mat-select
+                disableOptionCentering="true"
+                [formControl]="controls[field.tag]">
+                <mat-option
+                  *ngFor="let value of field.values"
+                  [value]="value.tag"
+                  matTooltipPosition="right"
+                  [matTooltip]="value.description">
+                  {{value.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="field.description"
+              inline="true">
+              help
+            </mat-icon>
+          </div>
+          <ng-template #singleCat>
+            <!-- make sure there is one to prevent oob error (should always be one though) -->
+            <ng-container *ngIf="field.values.length == 1">
+              <mat-label
+                [matTooltip]="field.values[0].description"
+                matTooltipPosition="right">
+                {{field.label}}: {{field.values[0].label}}
+              </mat-label>
+              <mat-icon
+                aria-hidden="false"
+                aria-label="Tooltip"
+                matTooltipPosition="right"
+                [matTooltip]="field.description"
+                inline="true">
+                help
+              </mat-icon>
+            </ng-container>
+          </ng-template>
+        </div>
 
-    <!-- what type of data (rainfall, etc) -->
+      <!-- <div *ngIf="formData.datasetItem.dateRange" class="control">
+        <app-date-selector
+            label="Start Date"
+            [min]="controls.dates.range[0]"
+            [max]="controls.dates.selected[1]"
+            [period]="controls.period.value"
+            [(date)]="controls.dates.selected[0]"
+            [readonly]="false">
+        </app-date-selector>
+
+        <app-date-selector
+          label="End Date"
+          [min]="controls.dates.selected[0]"
+          [max]="controls.dates.range[1]"
+          [period]="controls.period.value"
+          [(date)]="controls.dates.selected[1]"
+          [readonly]="false">
+        </app-date-selector>
+
+
+      </div> -->
+       
+      
+
+
+    </div>
+  </div>
+  
+  <div class="spacer"></div>
+
+  <div>
+    <div *ngFor="let fileGroup of formData.datasetItem.fileGroups" class="file-group">
+      <h4>
+        File Properties
+      </h4>
+      <div class="file-group-control-block">
+        <div *ngFor="let properties of fileGroup.additionalProperties" class="inline-control">
+          <div *ngIf="properties.formData.values.length > 1; else singleOpt">
+            <mat-form-field>
+              <mat-label>{{properties.formData.label}}</mat-label>
+              <mat-select
+                disableOptionCentering="true"
+                multiple>
+                <mat-option
+    
+                  *ngFor="let value of properties.formData.values"
+                  [value]="value.tag"
+                  matTooltipPosition="right"
+                  [matTooltip]="value.description">
+                  {{value.label}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="properties.formData.description"
+              inline="true">
+              help
+            </mat-icon>
+  
+          </div>
+          <ng-template #singleOpt>
+            <!-- make sure there is one to prevent oob error (should always be one though) -->
+            <ng-container *ngIf="properties.formData.values.length == 1">
+              <mat-label
+                [matTooltip]="properties.formData.values[0].description"
+                matTooltipPosition="right">
+                {{properties.formData.label}}: {{properties.formData.values[0].label}}
+              </mat-label>
+              <mat-icon
+                aria-hidden="false"
+                aria-label="Tooltip"
+                matTooltipPosition="right"
+                [matTooltip]="properties.formData.description"
+                inline="true">
+                help
+              </mat-icon>
+            </ng-container>
+          </ng-template>
+        </div>
+      </div>
+      
+
+        
+
+      <h4>
+        Files
+      </h4>
+      <table>
+        <tr *ngFor="let fileData of fileGroup.fileData">
+          <td>
+            <mat-checkbox class="checkbox"
+            >
+            </mat-checkbox>
+            {{fileData.label}}
+            <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="fileData.description"
+              inline="true">
+              help
+            </mat-icon>
+            
+          </td>
+          <td>
+            Filetype: {{fileData.fileType.type}} (.{{fileData.fileType.ext}})
+            <mat-icon
+              aria-hidden="false"
+              aria-label="Tooltip"
+              matTooltipPosition="right"
+              [matTooltip]="fileData.fileType.description"
+              inline="true">
+              help
+            </mat-icon>
+          </td>
+        </tr>
+      </table>
+      
+      
+    </div>
+  </div>
+  </div>
+
+  <div class="form-buttons">
+    <button  mat-raised-button color="primary" [disabled]="numSelected < 1" (click)="submit()">
+      Add Files
+    </button>
+    <button mat-raised-button color="warn" class="cancel-button" (click)="cancel()">
+      Cancel
+    </button>
+  </div>
+</div>
+
+
+
+<!-- <app-date-selector></app-date-selector>
+
+    
     <div class="control-group">
 
       <div class="control">
@@ -164,9 +448,9 @@
               </div>
             </td>
           </tr>
-        </table>
+        </table> -->
 
-      </div>
+      <!-- </div>
     <div class="spacer"></div>
   </div>
 
@@ -182,6 +466,6 @@
   <button mat-raised-button color="warn" class="cancel-button" (click)="cancel()">
       Cancel
   </button>
-</div>
+</div> -->
 
 <!-- <app-date-selector></app-date-selector> -->
