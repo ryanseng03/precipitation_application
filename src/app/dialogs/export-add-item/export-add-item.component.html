@@ -13,7 +13,7 @@
           <mat-label>{{formData.datasetFormData.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="controls.datatype">
+            >
             <mat-option
               *ngFor="let dataset of formData.datasetFormData.datasetValues"
               [value]="dataset.tag"

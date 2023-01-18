@@ -1454,7 +1454,7 @@ class FileType {
   }
 }
 
-class FileGroup {
+export class FileGroup {
   private _fileData: FileData[];
   private _displayData: DisplayData;
   private _additionalProperties: FileProperty[];
