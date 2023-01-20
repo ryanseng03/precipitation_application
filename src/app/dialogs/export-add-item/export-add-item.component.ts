@@ -1,6 +1,7 @@
 import { Component, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
+import { Subscription } from 'rxjs';
 import { StringMap } from 'src/app/models/types';
 import { ActiveFormData, DatasetFormManagerService, ExportDatasetItem, FormManager, FileGroup } from 'src/app/services/dataset-form-manager.service';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
@@ -124,7 +125,7 @@ export class ExportAddItemComponent {
       }
     }
 
-    
+
 
     this.debounce = false;
     this.controls = controls;
@@ -156,8 +157,15 @@ export class ExportAddItemComponent {
     this.getFileSelectControls();
   }
 
+  //cleanup
   destroyControls() {
-    this.controls.
+    for(let tag in this.controls.dataset) {
+      this.controls.dataset[tag].sub.unsubscribe();
+    }
+    for(let groupTag in this.controls.fileGroups) {
+      this.controls.fileGroups[groupTag].fileProps
+      this.controls.fileGroups[groupTag].files
+    }
   }
 
   getFileDatasetControls() {
@@ -165,8 +173,8 @@ export class ExportAddItemComponent {
   }
 
   //!! EACH FILE GROUP IS GOING TO HAVE FILE PROP CONTROLS WITH THE SAME TAG, NEED TO SEPARATE THE CONTROLS OUT BY GROUP
-  getFileGroupControls(groups: FileGroup[]) {
-    let fileGroupControls = {};
+  getFileGroupControls(groups: FileGroup[]): GroupControls {
+    let fileGroupControls: GroupControls = {};
     for(let group of groups) {
       let controlGroup = {
         fileProps: this.getFilePropertyControls(group),
@@ -177,8 +185,8 @@ export class ExportAddItemComponent {
     return fileGroupControls;
   }
 
-  getFilePropertyControls(group: FileGroup) {
-    let filePropertyControls = {};
+  getFilePropertyControls(group: FileGroup): Controls {
+    let filePropertyControls: Controls = {};
     //set up file property controls
     for(let field of group.additionalProperties) {
       let tag = field.formData.tag;
@@ -193,13 +201,13 @@ export class ExportAddItemComponent {
         else {
           lastValues = values;
         }
-      });  
+      });
     }
     return filePropertyControls;
   }
 
-  getFileSelectControls(group: FileGroup) {
-    let fileSelectControls = {};
+  getFileSelectControls(group: FileGroup): FileControl {
+    let fileSelectControls: FileControl = {};
     //set up file select controls
     this.numSelected = 0;
     for(let file of group.fileData) {
@@ -263,22 +271,30 @@ export interface FormState {
     fileProps: {[field: string]: string[]},
     files: {[field: string]: boolean}
   }
-  
+
 }
 
 interface FileControl {
   reqCount: number,
-  control: FormControl
+  data: FormData
 }
 
-type Controls = {[tag: string]: FormControl}
+type Controls = {[tag: string]: FormData}
 type FileControls = {[tag: string]: FileControl}
 
+interface FormData {
+  control: FormControl,
+  sub: Subscription
+}
+
+interface GroupControls {
+  fileProps: Controls,
+  files: FileControls
+}
+
 interface ControlData {
+  datatype: FormData,
   dataset: Controls,
-  fileGroups: {
-    fileProps: Controls,
-    files: FileControls
-  }
+  fileGroups: GroupControls[]
 }
 
