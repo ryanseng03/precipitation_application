@@ -1412,7 +1412,7 @@ class FileData {
   }
 }
 
-class FileProperty {
+export class FileProperty {
   private _formData: FormNode;
   private _defaultValues: string[];
 
@@ -1550,7 +1550,13 @@ export class FormManager<T extends DatasetItem> {
     return this.getFormData();
   }
 
-  public setDataset(tag: string): ActiveFormData<T> {
+  public setValues(values: StringMap): ActiveFormData<T> {
+    Object.assign(this._state, values);
+    this.updateState();
+    return this.getFormData();
+  }
+
+  public setDatatype(tag: string): ActiveFormData<T> {
     return this.setValue("datatype", tag);
   }
 
