@@ -14,8 +14,10 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges {
   @Output() selectionChange: EventEmitter<FormValue> = new EventEmitter<FormValue>();
 
   control: FormControl;
+  viewControl: FormControl;
 
   constructor() {
+    this.viewControl = new FormControl("percent");
     this.control = new FormControl();
     this.control.valueChanges.subscribe((value: FormValue) => {
       this.selectionChange.next(value);

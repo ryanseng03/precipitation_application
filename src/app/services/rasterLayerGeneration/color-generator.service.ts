@@ -243,7 +243,29 @@ export class ColorGeneratorService {
     return new ColorScale(getColor, range, parts);
   }
 
+  getDivergentColorScale(dataRange: [number, number], reverse: boolean) {
+    let parts = ColorGeneratorService.COLOR_PARTS;
+    let range: [number, number] = dataRange;
 
+    let colors = [[178, 24, 43], [214, 96, 77], [244, 165, 130], [253, 219, 199], [247, 247, 247], [209, 229, 240], [146, 197, 222], [67, 147, 195], [33, 102, 172]];
+    if(reverse) {
+      colors = colors.reverse();
+    }
+    let colorScale = chroma.scale(colors).domain(range);
+
+    let getColor = (value: number) => {
+      //value = Math.pow(value, 1);
+      let color = colorScale(value);
+      return {
+        r: color._rgb[0],
+        g: color._rgb[1],
+        b: color._rgb[2],
+        a: color._rgb[3] * 255
+      };
+    }
+
+    return new ColorScale(getColor, range, parts);
+  }
 }
 
 

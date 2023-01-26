@@ -29,7 +29,8 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     turbo: "Turbo",
     tacc3: "TACC 3-wave",
     tacc4: "TACC 4-wave",
-    tacc5: "TACC 5-wave"
+    tacc5: "TACC 5-wave",
+    diverging: "Diverging"
   };
   //use separate tag so no conflict with values, only have to restrict by public name
   customColorSchemes: {[tag: string]: XMLColorSchemeData};
@@ -244,6 +245,12 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "viridis": {
         let colorScheme = this.colors.getViridisColorScale(this._dataset.dataRange, this._dataset.reverseColors);
+        let data: [string, ColorScale] = [scheme, colorScheme]
+        p = Promise.resolve(data);
+        break;
+      }
+      case "diverging": {
+        let colorScheme = this.colors.getDivergentColorScale(this._dataset.dataRange, this._dataset.reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;

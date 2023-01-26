@@ -17,7 +17,7 @@ export class LeafletColorScaleComponent implements OnInit {
   intervalLabels: string[];
   colorGradient = "";
 
-  @Input() intervals: number = 4;
+  @Input() intervals: number = 5;
   @Input() datatype: string = "";
   @Input() units: string = "";
   private _rangeAbsolute: [boolean, boolean];

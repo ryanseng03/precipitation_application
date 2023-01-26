@@ -188,7 +188,7 @@ export class MetadataRequestResults extends RequestResults {
 }
 
 export class GeotiffRequestResults extends RequestResults {
-  static readonly ENDPOINT = "https://cistore.its.hawaii.edu/raster";
+  static readonly ENDPOINT = "https://cistore.its.hawaii.edu:8443/raster";
 
   get(params: GeotiffParams, delay?: number) {
     if(!this.cancelled && !this.sub) {

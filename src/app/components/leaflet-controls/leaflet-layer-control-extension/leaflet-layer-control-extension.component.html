@@ -17,19 +17,18 @@
         [formControl]="schemeControl">
         <div id="color-control-tiles">
           <mat-option *ngFor="let scheme of baseColorSchemes | keyvalue" [value]="scheme.key">{{scheme.value}}</mat-option>
-          <div *ngFor="let scheme of customColorSchemes | keyvalue">
-            <mat-option [value]="scheme.key">
-              <div class="custom-select">
-                <span>
-                  {{scheme.value.name}}
-                </span>
-                <span></span>
-                <span class="delete-button" (click)="removeCustomColorScheme(scheme.key)">
-                  <mat-icon>clear</mat-icon>
-                </span>
-              </div>
-            </mat-option>
-        </div>
+          <mat-option *ngFor="let scheme of customColorSchemes | keyvalue" [value]="scheme.key">
+            <div class="custom-select">
+              <span>
+                {{scheme.value.name}}
+              </span>
+              <span></span>
+              <span class="delete-button" (click)="removeCustomColorScheme(scheme.key)">
+                <mat-icon>clear</mat-icon>
+              </span>
+            </div>
+          </mat-option>
+        
 
 
         </div>

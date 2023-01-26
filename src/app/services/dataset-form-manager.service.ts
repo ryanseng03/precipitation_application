@@ -172,80 +172,80 @@ export class DatasetFormManagerService {
       period: "day"
     });
     //////DS Rainfall
-    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "annual"
     });
-    let dsRainfallStatisticalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "wet"
     });
-    let dsRainfallStatisticalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "dry"
     });
-    let dsRainfallStatisticalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "annual"
     });
-    let dsRainfallStatisticalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "wet"
     });
-    let dsRainfallStatisticalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "annual"
     });
-    let dsRainfallDynamicalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "wet"
     });
-    let dsRainfallDynamicalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "annual"
     });
-    let dsRainfallDynamicalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "wet"
     });
-    let dsRainfallDynamicalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "dry"
     });
     //////DS Temperature
-    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
+    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp45"
     });
-    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
+    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp85"
     });
-    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
+    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp45"
     });
-    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
+    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp85"
     });
@@ -420,30 +420,30 @@ export class DatasetFormManagerService {
     //use if you want to add labeling to file groups in the future, unused for now
     // let griddedMapDisplayData = new DisplayData("Gridded mapped data files and metadata", "Map Data", "map_data");
     // let stationDisplayData = new DisplayData("Files containing station data", "Station Data", "station_data");
-    let rainfallMonthMapFileGroup = new FileGroup(null, [rainfallMapFile, standardErrorMapFile, anomalyFile, anomalyStandardErrorFile, metadataFile], [allExtentProperty, rfMmUnitsProperty]);
-    let rainfallMonthStationFileGroup = new FileGroup(null, [stationFile], [statewideProperty, rfMmUnitsProperty, fillPartialProperty]);
-    let rainfallDayStationFileGroup = new FileGroup(null, [stationFile], [statewideProperty, rfMmUnitsProperty, fillProperty]);
+    let rainfallMonthMapFileGroup = new FileGroup(new DisplayData("", "", "a"), [rainfallMapFile, standardErrorMapFile, anomalyFile, anomalyStandardErrorFile, metadataFile], [allExtentProperty, rfMmUnitsProperty]);
+    let rainfallMonthStationFileGroup = new FileGroup(new DisplayData("", "", "b"), [stationFile], [statewideProperty, rfMmUnitsProperty, fillPartialProperty]);
+    let rainfallDayStationFileGroup = new FileGroup(new DisplayData("", "", "c"), [stationFile], [statewideProperty, rfMmUnitsProperty, fillProperty]);
 
-    let legacyRainfallFileGroup = new FileGroup(null, [rainfallMapFile], [statewideProperty, rfMmUnitsProperty])
+    let legacyRainfallFileGroup = new FileGroup(new DisplayData("", "", "d"), [rainfallMapFile], [statewideProperty, rfMmUnitsProperty])
 
-    let temperatureMapFileGroup = new FileGroup(null, [temperatureMapFile, standardErrorMapFile, metadataFile], [allExtentProperty, tempCUnitsProperty]);
-    let temperatureStationFileGroup = new FileGroup(null, [stationFile], [fillUnfilledProperty, statewideProperty, tempCUnitsProperty]);
+    let temperatureMapFileGroup = new FileGroup(new DisplayData("", "", "e"), [temperatureMapFile, standardErrorMapFile, metadataFile], [allExtentProperty, tempCUnitsProperty]);
+    let temperatureStationFileGroup = new FileGroup(new DisplayData("", "", "f"), [stationFile], [fillUnfilledProperty, statewideProperty, tempCUnitsProperty]);
 
-    let dsRainfallStatisticalMapFileGroup = new FileGroup(null, [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalAllProperty]);
-    let dsRainfallStatisticalPredictionsFileGroup = new FileGroup(null, [dsRainfallMapPredictionsFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
-    let dsRainfallStatisticalChangeFileGroup = new FileGroup(null, [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodStatisticalFutureProperty]);
+    let dsRainfallStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "g"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalAllProperty]);
+    let dsRainfallStatisticalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "h"), [dsRainfallMapPredictionsFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
+    let dsRainfallStatisticalChangeFileGroup = new FileGroup(new DisplayData("", "", "i"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodStatisticalFutureProperty]);
 
-    let dsRainfallDynamicalMapFileGroup = new FileGroup(null, [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalAllProperty]);
-    let dsRainfallDynamicalPredictionsFileGroup = new FileGroup(null, [dsRainfallMapPredictionsFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
-    let dsRainfallDynamicalChangeFileGroup = new FileGroup(null, [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodDynamicalFutureProperty]);
+    let dsRainfallDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "a"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalAllProperty]);
+    let dsRainfallDynamicalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "j"), [dsRainfallMapPredictionsFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
+    let dsRainfallDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "k"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
-    let dsTemperatureStatisticalMapFileGroup = new FileGroup(null, [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalAllProperty]);
-    let dsTemperatureStatisticalPredictionsFileGroup = new FileGroup(null, [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
-    let dsTemperatureStatisticalChangeFileGroup = new FileGroup(null, [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
+    let dsTemperatureStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "l"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalAllProperty]);
+    let dsTemperatureStatisticalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "m"), [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
+    let dsTemperatureStatisticalChangeFileGroup = new FileGroup(new DisplayData("", "", "n"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
 
-    let dsTemperatureDynamicalMapFileGroup = new FileGroup(null, [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalAllProperty]);
-    let dsTemperatureDynamicalPredictionsFileGroup = new FileGroup(null, [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
-    let dsTemperatureDynamicalChangeFileGroup = new FileGroup(null, [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
+    let dsTemperatureDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "o"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalAllProperty]);
+    let dsTemperatureDynamicalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "p"), [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
+    let dsTemperatureDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "q"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
     //allow filetypes to be a dropdown, in case other file types in the future
 
@@ -1370,7 +1370,7 @@ export class DisplayData {
 
 
 //display data tag should be the type for the file sent to API
-class FileData {
+export class FileData {
   private _displayData: DisplayData;
   private _fileType: FileType;
   private _requires: string[];

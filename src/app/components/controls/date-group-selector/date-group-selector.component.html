@@ -20,3 +20,37 @@
   inline="true">
   help
 </mat-icon>
+
+<mat-form-field>
+  <mat-label>View Type</mat-label>
+  <mat-select
+    disableOptionCentering="true"
+    [formControl]="viewControl">
+    <mat-option
+      value="percent"
+      matTooltipPosition="right"
+      matTooltip="Percent change relative to present day">
+      Percent Change
+    </mat-option>
+    <mat-option
+      value="percent"
+      matTooltipPosition="right"
+      matTooltip="Change in value relative to present day">
+      Absolute Change
+    </mat-option>
+    <mat-option
+      value="percent"
+      matTooltipPosition="right"
+      matTooltip="Direct data value">
+      Value
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<mat-icon
+  aria-hidden="false"
+  aria-label="Tooltip"
+  matTooltipPosition="right"
+  matTooltip=""
+  inline="true">
+  help
+</mat-icon>

@@ -13,6 +13,7 @@
           <mat-label>{{formData.datasetFormData.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
+            [formControl]="controls.datatype"
             >
             <mat-option
               *ngFor="let dataset of formData.datasetFormData.datasetValues"
@@ -53,7 +54,7 @@
             <mat-label>{{field.label}}</mat-label>
             <mat-select
               disableOptionCentering="true"
-              [formControl]="controls[field.tag]">
+              [formControl]="controls.dataset[field.tag]">
               <mat-option
                 *ngFor="let value of field.values"
                 [value]="value.tag"
@@ -116,7 +117,7 @@
               <mat-label>{{field.label}}</mat-label>
               <mat-select
                 disableOptionCentering="true"
-                [formControl]="controls[field.tag]">
+                [formControl]="controls.fileGroups[field.tag]">
                 <mat-option
                   *ngFor="let value of field.values"
                   [value]="value.tag"

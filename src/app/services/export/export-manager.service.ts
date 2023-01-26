@@ -35,8 +35,8 @@ export class ExportManagerService {
   static readonly F_PART_SIZE_UL_MB = 4;
 
   ///////////////////////
-  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu/genzip/instant/splitlink";
-  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu/genzip/email/";
+  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu:8443/genzip/instant/splitlink";
+  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu:8443/genzip/email/";
   ///////////////////////
 
   private initPromise: Promise<Config>;
