@@ -13,7 +13,7 @@
           <mat-label>{{formData.datasetFormData.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="controls.datatype"
+            [formControl]="controls.datatype.control"
             >
             <mat-option
               *ngFor="let dataset of formData.datasetFormData.datasetValues"
@@ -54,7 +54,7 @@
             <mat-label>{{field.label}}</mat-label>
             <mat-select
               disableOptionCentering="true"
-              [formControl]="controls.dataset[field.tag]">
+              [formControl]="controls.dataset[field.tag].control">
               <mat-option
                 *ngFor="let value of field.values"
                 [value]="value.tag"
@@ -117,7 +117,7 @@
               <mat-label>{{field.label}}</mat-label>
               <mat-select
                 disableOptionCentering="true"
-                [formControl]="controls.fileGroups[field.tag]">
+                [formControl]="controls.dataset[field.tag].control">
                 <mat-option
                   *ngFor="let value of field.values"
                   [value]="value.tag"
@@ -155,35 +155,9 @@
             </ng-container>
           </ng-template>
         </div>
-
-      <!-- <div *ngIf="formData.datasetItem.dateRange" class="control">
-        <app-date-selector
-            label="Start Date"
-            [min]="controls.dates.range[0]"
-            [max]="controls.dates.selected[1]"
-            [period]="controls.period.value"
-            [(date)]="controls.dates.selected[0]"
-            [readonly]="false">
-        </app-date-selector>
-
-        <app-date-selector
-          label="End Date"
-          [min]="controls.dates.selected[0]"
-          [max]="controls.dates.range[1]"
-          [period]="controls.period.value"
-          [(date)]="controls.dates.selected[1]"
-          [readonly]="false">
-        </app-date-selector>
-
-
-      </div> -->
-       
-      
-
-
     </div>
   </div>
-  
+
   <div class="spacer"></div>
 
   <div>
@@ -197,10 +171,10 @@
             <mat-form-field>
               <mat-label>{{properties.formData.label}}</mat-label>
               <mat-select
+                [formControl]="controls.fileGroups[fileGroup.tag].fileProps[properties.formData.tag].control"
                 disableOptionCentering="true"
                 multiple>
                 <mat-option
-    
                   *ngFor="let value of properties.formData.values"
                   [value]="value.tag"
                   matTooltipPosition="right"
@@ -217,7 +191,7 @@
               inline="true">
               help
             </mat-icon>
-  
+
           </div>
           <ng-template #singleOpt>
             <!-- make sure there is one to prevent oob error (should always be one though) -->
@@ -239,9 +213,7 @@
           </ng-template>
         </div>
       </div>
-      
 
-        
 
       <h4>
         Files
@@ -250,7 +222,7 @@
         <tr *ngFor="let fileData of fileGroup.fileData">
           <td>
             <mat-checkbox class="checkbox"
-            >
+              [formControl]="controls.fileGroups[fileGroup.tag].files[fileData.tag].data.control">
             </mat-checkbox>
             {{fileData.label}}
             <mat-icon
@@ -261,7 +233,7 @@
               inline="true">
               help
             </mat-icon>
-            
+
           </td>
           <td>
             Filetype: {{fileData.fileType.type}} (.{{fileData.fileType.ext}})
@@ -276,8 +248,8 @@
           </td>
         </tr>
       </table>
-      
-      
+
+
     </div>
   </div>
   </div>
@@ -291,182 +263,3 @@
     </button>
   </div>
 </div>
-
-
-
-<!-- <app-date-selector></app-date-selector>
-
-    
-    <div class="control-group">
-
-      <div class="control">
-        <mat-form-field>
-          <mat-label>Dataset</mat-label>
-          <mat-select
-            disableOptionCentering="true"
-            [formControl]="controls.dataset">
-            <mat-option
-              *ngFor="let dataset of getDatasetData()"
-              [value]="dataset.value"
-              matTooltipPosition="right"
-              [matTooltip]="dataset.description">
-              {{dataset.label}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-icon
-          aria-hidden="false"
-          aria-label="Tooltip"
-          matTooltipPosition="right"
-          [matTooltip]="selectorDescriptions.dataset"
-          inline="true">
-          help
-        </mat-icon>
-      </div>
-
-      <div class="control">
-        <mat-form-field>
-          <mat-label>{{periods.label}}</mat-label>
-          <mat-select
-            disableOptionCentering="true"
-            [formControl]="controls.period">
-            <mat-option
-              *ngFor="let period of periodAvailability[controls.dataset.value]"
-              [value]="periods.values[period].value"
-              matTooltipPosition="right"
-              [matTooltip]="periods.values[period].description">
-              {{periods.values[period].label}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-icon
-          aria-hidden="false"
-          aria-label="Tooltip"
-          matTooltipPosition="right"
-          [matTooltip]="periods.description"
-          inline="true">
-          help
-        </mat-icon>
-      </div>
-
-      <div *ngIf="ranges[controls.dataset.value][controls.period.value]">
-        <div class="control-group">
-          <div class="control-group-label">
-            Date Range
-            <mat-icon
-              aria-hidden="false"
-              aria-label="Tooltip"
-              matTooltipPosition="right"
-              [matTooltip]="selectorDescriptions.dates"
-              inline="true">
-              help
-            </mat-icon>
-          </div>
-
-          <div class="control">
-            <app-date-selector
-                label="Start Date"
-                [min]="controls.dates.range[0]"
-                [max]="controls.dates.selected[1]"
-                [period]="controls.period.value"
-                [(date)]="controls.dates.selected[0]"
-                [readonly]="false">
-            </app-date-selector>
-
-            <app-date-selector
-              label="End Date"
-              [min]="controls.dates.selected[0]"
-              [max]="controls.dates.range[1]"
-              [period]="controls.period.value"
-              [(date)]="controls.dates.selected[1]"
-              [readonly]="false">
-            </app-date-selector>
-
-
-          </div>
-        </div>
-
-        <div class="control-group-label">
-          Files
-          <mat-icon
-            aria-hidden="false"
-            aria-label="Tooltip"
-            matTooltipPosition="right"
-            [matTooltip]="selectorDescriptions.files"
-            inline="true">
-            help
-          </mat-icon>
-        </div>
-        <table>
-          <tr *ngFor="let fileData of getFileData()">
-            <td>
-              <mat-checkbox class="checkbox"
-                [formControl]="fileData.selectControl">
-              </mat-checkbox>
-              {{fileData.label}}
-              <mat-icon
-                aria-hidden="false"
-                aria-label="Tooltip"
-                matTooltipPosition="right"
-                [matTooltip]="fileData.description"
-                inline="true">
-                help
-              </mat-icon>
-            </td>
-            <td>
-              <div class="label">
-                Filetype:
-              </div>
-              {{fileData.filetype}}
-            </td>
-            <td>
-              <div class="extent-container" [ngClass]="{'hide': !fileData.selectControl.value}">
-                <div class="label">
-                  Spatial Extents:
-                </div>
-                <mat-form-field>
-                  <mat-select
-                    disableOptionCentering="true"
-                    [formControl]="fileData.extentControl"
-                    multiple>
-                    <mat-option
-                      *ngFor="let extent of fileData.extents"
-                      [value]="extentData.values[extent].value"
-                      matTooltipPosition="right"
-                      [matTooltip]="extentData.values[extent].description">
-                      {{extentData.values[extent].label}}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-icon
-                  aria-hidden="false"
-                  aria-label="Tooltip"
-                  matTooltipPosition="right"
-                  [matTooltip]="selectorDescriptions.extent"
-                  inline="true">
-                  help
-                </mat-icon>
-              </div>
-            </td>
-          </tr>
-        </table> -->
-
-      <!-- </div>
-    <div class="spacer"></div>
-  </div>
-
-
-
-
-</div>
-
-<div class="form-buttons">
-  <button  mat-raised-button color="primary" [disabled]="!filesSelected()" (click)="submit()">
-    Add Files
-  </button>
-  <button mat-raised-button color="warn" class="cancel-button" (click)="cancel()">
-      Cancel
-  </button>
-</div> -->
-
-<!-- <app-date-selector></app-date-selector> -->

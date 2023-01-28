@@ -21,30 +21,28 @@ export class ExportAddItemComponent {
   numSelected: number;
 
   constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: FormState, private dateManager: DateManagerService, private formService: DatasetFormManagerService) {
+    console.log(data);
     this._formManager = formService.exportFormManager;
-    //set up form controls
-    //inject values
-    //this.setupControls(data);
-    // this.updateDataset();
     this.initializeControls(data);
+    console.log(this.controls);
   }
 
 
-  
-  private initializeControls(initialValues: FormState) {
+
+  private initializeControls(initValues: FormState) {
     this.controls = {
       datatype: null,
       dataset: {},
       fileGroups: {}
     };
-    let formData = initialValues? this._formManager.setValues(initialValues.dataset) : this._formManager.getFormData();
+    let formData = initValues? this._formManager.setValues(initValues.dataset) : this._formManager.getFormData();
     this.formData = formData;
     let {datatype, ...values} = formData.values;
     //setup main datatype control (always there, only needed once)
     this.setupDatatypeControl(datatype);
     //setup variable controls
     this.setupDatasetControls(values);
-    this.setupFileGroupControls(initialValues?.fileGroups);
+    this.setupFileGroupControls(initValues?.fileGroups);
   }
 
   private setupDatatypeControl(datatype: string) {
@@ -56,7 +54,7 @@ export class ExportAddItemComponent {
     });
     this.controls.datatype = {
       control,
-      sub 
+      sub
     };
   }
 
@@ -70,9 +68,9 @@ export class ExportAddItemComponent {
     this.setupFileGroupControls(null);
   }
 
-  private setupDatasetControls(values: StringMap) {
-    for(let field in values) {
-      let control = new FormControl(values[field]);
+  private setupDatasetControls(controlValues: StringMap) {
+    for(let field in controlValues) {
+      let control = new FormControl(controlValues[field]);
       let sub = control.valueChanges.subscribe((value) => {
         if(!this.lockDatasetUpdates) {
           let formData = this._formManager.setValue(field, value);
@@ -82,7 +80,7 @@ export class ExportAddItemComponent {
           this.cleanupFileGroupControlSubscriptions();
           this.setupFileGroupControls(null);
         }
-      });   
+      });
       this.controls.dataset[field] = {
         control,
         sub
@@ -98,9 +96,9 @@ export class ExportAddItemComponent {
     this.lockDatasetUpdates = false;
   }
 
-  private setupFileGroupControls(values: FileGroupStates) {
+  private setupFileGroupControls(initValues: FileGroupStates) {
     for(let group of this.formData.datasetItem.fileGroups) {
-      let groupValues = values? values[group.tag] : null;
+      let groupValues = initValues ? initValues[group.tag] : null;
       let filePropertyControls = this.getFilePropertyControls(group.additionalProperties, groupValues?.fileProps);
       let fileSelectControls = this.getFileSelectControls(group.fileData, groupValues?.files);
       this.controls.fileGroups[group.tag] = {
@@ -110,12 +108,12 @@ export class ExportAddItemComponent {
     }
   }
 
-  private getFilePropertyControls(properties: FileProperty[], values: FilePropState): Controls {
+  private getFilePropertyControls(properties: FileProperty[], initValues: FilePropState): Controls {
     let filePropertyControls: Controls = {};
     //set up file property controls
     for(let field of properties) {
       let tag = field.formData.tag;
-      let defaults = field.defaultValues;
+      let defaults = initValues ? initValues[tag] : field.defaultValues;
       let control = new FormControl(defaults);
       let lastValues = defaults;
       let sub = control.valueChanges.subscribe((values: string[]) => {
@@ -134,13 +132,13 @@ export class ExportAddItemComponent {
     return filePropertyControls;
   }
 
-  private getFileSelectControls(fileData: FileData[], values: FileSelectState): FileControls {
+  private getFileSelectControls(fileData: FileData[], initValues: FileSelectState): FileControls {
     let fileSelectControls: FileControls = {};
     //set up file select controls
     this.numSelected = 0;
     for(let file of fileData) {
       let tag = file.tag;
-      let initValue: boolean = values ? values[tag] : false;
+      let initValue: boolean = initValues ? initValues[tag] : false;
       //set to false initially, separately set initial values so control listener handles side effects
       let control = new FormControl(initValue);
       let lastValue = false;
@@ -217,7 +215,28 @@ export class ExportAddItemComponent {
   }
 
   submit() {
-    this.dialogRef.close(null);
+    //construct state
+    let state: FormState = {
+      dataset: {},
+      fileGroups: {}
+    };
+    state.dataset.datatype = this.controls.datatype.control.value;
+    for(let field in this.controls.dataset) {
+      state.dataset.field = this.controls.dataset[field].control.value;
+    }
+    for(let groupTag in this.controls.fileGroups) {
+      state.fileGroups[groupTag] = {
+        fileProps: {},
+        files: {}
+      };
+      for(let tag in this.controls.fileGroups[groupTag].fileProps) {
+        state.fileGroups[groupTag].fileProps[tag] = this.controls.fileGroups[groupTag].fileProps[tag].control.value;
+      }
+      for(let tag in this.controls.fileGroups[groupTag].files) {
+        state.fileGroups[groupTag].files[tag] = this.controls.fileGroups[groupTag].files[tag].data.control.value;
+      }
+    }
+    this.dialogRef.close(state);
   }
 
 

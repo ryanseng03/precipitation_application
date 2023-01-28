@@ -2,7 +2,7 @@
 import { Component, OnInit, Inject, NgZone, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ExportAddItemComponent } from 'src/app/dialogs/export-add-item/export-add-item.component';
+import { ExportAddItemComponent, FormState } from 'src/app/dialogs/export-add-item/export-add-item.component';
 import { ExportManagerService } from 'src/app/services/export/export-manager.service';
 import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.service';
 import { Observable } from 'rxjs';
@@ -55,18 +55,18 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
   }
 
   checkEmailReq() {
-    let numFiles: number = this.exportItems.reduce((acc: number, item: any) => {
-      let numDateFiles = item.data.range[1].diff(item.data.range[0], item.data.period) + 1;
-      let numExtentFiles: number = (<string[][]>Object.values(item.data.files)).reduce((acc: number, extents: string[]) => {
-        return acc + extents.length;
-      }, 0);
-      let numItemFiles = numDateFiles * numExtentFiles;
-      return acc + numItemFiles;
-    }, 0);
-    this.emailData.maxSizeExceeded = numFiles > 150;
-    if(this.emailData.maxSizeExceeded) {
-      this.emailData.useEmailControl.setValue(true);
-    }
+    // let numFiles: number = this.exportItems.reduce((acc: number, item: any) => {
+    //   let numDateFiles = item.data.range[1].diff(item.data.range[0], item.data.period) + 1;
+    //   let numExtentFiles: number = (<string[][]>Object.values(item.data.files)).reduce((acc: number, extents: string[]) => {
+    //     return acc + extents.length;
+    //   }, 0);
+    //   let numItemFiles = numDateFiles * numExtentFiles;
+    //   return acc + numItemFiles;
+    // }, 0);
+    // this.emailData.maxSizeExceeded = numFiles > 150;
+    // if(this.emailData.maxSizeExceeded) {
+    //   this.emailData.useEmailControl.setValue(true);
+    // }
   }
 
 
@@ -77,7 +77,7 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
 
 
   addExportData(i: number) {
-    let initData: any = i < 0 ? null : this.exportItems[i].data;
+    let initData: any = i < 0 ? null : this.exportItems[i];
 
     //panelClass applies global class to form (styles.scss)
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
@@ -87,7 +87,7 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
       data: initData
     });
 
-    dialogRef.afterClosed().subscribe((data: any) => {
+    dialogRef.afterClosed().subscribe((data: FormState) => {
       if(data) {
         if(i < 0) {
           this.exportItems.push(data);

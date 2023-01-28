@@ -156,10 +156,5 @@ h3 {
   box-shadow: 5px 3px 4px lightgray;
   margin: 10px;
   border-radius: 10px;
-  
+  margin-bottom: 20px;
 }
-
-//this would modify all dialogs, since in upper class have to use global class and pass in on form creation
-// ::ng-deep .mat-dialog-container {
-//   padding: 0;
-// }
