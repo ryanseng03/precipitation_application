@@ -21,10 +21,12 @@ export class ExportAddItemComponent {
   numSelected: number;
 
   constructor(public dialogRef: MatDialogRef<ExportAddItemComponent>, @Inject(MAT_DIALOG_DATA) public data: FormState, private dateManager: DateManagerService, private formService: DatasetFormManagerService) {
-    console.log(data);
+    //reset the state on close, can remove this if want to save when closing form, probably want it to reset to a default
+    dialogRef.afterClosed().subscribe(() => {
+      this._formManager.resetState();
+    });
     this._formManager = formService.exportFormManager;
     this.initializeControls(data);
-    console.log(this.controls);
   }
 
 
@@ -97,6 +99,7 @@ export class ExportAddItemComponent {
   }
 
   private setupFileGroupControls(initValues: FileGroupStates) {
+    this.numSelected = 0;
     for(let group of this.formData.datasetItem.fileGroups) {
       let groupValues = initValues ? initValues[group.tag] : null;
       let filePropertyControls = this.getFilePropertyControls(group.additionalProperties, groupValues?.fileProps);
@@ -135,13 +138,15 @@ export class ExportAddItemComponent {
   private getFileSelectControls(fileData: FileData[], initValues: FileSelectState): FileControls {
     let fileSelectControls: FileControls = {};
     //set up file select controls
-    this.numSelected = 0;
     for(let file of fileData) {
       let tag = file.tag;
       let initValue: boolean = initValues ? initValues[tag] : false;
       //set to false initially, separately set initial values so control listener handles side effects
       let control = new FormControl(initValue);
-      let lastValue = false;
+      if(initValue) {
+        this.numSelected++;
+      }
+      let lastValue = initValue;
       let sub = control.valueChanges.subscribe((value: boolean) => {
         //use to debounce same values if toggled due to requirements
         if(value == lastValue) {
@@ -222,7 +227,7 @@ export class ExportAddItemComponent {
     };
     state.dataset.datatype = this.controls.datatype.control.value;
     for(let field in this.controls.dataset) {
-      state.dataset.field = this.controls.dataset[field].control.value;
+      state.dataset[field] = this.controls.dataset[field].control.value;
     }
     for(let groupTag in this.controls.fileGroups) {
       state.fileGroups[groupTag] = {
@@ -238,8 +243,6 @@ export class ExportAddItemComponent {
     }
     this.dialogRef.close(state);
   }
-
-
 }
 
 export interface FormState {

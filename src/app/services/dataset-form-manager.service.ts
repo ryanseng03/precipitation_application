@@ -1523,9 +1523,11 @@ export class FormManager<T extends DatasetItem> {
   private _values: StringMap;
   private _activeItem: T;
   private _state: StringMap;
+  private _defaultState: StringMap;
 
   constructor(datasets: Dataset<T>[], datasetFormData: DatasetFormData, defaultState: StringMap) {
-    this._state = defaultState;
+    this._defaultState = defaultState;
+    this._state = Object.assign({}, defaultState);
     this._datasets = {};
     for(let dataset of datasets) {
       this._datasets[dataset.tag] = dataset;
@@ -1542,6 +1544,11 @@ export class FormManager<T extends DatasetItem> {
     this._values = Object.assign({
       datatype: dataset.tag
     }, this._activeItem.values)
+  }
+
+  public resetState(): void {
+    this._state = Object.assign({}, this._defaultState);
+    this.updateState();
   }
 
   public setValue(field: string, tag: string): ActiveFormData<T> {
