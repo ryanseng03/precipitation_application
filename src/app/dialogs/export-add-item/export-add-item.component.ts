@@ -1,6 +1,7 @@
 import { Component, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
+import { Moment } from 'moment';
 import { Subscription } from 'rxjs';
 import { StringMap } from 'src/app/models/types';
 import { ActiveFormData, DatasetFormManagerService, ExportDatasetItem, FormManager, FileGroup, FileProperty, FileData } from 'src/app/services/dataset-form-manager.service';
@@ -35,11 +36,18 @@ export class ExportAddItemComponent {
     this.controls = {
       datatype: null,
       dataset: {},
+      dates: {
+        start: null,
+        end: null
+      },
       fileGroups: {}
     };
     let formData = initValues? this._formManager.setValues(initValues.dataset) : this._formManager.getFormData();
     this.formData = formData;
     let {datatype, ...values} = formData.values;
+    //initialize date values to date range
+    this.controls.dates.start = initValues ? initValues.dates.start : this.formData.datasetItem.dateRange[0];
+    this.controls.dates.end = initValues ? initValues.dates.end : this.formData.datasetItem.dateRange[1];
     //setup main datatype control (always there, only needed once)
     this.setupDatatypeControl(datatype);
     //setup variable controls
@@ -223,6 +231,10 @@ export class ExportAddItemComponent {
     //construct state
     let state: FormState = {
       dataset: {},
+      dates: {
+        start: this.controls.dates.start,
+        end: this.controls.dates.end
+      },
       fileGroups: {}
     };
     state.dataset.datatype = this.controls.datatype.control.value;
@@ -247,6 +259,7 @@ export class ExportAddItemComponent {
 
 export interface FormState {
   dataset: StringMap,
+  dates: DateState,
   fileGroups: FileGroupStates
 }
 
@@ -283,6 +296,12 @@ interface FileGroupControls {
 interface ExportControlData {
   datatype: ControlData,
   dataset: Controls,
+  dates: DateState
   fileGroups: FileGroupControls
+}
+
+interface DateState {
+  start: Moment
+  end: Moment
 }
 

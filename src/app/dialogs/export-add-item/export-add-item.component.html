@@ -160,6 +160,38 @@
 
   <div class="spacer"></div>
 
+  <!-- @Input() label: string;
+  @Input() min: Moment.Moment;
+  @Input() max: Moment.Moment;
+
+  @Input() date: Moment.Moment;
+  @Output() dateChange: EventEmitter<Moment.Moment> = new EventEmitter<Moment.Moment>();
+
+  @Input() period: string;
+
+  @Input() readonly: boolean = false; -->
+  <div *ngIf="formData.datasetItem.dateRange">
+    <app-date-selector
+      class="date-select"
+      label="Start Date"
+      [min]="formData.datasetItem.dateRange[0]"
+      [max]="controls.dates.end"
+      [(date)]="controls.dates.start"
+      [period]="'month'"
+      [readonly]="false">
+    </app-date-selector>
+    <app-date-selector
+      class="date-select"
+      label="End Date"
+      [min]="controls.dates.start"
+      [max]="formData.datasetItem.dateRange[1]"
+      [(date)]="controls.dates.end"
+      [period]="'month'"
+      [readonly]="false">
+    </app-date-selector>
+    <div class="spacer"></div>
+  </div>
+
   <div>
     <div *ngFor="let fileGroup of formData.datasetItem.fileGroups" class="file-group">
       <h4>
