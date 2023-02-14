@@ -8,19 +8,12 @@ import { DateManagerService } from './dateManager/date-manager.service';
   providedIn: 'root'
 })
 export class DatasetFormManagerService {
-  // private _datasetFormData: DatasetFormData;
-  // private _datasets: {[tag: string]: Dataset};
-  // private _activeDataset: Dataset;
-  // private _activeItem: DatasetItem;
-  // private _state: StringMap;
   private _visFormManager: FormManager<VisDatasetItem>;
   private _exportFormManager: FormManager<ExportDatasetItem>;
 
   constructor(private dateHandler: DateManagerService) {
     this.setupDatasets();
   }
-
-
 
   ////////////// set up datasets ///////////////////
   private setupDatasets() {
@@ -332,8 +325,7 @@ export class DatasetFormManagerService {
     //file display data
     let rainfallMapDisplayData = new DisplayData("A gridded rainfall map representing estimated rainfall values over the state of Hawaiʻi.", "Rainfall Map", "data_map");
     let temperatureMapDisplayData = new DisplayData("A gridded temperature map representing the estimated temperature values over the state of Hawaiʻi.", "Temperature Map", "data_map");
-    let dsRainfallMapDisplayData = new DisplayData("A gridded rainfall map representing estimated present day rainfall values based on current data.", "Rainfall Map", "data_map");
-    let dsRainfallMapPredictionsDisplayData = new DisplayData("A gridded map displaying the predicted future rainfall.", "Rainfall Prediction Map", "data_map_predictions");
+    let dsRainfallMapDisplayData = new DisplayData("A gridded rainfall map representing estimated present day or predicted future rainfall values.", "Rainfall Map", "data_map");
     let dsRainfallMapChangeDisplayData = new DisplayData("A gridded map displaying the predicted change in rainfall from present day conditions.", "Rainfall Change Map", "data_map_change"); //includes percent
     let dsTemperatureMapDisplayData = new DisplayData("A gridded temperature map representing estimated present day average temperature values based on current data.", "Temperature Map", "data_map");
     let dsTemperatureMapPredictionsDisplayData = new DisplayData("A gridded map displaying the predicted future temperature.", "Temperature Prediction Map", "data_map_predictions");
@@ -406,7 +398,6 @@ export class DatasetFormManagerService {
     let rainfallMapFile = new FileData(rainfallMapDisplayData, geotiffFtype, ["metadata"], {});
     let temperatureMapFile = new FileData(temperatureMapDisplayData, geotiffFtype, ["metadata"], {});
     let dsRainfallMapFile = new FileData(dsRainfallMapDisplayData, geotiffFtype, [], {});
-    let dsRainfallMapPredictionsFile = new FileData(dsRainfallMapPredictionsDisplayData, geotiffFtype, [], {});
     let dsRainfallMapChangeFile = new FileData(dsRainfallMapChangeDisplayData, geotiffFtype, [], {});
     let dsTemperatureMapFile = new FileData(dsTemperatureMapDisplayData, geotiffFtype, [], {});
     let dsTemperatureMapPredictionsFile = new FileData(dsTemperatureMapPredictionsDisplayData, geotiffFtype, [], {});
@@ -430,11 +421,9 @@ export class DatasetFormManagerService {
     let temperatureStationFileGroup = new FileGroup(new DisplayData("", "", "f"), [stationFile], [fillUnfilledProperty, statewideProperty, tempCUnitsProperty]);
 
     let dsRainfallStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "g"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalAllProperty]);
-    let dsRainfallStatisticalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "h"), [dsRainfallMapPredictionsFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
     let dsRainfallStatisticalChangeFileGroup = new FileGroup(new DisplayData("", "", "i"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodStatisticalFutureProperty]);
 
     let dsRainfallDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "a"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalAllProperty]);
-    let dsRainfallDynamicalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "j"), [dsRainfallMapPredictionsFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
     let dsRainfallDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "k"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
     let dsTemperatureStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "l"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalAllProperty]);
@@ -445,120 +434,124 @@ export class DatasetFormManagerService {
     let dsTemperatureDynamicalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "p"), [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
     let dsTemperatureDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "q"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
-    //allow filetypes to be a dropdown, in case other file types in the future
+    //note these can be combined with the vis timeseries stuff, just need to rework vistimeseries data to use this
+    let rainfallMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
+    let temperatureRainfallDayTimeseriesHandler = new TimeseriesHandler(date1990, lastDay, dayPeriod, this.dateHandler);
+    let legacyRainfallTimeseriesHandler = new TimeseriesHandler(date1920, date2012, monthPeriod, this.dateHandler);
+    let temperatureMonthTimeseriesHandler = new TimeseriesHandler(date1990, date2018, monthPeriod, this.dateHandler);
 
     //export items
     ////rainfall
     let rainfallMonthExportItem = new ExportDatasetItem([rainfallMonthMapFileGroup, rainfallMonthStationFileGroup], {
       period: "month"
-    }, [date1990, lastMonth]);
+    }, "Monthly Rainfall", rainfallMonthTimeseriesHandler);
     let rainfallDayExportItem = new ExportDatasetItem([rainfallDayStationFileGroup], {
       period: "day"
-    }, [date1990, lastDay]);
+    }, "Daily Rainfall", temperatureRainfallDayTimeseriesHandler);
     ////legacy rainfall
     let legacyRainfallMonthExportItem = new ExportDatasetItem([legacyRainfallFileGroup], {
       period: "month"
-    }, [date1920, date2012]);
+    }, "Monthly Rainfall", legacyRainfallTimeseriesHandler);
     ////min temp
     let minTemperatureMonthExportItem = new ExportDatasetItem([temperatureMapFileGroup, temperatureStationFileGroup], {
       period: "month"
-    }, [date1990, date2018]);
+    }, "Monthly Minimum Temperature", temperatureMonthTimeseriesHandler);
     let minTemperatureDayExportItem = new ExportDatasetItem([temperatureMapFileGroup, temperatureStationFileGroup], {
       period: "day"
-    }, [date1990, date2018]);
+    }, "Daily Minimum Temperature", temperatureRainfallDayTimeseriesHandler);
     ////max temp
     let maxTemperatureMonthExportItem = new ExportDatasetItem([temperatureMapFileGroup, temperatureStationFileGroup], {
       period: "month"
-    }, [date1990, date2018]);
+    }, "Monthly Maximum Temperature", temperatureMonthTimeseriesHandler);
     let maxTemperatureDayExportItem = new ExportDatasetItem([temperatureMapFileGroup, temperatureStationFileGroup], {
       period: "day"
-    }, [date1990, date2018]);
+    }, "Daily Maximum Temperature", temperatureRainfallDayTimeseriesHandler);
     ////mean temp
     let meanTemperatureMonthExportItem = new ExportDatasetItem([temperatureMapFileGroup], {
       period: "month"
-    }, [date1990, date2018]);
+    }, "Monthly Mean Temperature", temperatureMonthTimeseriesHandler);
     let meanTemperatureDayExportItem = new ExportDatasetItem([temperatureMapFileGroup], {
       period: "day"
-    }, [date1990, date2018]);
+    }, "Daily Mean Temperature", temperatureRainfallDayTimeseriesHandler);
     ////ds
     //////DS Rainfall
-    let dsRainfallStatisticalRcp45AnnualExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalPredictionsFileGroup, dsRainfallStatisticalChangeFileGroup], {
+    let dsRainfallStatisticalRcp45AnnualExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp45",
       season: "annual"
-    });
-    let dsRainfallStatisticalRcp45WetExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalPredictionsFileGroup, dsRainfallStatisticalChangeFileGroup], {
+    }, "Statistically Downscaled Annual Rainfall (RCP 4.5)");
+    let dsRainfallStatisticalRcp45WetExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp45",
       season: "wet"
-    });
-    let dsRainfallStatisticalRcp45DryExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalPredictionsFileGroup, dsRainfallStatisticalChangeFileGroup], {
+    }, "Statistically Downscaled Wet Season Rainfall (RCP 4.5)");
+    let dsRainfallStatisticalRcp45DryExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp45",
       season: "dry"
-    });
-    let dsRainfallStatisticalRcp85AnnualExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalPredictionsFileGroup, dsRainfallStatisticalChangeFileGroup], {
+    }, "Statistically Downscaled Dry Season Rainfall (RCP 4.5)");
+    let dsRainfallStatisticalRcp85AnnualExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp85",
       season: "annual"
-    });
-    let dsRainfallStatisticalRcp85WetExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalPredictionsFileGroup, dsRainfallStatisticalChangeFileGroup], {
+    }, "Statistically Downscaled Annual Rainfall (RCP 8.5)");
+    let dsRainfallStatisticalRcp85WetExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp85",
       season: "wet"
-    });
-    let dsRainfallStatisticalRcp85DryExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalPredictionsFileGroup, dsRainfallStatisticalChangeFileGroup], {
+    }, "Statistically Downscaled Wet Season Rainfall (RCP 8.5)");
+    let dsRainfallStatisticalRcp85DryExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp85",
       season: "dry"
-    });
-    let dsRainfallDynamicalRcp45AnnualExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalPredictionsFileGroup, dsRainfallDynamicalChangeFileGroup], {
+    }, "Statistically Downscaled Dry Season Rainfall (RCP 8.5)");
+    let dsRainfallDynamicalRcp45AnnualExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp45",
       season: "annual"
-    });
-    let dsRainfallDynamicalRcp45WetExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalPredictionsFileGroup, dsRainfallDynamicalChangeFileGroup], {
+    }, "Dynamically Downscaled Annual Rainfall (RCP 4.5)");
+    let dsRainfallDynamicalRcp45WetExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp45",
       season: "wet"
-    });
-    let dsRainfallDynamicalRcp45DryExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalPredictionsFileGroup, dsRainfallDynamicalChangeFileGroup], {
+    }, "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)");
+    let dsRainfallDynamicalRcp45DryExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp45",
       season: "dry"
-    });
-    let dsRainfallDynamicalRcp85AnnualExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalPredictionsFileGroup, dsRainfallDynamicalChangeFileGroup], {
+    }, "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)");
+    let dsRainfallDynamicalRcp85AnnualExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp85",
       season: "annual"
-    });
-    let dsRainfallDynamicalRcp85WetExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalPredictionsFileGroup, dsRainfallDynamicalChangeFileGroup], {
+    }, "Dynamically Downscaled Annual Rainfall (RCP 8.5)");
+    let dsRainfallDynamicalRcp85WetExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp85",
       season: "wet"
-    });
-    let dsRainfallDynamicalRcp85DryExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalPredictionsFileGroup, dsRainfallDynamicalChangeFileGroup], {
+    }, "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)");
+    let dsRainfallDynamicalRcp85DryExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp85",
       season: "dry"
-    });
+    }, "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)");
     //////DS Temperature
     let dsTemperatureStatisticalRcp45ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalPredictionsFileGroup, dsTemperatureStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp45"
-    });
+    }, "Statistically Downscaled Temperature (RCP 4.5)");
     let dsTemperatureStatisticalRcp85ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalPredictionsFileGroup, dsTemperatureStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp85"
-    });
+    }, "Statistically Downscaled Temperature (RCP 8.5)");
     let dsTemperatureDynamicalRcp45ExportItem = new ExportDatasetItem([dsTemperatureDynamicalMapFileGroup, dsTemperatureDynamicalPredictionsFileGroup, dsTemperatureDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp45"
-    });
+    }, "Dynamically Downscaled Temperature (RCP 4.5)");
     let dsTemperatureDynamicalRcp85ExportItem = new ExportDatasetItem([dsTemperatureDynamicalMapFileGroup, dsTemperatureDynamicalPredictionsFileGroup, dsTemperatureDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp85"
-    });
+    }, "Dynamically Downscaled Temperature (RCP 8.5)");
 
     ////Datasets
     let rainfallExportDataset = new Dataset<ExportDatasetItem>(rainfallDatasetDisplayData, {
@@ -919,11 +912,12 @@ abstract class DatasetItem {
   private _baseParams: StringMap;
   private _values: StringMap;
   private _formData: FormData;
+  private _label: string;
 
-
-  constructor(values: StringMap) {
+  constructor(values: StringMap, label: string) {
     this._values = values;
     this._formData = null;
+    this._label = label;
   }
 
   get formData(): FormData {
@@ -948,6 +942,10 @@ abstract class DatasetItem {
 
   get baseParams(): StringMap {
     return this._baseParams;
+  }
+  
+  get label(): string {
+    return this._label;
   }
 
   set dataset(dataset: Dataset<DatasetItem>) {
@@ -999,10 +997,9 @@ export class VisDatasetItem extends DatasetItem {
   private _focusManager: FocusManager<any>;
   private _reverseColors: boolean;
   private _datatype: string;
-  private _label: string;
 
   constructor(includeStations: boolean, includeRaster: boolean, units: string, unitsShort: string, datatype: string, label: string, dataRange: [number, number], rangeAbsolute: [boolean, boolean], focusManager: FocusManager<any>, reverseColors: boolean, values: StringMap) {
-    super(values);
+    super(values, label);
     this._includeRaster = includeRaster;
     this._includeStations = includeStations;
     this._units = units;
@@ -1011,12 +1008,7 @@ export class VisDatasetItem extends DatasetItem {
     this._rangeAbsolute = rangeAbsolute;
     this._reverseColors = reverseColors;
     this._datatype = datatype;
-    this._label = label;
     this._focusManager = focusManager;
-  }
-
-  get label(): string {
-    return this._label;
   }
 
   get datatype(): string {
@@ -1160,6 +1152,216 @@ export class PeriodData {
 
   get tag(): string {
     return this._tag;
+  }
+}
+
+// //STATEFUL VERSION NOT GOOD FOR EXPORT BECAUSE YOU NEED A RANGE INSIDE, STATELESS IS MORE USEFUL, SHOULD PROBABLY NIX THIS AND USE STATELESS IN GENERAL
+// export class TimeseriesState {
+//   private _start: Moment;
+//   private _end: Moment;
+//   private _state: Moment;
+//   private _period: PeriodData;
+
+//   constructor(start: Moment, end: Moment, period: PeriodData, initDate?: Moment) {
+//     this._start = start;
+//     this._end = end;
+//     this._period = period;
+//     this._state = initDate ? initDate.clone() : start.clone();
+//   }
+
+//   addInterval(n: number = 1): Moment {
+//     this._state.add(n * this.interval, this.unit);
+//     this.lockToRange();
+//     return this._state;
+//   }
+
+//   correctState(): Moment {
+//     let base = this._start.clone();
+//     let intervalDiff = this._state.diff(base, this.unit) / this.interval;
+//     let roundedDiff = Math.round(intervalDiff) * this.interval;
+//     base.add(roundedDiff, this.unit);
+//     this._state = base;
+//     return this.lockToRange();
+//   }
+
+//   private lockToRange(): Moment {
+//     if(this._state.isBefore(this._start)) {
+//       this._state = this._start.clone();
+//     }
+//     else if(this._state.isAfter(this._end)) {
+//       this._state = this._end.clone();
+//     }
+//     return this._state;
+//   }
+
+//   get start(): Moment {
+//     return this._start;
+//   }
+
+//   get end(): Moment {
+//     return this._end;
+//   }
+
+//   get unit(): UnitOfTime {
+//     return this._period.unit;
+//   }
+
+//   get interval(): number {
+//     return this._period.interval;
+//   }
+
+//   get period(): PeriodData {
+//     return this._period;
+//   }
+
+//   get state(): Moment {
+//     return this._state;
+//   }
+// }
+
+// export class PeriodController {
+//   private _start: Moment;
+//   private _end: Moment;
+//   private _period: PeriodData;
+//   private _dateHandler: DateManagerService;
+//   private _coverageLabel: string;
+
+//   constructor(start: Moment, end: Moment, period: PeriodData, timeseriesPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
+//     //keep coverage label
+//     //also add in date formatter for passed date, can use to get formatted date for period data for passed date
+//     this._coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
+//     this._start = start;
+//     this._end = end;
+//     this._period = period;
+//     this._dateHandler = dateHandler;
+//   }
+
+//   getLabel(date: Moment): string {
+//     return `${this._dateHandler.dateToString(date, this._period.unit, true)}`
+//   }
+
+//   addInterval(time: Moment, n: number = 1): Moment {
+//     let result = this.roundToInterval(time);
+//     result.add(n * this.interval, this.unit);
+//     result = this.lockToRange(result);
+//     return result;
+//   }
+
+//   roundToInterval(time: Moment) {
+//     let base = this._start.clone();
+//     let timeClone = time.clone();
+//     let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
+//     let roundedDiff = Math.round(intervalDiff) * this.interval;
+//     base.add(roundedDiff, this.unit);
+//     base = this.lockToRange(base);
+//     return base;
+//   }
+
+//   lockToRange(time: Moment) {
+//     let res: Moment = time;
+//     if(time.isBefore(this._start)) {
+//       res = this._start.clone();
+//     }
+//     else if(time.isAfter(this._end)) {
+//       res = this._end.clone();
+//     }
+//     return res;
+//   }
+
+//   get start(): Moment {
+//     return this._start;
+//   }
+
+//   get end(): Moment {
+//     return this._end;
+//   }
+
+//   get unit(): UnitOfTime {
+//     return this._period.unit;
+//   }
+
+//   get interval(): number {
+//     return this._period.interval;
+//   }
+
+//   get period(): PeriodData {
+//     return this._period;
+//   }
+
+//   get coverageLabel(): string {
+//     return this.coverageLabel;
+//   }
+// }
+
+export class TimeseriesHandler {
+  private _start: Moment;
+  private _end: Moment;
+  private _period: PeriodData;
+  private _dateHandler: DateManagerService;
+  private _coverageLabel: string;
+
+  constructor(start: Moment, end: Moment, period: PeriodData, dateHandler: DateManagerService) {
+    this._coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
+    this._start = start;
+    this._end = end;
+    this._period = period;
+    this._dateHandler = dateHandler;
+  }
+
+  getLabel(date: Moment): string {
+    return `${this._dateHandler.dateToString(date, this._period.unit, true)}`
+  }
+
+  addInterval(time: Moment, n: number = 1): Moment {
+    let result = this.roundToInterval(time);
+    result.add(n * this.interval, this.unit);
+    result = this.lockToRange(result);
+    return result;
+  }
+
+  roundToInterval(time: Moment) {
+    let base = this._start.clone();
+    let timeClone = time.clone();
+    let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
+    let roundedDiff = Math.round(intervalDiff) * this.interval;
+    base.add(roundedDiff, this.unit);
+    base = this.lockToRange(base);
+    return base;
+  }
+
+  lockToRange(time: Moment) {
+    let res: Moment = time;
+    if(time.isBefore(this._start)) {
+      res = this._start.clone();
+    }
+    else if(time.isAfter(this._end)) {
+      res = this._end.clone();
+    }
+    return res;
+  }
+
+  get coverageLabel(): string {
+    return this._coverageLabel;
+  }
+
+  get start(): Moment {
+    return this._start;
+  }
+
+  get end(): Moment {
+    return this._end;
+  }
+
+  get unit(): UnitOfTime {
+    return this._period.unit;
+  }
+
+  get interval(): number {
+    return this._period.interval;
+  }
+
+  get period(): PeriodData {
+    return this._period;
   }
 }
 
@@ -1497,20 +1699,40 @@ export class FileGroup {
 export class ExportDatasetItem extends DatasetItem {
   private _fileGroups: FileGroup[];
   //can be null
-  private _dateRange: [Moment, Moment];
+  private _timeseriesHandler: TimeseriesHandler;
 
-  constructor(fileGroups: FileGroup[], values: StringMap, dateRange?: [Moment, Moment]) {
-    super(values);
+  constructor(fileGroups: FileGroup[], values: StringMap, label: string, timeseriesHandler?: TimeseriesHandler) {
+    super(values, label);
     this._fileGroups = fileGroups;
-    this._dateRange = dateRange || null;
+    this._timeseriesHandler = timeseriesHandler;
   }
 
   get fileGroups(): FileGroup[] {
     return this._fileGroups;
   }
 
-  get dateRange(): [Moment, Moment] {
-    return this._dateRange;
+  get timeseriesHandler(): TimeseriesHandler {
+    return this._timeseriesHandler;
+  }
+
+  get start(): Moment {
+    return this._timeseriesHandler?.start;
+  }
+
+  get end(): Moment {
+    return this._timeseriesHandler?.end;
+  }
+
+  get unit(): UnitOfTime {
+    return this._timeseriesHandler?.unit;
+  }
+
+  get interval(): number {
+    return this._timeseriesHandler?.interval;
+  }
+
+  get period(): PeriodData {
+    return this._timeseriesHandler?.period;
   }
 }
 

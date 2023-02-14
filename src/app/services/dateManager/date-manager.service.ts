@@ -78,36 +78,5 @@ export class DateManagerService {
     return num;
   }
 
-
-  //TEMP
-  getDatasetRanges() {
-    let now = Moment();
-    let lastMonth = now.clone().subtract(1, "month").startOf("month");
-    let lastDay = now.clone().subtract(1, "day").startOf("day");
-    //set end dates to previous period for everything but legacy rainfall
-    let ranges = {
-      rainfall: {
-        day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), lastMonth.clone()]
-      },
-      legacy_rainfall: {
-        month: [Moment("1920-01"), Moment("2012-12")]
-      },
-      tmin: {
-        day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), Moment("2018-12")]
-      },
-      tmax: {
-        day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), Moment("2018-12")]
-      },
-      tmean: {
-        day: [Moment("1990-01-01"), lastDay.clone()],
-        month: [Moment("1990-01"), Moment("2018-12")]
-      }
-    };
-    return ranges;
-  }
-
   constructor() { }
 }

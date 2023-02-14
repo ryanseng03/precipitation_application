@@ -2,12 +2,13 @@
 import { Component, OnInit, Inject, NgZone, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ExportAddItemComponent, FormState } from 'src/app/dialogs/export-add-item/export-add-item.component';
+import { ExportAddItemComponent, ExportPackageItemData, FormState } from 'src/app/dialogs/export-add-item/export-add-item.component';
 import { ExportManagerService } from 'src/app/services/export/export-manager.service';
 import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.service';
 import { Observable } from 'rxjs';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
-import { ExportData, ResourceReq } from 'src/app/models/exportData';
+import { ResourceReq } from 'src/app/models/exportData';
+import { StringMap } from '@angular/core/src/render3/jit/compiler_facade_interface';
 
 
 @Component({
@@ -33,7 +34,7 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
 
   acknowledgeControl: FormControl;
 
-  exportItems: any[] = [];
+  exportItems: ExportPackageItemData[] = [];
 
   constructor(public dialog: MatDialog, private exportManager: ExportManagerService, private errorService: ErrorPopupService, private dateService: DateManagerService, private ngZone: NgZone) {
     this.emailData = {
@@ -77,7 +78,7 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
 
 
   addExportData(i: number) {
-    let initData: any = i < 0 ? null : this.exportItems[i];
+    let initData: FormState = i < 0 ? null : this.exportItems[i].state;
 
     //panelClass applies global class to form (styles.scss)
     const dialogRef = this.dialog.open(ExportAddItemComponent, {
@@ -87,7 +88,7 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
       data: initData
     });
 
-    dialogRef.afterClosed().subscribe((data: FormState) => {
+    dialogRef.afterClosed().subscribe((data: ExportPackageItemData) => {
       if(data) {
         if(i < 0) {
           this.exportItems.push(data);
@@ -149,8 +150,20 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
     }
   }
 
+  private compareDatasets(a: StringMap, b: StringMap) {
+    let same = true;
+    for(let key in a) {
+      if(a[key] !== b[key]) {
+        same = false;
+        break;
+      }
+    }
+    return same;
+  }
+
+  //UPDATE EXPORT PACKAGE CREATION
   export() {
-    let reqs: any[] = this.exportItems.reduce((acc: any[], item: any) => {
+    let reqs: ResourceReq[] = this.exportItems.reduce((acc: any[], item: any) => {
       let sub = [];
       //deconstruct data
       const { dataset, files, period, range } = item.data;

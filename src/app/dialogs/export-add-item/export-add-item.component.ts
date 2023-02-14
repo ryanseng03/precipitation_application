@@ -16,6 +16,7 @@ export class ExportAddItemComponent {
   formData: ActiveFormData<ExportDatasetItem>;
   controls: ExportControlData;
   private lockDatasetUpdates: boolean;
+  private dateDebounce: boolean = false;
 
   private _formManager: FormManager<ExportDatasetItem>;
 
@@ -46,8 +47,8 @@ export class ExportAddItemComponent {
     this.formData = formData;
     let {datatype, ...values} = formData.values;
     //initialize date values to date range
-    this.controls.dates.start = initValues ? initValues.dates.start : this.formData.datasetItem.dateRange[0];
-    this.controls.dates.end = initValues ? initValues.dates.end : this.formData.datasetItem.dateRange[1];
+    this.controls.dates.start = initValues ? initValues.dates.start : this.formData.datasetItem.start;
+    this.controls.dates.end = initValues ? initValues.dates.end : this.formData.datasetItem.end;
     //setup main datatype control (always there, only needed once)
     this.setupDatatypeControl(datatype);
     //setup variable controls
@@ -222,6 +223,18 @@ export class ExportAddItemComponent {
     this.controls.fileGroups = {};
   }
 
+  validateSetDate(date: Moment, which: string) {
+    //debounce corrected value feedback
+    if(!this.dateDebounce) {
+      this.dateDebounce = true;
+      let correctedDate = this.formData.datasetItem.timeseriesHandler.roundToInterval(date);
+      this.controls.dates[which] = correctedDate;
+    }
+    else {
+      this.dateDebounce = false;
+    }
+  }
+
   //return info about the export item
   cancel(): void {
     this.dialogRef.close(null);
@@ -229,31 +242,48 @@ export class ExportAddItemComponent {
 
   submit() {
     //construct state
-    let state: FormState = {
-      dataset: {},
-      dates: {
-        start: this.controls.dates.start,
-        end: this.controls.dates.end
+    let exportData: ExportPackageItemData = {
+      state: {
+        dataset: {},
+        dates: {
+          start: this.controls.dates.start,
+          end: this.controls.dates.end
+        },
+        fileGroups: {}
       },
-      fileGroups: {}
-    };
-    state.dataset.datatype = this.controls.datatype.control.value;
-    for(let field in this.controls.dataset) {
-      state.dataset[field] = this.controls.dataset[field].control.value;
+      labels: {
+        dataset: null,
+        files: null
+      }
     }
-    for(let groupTag in this.controls.fileGroups) {
-      state.fileGroups[groupTag] = {
+    let fileLabels = [];
+    let datasetLabel = `${this.formData.datasetItem.label} ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.end)}`;
+    exportData.labels.dataset = datasetLabel;
+    exportData.state.dataset.datatype = this.controls.datatype.control.value;
+    for(let field in this.controls.dataset) {
+      exportData.state.dataset[field] = this.controls.dataset[field].control.value;
+    }
+    for(let fileGroup of this.formData.datasetItem.fileGroups) {
+      let groupTag = fileGroup.tag;
+      exportData.state.fileGroups[groupTag] = {
         fileProps: {},
         files: {}
       };
-      for(let tag in this.controls.fileGroups[groupTag].fileProps) {
-        state.fileGroups[groupTag].fileProps[tag] = this.controls.fileGroups[groupTag].fileProps[tag].control.value;
+      for(let propTag in this.controls.fileGroups[groupTag].fileProps) {
+        exportData.state.fileGroups[groupTag].fileProps[propTag] = this.controls.fileGroups[groupTag].fileProps[propTag].control.value;
       }
-      for(let tag in this.controls.fileGroups[groupTag].files) {
-        state.fileGroups[groupTag].files[tag] = this.controls.fileGroups[groupTag].files[tag].data.control.value;
+      for(let fileData of fileGroup.fileData) {
+        let fileTag = fileData.tag;
+        let selected = this.controls.fileGroups[groupTag].files[fileTag].data.control.value;
+        exportData.state.fileGroups[groupTag].files[fileTag] = selected;
+        if(selected) {
+          fileLabels.push(fileData.label);
+        }
       }
     }
-    this.dialogRef.close(state);
+    exportData.labels.files = fileLabels.join(", ");
+
+    this.dialogRef.close(exportData);
   }
 }
 
@@ -296,12 +326,21 @@ interface FileGroupControls {
 interface ExportControlData {
   datatype: ControlData,
   dataset: Controls,
-  dates: DateState
+  dates: DateState,
   fileGroups: FileGroupControls
 }
 
-interface DateState {
-  start: Moment
+export interface DateState {
+  start: Moment,
   end: Moment
 }
 
+export interface LabelData {
+  dataset: string,
+  files: string
+}
+
+export interface ExportPackageItemData {
+  state: FormState,
+  labels: LabelData
+}

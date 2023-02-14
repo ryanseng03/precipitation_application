@@ -11,14 +11,14 @@
     <div class="item-tile" *ngFor="let item of exportItems; let i = index">
       <div class="export-item">
         <div class="text-block">
-          placeholder<!-- {{item.labels.dataset}} -->
+          {{item.labels.dataset}}
         </div>
         <div class="text-block">
           <h4>
             Files
           </h4>
           <div>
-            placeholder<!-- {{item.labels.files.join(", ")}} -->
+            {{item.labels.files}}
           </div>
         </div>
       </div>
