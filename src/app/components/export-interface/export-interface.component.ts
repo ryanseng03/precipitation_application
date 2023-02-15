@@ -163,7 +163,27 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
 
   //UPDATE EXPORT PACKAGE CREATION
   export() {
-    let reqs: ResourceReq[] = this.exportItems.reduce((acc: any[], item: any) => {
+    let reqs: ResourceReq[] = this.exportItems.reduce((acc: ResourceReq[], item: ExportPackageItemData) => {
+      let { datatype, ...baseParams } = item.state.dataset;
+      let baseData = {
+        datatype,
+        params,
+      }
+      for(let groupTag in item.state.fileGroups) {
+        let fileGroup = item.state.fileGroups[groupTag];
+        let files = [];
+        for(let file in fileGroup.files) {
+          if(fileGroup.files[file]) {
+            files.push(file);
+          }
+        }
+        for(let fileParamTag in fileGroup.fileProps) {
+          let props = fileGroup.fileProps[fileParamTag];
+          for(let prop of props) {
+
+          }
+        }
+      }
       let sub = [];
       //deconstruct data
       const { dataset, files, period, range } = item.data;
