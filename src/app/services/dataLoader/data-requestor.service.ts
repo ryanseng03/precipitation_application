@@ -33,13 +33,6 @@ export class DataRequestorService {
     return response;
   }
 
-  // getDateRange(properties: any, delay?: number): RequestResults {
-  //   let query = this.propertiesToQuery("hcdp_station_value_range", properties);
-  //   let timingMessage = `Retreived date range data`;
-  //   let response = this.basicQueryDispatch(query, delay, timingMessage);
-  //   return response;
-  // }
-
   getRaster(properties: any, delay?: number): RequestResults {
     let start = new Date().getTime();
     let response = this.dbcon.getRaster(properties, delay);

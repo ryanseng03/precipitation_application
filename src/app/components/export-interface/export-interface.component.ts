@@ -1,5 +1,5 @@
 
-import { Component, OnInit, Inject, NgZone, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, NgZone, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ExportAddItemComponent, ExportPackageItemData, FormState } from 'src/app/dialogs/export-add-item/export-add-item.component';
@@ -8,7 +8,6 @@ import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.se
 import { Observable } from 'rxjs';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
-import { StringMap } from '@angular/core/src/render3/jit/compiler_facade_interface';
 
 
 @Component({
@@ -100,54 +99,6 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
       }
 
     });
-  }
-
-  dataset2Prop = {
-    rainfall: {
-      datatype: "rainfall",
-      production: "new"
-    },
-    legacy_rainfall: {
-      datatype: "rainfall",
-      production: "legacy"
-    },
-    tmin: {
-      datatype: "temperature",
-      aggregation: "min"
-    },
-    tmax: {
-      datatype: "temperature",
-      aggregation: "max"
-    },
-    tmean: {
-      datatype: "temperature",
-      aggregation: "mean"
-    }
-  }
-  file2Prop = {
-    data_map: {
-      files: ["data_map"]
-    },
-    se: {
-      files: ["se"]
-    },
-    anom: {
-      files: ["anom"]
-    },
-    anom_se: {
-      files: ["anom_se"]
-    },
-    metadata: {
-      files: ["metadata"]
-    },
-    station_data_partial: {
-      files: ["station_data"],
-      fill: "partial"
-    },
-    station_data_raw: {
-      files: ["station_data"],
-      fill: "raw"
-    }
   }
 
   export() {

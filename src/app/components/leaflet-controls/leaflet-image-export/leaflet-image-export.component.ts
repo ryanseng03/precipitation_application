@@ -8,7 +8,7 @@ import * as rasterizeHTML from 'rasterizehtml';
   styleUrls: ['./leaflet-image-export.component.scss']
 })
 export class LeafletImageExportComponent implements OnInit {
-  @ViewChild("exportControl") exportControl: ElementRef;
+  @ViewChild("exportControl", {static: false}) exportControl: ElementRef;
 
   @Input() position: ControlPosition = "topleft";
   private _map: LMap;

@@ -1416,7 +1416,6 @@ export class TimeseriesData extends FocusManager<Moment> {
     let base = this._start.clone();
     let timeClone = time.clone();
     let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
-    console.log(intervalDiff);
     let roundedDiff = Math.round(intervalDiff) * this.interval;
     base.add(roundedDiff, this.unit);
     base = this.lockToRange(base);

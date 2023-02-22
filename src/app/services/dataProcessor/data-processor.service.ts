@@ -12,6 +12,11 @@ export class DataProcessorService {
 
   //need custom no data for now since geotiffs appear to have rounding error
   getRasterDataFromGeoTIFFArrayBuffer(data: ArrayBuffer, customNoData?: number, bands?: string[]): Promise<RasterData> {
+    const worker = new Worker("../../workers/geotiff.worker", { type: "module" });
+    worker.onmessage = ({ data }) => {
+      console.log(`page got message: ${data}`);
+    };
+    worker.postMessage("test");
     return geotiff.fromArrayBuffer(data).then((tiff: geotiff.GeoTIFF) => {
       return tiff.getImage().then((image: geotiff.GeoTIFFImage) => {
         //are tiepoints indexed by cooresponding band?

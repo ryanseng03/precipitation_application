@@ -9,7 +9,7 @@ import { ColorScale } from 'src/app/models/colorScale';
 })
 export class LeafletColorScaleComponent implements OnInit {
 
-  @ViewChild("colors") colors;
+  @ViewChild("colors", {static: false}) colors;
 
   _map: Map;
   control: Control;

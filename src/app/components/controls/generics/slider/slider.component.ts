@@ -8,8 +8,8 @@ import { Subject } from "rxjs";
 })
 export class SliderComponent implements OnInit {
 
-  @ViewChild("slider") slider;
-  @ViewChild("track") track;
+  @ViewChild("slider", {static: false}) slider;
+  @ViewChild("track", {static: false}) track;
   @Output() values: Subject<number>[] = [];
 
   trackWidth: number;

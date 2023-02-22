@@ -35,15 +35,15 @@ export class VisComponent implements OnInit, AfterViewInit {
     }
   }
 
-  @ViewChild("container") container: ElementRef;
-  @ViewChild("mapContainer") mapContainerRef: ElementRef;
-  @ViewChild("dragbar") dragbar: ElementRef;
-  @ViewChild("viewNav") viewNav: MatSidenav;
+  @ViewChild("container", {static: false}) container: ElementRef;
+  @ViewChild("mapContainer", {static: false}) mapContainerRef: ElementRef;
+  @ViewChild("dragbar", {static: false}) dragbar: ElementRef;
+  @ViewChild("viewNav", {static: false}) viewNav: MatSidenav;
 
 
-  @ViewChild("map") map: MapComponent;
+  @ViewChild("map", {static: false}) map: MapComponent;
 
-  @ViewChild("viewContainer") viewContainer: ElementRef;
+  @ViewChild("viewContainer", {static: true}) viewContainer: ElementRef;
 
 
   mapWidth: string = "calc(50% - 10px)";

@@ -52,9 +52,7 @@ export class DateFocusComponent implements OnInit {
 
   dateChanged(date: Moment.Moment) {
     date = this._timeseriesData.roundToInterval(date);
-    console.log(date.toISOString(), this.setDate?.toISOString(), this._timeseriesData.end.toISOString());
     if(!date.isSame(this.setDate)) {
-      console.log("changed");
       this.setDate = date;
       //check if any controls are disabled
       this.setDisabled(date);

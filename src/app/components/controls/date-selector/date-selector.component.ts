@@ -21,7 +21,7 @@ export let dateFormatFactory = (formatHelper: DateFormatHelperService) => {
 })
 export class DateSelectorComponent implements OnInit, OnChanges {
 
-  @ViewChild("datePicker") datePicker;
+  @ViewChild("datePicker", {static: false}) datePicker;
 
   lastValidValue: Moment.Moment;
 

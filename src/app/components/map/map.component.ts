@@ -26,8 +26,8 @@ export class MapComponent implements OnInit {
 
   @Input() imageContainer: ElementRef;
 
-  @ViewChild("mapElement") mapElement: ElementRef;
-  @ViewChild("layerController") layerController: LeafletLayerControlExtensionComponent;
+  @ViewChild("mapElement", {static: false}) mapElement: ElementRef;
+  @ViewChild("layerController", {static: true}) layerController: LeafletLayerControlExtensionComponent;
 
   readonly extents: {[county: string]: L.LatLngBoundsExpression} = {
     ka: [ [ 21.819, -159.816 ], [ 22.269, -159.25125 ] ],
@@ -232,7 +232,6 @@ export class MapComponent implements OnInit {
       L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
       clearTimeout(this.crosshairThrottle);
       this.crosshairThrottle = null;
-      console.log("Remove!");
       L.DomUtil.addClass(this.mapElement.nativeElement, 'cursor-grabbing');
     });
     this.map.on("moveend", () => {

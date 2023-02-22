@@ -12,7 +12,7 @@ import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc
 export class SiteAvailabilityTableComponent implements AfterViewInit, AfterContentInit {
 
   @ViewChildren("dataRows") dataRows: QueryList<ElementRef>;
-  @ViewChild("tbody") tbody: ElementRef;
+  @ViewChild("tbody", {static: false}) tbody: ElementRef;
 
   islandNameMap = {
     BI: "Big Island",

@@ -23,13 +23,13 @@ import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc
 })
 export class ViewContainerComponent implements OnInit {
 
-  @ViewChild("viewContainer") viewContainer: ElementRef;
-  @ViewChild("formComponent") formComponent: ElementRef;
-  @ViewChild("tableComponent") tableComponent: ElementRef;
-  @ViewChild("timeseriesComponent") timeseriesComponent: ElementRef;
-  @ViewChild("viewNav") viewNav: ElementRef;
+  @ViewChild("viewContainer", {static: true}) viewContainer: ElementRef;
+  @ViewChild("formComponent", {static: true}) formComponent: ElementRef;
+  @ViewChild("tableComponent", {static: false}) tableComponent: ElementRef;
+  @ViewChild("timeseriesComponent", {static: false}) timeseriesComponent: ElementRef;
+  @ViewChild("viewNav", {static: false}) viewNav: ElementRef;
 
-  @ViewChild("dateControlComponent") dateControlComponent: ElementRef;
+  @ViewChild("dateControlComponent", {static: false}) dateControlComponent: ElementRef;
 
   //set scrollbar width the first time becomes visible
   // scrollbarSet: boolean = false;

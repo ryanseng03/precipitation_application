@@ -1,9 +1,6 @@
-import { Component, OnInit, ViewChild, Output, Input, OnChanges, ElementRef, EventEmitter } from '@angular/core';
-import { Subject, BehaviorSubject, Observable } from "rxjs";
+import { Component, OnInit, ViewChild, Input, ElementRef } from '@angular/core';
 import { UtilityService } from "../../../../services/util/utility.service";
 import { FormControl } from '@angular/forms';
-import { element } from '@angular/core/src/render3';
-import { max } from 'rxjs/operators';
 
 
 interface SideComponents {
@@ -22,12 +19,12 @@ interface SideComponents {
 })
 export class RangeSliderComponent implements OnInit {
 
-  @ViewChild("sliderR") sliderR: ElementRef;
-  @ViewChild("sliderL") sliderL: ElementRef;
-  @ViewChild("track") track: ElementRef;
-  @ViewChild("segFill") segFill: ElementRef;
-  @ViewChild("popup") popup: ElementRef;
-  @ViewChild("popupText") popupText: ElementRef;
+  @ViewChild("sliderR", {static: false}) sliderR: ElementRef;
+  @ViewChild("sliderL", {static: false}) sliderL: ElementRef;
+  @ViewChild("track", {static: false}) track: ElementRef;
+  @ViewChild("segFill", {static: false}) segFill: ElementRef;
+  @ViewChild("popup", {static: false}) popup: ElementRef;
+  @ViewChild("popupText", {static: false}) popupText: ElementRef;
 
   // @Output() lower: Subject<number>;
   // @Output() upper: Subject<number>;

@@ -1,4 +1,3 @@
-import { setStyles } from '@angular/animations/browser/src/util';
 import { Component, OnInit, Output, Input, EventEmitter, HostListener } from '@angular/core';
 import * as L from "leaflet";
 //import * as D from "leaflet-draw";
