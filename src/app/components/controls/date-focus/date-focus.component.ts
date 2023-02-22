@@ -2,7 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import Moment from 'moment';
 import {MatIconRegistry} from "@angular/material/icon";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-import { TimeseriesData } from 'src/app/services/dataset-form-manager.service';
+import { TimeseriesData, UnitOfTime } from 'src/app/services/dataset-form-manager.service';
 
 @Component({
   selector: 'app-date-focus',
@@ -14,9 +14,10 @@ export class DateFocusComponent implements OnInit {
   _timeseriesData: TimeseriesData;
   @Input() set timeseriesData(data: TimeseriesData) {
     this._timeseriesData = data;
+    this.constructDateMoveData(data);
     //trigger recompute
     if(this.controlDate) {
-      this.controlDate = this.setDate.clone();
+      this.controlDate = this._timeseriesData.roundToInterval(this.setDate.clone());
     }
   };
   @Input() initValue: Moment.Moment;
@@ -26,156 +27,7 @@ export class DateFocusComponent implements OnInit {
   setDate: Moment.Moment;
   controlDate: Moment.Moment;
 
-  controls = null;
-
-  //NEED TO UPDATE THIS TO USE PERIODS, E.G. MOVE ONE PERIOD FOR FIRST, ONE NEXT PERIOD UP FOR SECOND (should we extend this for lower time periods?)
-  //timeseriesData has all the stuff in it for validation and whatnot, need to implement using all this
-  controlData = {
-    month: {
-      forward: [
-        {
-          tooltip: "Move forward one month",
-          icon: "fr",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.end);
-          },
-          trigger: () => {
-            this.moveDate(1, "month");
-          }
-        },
-        {
-          tooltip: "Move forward one year",
-          icon: "ffr",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.end);
-          },
-          trigger: () => {
-            this.moveDate(1, "year");
-          }
-        },
-        {
-          tooltip: "Skip to last month in range",
-          icon: "er",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.end);
-          },
-          trigger: () => {
-            this.controlDate = this._timeseriesData.end.clone();
-          }
-        }
-      ],
-      back: [
-        {
-          tooltip: "Skip to first month in range",
-          icon: "el",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.start);
-          },
-          trigger: () => {
-            this.controlDate = this._timeseriesData.start.clone();
-          }
-        },
-        {
-          tooltip: "Move back one year",
-          icon: "ffl",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.start);
-          },
-          trigger: () => {
-            this.moveDate(-1, "year");
-          }
-        },
-        {
-          tooltip: "Move back one month",
-          icon: "fl",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.start);
-          },
-          trigger: () => {
-            this.moveDate(-1, "month");
-          }
-        }
-      ]
-    },
-    day: {
-      forward: [
-        {
-          tooltip: "Move forward one day",
-          icon: "fr",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.end);
-          },
-          trigger: () => {
-            this.moveDate(1, "day");
-          }
-        },
-        {
-          tooltip: "Move forward one month",
-          icon: "ffr",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.end);
-          },
-          trigger: () => {
-            this.moveDate(1, "month");
-          }
-        },
-        {
-          tooltip: "Skip to last day in range",
-          icon: "er",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.end);
-          },
-          trigger: () => {
-            this.controlDate = this._timeseriesData.end.clone();
-          }
-        }
-      ],
-      back: [
-        {
-          tooltip: "Skip to first day in range",
-          icon: "el",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.start);
-          },
-          trigger: () => {
-            this.controlDate = this._timeseriesData.start.clone();
-          }
-        },
-        {
-          tooltip: "Move back one month",
-          icon: "ffl",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.start);
-          },
-          trigger: () => {
-            this.moveDate(-1, "month");
-          }
-        },
-        {
-          tooltip: "Move back one day",
-          icon: "fl",
-          disabled: false,
-          checkDisabled: () => {
-            return this.setDate.isSame(this._timeseriesData.start);
-          },
-          trigger: () => {
-            this.moveDate(-1, "day");
-          }
-        }
-      ]
-    }
-  };
+  dateMoveData: MoveButtonData;
 
   constructor(private matIconRegistry: MatIconRegistry, private assetService: AssetManagerService) {
     let icon = assetService.getTrustedResourceURL("/icons/fl_m.svg");
@@ -194,33 +46,139 @@ export class DateFocusComponent implements OnInit {
 
   ngOnInit() {
     let initDate = this.initValue ? this.initValue : this._timeseriesData.defaultValue;
+    initDate = this._timeseriesData.roundToInterval(initDate);
     this.controlDate = initDate;
   }
 
   dateChanged(date: Moment.Moment) {
+    date = this._timeseriesData.roundToInterval(date);
+    console.log(date.toISOString(), this.setDate?.toISOString(), this._timeseriesData.end.toISOString());
     if(!date.isSame(this.setDate)) {
+      console.log("changed");
       this.setDate = date;
       //check if any controls are disabled
-      this.setDisabled();
+      this.setDisabled(date);
       this.dateChange.emit(date);
     }
   }
 
-  setDisabled() {
-    let period = this._timeseriesData.period.unit;
-    let controlData = this.controlData[period];
-    let directions = ["forward", "back"];
-    for(let direction of directions) {
-      for(let control of controlData[direction]) {
-        control.disabled = control.checkDisabled();
+  setDisabled(date: Moment.Moment) {
+    if(date.isSame(this._timeseriesData.end)) {
+      this.dateMoveData.forward.disabled = true;
+    }
+    else {
+      this.dateMoveData.forward.disabled = false;
+    }
+    if(date.isSame(this._timeseriesData.start)) {
+      this.dateMoveData.back.disabled = true;
+    }
+    else {
+      this.dateMoveData.back.disabled = false;
+    }
+  }
+
+  constructDateMoveData(timeseriesData: TimeseriesData) {
+    //start of range
+    let fUnitStr = `${timeseriesData.interval} ${timeseriesData.unit}`;
+    //pluralize if multiple
+    if(timeseriesData.interval > 1) {
+      fUnitStr += "s";
+    }
+    let ffUnitStr: string;
+    if(timeseriesData.nextPeriod) {
+      ffUnitStr = `${timeseriesData.nextPeriod.interval} ${timeseriesData.nextPeriod.unit}`;
+      //pluralize if multiple
+      if(timeseriesData.nextPeriod.interval > 1) {
+        ffUnitStr += "s";
+      }
+    }
+
+    let dateBack: MoveData[] = [{
+      tooltip: `Skip to first ${timeseriesData.unit} in range`,
+      icon: "el",
+      trigger: () => {
+        this.controlDate = timeseriesData.start.clone();
+      }
+    }];
+
+    if(ffUnitStr !== undefined) {
+      dateBack.push({
+        tooltip: `Move back ${ffUnitStr}`,
+        icon: "ffl",
+        trigger: () => {
+          this.moveDate(-timeseriesData.nextPeriod.interval, timeseriesData.nextPeriod.unit);
+        }
+      });
+    }
+
+    dateBack.push({
+      tooltip: `Move back ${fUnitStr}`,
+      icon: "fl",
+      trigger: () => {
+        this.moveDate(-timeseriesData.interval, timeseriesData.unit);
+      }
+    });
+
+
+
+    let dateForward: MoveData[] = [{
+      tooltip: `Move forward ${fUnitStr}`,
+      icon: "fr",
+      trigger: () => {
+        this.moveDate(timeseriesData.interval, timeseriesData.unit);
+      }
+    }];
+
+    if(ffUnitStr !== undefined) {
+      dateForward.push({
+        tooltip: `Move forward ${ffUnitStr}`,
+        icon: "ffr",
+        trigger: () => {
+          this.moveDate(timeseriesData.nextPeriod.interval, timeseriesData.nextPeriod.unit);
+        }
+      });
+    }
+
+    dateForward.push({
+      tooltip: `Skip to last ${timeseriesData.unit} in range`,
+      icon: "er",
+      trigger: () => {
+        this.controlDate = timeseriesData.end.clone();
+      }
+    });
+
+    this.dateMoveData = {
+      forward: {
+        disabled: false,
+        moveData: dateForward
+      },
+      back: {
+        disabled: false,
+        moveData: dateBack
       }
     }
   }
 
-  moveDate(change: number, unit: Moment.unitOfTime.DurationConstructor) {
+  private moveDate(interval: number, unit: UnitOfTime) {
     let newDate = this.setDate.clone();
-    newDate.add(change, unit);
+    newDate.add(interval, unit);
     this.controlDate = newDate;
   }
 
+}
+
+interface MoveButtonData {
+  forward: DirectionGroup,
+  back: DirectionGroup
+}
+
+interface DirectionGroup {
+  disabled: boolean,
+  moveData: MoveData[]
+}
+
+interface MoveData {
+  tooltip: string,
+  icon: string,
+  trigger: () => void
 }

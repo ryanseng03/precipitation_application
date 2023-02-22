@@ -23,17 +23,28 @@
         </div>
       </div>
       <div class="tile-button-container">
-        <button mat-mini-fab (click)="addExportData(i)">
+        <button 
+          mat-mini-fab
+          matTooltip="Edit file set"
+          (click)="addExportData(i)">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-mini-fab color="warn" (click)="removeExportItem(i)">
+        <button
+          mat-mini-fab
+          matTooltip="Delete file set"
+          color="warn"
+          (click)="removeExportItem(i)">
           <mat-icon>clear</mat-icon>
         </button>
       </div>
     </div>
 
     <div class="add-button">
-      <button mat-mini-fab color="primary" (click)="addExportData(-1)">
+      <button 
+        mat-mini-fab
+        matTooltip="Add file set"
+        color="primary"
+        (click)="addExportData(-1)">
         <mat-icon>add</mat-icon>
       </button>
     </div>
@@ -64,7 +75,7 @@
         <mat-icon
           class="help-icon"
           inline="true"
-          matTooltip="Please enter your email address. This will be used to send you your data if the above box is selected, otherwise it will only be used for logging purposes.">
+          matTooltip="Please enter your email address. This will be used for logging purposes and to send you your data if the above box is selected.">
           help
         </mat-icon>
       </div>

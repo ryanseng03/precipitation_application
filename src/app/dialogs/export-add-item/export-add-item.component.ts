@@ -4,7 +4,7 @@ import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs';
 import { StringMap } from 'src/app/models/types';
-import { ActiveFormData, DatasetFormManagerService, ExportDatasetItem, FormManager, FileGroup, FileProperty, FileData } from 'src/app/services/dataset-form-manager.service';
+import { ActiveFormData, DatasetFormManagerService, ExportDatasetItem, FormManager, FileGroup, FileProperty, FileData, UnitOfTime } from 'src/app/services/dataset-form-manager.service';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 
 @Component({
@@ -37,16 +37,20 @@ export class ExportAddItemComponent {
     this.controls = {
       datatype: null,
       dataset: {},
-      dates: {
-        start: null,
-        end: null
-      },
       fileGroups: {}
     };
     let formData = initValues? this._formManager.setValues(initValues.dataset) : this._formManager.getFormData();
     this.formData = formData;
     let {datatype, ...values} = formData.values;
     //initialize date values to date range
+    this.controls.dates = initValues?.dates ? {
+      ...initValues.dates
+    } : {
+      start: this.formData.datasetItem.start,
+      end: this.formData.datasetItem.end,
+      unit: this.formData.datasetItem.unit,
+      interval: this.formData.datasetItem.interval
+    }
     this.controls.dates.start = initValues ? initValues.dates.start : this.formData.datasetItem.start;
     this.controls.dates.end = initValues ? initValues.dates.end : this.formData.datasetItem.end;
     //setup main datatype control (always there, only needed once)
@@ -246,8 +250,7 @@ export class ExportAddItemComponent {
       state: {
         dataset: {},
         dates: {
-          start: this.controls.dates.start,
-          end: this.controls.dates.end
+          ...this.controls.dates
         },
         fileGroups: {}
       },
@@ -289,7 +292,7 @@ export class ExportAddItemComponent {
 
 export interface FormState {
   dataset: StringMap,
-  dates: DateState,
+  dates?: DateState,
   fileGroups: FileGroupStates
 }
 
@@ -326,13 +329,15 @@ interface FileGroupControls {
 interface ExportControlData {
   datatype: ControlData,
   dataset: Controls,
-  dates: DateState,
+  dates?: DateState,
   fileGroups: FileGroupControls
 }
 
 export interface DateState {
   start: Moment,
-  end: Moment
+  end: Moment,
+  unit: UnitOfTime,
+  interval: number
 }
 
 export interface LabelData {

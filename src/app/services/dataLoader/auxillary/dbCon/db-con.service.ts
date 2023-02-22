@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subscription, throwError } from 'rxjs';
+import { Subscription, throwError } from 'rxjs';
 import { retry, catchError, take } from 'rxjs/operators';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-import { DataProcessorService } from 'src/app/services/dataProcessor/data-processor.service';
 import { StringMap } from 'src/app/models/types';
-import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 
 
 export interface Config {

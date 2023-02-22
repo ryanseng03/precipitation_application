@@ -3,8 +3,12 @@
     width: 100%;
 }
 
-.grabbing {
-    cursor: grabbing;
+.cursor-grabbing {
+    cursor: grabbing !important;
+}
+
+.cursor-crosshair {
+    cursor: crosshair;
 }
 
 ::ng-deep .leaflet-control-scale-line {

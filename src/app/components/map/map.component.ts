@@ -57,6 +57,7 @@ export class MapComponent implements OnInit {
   private dataLayers: {
     [band: string]: any
   };
+  hoverHook: ParameterHook;
 
 
   private selectedMarker: L.CircleMarker;
@@ -206,7 +207,7 @@ export class MapComponent implements OnInit {
 
     this.initMarkerInfo();
 
-    //L.DomUtil.addClass(this.map.getContainer(), 'pointer-cursor');
+    //L.DomUtil.addClass(this.mapElement.nativeElement, 'pointer-cursor');
     L.control.scale({
       position: 'bottomleft',
       maxWidth: 200
@@ -226,10 +227,19 @@ export class MapComponent implements OnInit {
       this.updateMarkers();
     });
 
-    //L.DomUtil.addClass(this.map.getContainer(), 'grabbing');
+    this.map.on("movestart", () => {
+      this.hoverHook.uninstall();
+      L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
+      clearTimeout(this.crosshairThrottle);
+      this.crosshairThrottle = null;
+      console.log("Remove!");
+      L.DomUtil.addClass(this.mapElement.nativeElement, 'cursor-grabbing');
+    });
     this.map.on("moveend", () => {
       let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);
+      L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-grabbing');
+      this.hoverHook.install();
     });
 
     //set timeout to prevent issues with map not propogating to overlay extension
@@ -275,7 +285,7 @@ export class MapComponent implements OnInit {
 
         //install hover handler (requires raster to be set to work)
         let hoverTag = this.paramService.registerMapHover(this.map);
-        this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
+        this.hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
         //uninstall current hook and replace with update hook that updates raster
         rasterHook.uninstall();
         let rasterLayerActive = true;
@@ -354,6 +364,22 @@ export class MapComponent implements OnInit {
     }
   }
 
+  crosshairThrottle = null;
+  crosshairHandler(position: L.LatLng, throttle: number) {
+    if(!this.crosshairThrottle) {
+      this.crosshairThrottle = setTimeout(() => {
+        let header = this.active.data.raster.getHeader();
+        let data = this.active.data.raster.getBands()[this.active.band];
+        if(this.dataRetreiver.geoPosToGridValue(header, data, position)) {
+          L.DomUtil.addClass(this.mapElement.nativeElement, 'cursor-crosshair');
+        }
+        else {
+          L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
+        }
+        this.crosshairThrottle = null;
+      }, throttle);
+    }
+  }
 
   hoverPopupHandler(timeout: number) {
     let popupData: PopupData = {
@@ -363,6 +389,7 @@ export class MapComponent implements OnInit {
     };
 
     return (position: L.LatLng) => {
+      clearTimeout(popupData.popupTimer);
       if(popupData.highlightedCell != null) {
         this.map.removeLayer(popupData.highlightedCell);
         popupData.highlightedCell = null;
@@ -372,17 +399,14 @@ export class MapComponent implements OnInit {
         this.map.closePopup(popupData.popup);
         popupData.popup = null;
       }
-
-      clearTimeout(popupData.popupTimer);
+      //if position is null mouse moved out of map
+      if(position == null) {
+        return;
+      }
+      this.crosshairHandler(position, 20);
       popupData.popupTimer = setTimeout(() => {
-        //if position is null mouse moved out of map
-        if(position == null) {
-          return;
-        }
-
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
-
         let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
         if(geojson != undefined) {
@@ -399,11 +423,12 @@ export class MapComponent implements OnInit {
           let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
 
           let labels = this.getValueLabels(value);
+          let valueLabel = labels.join("<br>");
 
           //popup cell value
           popupData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
-          let content = `${labels.value}<br>${labels.transValue}<br>`;
+          let content = `${valueLabel}<br>`;
           popupData.popup.setContent(content);
           popupData.popup.openOn(this.map);
         }
@@ -479,11 +504,11 @@ export class MapComponent implements OnInit {
 
   getMarkerPopupText(station: any): string {
     let labels = this.getCoordAndValueLabels(station);
+    let valuesLabel = labels.valueLabels.join(", ");
     let stationDetails: string = "Name: " + station.name
     + "<br> Station ID: " + station[station.id_field]
     + "<br> Lat: " + labels.lat + ", Lon: " + labels.lng
-    + `<br> Value: ${labels.value}`
-    + `, ${labels.transValue}`;
+    + `<br> Value: ${valuesLabel}`;
     return stationDetails;
   }
 
@@ -494,11 +519,11 @@ export class MapComponent implements OnInit {
     return {
       lat,
       lng,
-      ...valueLabels
+      valueLabels
     };
   }
 
-  getValueLabels(value) {
+  getValueLabels(value): string[] {
      //TEMP translations
      let translations = {
       mm: {
@@ -516,15 +541,21 @@ export class MapComponent implements OnInit {
     };
 
     let unit = this.dataset.unitsShort;
-    let translationData = translations[unit];
-    let translationValue = translationData.f(value);
-    let translationUnit = translationData.translationUnit;
+    let valueLabels = [];
+
     let roundedValue = Math.round(value * 100) / 100;
-    let roundedTranslationValue = Math.round(translationValue * 100) / 100;
-    return {
-      value: `${roundedValue.toLocaleString()}${unit}`,
-      transValue: `${roundedTranslationValue.toLocaleString()}${translationUnit}`
-    };
+    let valueLabel = `${roundedValue.toLocaleString()}${unit}`;
+    valueLabels.push(valueLabel);
+    
+    let translationData = translations[unit];
+    if(translationData) {
+      let translationValue = translationData.f(value);
+      let translationUnit = translationData.translationUnit;
+      let roundedTranslationValue = Math.round(translationValue * 100) / 100;
+      let translatedValueLabel = `${roundedTranslationValue.toLocaleString()}${translationUnit}`;
+      valueLabels.push(translatedValueLabel);
+    }
+    return valueLabels;
   }
 
   updateMarkers(): void {

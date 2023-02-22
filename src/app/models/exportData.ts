@@ -8,9 +8,12 @@ export interface ResourceReq {
     start: string,
     end: string,
     unit: UnitOfTime,
-    interval: string
+    interval: number
   },
   params: StringMap,
-  files: string[]
-}
+  fileData: {
+    fileParams: {[param: string]: string[]},
+    files: string[]
+  }[]
+};
 

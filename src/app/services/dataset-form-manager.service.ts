@@ -21,6 +21,7 @@ export class DatasetFormManagerService {
     ////values
     //////period
     let periodDay = new FormValue(new DisplayData("Data measured at a daily time scale.", "Daily", "day"), {period: "day"}, [true, true]);
+    let period16Day = new FormValue(new DisplayData("Data measured at a 16 day time scale.", "16 Day", "16day"), {period: "16day"}, [true, true]);
     let periodMonth = new FormValue(new DisplayData("Data measured at a monthly time scale.", "Monthly", "month"), {period: "month"}, [true, true]);
     //////fill
     let fillUnfilled = new FormValue(new DisplayData("Station data including only values provided by stations before going through QA/QC.", "Unfilled", "unfilled"), {fill: "raw"}, [false, true]);
@@ -42,7 +43,8 @@ export class DatasetFormManagerService {
 
     let periodNode = new FormNode(new DisplayData("The time period over which the data is measured.", "Time Period", "period"), [
       periodDay,
-      periodMonth
+      periodMonth,
+      period16Day
     ]);
     let fillNode = new FormNode(new DisplayData("The type of processing the station data goes through.", "Data Fill", "fill"), [
       fillUnfilled,
@@ -70,6 +72,7 @@ export class DatasetFormManagerService {
       periodPresent,
       periodLate
     ]);
+
 
     ////categories
     //right now only fill data is categorized separately under station data
@@ -99,6 +102,9 @@ export class DatasetFormManagerService {
       dsmNode,
       climateNode
     ], []);
+    let ndviFormData = new FormData([
+      periodNode
+    ], []);
 
     //Create Focus Managers
     ////dates
@@ -109,16 +115,21 @@ export class DatasetFormManagerService {
     let date1920 = moment("1920-01");
     let date2018 = moment("2018-12");
     let date2012 = moment("2012-12");
+    let dateNDVIStart = moment("2000-02-18");
+    let dateNDVIEnd = moment("2021-12-19");
     ////periods
+    let yearPeriod = new PeriodData("year", 1, "year");
     let monthPeriod = new PeriodData("month", 1, "month");
     let dayPeriod = new PeriodData("day", 1, "day");
+    let day16Period = new PeriodData("day", 16, "16day");
     ////focus managers
-    let rainfallMonthFocusManager = new TimeseriesData(date1990, lastMonth, monthPeriod, [monthPeriod, dayPeriod], this.dateHandler, lastMonth);
-    let temperatureRainfallDayFocusManager = new TimeseriesData(date1990, lastDay, dayPeriod, [dayPeriod], this.dateHandler, lastDay);
-    let legacyRainfallFocusManager = new TimeseriesData(date1920, date2012, monthPeriod, [monthPeriod], this.dateHandler, date2012);
-    let temperatureMonthFocusManager = new TimeseriesData(date1990, date2018, monthPeriod, [monthPeriod, dayPeriod], this.dateHandler, date2018);
+    let rainfallMonthFocusManager = new TimeseriesData(date1990, lastMonth, monthPeriod, yearPeriod, [monthPeriod, dayPeriod], this.dateHandler, lastMonth);
+    let temperatureRainfallDayFocusManager = new TimeseriesData(date1990, lastDay, dayPeriod, monthPeriod, [dayPeriod], this.dateHandler, lastDay);
+    let legacyRainfallFocusManager = new TimeseriesData(date1920, date2012, monthPeriod, yearPeriod, [monthPeriod], this.dateHandler, date2012);
+    let temperatureMonthFocusManager = new TimeseriesData(date1990, date2018, monthPeriod, yearPeriod, [monthPeriod, dayPeriod], this.dateHandler, date2018);
     let dsDynamicalFocusManager = new TimeSelectorData(dsPeriodDynamicalNode, periodPresent);
     let dsStatisticalFocusManager = new TimeSelectorData(dsPeriodStatisticalNode, periodPresent);
+    let ndviFocusManager = new TimeseriesData(dateNDVIStart, dateNDVIEnd, day16Period, yearPeriod, [], this.dateHandler, dateNDVIEnd);
 
     //Create Datasets
     ////Dataset Items
@@ -165,82 +176,86 @@ export class DatasetFormManagerService {
       period: "day"
     });
     //////DS Rainfall
-    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "annual"
     });
-    let dsRainfallStatisticalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "wet"
     });
-    let dsRainfallStatisticalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "dry"
     });
-    let dsRainfallStatisticalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "annual"
     });
-    let dsRainfallStatisticalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "wet"
     });
-    let dsRainfallStatisticalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, false, {
+    let dsRainfallStatisticalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, false, {
       dsm: "statistical",
       model: "rcp85",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "annual"
     });
-    let dsRainfallDynamicalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "wet"
     });
-    let dsRainfallDynamicalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "annual"
     });
-    let dsRainfallDynamicalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "wet"
     });
-    let dsRainfallDynamicalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, false, {
+    let dsRainfallDynamicalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, false, {
       dsm: "dynamical",
       model: "rcp85",
       season: "dry"
     });
     //////DS Temperature
-    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-50, 50], [false, false], dsStatisticalFocusManager, true, {
+    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp45"
     });
-    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-50, 50], [false, false], dsStatisticalFocusManager, true, {
+    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp85"
     });
-    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-50, 50], [false, false], dsDynamicalFocusManager, true, {
+    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp45"
     });
-    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C","Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-50, 50], [false, false], dsDynamicalFocusManager, true, {
+    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp85"
+    });
+    //NDVI
+    let ndvi = new VisDatasetItem(false, true, "", "", "NDVI", "NDVI", [-0.2, 1], [false, true], ndviFocusManager, false, {
+      period: "16day"
     });
 
     ////Datasets
@@ -251,6 +266,7 @@ export class DatasetFormManagerService {
     let meanTemperatureDatasetDisplayData = new DisplayData("Temperature data aggregated to its average value over the time period.", "Mean Temperature", "mean_temp");
     let dsRainfallDatasetDisplayData = new DisplayData("Downscaled future projections for rainfall data.", "Rainfall Projections", "ds_rainfall");
     let dsTemperatureDatasetDisplayData = new DisplayData("Downscaled future projections for temperature data.", "Temperature Projections", "ds_temp");
+    let ndviDatasetDisplayData = new DisplayData("Normalized Difference Vegetation Index", "NDVI", "ndvi");
 
     let rainfallVisDataset = new Dataset<VisDatasetItem>(rainfallDatasetDisplayData, {
       datatype: "rainfall",
@@ -310,6 +326,11 @@ export class DatasetFormManagerService {
       dsTemperatureStatisticalRcp85,
       dsTemperatureDynamicalRcp45,
       dsTemperatureDynamicalRcp85
+    ]);
+    let ndviVisDataset = new Dataset<VisDatasetItem>(ndviDatasetDisplayData, {
+      datatype: "ndvi"
+    }, ndviFormData, [
+      ndvi
     ]);
 
 
@@ -624,7 +645,7 @@ export class DatasetFormManagerService {
     let dsGrouperDisplayData = new DisplayData("Future climate projections using downscaling prediction methods.", "Downscaled Climate Projections", "downscaled");
     let datasetFormDisplayData = new DisplayData("Select the type of data you would like to view. Hover over an option for a description of the dataset.", "Dataset", "dataset");
     //vis dataset groups
-    let visDatasets = [rainfallVisDataset, legacyRainfallVisDataset, maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset, dsRainfallVisDataset, dsTemperatureVisDataset];
+    let visDatasets = [rainfallVisDataset, legacyRainfallVisDataset, maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset, dsRainfallVisDataset, dsTemperatureVisDataset, ndviVisDataset];
     let visDatasetSingles: Dataset<VisDatasetItem>[] = [];
     let visDatasetGroupers: DatasetSelectorGroup[] = [
       new DatasetSelectorGroup(historicalRainfallGrouperDisplayData, [rainfallVisDataset, legacyRainfallVisDataset]),
@@ -968,7 +989,7 @@ abstract class DatasetItem {
       return value.tag == valueTag;
     });
     this._baseParams = Object.assign(this._baseParams, valueData.paramData);
-    if(valueData.applicability[0]) {;
+    if(valueData.applicability[0]) {
       this._rasterParams = Object.assign(this._rasterParams, valueData.paramData);
     }
     if(valueData.applicability[1]) {
@@ -1369,16 +1390,18 @@ export class TimeseriesData extends FocusManager<Moment> {
   private _start: Moment;
   private _end: Moment;
   private _period: PeriodData;
-  private _timeseriesPeriods: PeriodData[];
+  private _nextPeriod: PeriodData;
+  private _stationPeriods: PeriodData[];
   private _dateHandler: DateManagerService;
 
-  constructor(start: Moment, end: Moment, period: PeriodData, timeseriesPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
+  constructor(start: Moment, end: Moment, period: PeriodData, nextPeriod: PeriodData, stationPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
     let coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
     super("timeseries", coverageLabel, defaultDate);
     this._start = start;
     this._end = end;
     this._period = period;
-    this._timeseriesPeriods = timeseriesPeriods;
+    this._nextPeriod = nextPeriod;
+    this._stationPeriods = stationPeriods;
     this._dateHandler = dateHandler;
   }
 
@@ -1393,6 +1416,7 @@ export class TimeseriesData extends FocusManager<Moment> {
     let base = this._start.clone();
     let timeClone = time.clone();
     let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
+    console.log(intervalDiff);
     let roundedDiff = Math.round(intervalDiff) * this.interval;
     base.add(roundedDiff, this.unit);
     base = this.lockToRange(base);
@@ -1434,8 +1458,12 @@ export class TimeseriesData extends FocusManager<Moment> {
     return this._period;
   }
 
-  get timeseriesPeriods(): PeriodData[] {
-    return this._timeseriesPeriods;
+  get nextPeriod(): PeriodData {
+    return this._nextPeriod;
+  }
+
+  get stationPeriods(): PeriodData[] {
+    return this._stationPeriods;
   }
 }
 

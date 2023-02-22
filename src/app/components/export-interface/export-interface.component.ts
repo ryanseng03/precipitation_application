@@ -150,68 +150,46 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
     }
   }
 
-  private compareDatasets(a: StringMap, b: StringMap) {
-    let same = true;
-    for(let key in a) {
-      if(a[key] !== b[key]) {
-        same = false;
-        break;
-      }
-    }
-    return same;
-  }
-
-  //UPDATE EXPORT PACKAGE CREATION
   export() {
-    let reqs: ResourceReq[] = this.exportItems.reduce((acc: ResourceReq[], item: ExportPackageItemData) => {
-      let { datatype, ...baseParams } = item.state.dataset;
-      let baseData = {
-        datatype,
-        params,
+    let reqs: ResourceReq[] = this.exportItems.map((item: ExportPackageItemData) => {
+      let resourceDates = null;
+      if(item.state.dates) {
+        let startDateStr = this.dateService.dateToString(item.state.dates.start, item.state.dates.unit);
+        let endDateStr = this.dateService.dateToString(item.state.dates.end, item.state.dates.unit);
+        resourceDates = {
+          start: startDateStr,
+          end: endDateStr,
+          unit: item.state.dates.unit,
+          interval: item.state.dates.interval
+        }
       }
+      
+      let { datatype, ...params } = item.state.dataset;
+      let fileData = [];
       for(let groupTag in item.state.fileGroups) {
         let fileGroup = item.state.fileGroups[groupTag];
-        let files = [];
+        let files: string[] = [];
         for(let file in fileGroup.files) {
           if(fileGroup.files[file]) {
             files.push(file);
           }
         }
-        for(let fileParamTag in fileGroup.fileProps) {
-          let props = fileGroup.fileProps[fileParamTag];
-          for(let prop of props) {
-
-          }
+        let fileDataItem = {
+          fileParams: fileGroup.fileProps,
+          files
         }
+        fileData.push(fileDataItem);
       }
-      let sub = [];
-      //deconstruct data
-      const { dataset, files, period, range } = item.data;
-      //translate dates to strings
-      let start = this.dateService.dateToString(range[0], period);
-      let end = this.dateService.dateToString(range[1], period);
-      //expand dataset props
-      let datasetProps = this.dataset2Prop[dataset];
-      //expand file props and loop extents
-      for(let file in files) {
-        let fileProps = this.file2Prop[file];
-        let extents = files[file];
-        for(let extent of extents) {
-          let data = {
-            extent,
-            range: {
-              start,
-              end
-            },
-            period
-          };
-          //add dataset and file props
-          data = Object.assign(data, datasetProps, fileProps);
-          sub.push(data);
-        }
+      let req: ResourceReq = {
+        datatype,
+        params,
+        fileData
       }
-      return acc.concat(sub);
-    }, []);
+      if(resourceDates) {
+        req.dates = resourceDates;
+      }
+      return req;
+    });
     let email = this.emailData.emailInputControl.value
     if(this.emailData.useEmailControl.value) {
       this.exportActivityMonitor.mode = "indeterminate"

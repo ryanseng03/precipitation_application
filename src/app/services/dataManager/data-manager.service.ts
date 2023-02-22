@@ -216,7 +216,7 @@ export class DataManagerService {
           let timeseriesPromises = [];
           let startDate = timeseriesData.start;
           let endDate = timeseriesData.end;
-          let periods = timeseriesData.timeseriesPeriods;
+          let periods = timeseriesData.stationPeriods;
           for(let periodData of periods) {
             let properties = {
               station_id: station[station.id_field],

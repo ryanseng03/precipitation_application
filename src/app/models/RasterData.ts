@@ -134,15 +134,17 @@ export class RasterData {
     }
 
     getBands(bands?: string[]): BandData {
-        if(bands == undefined) {
-            bands = Object.keys(this.data.data);
-        }
         let data: BandData = {};
-        let name: string;
-        let i: number;
-        for(i = 0; i < bands.length; i++) {
-            name = bands[i];
-            data[name] = this.data.data[name]
+        if(bands == undefined) {
+            data = this.data.data;
+        }
+        else {
+            let name: string;
+            let i: number;
+            for(i = 0; i < bands.length; i++) {
+                name = bands[i];
+                data[name] = this.data.data[name]
+            }
         }
         return data;
     }

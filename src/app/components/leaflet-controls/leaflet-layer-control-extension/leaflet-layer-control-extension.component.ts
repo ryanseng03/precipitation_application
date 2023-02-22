@@ -30,7 +30,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     tacc3: "TACC 3-wave",
     tacc4: "TACC 4-wave",
     tacc5: "TACC 5-wave",
-    diverging: "Diverging"
+    //diverging: "Diverging"
   };
   //use separate tag so no conflict with values, only have to restrict by public name
   customColorSchemes: {[tag: string]: XMLColorSchemeData};

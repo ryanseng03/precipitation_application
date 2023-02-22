@@ -38,8 +38,9 @@ export class LeafletColorScaleComponent implements OnInit {
       this.intervalLabelsRaw = [];
       let i: number;
       for(i = 0; i < parts; i++) {
-        //round to whole numbers
-        let interval = Math.round(range[1] - intervalSize * i);
+        let interval = range[1] - intervalSize * i;
+        //round to at most 2 decimals
+        interval = Math.round(interval * 100) / 100;
         this.intervalLabelsRaw.push(interval.toLocaleString());
       }
       //add range[0] directly to avoid rounding errors
@@ -92,7 +93,11 @@ export class LeafletColorScaleComponent implements OnInit {
   }
 
   getHeader() {
-    return `${this.datatype} (${this.units})`;
+    let header = `${this.datatype}`;
+    if(this.units) {
+      header += ` (${this.units})`
+    }
+    return header;
   }
 
 }
