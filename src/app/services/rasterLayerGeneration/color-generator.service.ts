@@ -94,9 +94,7 @@ export class ColorGeneratorService {
               name = colorMap.$.name;
             }
 
-            //console.log(name);
             let points = colorMap.Point;
-            //console.log(points);
             let colors = [];
             let domain = [];
             let span = range[1] - range[0];
@@ -247,7 +245,7 @@ export class ColorGeneratorService {
     let parts = ColorGeneratorService.COLOR_PARTS;
     let range: [number, number] = dataRange;
 
-    let colors = [[178, 24, 43], [214, 96, 77], [244, 165, 130], [253, 219, 199], [247, 247, 247], [209, 229, 240], [146, 197, 222], [67, 147, 195], [33, 102, 172]];
+    let colors = [[103,0,31], [178,24,43], [214,96,77], [255, 255, 255], [67,147,195], [33,102,172], [5,48,97]];
     if(reverse) {
       colors = colors.reverse();
     }

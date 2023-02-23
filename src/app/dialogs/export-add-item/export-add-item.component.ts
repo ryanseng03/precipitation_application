@@ -244,11 +244,54 @@ export class ExportAddItemComponent {
     this.dialogRef.close(null);
   }
 
+  // let reqs: ResourceReq[] = this.exportItems.map((item: ExportPackageItemData) => {
+  //   let resourceDates = null;
+  //   if(item.state.dates) {
+  //     let startDateStr = this.dateService.dateToString(item.state.dates.start, item.state.dates.unit);
+  //     let endDateStr = this.dateService.dateToString(item.state.dates.end, item.state.dates.unit);
+  //     resourceDates = {
+  //       start: startDateStr,
+  //       end: endDateStr,
+  //       unit: item.state.dates.unit,
+  //       interval: item.state.dates.interval
+  //     }
+  //   }
+
+  //   let { datatype, ...params } = item.state.dataset;
+  //   let fileData = [];
+  //   for(let groupTag in item.state.fileGroups) {
+  //     let fileGroup = item.state.fileGroups[groupTag];
+  //     let files: string[] = [];
+  //     for(let file in fileGroup.files) {
+  //       if(fileGroup.files[file]) {
+  //         files.push(file);
+  //       }
+  //     }
+  //     let fileDataItem = {
+  //       fileParams: fileGroup.fileProps,
+  //       files
+  //     }
+  //     fileData.push(fileDataItem);
+  //   }
+  //   let req: ResourceReq = {
+  //     datatype,
+  //     params,
+  //     fileData
+  //   }
+  //   if(resourceDates) {
+  //     req.dates = resourceDates;
+  //   }
+  //   return req;
+  // });
+
   submit() {
     //construct state
     let exportData: ExportPackageItemData = {
+      datasetItem: this.formData.datasetItem,
       state: {
-        dataset: {},
+        dataset: {
+          datatype: this.controls.datatype.control.value
+        },
         dates: {
           ...this.controls.dates
         },
@@ -260,9 +303,11 @@ export class ExportAddItemComponent {
       }
     }
     let fileLabels = [];
-    let datasetLabel = `${this.formData.datasetItem.label} ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.end)}`;
+    let datasetLabel = `${this.formData.datasetItem.label}`;
+    if(this.formData.datasetItem.timeseriesHandler) {
+      datasetLabel += ` ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.end)}`;
+    }
     exportData.labels.dataset = datasetLabel;
-    exportData.state.dataset.datatype = this.controls.datatype.control.value;
     for(let field in this.controls.dataset) {
       exportData.state.dataset[field] = this.controls.dataset[field].control.value;
     }
@@ -346,6 +391,7 @@ export interface LabelData {
 }
 
 export interface ExportPackageItemData {
+  datasetItem: ExportDatasetItem,
   state: FormState,
   labels: LabelData
 }

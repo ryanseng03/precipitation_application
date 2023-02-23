@@ -3,7 +3,7 @@ import { UnitOfTime } from "../services/dataset-form-manager.service";
 
 
 export interface ResourceReq {
-  datatype: string,
+  // datatype: string,
   dates?: {
     start: string,
     end: string,

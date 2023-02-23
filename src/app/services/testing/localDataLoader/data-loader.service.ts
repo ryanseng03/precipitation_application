@@ -52,7 +52,6 @@ export class DataLoaderService {
               console.error("Bad index, too many rasters.");
             }
           }
-          //console.log(bandName);
           return bandName;
         }
       }

@@ -1,13 +1,14 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges, OnDestroy } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { FormNode, FormValue, TimeSelectorData } from 'src/app/services/dataset-form-manager.service';
+import { FormNode, FormValue, TimeSelectorData, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
   selector: 'app-date-group-selector',
   templateUrl: './date-group-selector.component.html',
   styleUrls: ['./date-group-selector.component.scss']
 })
-export class DateGroupSelectorComponent implements OnInit, OnChanges {
+export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() timeSelectorData: TimeSelectorData;
   @Input() initValue: FormValue;
@@ -16,21 +17,54 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges {
   control: FormControl;
   viewControl: FormControl;
 
-  constructor() {
-    this.viewControl = new FormControl("percent");
+  datatype: string;
+
+  constructor(private paramService: EventParamRegistrarService) {
     this.control = new FormControl();
     this.control.valueChanges.subscribe((value: FormValue) => {
-      this.selectionChange.next(value);
+      //temp//
+      let type: string = value.tag == "present" ? "direct" : this.viewControl.value;
+      ////
+      this._pushValue(type);
     });
   }
 
+  private _pushValue(type: string) {
+    this.paramService.pushViewType(type);
+    let value = this.control.value;
+    value.paramData.type = type;
+    this.selectionChange.next(value);
+  }
+
   ngOnInit() {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
+      if(dataset) {
+        this.datatype = dataset.datatype;
+        if(!this.viewControl) {
+          let defaultType = this.datatype == "Rainfall" ? "percent" : "absolute";
+          this.viewControl = new FormControl(defaultType);
+          //temp?
+          this.viewControl.valueChanges.subscribe((value: string) => {
+            this._pushValue(value);
+          });
+        }
+        else {
+          if(this.datatype != "Rainfall" && this.viewControl.value == "percent") {
+            this.viewControl.setValue("absolute");
+          }
+        }
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if(changes.timeSelectorData) {
       this.validateForm();
     }
+  }
+
+  ngOnDestroy(): void {
+      this.paramService.pushViewType("direct");
   }
 
   validateForm() {

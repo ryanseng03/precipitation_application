@@ -348,8 +348,7 @@ export class DatasetFormManagerService {
     let temperatureMapDisplayData = new DisplayData("A gridded temperature map representing the estimated temperature values over the state of Hawaiʻi.", "Temperature Map", "data_map");
     let dsRainfallMapDisplayData = new DisplayData("A gridded rainfall map representing estimated present day or predicted future rainfall values.", "Rainfall Map", "data_map");
     let dsRainfallMapChangeDisplayData = new DisplayData("A gridded map displaying the predicted change in rainfall from present day conditions.", "Rainfall Change Map", "data_map_change"); //includes percent
-    let dsTemperatureMapDisplayData = new DisplayData("A gridded temperature map representing estimated present day average temperature values based on current data.", "Temperature Map", "data_map");
-    let dsTemperatureMapPredictionsDisplayData = new DisplayData("A gridded map displaying the predicted future temperature.", "Temperature Prediction Map", "data_map_predictions");
+    let dsTemperatureMapDisplayData = new DisplayData("A gridded rainfall map representing estimated present day or predicted future average temperature values.", "Temperature Map", "data_map");
     let dsTemperatureMapChangeDisplayData = new DisplayData("A gridded map displaying the predicted change in temperature from present day conditions.", "Temperature Change Map", "data_map_change");
     let standardErrorMapDisplayData = new DisplayData("The standard error values for the gridded map data.", "Standard Error Map", "se");
     let anomalyDisplayData = new DisplayData("The anomaly values for the gridded map.", "Anomaly Map", "anom");
@@ -382,13 +381,13 @@ export class DatasetFormManagerService {
       units: "in"
     }, null);
     let cUnits = new FormValue(new DisplayData("Values in degrees celcius", "°C", "c"), {
-      units: "c"
+      units: "celcius"
     }, null);
     let fUnits = new FormValue(new DisplayData("Values in degrees fahrenheit", "°F", "f"), {
-      units: "f"
+      units: "fahrenheit"
     }, null);
     let kUnits = new FormValue(new DisplayData("Values in kelvin", "K", "k"), {
-      units: "k"
+      units: "kelvin"
     }, null);
     let percentUnits = new FormValue(new DisplayData("Percent change", "%", "percent"), {
       units: "percent"
@@ -398,7 +397,7 @@ export class DatasetFormManagerService {
     let unitsDisplayData = new DisplayData("The units the data are represented in.", "Units", "units");
     let extentNode = new FormNode(extentDisplayData, [statewideSpatialExtent, hawaiiSpatialExtent, mauiSpatialExtent, honoluluSpatialExtent, kauaiSpatialExtent]);
     let rfUnitsNode = new FormNode(unitsDisplayData, [mmUnits, inUnits, percentUnits]);
-    let tempUnitsNode = new FormNode(unitsDisplayData, [cUnits, fUnits, kUnits]);
+    let tempUnitsNode = new FormNode(unitsDisplayData, [cUnits, fUnits]);
     //fileProperties
     let allExtentProperty = new FileProperty(extentNode, ["statewide"]);
     let statewideProperty = new FileProperty(extentNode.filter(["statewide"]), ["statewide"]);
@@ -416,18 +415,17 @@ export class DatasetFormManagerService {
     let dsPeriodDynamicalFutureProperty = new FileProperty(dsPeriodDynamicalNode.filter(["late"]), ["late"]);
 
     //package files
-    let rainfallMapFile = new FileData(rainfallMapDisplayData, geotiffFtype, ["metadata"], {});
-    let temperatureMapFile = new FileData(temperatureMapDisplayData, geotiffFtype, ["metadata"], {});
-    let dsRainfallMapFile = new FileData(dsRainfallMapDisplayData, geotiffFtype, [], {});
-    let dsRainfallMapChangeFile = new FileData(dsRainfallMapChangeDisplayData, geotiffFtype, [], {});
-    let dsTemperatureMapFile = new FileData(dsTemperatureMapDisplayData, geotiffFtype, [], {});
-    let dsTemperatureMapPredictionsFile = new FileData(dsTemperatureMapPredictionsDisplayData, geotiffFtype, [], {});
-    let dsTemperatureMapChangeFile = new FileData(dsTemperatureMapChangeDisplayData, geotiffFtype, [], {});
-    let standardErrorMapFile = new FileData(standardErrorMapDisplayData, geotiffFtype, ["metadata"], {});
-    let anomalyFile = new FileData(anomalyDisplayData, geotiffFtype, ["metadata"], {});
-    let anomalyStandardErrorFile = new FileData(anomalyStandardErrorDisplayData, geotiffFtype, ["metadata"], {});
-    let metadataFile = new FileData(metadataDisplayData, txtFtype, [], {});
-    let stationFile = new FileData(stationPartialDisplayData, csvFtype, [], {fill: "partial"});
+    let rainfallMapFile = new FileData(rainfallMapDisplayData, geotiffFtype, ["metadata"]);
+    let temperatureMapFile = new FileData(temperatureMapDisplayData, geotiffFtype, ["metadata"]);
+    let dsRainfallMapFile = new FileData(dsRainfallMapDisplayData, geotiffFtype, []);
+    let dsRainfallMapChangeFile = new FileData(dsRainfallMapChangeDisplayData, geotiffFtype, []);
+    let dsTemperatureMapFile = new FileData(dsTemperatureMapDisplayData, geotiffFtype, []);
+    let dsTemperatureMapChangeFile = new FileData(dsTemperatureMapChangeDisplayData, geotiffFtype, []);
+    let standardErrorMapFile = new FileData(standardErrorMapDisplayData, geotiffFtype, ["metadata"]);
+    let anomalyFile = new FileData(anomalyDisplayData, geotiffFtype, ["metadata"]);
+    let anomalyStandardErrorFile = new FileData(anomalyStandardErrorDisplayData, geotiffFtype, ["metadata"]);
+    let metadataFile = new FileData(metadataDisplayData, txtFtype, []);
+    let stationFile = new FileData(stationPartialDisplayData, csvFtype, []);
 
     //use if you want to add labeling to file groups in the future, unused for now
     // let griddedMapDisplayData = new DisplayData("Gridded mapped data files and metadata", "Map Data", "map_data");
@@ -448,11 +446,9 @@ export class DatasetFormManagerService {
     let dsRainfallDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "k"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
     let dsTemperatureStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "l"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalAllProperty]);
-    let dsTemperatureStatisticalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "m"), [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
     let dsTemperatureStatisticalChangeFileGroup = new FileGroup(new DisplayData("", "", "n"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalFutureProperty]);
 
     let dsTemperatureDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "o"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalAllProperty]);
-    let dsTemperatureDynamicalPredictionsFileGroup = new FileGroup(new DisplayData("", "", "p"), [dsTemperatureMapPredictionsFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
     let dsTemperatureDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "q"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
     //note these can be combined with the vis timeseries stuff, just need to rework vistimeseries data to use this
@@ -557,19 +553,19 @@ export class DatasetFormManagerService {
       season: "dry"
     }, "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)");
     //////DS Temperature
-    let dsTemperatureStatisticalRcp45ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalPredictionsFileGroup, dsTemperatureStatisticalChangeFileGroup], {
+    let dsTemperatureStatisticalRcp45ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp45"
     }, "Statistically Downscaled Temperature (RCP 4.5)");
-    let dsTemperatureStatisticalRcp85ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalPredictionsFileGroup, dsTemperatureStatisticalChangeFileGroup], {
+    let dsTemperatureStatisticalRcp85ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalChangeFileGroup], {
       dsm: "statistical",
       model: "rcp85"
     }, "Statistically Downscaled Temperature (RCP 8.5)");
-    let dsTemperatureDynamicalRcp45ExportItem = new ExportDatasetItem([dsTemperatureDynamicalMapFileGroup, dsTemperatureDynamicalPredictionsFileGroup, dsTemperatureDynamicalChangeFileGroup], {
+    let dsTemperatureDynamicalRcp45ExportItem = new ExportDatasetItem([dsTemperatureDynamicalMapFileGroup, dsTemperatureDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp45"
     }, "Dynamically Downscaled Temperature (RCP 4.5)");
-    let dsTemperatureDynamicalRcp85ExportItem = new ExportDatasetItem([dsTemperatureDynamicalMapFileGroup, dsTemperatureDynamicalPredictionsFileGroup, dsTemperatureDynamicalChangeFileGroup], {
+    let dsTemperatureDynamicalRcp85ExportItem = new ExportDatasetItem([dsTemperatureDynamicalMapFileGroup, dsTemperatureDynamicalChangeFileGroup], {
       dsm: "dynamical",
       model: "rcp85"
     }, "Dynamically Downscaled Temperature (RCP 8.5)");
@@ -793,6 +789,9 @@ export class FormData {
     return nodes.map((node: FormNode) => {
       let tag = node.tag;
       let valueTags = values[tag];
+      if(!Array.isArray(valueTags)) {
+        valueTags = [valueTags];
+      }
       return node.filter(valueTags);
     });
   }
@@ -804,6 +803,14 @@ export class FormData {
       return new FormCategory(category.displayData, nodes);
     });
     return new FormData(filteredDefault, filteredCategorized);
+  }
+
+  public flatten(): FormNode[] {
+    let nodes = [...this._default];
+    for(let category of this._categorized) {
+      nodes = nodes.concat(category.nodes);
+    }
+    return nodes;
   }
 }
 
@@ -964,7 +971,7 @@ abstract class DatasetItem {
   get baseParams(): StringMap {
     return this._baseParams;
   }
-  
+
   get label(): string {
     return this._label;
   }
@@ -1416,7 +1423,6 @@ export class TimeseriesData extends FocusManager<Moment> {
     let base = this._start.clone();
     let timeClone = time.clone();
     let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
-    console.log(intervalDiff);
     let roundedDiff = Math.round(intervalDiff) * this.interval;
     base.add(roundedDiff, this.unit);
     base = this.lockToRange(base);
@@ -1604,13 +1610,11 @@ export class FileData {
   private _displayData: DisplayData;
   private _fileType: FileType;
   private _requires: string[];
-  private _paramData: StringMap;
 
-  constructor(displayData: DisplayData, fileType: FileType, requires: string[], paramData: StringMap) {
+  constructor(displayData: DisplayData, fileType: FileType, requires: string[]) {
     this._displayData = displayData;
     this._fileType = fileType;
     this._requires = requires;
-    this._paramData = paramData;
   }
 
   get description(): string {
@@ -1635,10 +1639,6 @@ export class FileData {
 
   get requires(): string[] {
     return this._requires;
-  }
-
-  get paramData(): StringMap {
-    return this._paramData;
   }
 }
 

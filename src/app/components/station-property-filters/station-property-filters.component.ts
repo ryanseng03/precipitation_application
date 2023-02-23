@@ -87,7 +87,6 @@ export class StationPropertyFiltersComponent implements OnInit {
     //note this is going to change
     // metaService.getMetaBySKNs(null).then((metadataRef: SKNRefMeta) => {
     //   let properties = Object.keys(metadataRef[Object.keys(metadataRef)[0]].meta);
-    //   console.log(properties);
     //   for(let skn in metadataRef) {
     //     let metadata = metadataRef[skn];
     //     let stationForm: StationMetadata = {
@@ -96,7 +95,6 @@ export class StationPropertyFiltersComponent implements OnInit {
     //       name: metadata.name,
     //       add: {}
     //     }
-    //     //console.log(stationForm.location.alt);
     //     for(let prop of properties) {
     //       //wow this is sketch
     //       if(!["lat", "lng", "skn", "name"].includes(prop)) {

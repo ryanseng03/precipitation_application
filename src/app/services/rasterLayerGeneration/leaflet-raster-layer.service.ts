@@ -56,10 +56,8 @@ export class LeafletRasterLayerService {
 
           let ctx = tile.getContext("2d");
           let tileSize = this.getTileSize();
-          //console.log(tileSize);
           tile.width = tileSize.x;
           tile.height = tileSize.y;
-          //console.log(tile);
           let imgData = ctx.getImageData(0, 0, tileSize.x, tileSize.y);
 
 

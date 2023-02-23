@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
 import { StringMap } from '@angular/core/src/render3/jit/compiler_facade_interface';
+import { ExportDatasetItem, FormNode, FormValue } from 'src/app/services/dataset-form-manager.service';
 
 
 @Component({
@@ -56,18 +57,18 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
   }
 
   checkEmailReq() {
-    // let numFiles: number = this.exportItems.reduce((acc: number, item: any) => {
-    //   let numDateFiles = item.data.range[1].diff(item.data.range[0], item.data.period) + 1;
-    //   let numExtentFiles: number = (<string[][]>Object.values(item.data.files)).reduce((acc: number, extents: string[]) => {
-    //     return acc + extents.length;
-    //   }, 0);
-    //   let numItemFiles = numDateFiles * numExtentFiles;
-    //   return acc + numItemFiles;
-    // }, 0);
-    // this.emailData.maxSizeExceeded = numFiles > 150;
-    // if(this.emailData.maxSizeExceeded) {
-    //   this.emailData.useEmailControl.setValue(true);
-    // }
+    let numFiles: number = this.exportItems.reduce((acc: number, item: ExportPackageItemData) => {
+      let num = 1;
+      //TEMP REALLY REALLY ROUGH ESTIMATE
+      if(item.state.dates) {
+        num += item.state.dates.end.diff(item.state.dates.start, item.state.dates.unit);
+      }
+      return acc + num * Object.keys(item.state.fileGroups).length;
+    }, 0);
+    this.emailData.maxSizeExceeded = numFiles > 150;
+    if(this.emailData.maxSizeExceeded) {
+      this.emailData.useEmailControl.setValue(true);
+    }
   }
 
 
@@ -152,6 +153,8 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
 
   export() {
     let reqs: ResourceReq[] = this.exportItems.map((item: ExportPackageItemData) => {
+      let datasetItem: ExportDatasetItem = item.datasetItem;
+
       let resourceDates = null;
       if(item.state.dates) {
         let startDateStr = this.dateService.dateToString(item.state.dates.start, item.state.dates.unit);
@@ -163,25 +166,54 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
           interval: item.state.dates.interval
         }
       }
-      
-      let { datatype, ...params } = item.state.dataset;
+
+      let { datatype, ...stateParams } = item.state.dataset;
+      //get param data
+      let formData = datasetItem.formData.filter(stateParams);
+      let params = formData.flatten().reduce((acc: StringMap, node: FormNode) => {
+        return {
+          ...acc,
+          ...node.values[0].paramData
+        };
+      }, {
+        ...datasetItem.baseParams
+      });
+
       let fileData = [];
-      for(let groupTag in item.state.fileGroups) {
-        let fileGroup = item.state.fileGroups[groupTag];
-        let files: string[] = [];
-        for(let file in fileGroup.files) {
-          if(fileGroup.files[file]) {
-            files.push(file);
+
+      for(let fileGroup of datasetItem.fileGroups) {
+        let stateGroup = item.state.fileGroups[fileGroup.tag];
+        //if not in state just skip
+        if(stateGroup) {
+          let fileParams = {};
+          //!!!note this will cause issues if a file param has more that one property!!!
+          for(let property of fileGroup.additionalProperties) {
+            property.formData.filter(stateGroup.fileProps[property.formData.tag]).values.reduce((acc: {[tag: string]: string[]}, value: FormValue) => {
+              for(let param in value.paramData) {
+                if(acc[param]) {
+                  acc[param].push(value.paramData[param]);
+                }
+                else {
+                  acc[param] = [value.paramData[param]];
+                }
+              }
+              return acc;
+            }, fileParams);
           }
+          let files: string[] = [];
+            for(let file of fileGroup.fileData) {
+              if(stateGroup.files[file.tag]) {
+                files.push(file.tag);
+              }
+            }
+            let fileDataItem = {
+              fileParams,
+              files
+            }
+            fileData.push(fileDataItem);
         }
-        let fileDataItem = {
-          fileParams: fileGroup.fileProps,
-          files
-        }
-        fileData.push(fileDataItem);
       }
       let req: ResourceReq = {
-        datatype,
         params,
         fileData
       }

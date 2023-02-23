@@ -14,10 +14,12 @@ export class DateFocusComponent implements OnInit {
   _timeseriesData: TimeseriesData;
   @Input() set timeseriesData(data: TimeseriesData) {
     this._timeseriesData = data;
+    //set setDate to null so debounce isn't triggered on control set
+    this.setDate = null;
     this.constructDateMoveData(data);
     //trigger recompute
     if(this.controlDate) {
-      this.controlDate = this._timeseriesData.roundToInterval(this.setDate.clone());
+      this.controlDate = this._timeseriesData.roundToInterval(this.controlDate);
     }
   };
   @Input() initValue: Moment.Moment;
@@ -52,9 +54,7 @@ export class DateFocusComponent implements OnInit {
 
   dateChanged(date: Moment.Moment) {
     date = this._timeseriesData.roundToInterval(date);
-    console.log(date.toISOString(), this.setDate?.toISOString(), this._timeseriesData.end.toISOString());
     if(!date.isSame(this.setDate)) {
-      console.log("changed");
       this.setDate = date;
       //check if any controls are disabled
       this.setDisabled(date);
