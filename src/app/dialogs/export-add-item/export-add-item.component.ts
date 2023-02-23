@@ -43,16 +43,19 @@ export class ExportAddItemComponent {
     this.formData = formData;
     let {datatype, ...values} = formData.values;
     //initialize date values to date range
-    this.controls.dates = initValues?.dates ? {
-      ...initValues.dates
-    } : {
-      start: this.formData.datasetItem.start,
-      end: this.formData.datasetItem.end,
-      unit: this.formData.datasetItem.unit,
-      interval: this.formData.datasetItem.interval
+    if(initValues?.dates) {
+      this.controls.dates = {
+        ...initValues.dates
+      }
     }
-    this.controls.dates.start = initValues ? initValues.dates.start : this.formData.datasetItem.start;
-    this.controls.dates.end = initValues ? initValues.dates.end : this.formData.datasetItem.end;
+    else if(!initValues) {
+      this.controls.dates = {
+        start: this.formData.datasetItem.start,
+        end: this.formData.datasetItem.end,
+        unit: this.formData.datasetItem.unit,
+        interval: this.formData.datasetItem.interval
+      }
+    }
     //setup main datatype control (always there, only needed once)
     this.setupDatatypeControl(datatype);
     //setup variable controls
@@ -76,6 +79,14 @@ export class ExportAddItemComponent {
   private updateDatatype(value: string) {
     let formData = this._formManager.setDatatype(value);
     this.formData = formData;
+    if(!this.controls.dates && formData.datasetItem.start) {
+      this.controls.dates = {
+        start: this.formData.datasetItem.start,
+        end: this.formData.datasetItem.end,
+        unit: this.formData.datasetItem.unit,
+        interval: this.formData.datasetItem.interval
+      }
+    }
     let {datatype, ...values} = formData.values;
     //unsubscribe from controls so new ones can be created
     this.cleanupControlSubscriptions();
@@ -244,46 +255,6 @@ export class ExportAddItemComponent {
     this.dialogRef.close(null);
   }
 
-  // let reqs: ResourceReq[] = this.exportItems.map((item: ExportPackageItemData) => {
-  //   let resourceDates = null;
-  //   if(item.state.dates) {
-  //     let startDateStr = this.dateService.dateToString(item.state.dates.start, item.state.dates.unit);
-  //     let endDateStr = this.dateService.dateToString(item.state.dates.end, item.state.dates.unit);
-  //     resourceDates = {
-  //       start: startDateStr,
-  //       end: endDateStr,
-  //       unit: item.state.dates.unit,
-  //       interval: item.state.dates.interval
-  //     }
-  //   }
-
-  //   let { datatype, ...params } = item.state.dataset;
-  //   let fileData = [];
-  //   for(let groupTag in item.state.fileGroups) {
-  //     let fileGroup = item.state.fileGroups[groupTag];
-  //     let files: string[] = [];
-  //     for(let file in fileGroup.files) {
-  //       if(fileGroup.files[file]) {
-  //         files.push(file);
-  //       }
-  //     }
-  //     let fileDataItem = {
-  //       fileParams: fileGroup.fileProps,
-  //       files
-  //     }
-  //     fileData.push(fileDataItem);
-  //   }
-  //   let req: ResourceReq = {
-  //     datatype,
-  //     params,
-  //     fileData
-  //   }
-  //   if(resourceDates) {
-  //     req.dates = resourceDates;
-  //   }
-  //   return req;
-  // });
-
   submit() {
     //construct state
     let exportData: ExportPackageItemData = {
@@ -292,15 +263,15 @@ export class ExportAddItemComponent {
         dataset: {
           datatype: this.controls.datatype.control.value
         },
-        dates: {
-          ...this.controls.dates
-        },
         fileGroups: {}
       },
       labels: {
         dataset: null,
         files: null
       }
+    }
+    if(this.formData.datasetItem.start) {
+      exportData.state.dates = this.controls.dates;
     }
     let fileLabels = [];
     let datasetLabel = `${this.formData.datasetItem.label}`;

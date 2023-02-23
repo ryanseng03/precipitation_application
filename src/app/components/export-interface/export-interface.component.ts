@@ -186,31 +186,35 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
         //if not in state just skip
         if(stateGroup) {
           let fileParams = {};
-          //!!!note this will cause issues if a file param has more that one property!!!
-          for(let property of fileGroup.additionalProperties) {
-            property.formData.filter(stateGroup.fileProps[property.formData.tag]).values.reduce((acc: {[tag: string]: string[]}, value: FormValue) => {
-              for(let param in value.paramData) {
-                if(acc[param]) {
-                  acc[param].push(value.paramData[param]);
-                }
-                else {
-                  acc[param] = [value.paramData[param]];
-                }
-              }
-              return acc;
-            }, fileParams);
-          }
           let files: string[] = [];
-            for(let file of fileGroup.fileData) {
-              if(stateGroup.files[file.tag]) {
-                files.push(file.tag);
-              }
+          for(let file of fileGroup.fileData) {
+            if(stateGroup.files[file.tag]) {
+              files.push(file.tag);
             }
+          }
+          //if no files then skip
+          if(files.length > 0) {
+            //!!!note this will cause issues if a file param has more that one property!!!
+            for(let property of fileGroup.additionalProperties) {
+              property.formData.filter(stateGroup.fileProps[property.formData.tag]).values.reduce((acc: {[tag: string]: string[]}, value: FormValue) => {
+                for(let param in value.paramData) {
+                  if(acc[param]) {
+                    acc[param].push(value.paramData[param]);
+                  }
+                  else {
+                    acc[param] = [value.paramData[param]];
+                  }
+                }
+                return acc;
+              }, fileParams);
+            }
+
             let fileDataItem = {
               fileParams,
               files
             }
             fileData.push(fileDataItem);
+          }
         }
       }
       let req: ResourceReq = {

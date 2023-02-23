@@ -1,7 +1,5 @@
 import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
-import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
-import { SiteValue, SiteInfo } from 'src/app/models/SiteMetadata';
-import { FormControl } from '@angular/forms';
+import { SiteInfo } from 'src/app/models/SiteMetadata';
 import Moment  from 'moment';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { Observable } from 'rxjs';

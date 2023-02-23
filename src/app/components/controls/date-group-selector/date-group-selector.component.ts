@@ -12,21 +12,16 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
 
   @Input() timeSelectorData: TimeSelectorData;
   @Input() initValue: FormValue;
+  @Input() datatype: string;
   @Output() selectionChange: EventEmitter<FormValue> = new EventEmitter<FormValue>();
+
 
   control: FormControl;
   viewControl: FormControl;
 
-  datatype: string;
-
   constructor(private paramService: EventParamRegistrarService) {
     this.control = new FormControl();
-    this.control.valueChanges.subscribe((value: FormValue) => {
-      //temp//
-      let type: string = value.tag == "present" ? "direct" : this.viewControl.value;
-      ////
-      this._pushValue(type);
-    });
+    this.viewControl = new FormControl();
   }
 
   private _pushValue(type: string) {
@@ -37,24 +32,24 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnInit() {
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
-      if(dataset) {
-        this.datatype = dataset.datatype;
-        if(!this.viewControl) {
-          let defaultType = this.datatype == "Rainfall" ? "percent" : "absolute";
-          this.viewControl = new FormControl(defaultType);
-          //temp?
-          this.viewControl.valueChanges.subscribe((value: string) => {
-            this._pushValue(value);
-          });
-        }
-        else {
-          if(this.datatype != "Rainfall" && this.viewControl.value == "percent") {
-            this.viewControl.setValue("absolute");
-          }
-        }
-      }
+    //THIS IS TRIGGERING WHEN NEW DATASET COMES IN AND IS CREATING A FINAL PUSH AFTER SHOULD BE DESTROYED, MOVE TO INPUT
+
+    let defaultType = this.datatype == "Rainfall" ? "percent" : "absolute";
+    this.viewControl.setValue(defaultType);
+    //temp?
+    this.viewControl.valueChanges.subscribe((value: string) => {
+      this._pushValue(value);
     });
+    this.control.valueChanges.subscribe((value: FormValue) => {
+      //temp//
+      let type: string = value.tag == "present" ? "direct" : this.viewControl.value;
+      ////
+      this._pushValue(type);
+    });
+    //trigger initial push
+    this.control.setValue(this.control.value);
+
+
   }
 
   ngOnChanges(changes: SimpleChanges): void {

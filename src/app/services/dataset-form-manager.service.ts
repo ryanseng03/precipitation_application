@@ -416,6 +416,7 @@ export class DatasetFormManagerService {
 
     //package files
     let rainfallMapFile = new FileData(rainfallMapDisplayData, geotiffFtype, ["metadata"]);
+    let legacyRainfallMapFile = new FileData(rainfallMapDisplayData, geotiffFtype, []);
     let temperatureMapFile = new FileData(temperatureMapDisplayData, geotiffFtype, ["metadata"]);
     let dsRainfallMapFile = new FileData(dsRainfallMapDisplayData, geotiffFtype, []);
     let dsRainfallMapChangeFile = new FileData(dsRainfallMapChangeDisplayData, geotiffFtype, []);
@@ -434,7 +435,7 @@ export class DatasetFormManagerService {
     let rainfallMonthStationFileGroup = new FileGroup(new DisplayData("", "", "b"), [stationFile], [statewideProperty, rfMmUnitsProperty, fillPartialProperty]);
     let rainfallDayStationFileGroup = new FileGroup(new DisplayData("", "", "c"), [stationFile], [statewideProperty, rfMmUnitsProperty, fillProperty]);
 
-    let legacyRainfallFileGroup = new FileGroup(new DisplayData("", "", "d"), [rainfallMapFile], [statewideProperty, rfMmUnitsProperty])
+    let legacyRainfallFileGroup = new FileGroup(new DisplayData("", "", "d"), [legacyRainfallMapFile], [statewideProperty, rfMmUnitsProperty])
 
     let temperatureMapFileGroup = new FileGroup(new DisplayData("", "", "e"), [temperatureMapFile, standardErrorMapFile, metadataFile], [allExtentProperty, tempCUnitsProperty]);
     let temperatureStationFileGroup = new FileGroup(new DisplayData("", "", "f"), [stationFile], [fillUnfilledProperty, statewideProperty, tempCUnitsProperty]);

@@ -79,12 +79,13 @@ export class LeafletColorScaleComponent implements OnInit {
   }
 
   updateLabels() {
+    let rangeAbsolute = this._type == "direct" ? this._rangeAbsolute : [false, false];
     this.intervalLabels = [...this.intervalLabelsRaw];
-    if(this._rangeAbsolute && this.intervalLabels.length > 1) {
-      if(!this._rangeAbsolute[0]) {
+    if(rangeAbsolute && this.intervalLabels.length > 1) {
+      if(!rangeAbsolute[0]) {
         this.intervalLabels[this.intervalLabels.length - 1] += "-";
       }
-      if(!this._rangeAbsolute[1]) {
+      if(!rangeAbsolute[1]) {
         this.intervalLabels[0] += "+";
       }
     }
