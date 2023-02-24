@@ -38,7 +38,12 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
     this.viewControl.setValue(defaultType);
     //temp?
     this.viewControl.valueChanges.subscribe((value: string) => {
-      this._pushValue(value);
+      if(!this.debounce) {
+        this._pushValue(value);
+      }
+      else {
+        this.debounce = false;
+      }
     });
     this.control.valueChanges.subscribe((value: FormValue) => {
       //temp//
@@ -48,12 +53,10 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
     });
     //trigger initial push
     this.control.setValue(this.control.value);
-
-
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(changes.timeSelectorData) {
+    if(changes.datatype) {
       this.validateForm();
     }
   }
@@ -62,7 +65,12 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
       this.paramService.pushViewType("direct");
   }
 
+  debounce: boolean = false;
   validateForm() {
+    if(this.datatype != "Rainfall" && this.viewControl.value == "percent") {
+      this.debounce = true;
+      this.viewControl.setValue("absolute");
+    }
     let value: FormValue;
     //if control already has a value make sure it is valid and use that if it is
     if(this.control.value) {

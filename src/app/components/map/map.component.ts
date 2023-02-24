@@ -551,7 +551,7 @@ export class MapComponent implements OnInit {
     valueLabels.push(valueLabel);
 
     let translationData = translations[unit];
-    if(translationData) {
+    if((unit == "mm" || !this._viewType || this._viewType == "direct") && translationData) {
       let translationValue = translationData.f(value);
       let translationUnit = translationData.translationUnit;
       let roundedTranslationValue = Math.round(translationValue * 100) / 100;
