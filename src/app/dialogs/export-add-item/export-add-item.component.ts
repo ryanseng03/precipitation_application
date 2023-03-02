@@ -43,16 +43,19 @@ export class ExportAddItemComponent {
     this.formData = formData;
     let {datatype, ...values} = formData.values;
     //initialize date values to date range
-    this.controls.dates = initValues?.dates ? {
-      ...initValues.dates
-    } : {
-      start: this.formData.datasetItem.start,
-      end: this.formData.datasetItem.end,
-      unit: this.formData.datasetItem.unit,
-      interval: this.formData.datasetItem.interval
+    if(initValues?.dates) {
+      this.controls.dates = {
+        ...initValues.dates
+      }
     }
-    this.controls.dates.start = initValues ? initValues.dates.start : this.formData.datasetItem.start;
-    this.controls.dates.end = initValues ? initValues.dates.end : this.formData.datasetItem.end;
+    else if(!initValues) {
+      this.controls.dates = {
+        start: this.formData.datasetItem.start,
+        end: this.formData.datasetItem.end,
+        unit: this.formData.datasetItem.unit,
+        interval: this.formData.datasetItem.interval
+      }
+    }
     //setup main datatype control (always there, only needed once)
     this.setupDatatypeControl(datatype);
     //setup variable controls
@@ -76,6 +79,14 @@ export class ExportAddItemComponent {
   private updateDatatype(value: string) {
     let formData = this._formManager.setDatatype(value);
     this.formData = formData;
+    if(!this.controls.dates && formData.datasetItem.start) {
+      this.controls.dates = {
+        start: this.formData.datasetItem.start,
+        end: this.formData.datasetItem.end,
+        unit: this.formData.datasetItem.unit,
+        interval: this.formData.datasetItem.interval
+      }
+    }
     let {datatype, ...values} = formData.values;
     //unsubscribe from controls so new ones can be created
     this.cleanupControlSubscriptions();
@@ -247,10 +258,10 @@ export class ExportAddItemComponent {
   submit() {
     //construct state
     let exportData: ExportPackageItemData = {
+      datasetItem: this.formData.datasetItem,
       state: {
-        dataset: {},
-        dates: {
-          ...this.controls.dates
+        dataset: {
+          datatype: this.controls.datatype.control.value
         },
         fileGroups: {}
       },
@@ -259,10 +270,15 @@ export class ExportAddItemComponent {
         files: null
       }
     }
+    if(this.formData.datasetItem.start) {
+      exportData.state.dates = this.controls.dates;
+    }
     let fileLabels = [];
-    let datasetLabel = `${this.formData.datasetItem.label} ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.end)}`;
+    let datasetLabel = `${this.formData.datasetItem.label}`;
+    if(this.formData.datasetItem.timeseriesHandler) {
+      datasetLabel += ` ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.end)}`;
+    }
     exportData.labels.dataset = datasetLabel;
-    exportData.state.dataset.datatype = this.controls.datatype.control.value;
     for(let field in this.controls.dataset) {
       exportData.state.dataset[field] = this.controls.dataset[field].control.value;
     }
@@ -346,6 +362,7 @@ export interface LabelData {
 }
 
 export interface ExportPackageItemData {
+  datasetItem: ExportDatasetItem,
   state: FormState,
   labels: LabelData
 }

@@ -10,7 +10,6 @@ import { RasterData, RasterHeader } from 'src/app/models/RasterData.js';
 import { SiteInfo } from 'src/app/models/SiteMetadata.js';
 import "leaflet.markercluster";
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
-import Moment from 'moment';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 // import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
@@ -63,6 +62,8 @@ export class MapComponent implements OnInit {
   private selectedMarker: L.CircleMarker;
 
   dataset: VisDatasetItem;
+
+  private _viewType: string;
 
   constructor(private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private assetService: AssetManagerService, private dataManager: DataManagerService, private layerService: LeafletRasterLayerService) {
     let roseImage = "/arrows/nautical.svg";
@@ -438,7 +439,9 @@ export class MapComponent implements OnInit {
 
 
   ngOnInit() {
-
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.viewType, (viewType: string) => {
+      this._viewType = viewType;
+    });
   }
 
   initMarkerInfo() {
@@ -539,15 +542,16 @@ export class MapComponent implements OnInit {
       }
     };
 
-    let unit = this.dataset.unitsShort;
+    //TEMP WORKAROUNDS
+    let unit = this._viewType == "percent" ? "%" : this.dataset.unitsShort;
     let valueLabels = [];
 
     let roundedValue = Math.round(value * 100) / 100;
     let valueLabel = `${roundedValue.toLocaleString()}${unit}`;
     valueLabels.push(valueLabel);
-    
+
     let translationData = translations[unit];
-    if(translationData) {
+    if((unit == "mm" || !this._viewType || this._viewType == "direct") && translationData) {
       let translationValue = translationData.f(value);
       let translationUnit = translationData.translationUnit;
       let roundedTranslationValue = Math.round(translationValue * 100) / 100;

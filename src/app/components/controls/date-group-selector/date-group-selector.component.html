@@ -1,56 +1,61 @@
-<mat-form-field>
-  <mat-label>{{timeSelectorData.formData.label}}</mat-label>
-  <mat-select
-    disableOptionCentering="true"
-    [formControl]="control">
-    <mat-option
-      *ngFor="let value of timeSelectorData.formData.values"
-      [value]="value"
-      matTooltipPosition="right"
-      [matTooltip]="value.description">
-      {{value.label}}
-    </mat-option>
-  </mat-select>
-</mat-form-field>
-<mat-icon
-  aria-hidden="false"
-  aria-label="Tooltip"
-  matTooltipPosition="right"
-  [matTooltip]="timeSelectorData.formData.description"
-  inline="true">
-  help
-</mat-icon>
+<div class="selectors">
+  <mat-form-field>
+    <mat-label>{{timeSelectorData.formData.label}}</mat-label>
+    <mat-select
+      disableOptionCentering="true"
+      [formControl]="control">
+      <mat-option
+        *ngFor="let value of timeSelectorData.formData.values"
+        [value]="value"
+        matTooltipPosition="right"
+        [matTooltip]="value.description">
+        {{value.label}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-icon
+    aria-hidden="false"
+    aria-label="Tooltip"
+    matTooltipPosition="right"
+    [matTooltip]="timeSelectorData.formData.description"
+    inline="true">
+    help
+  </mat-icon>
+</div>
 
-<!-- <mat-form-field>
-  <mat-label>View Type</mat-label>
-  <mat-select
-    disableOptionCentering="true"
-    [formControl]="viewControl">
-    <mat-option
-      value="percent"
-      matTooltipPosition="right"
-      matTooltip="Percent change relative to present day">
-      Percent Change
-    </mat-option>
-    <mat-option
-      value="percent"
-      matTooltipPosition="right"
-      matTooltip="Change in value relative to present day">
-      Absolute Change
-    </mat-option>
-    <mat-option
-      value="percent"
-      matTooltipPosition="right"
-      matTooltip="Direct data value">
-      Value
-    </mat-option>
-  </mat-select>
-</mat-form-field>
-<mat-icon
-  aria-hidden="false"
-  aria-label="Tooltip"
-  matTooltipPosition="right"
-  matTooltip=""
-  inline="true">
-  help
-</mat-icon> -->
+<div class="selectors" *ngIf="control.value.tag != 'present'">
+  <mat-form-field>
+    <mat-label>View Type</mat-label>
+    <mat-select
+      disableOptionCentering="true"
+      [formControl]="viewControl">
+      <mat-option *ngIf="datatype == 'Rainfall'"
+        value="percent"
+        matTooltipPosition="right"
+        matTooltip="Percent change relative to present day">
+        Percent Change
+      </mat-option>
+      <mat-option
+        value="absolute"
+        matTooltipPosition="right"
+        matTooltip="Change in value relative to present day">
+        Absolute Change
+      </mat-option>
+      <mat-option
+        value="direct"
+        matTooltipPosition="right"
+        matTooltip="Direct data value">
+        Value
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-icon
+    aria-hidden="false"
+    aria-label="Tooltip"
+    matTooltipPosition="right"
+    matTooltip="How should the data be viewed? Either view the data directly or relative to present conditions"
+    inline="true">
+    help
+  </mat-icon>
+</div>
+

@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import {Map, Control, DomUtil, ControlPosition} from 'leaflet';
 import { ColorScale } from 'src/app/models/colorScale';
+import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
   selector: 'app-leaflet-color-scale',
@@ -16,6 +17,8 @@ export class LeafletColorScaleComponent implements OnInit {
   intervalLabelsRaw: string[];
   intervalLabels: string[];
   colorGradient = "";
+
+  private _type: string;
 
   @Input() intervals: number = 5;
   @Input() datatype: string = "";
@@ -64,22 +67,25 @@ export class LeafletColorScaleComponent implements OnInit {
     }
   }
 
-  constructor() {
+  constructor(private paramService: EventParamRegistrarService) {
     this.intervalLabelsRaw = [];
   }
 
   //note that is the scale changes this won't update, maybe modify (this is static for now though)
   ngOnInit() {
-
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.viewType, (type: string) => {
+      this._type = type;
+    });
   }
 
   updateLabels() {
+    let rangeAbsolute = this._type == "direct" ? this._rangeAbsolute : [false, false];
     this.intervalLabels = [...this.intervalLabelsRaw];
-    if(this._rangeAbsolute && this.intervalLabels.length > 1) {
-      if(!this._rangeAbsolute[0]) {
+    if(rangeAbsolute && this.intervalLabels.length > 1) {
+      if(!rangeAbsolute[0]) {
         this.intervalLabels[this.intervalLabels.length - 1] += "-";
       }
-      if(!this._rangeAbsolute[1]) {
+      if(!rangeAbsolute[1]) {
         this.intervalLabels[0] += "+";
       }
     }
@@ -93,10 +99,17 @@ export class LeafletColorScaleComponent implements OnInit {
   }
 
   getHeader() {
-    let header = `${this.datatype}`;
-    if(this.units) {
-      header += ` (${this.units})`
+    let unit: string = this.units ? `(${this.units})` : "";
+    let text: string = this.datatype;
+    if(this._type == "percent") {
+      unit = "(%)"
+      text += " Change"
     }
+    else if(this._type == "absolute") {
+      text += " Change"
+    }
+
+    let header = `${text} ${unit}`;
     return header;
   }
 

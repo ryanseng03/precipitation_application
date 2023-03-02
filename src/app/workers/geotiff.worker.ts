@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+const global = self;
 
 import * as geotiff from "geotiff";
 

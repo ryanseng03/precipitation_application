@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {RasterData} from "../../../../models/RasterData";
 import {DataProcessorService} from "../../../dataProcessor/data-processor.service"
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 

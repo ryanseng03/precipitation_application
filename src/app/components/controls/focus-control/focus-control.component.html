@@ -1,7 +1,5 @@
 <div *ngIf="focusManager">
   <div *ngIf="focusManager.type == 'timeseries' else groupSelector">
-    <!-- NEED TO UPDATE THIS TO BE MORE ROBUST FOR DIFFERENT PERIODS -->
-    <!-- should pass in manager and use the rounding functions and all that -->
     <app-date-focus
       [timeseriesData]="castTimeseriesManager()"
       [initValue]="date"
@@ -12,6 +10,7 @@
     <app-date-group-selector
       [timeSelectorData]="castSelectorManager()"
       [initValue]="selection"
+      [datatype]="datatype"
       (selectionChange)="setFocus($event)">
     </app-date-group-selector>
   </ng-template>

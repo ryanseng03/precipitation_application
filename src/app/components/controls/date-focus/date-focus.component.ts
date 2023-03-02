@@ -14,10 +14,12 @@ export class DateFocusComponent implements OnInit {
   _timeseriesData: TimeseriesData;
   @Input() set timeseriesData(data: TimeseriesData) {
     this._timeseriesData = data;
+    //set setDate to null so debounce isn't triggered on control set
+    this.setDate = null;
     this.constructDateMoveData(data);
     //trigger recompute
     if(this.controlDate) {
-      this.controlDate = this._timeseriesData.roundToInterval(this.setDate.clone());
+      this.controlDate = this._timeseriesData.roundToInterval(this.controlDate);
     }
   };
   @Input() initValue: Moment.Moment;

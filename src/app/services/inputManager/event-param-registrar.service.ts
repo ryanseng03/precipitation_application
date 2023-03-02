@@ -21,7 +21,8 @@ export class EventParamRegistrarService {
     stationTimeseries: "stationTimeseries",
     loading: "loading",
     mapBounds: "mapBounds",
-    colorScale: "colorScale"
+    colorScale: "colorScale",
+    viewType: "viewType"
   };
 
   private datasetSource: BehaviorSubject<VisDatasetItem>;
@@ -34,6 +35,7 @@ export class EventParamRegistrarService {
   private loadingSource: BehaviorSubject<LoadingData>;
   private mapBoundsSource: BehaviorSubject<L.LatLngBounds>;
   private colorScaleSource: BehaviorSubject<ColorScale>;
+  private viewTypeSource: BehaviorSubject<string>;
   private tagGen: UniqueTagID;
 
   constructor(private paramService: ParameterStoreService) {
@@ -49,6 +51,7 @@ export class EventParamRegistrarService {
     this.loadingSource = this.paramService.registerParameter<LoadingData>(EventParamRegistrarService.EVENT_TAGS.loading);
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
     this.colorScaleSource = this.paramService.registerParameter<ColorScale>(EventParamRegistrarService.EVENT_TAGS.colorScale);
+    this.viewTypeSource = this.paramService.registerParameter<string>(EventParamRegistrarService.EVENT_TAGS.viewType);
   }
 
   pushDataset(dataset: VisDatasetItem): void {
@@ -89,6 +92,10 @@ export class EventParamRegistrarService {
 
   pushMapBounds(mapBounds: L.LatLngBounds): void {
     this.mapBoundsSource.next(mapBounds);
+  }
+
+  pushViewType(viewType: string): void {
+    this.viewTypeSource.next(viewType);
   }
 
 

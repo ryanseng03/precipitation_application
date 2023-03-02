@@ -308,9 +308,7 @@ abstract class Slider {
 
 
   moveSlider(positionOffset: number): SliderData {
-    //console.log(this.left, positionOffset);
     let newLeft = this.left + positionOffset;
-    //console.log(newLeft);
     //this handles all the rounding and updates and whatnot
     this.setLeft(newLeft);
     return this.getData();
