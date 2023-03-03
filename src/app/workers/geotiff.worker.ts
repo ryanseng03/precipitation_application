@@ -1,17 +1,16 @@
 /// <reference lib="webworker" />
-const global = self;
 
 import * as geotiff from "geotiff";
 
-addEventListener('message', ({ data }) => {
-  let { buffer, customNoData, bands } = data
-  return geotiff.fromArrayBuffer(buffer).then((tiff: geotiff.GeoTIFF) => {
-    return tiff.getImage().then((image: geotiff.GeoTIFFImage) => {
+addEventListener("message", ({ data }) => {
+  let { buffer, customNoData, bands, id } = data;
+  geotiff.fromArrayBuffer(buffer).then((tiff: geotiff.GeoTIFF) => {
+    tiff.getImage().then((image: geotiff.GeoTIFFImage) => {
       //are tiepoints indexed by cooresponding band?
       //assume just at index 0 like example for now, maybe ask matt
       let tiepoint = image.getTiePoints()[0];
       let fileDirectory = image.getFileDirectory();
-      return image.readRasters().then((rasters: any) => {
+      image.readRasters().then((rasters: any) => {
         //get scales from file directory
         let [xScale, yScale] = fileDirectory.ModelPixelScale;
 
@@ -39,20 +38,24 @@ addEventListener('message', ({ data }) => {
           if(raster == undefined) {
             throw new Error("Could not find band: " + band);
           }
-          let values = {};
+          let values = [];
           let j: number;
           for(j = 0; j < raster.length; j++) {
             let value = raster[j];
             //the nodata values are all kinds of messed up, these need to be fixed
             if(value != noData && value != customNoData && !isNaN(value)) {
-              values[j] = value;
+              let valuePair = [j, value];
+              values.push(valuePair);
             }
           }
           bandData[i] = values;
         }
-        postMessage("aaa");
+        postMessage({
+          id,
+          header,
+          bandData
+        });
       });
     });
-
   });
 });

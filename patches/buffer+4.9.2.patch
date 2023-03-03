@@ -1,0 +1,15 @@
+diff --git a/node_modules/buffer/index.js b/node_modules/buffer/index.js
+index 1324910..b0af545 100644
+--- a/node_modules/buffer/index.js
++++ b/node_modules/buffer/index.js
+@@ -40,8 +40,8 @@ exports.INSPECT_MAX_BYTES = 50
+  * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+  * get the Object implementation, which is slower but behaves correctly.
+  */
+-Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+-  ? global.TYPED_ARRAY_SUPPORT
++Buffer.TYPED_ARRAY_SUPPORT = self.TYPED_ARRAY_SUPPORT !== undefined
++  ? self.TYPED_ARRAY_SUPPORT
+   : typedArraySupport()
+ 
+ /*

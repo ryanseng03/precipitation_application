@@ -75,6 +75,7 @@ export class DataManagerService {
 
     let stationRes: RequestResults = null;
     let rasterRes: RequestResults = null;
+    let throttle = null;
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
       if(focus) {
         if(stationRes) {

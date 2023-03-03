@@ -229,7 +229,9 @@ export class MapComponent implements OnInit {
     });
 
     this.map.on("movestart", () => {
-      this.hoverHook.uninstall();
+      if(this.hoverHook) {
+        this.hoverHook.uninstall();
+      }
       L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
       clearTimeout(this.crosshairThrottle);
       this.crosshairThrottle = null;
@@ -239,7 +241,9 @@ export class MapComponent implements OnInit {
       let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);
       L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-grabbing');
-      this.hoverHook.install();
+      if(this.hoverHook) {
+        this.hoverHook.install();
+      }
     });
 
     //set timeout to prevent issues with map not propogating to overlay extension
