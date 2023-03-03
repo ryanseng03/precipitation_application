@@ -4,6 +4,7 @@
     "disableTypeScriptVersionCheck": true
   },
   "compilerOptions": {
+    "downlevelIteration": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
