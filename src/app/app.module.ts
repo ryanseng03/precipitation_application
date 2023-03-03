@@ -56,12 +56,9 @@ import { ExportUnimplementedComponent } from './dialogs/export-unimplemented/exp
 import { UploadCustomColorSchemeComponent } from './dialogs/upload-custom-color-scheme/upload-custom-color-scheme.component';
 import { ExportAddItemComponent } from './dialogs/export-add-item/export-add-item.component';
 import { ExportInterfaceComponent } from './components/export-interface/export-interface.component';
-import { FilterMapComponent } from './components/filter-map/filter-map.component';
 import { NavBaseComponent } from './components/nav-base/nav-base.component';
 import { NavTilesComponent } from './components/nav-tiles/nav-tiles.component';
 import { LeafletCompassRoseComponent } from './components/leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
-import { StationFilterInterfaceComponent } from './components/station-filter-interface/station-filter-interface.component';
-import { StationPropertyFiltersComponent } from './components/station-property-filters/station-property-filters.component';
 
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import { HeaderControlComponent } from './components/leaflet-controls/header-control/header-control.component';
@@ -102,12 +99,9 @@ PlotlyModule.plotlyjs = PlotlyJS;
     UploadCustomColorSchemeComponent,
     ExportAddItemComponent,
     ExportInterfaceComponent,
-    FilterMapComponent,
     NavBaseComponent,
     NavTilesComponent,
     LeafletCompassRoseComponent,
-    StationFilterInterfaceComponent,
-    StationPropertyFiltersComponent,
     HeaderControlComponent,
     ViewContainerComponent,
     LoadingComponentComponent,
