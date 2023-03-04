@@ -30,7 +30,6 @@ export class DataManagerService {
     });
 
     metadataReq.transform((data: any) => {
-      console.log(data);
       let metadata = {};
       for(let item of data) {
         //deconstruct
@@ -106,7 +105,6 @@ export class DataManagerService {
           stationRes = dataRequestor.getStationData(properties);
           //transform by combining with station data
           stationRes.transform((stationVals: any[]) => {
-            console.log(stationVals);
             //get metadata
             return metadataReq.toPromise()
             .then((metadata: any) => {

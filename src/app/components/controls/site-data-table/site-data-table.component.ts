@@ -103,7 +103,8 @@ export class SiteDataTableComponent implements OnInit {
     MA: "Maui",
     KA: "Kauai",
     MO: "Molokaʻi",
-    KO: "Kahoʻolawe"
+    KO: "Kahoʻolawe",
+    LA: "Lānaʻi"
   }
 
   selected2datamap() {
