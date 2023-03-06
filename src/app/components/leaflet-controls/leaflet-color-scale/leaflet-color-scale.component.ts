@@ -44,10 +44,12 @@ export class LeafletColorScaleComponent implements OnInit {
         let interval = range[1] - intervalSize * i;
         //round to at most 2 decimals
         interval = Math.round(interval * 100) / 100;
-        this.intervalLabelsRaw.push(interval.toLocaleString());
+        let intervalStr = (interval > 0 ? "+" : "") + interval.toLocaleString();
+        this.intervalLabelsRaw.push(intervalStr);
       }
       //add range[0] directly to avoid rounding errors
-      this.intervalLabelsRaw.push(range[0].toLocaleString());
+      let intervalStr = (range[0] > 0 ? "+" : "") + range[0].toLocaleString();
+      this.intervalLabelsRaw.push(intervalStr);
       this.updateLabels();
       this.getColorGradient();
     }
