@@ -63,7 +63,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     this._dataset = dataset;
     //temp
     if(dataset.datatype == "Temperature") {
-      this.absoluteRange = [1, 4.5];
+      this.absoluteRange = [1.25, 4.5];
     }
     else {
       let range = dataset.dataRange[1] - dataset.dataRange[0];

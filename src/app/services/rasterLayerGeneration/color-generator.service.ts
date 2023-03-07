@@ -269,7 +269,7 @@ export class ColorGeneratorService {
     let parts = ColorGeneratorService.COLOR_PARTS;
     let range: [number, number] = dataRange;
 
-    let colors = [[103,0,31], [178,24,43], [214,96,77], [255, 255, 255]];
+    let colors = [[128,0,38], [189,0,38], [227,26,28], [252,78,42], [253,141,60], [255,237,160]];
     if(reverse) {
       colors = colors.reverse();
     }
