@@ -19,13 +19,8 @@ export class FocusControlComponent implements OnInit {
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
         this.datatype = dataset.datatype;
-        //if same focus manager used between sets won't trigger update since not changing focusManager, so re-push last focus data to trigger updates
-        if(dataset.focusManager == this.focusManager) {
-          this.paramService.pushFocusData(this.lastFocus);
-        }
-        else {
-          this.focusManager = dataset.focusManager;
-        }
+        this.focusManager = dataset.focusManager;
+        this.paramService.pushFocusData(this.lastFocus);
       }
     });
   }

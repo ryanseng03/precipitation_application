@@ -237,19 +237,19 @@ export class DatasetFormManagerService {
       season: "dry"
     });
     //////DS Temperature
-    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
+    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [0, 26], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp45"
     });
-    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsStatisticalFocusManager, true, {
+    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [0, 26], [false, false], dsStatisticalFocusManager, true, {
       dsm: "statistical",
       model: "rcp85"
     });
-    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
+    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [0, 26], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp45"
     });
-    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsDynamicalFocusManager, true, {
+    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [0, 26], [false, false], dsDynamicalFocusManager, true, {
       dsm: "dynamical",
       model: "rcp85"
     });

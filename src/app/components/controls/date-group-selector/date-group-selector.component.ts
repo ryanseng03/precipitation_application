@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges, OnDestroy } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { FormNode, FormValue, TimeSelectorData, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { FormValue, TimeSelectorData } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
@@ -56,7 +56,7 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(changes.datatype) {
+    if(changes.timeSelectorData) {
       this.validateForm();
     }
   }
@@ -67,6 +67,7 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
 
   debounce: boolean = false;
   validateForm() {
+    console.log("validate");
     if(this.datatype != "Rainfall" && this.viewControl.value == "percent") {
       this.debounce = true;
       this.viewControl.setValue("absolute");
