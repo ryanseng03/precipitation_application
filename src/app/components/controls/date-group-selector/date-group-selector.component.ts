@@ -67,7 +67,6 @@ export class DateGroupSelectorComponent implements OnInit, OnChanges, OnDestroy 
 
   debounce: boolean = false;
   validateForm() {
-    console.log("validate");
     if(this.datatype != "Rainfall" && this.viewControl.value == "percent") {
       this.debounce = true;
       this.viewControl.setValue("absolute");
