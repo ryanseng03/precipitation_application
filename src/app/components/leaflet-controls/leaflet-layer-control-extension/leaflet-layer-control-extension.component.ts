@@ -62,8 +62,16 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   @Input() set dataset(dataset: VisDatasetItem) {
     this._dataset = dataset;
     //temp
-    let range = dataset.dataRange[1] - dataset.dataRange[0];
-    this.absoluteRange = [-range / 10.0, range / 10.0];
+    if(dataset.datatype == "Temperature") {
+      this.absoluteRange = [1, 4.5];
+    }
+    else {
+      let range = dataset.dataRange[1] - dataset.dataRange[0];
+      this.absoluteRange = [-range / 10.0, range / 10.0];
+    }
+
+
+
     this.schemeControl.setValue(this.schemeControl.value);
   }
 
@@ -304,7 +312,13 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
         break;
       }
       case "diverging": {
-        let colorScheme = this.colors.getDivergentColorScale(range, this._dataset.reverseColors);
+        let colorScheme: ColorScale;
+        if(this._dataset.datatype == "Temperature") {
+          colorScheme = this.colors.getIncreasingColorScale(range, this._dataset.reverseColors);
+        }
+        else {
+          colorScheme = this.colors.getDivergentColorScale(range, this._dataset.reverseColors);
+        }
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;

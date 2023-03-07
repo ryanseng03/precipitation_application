@@ -264,9 +264,31 @@ export class ColorGeneratorService {
 
     return new ColorScale(getColor, range, parts);
   }
+
+  getIncreasingColorScale(dataRange: [number, number], reverse: boolean) {
+    let parts = ColorGeneratorService.COLOR_PARTS;
+    let range: [number, number] = dataRange;
+
+    let colors = [[103,0,31], [178,24,43], [214,96,77], [255, 255, 255]];
+    if(reverse) {
+      colors = colors.reverse();
+    }
+    let colorScale = chroma.scale(colors).domain(range);
+
+    let getColor = (value: number) => {
+      //value = Math.pow(value, 1);
+      let color = colorScale(value);
+      return {
+        r: color._rgb[0],
+        g: color._rgb[1],
+        b: color._rgb[2],
+        a: color._rgb[3] * 255
+      };
+    }
+
+    return new ColorScale(getColor, range, parts);
+  }
 }
-
-
 
 export interface XMLColorSchemeData {
   name: string;
