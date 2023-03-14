@@ -126,7 +126,7 @@ export class DatasetFormManagerService {
     let rainfallMonthFocusManager = new TimeseriesData(date1990, lastMonth, monthPeriod, yearPeriod, [monthPeriod, dayPeriod], this.dateHandler, lastMonth);
     let temperatureRainfallDayFocusManager = new TimeseriesData(date1990, lastDay, dayPeriod, monthPeriod, [dayPeriod], this.dateHandler, lastDay);
     let legacyRainfallFocusManager = new TimeseriesData(date1920, date2012, monthPeriod, yearPeriod, [monthPeriod], this.dateHandler, date2012);
-    let temperatureMonthFocusManager = new TimeseriesData(date1990, date2018, monthPeriod, yearPeriod, [monthPeriod, dayPeriod], this.dateHandler, date2018);
+    let temperatureMonthFocusManager = new TimeseriesData(date1990, lastMonth, monthPeriod, yearPeriod, [monthPeriod, dayPeriod], this.dateHandler, date2018);
     let dsDynamicalFocusManager = new TimeSelectorData(dsPeriodDynamicalNode, periodPresent);
     let dsStatisticalFocusManager = new TimeSelectorData(dsPeriodStatisticalNode, periodPresent);
     let ndviFocusManager = new TimeseriesData(dateNDVIStart, dateNDVIEnd, day16Period, yearPeriod, [], this.dateHandler, dateNDVIEnd);
@@ -151,28 +151,28 @@ export class DatasetFormManagerService {
       period: "month"
     });
     //////Min Temperature
-    let minTemperatureMonthUnfilled = new VisDatasetItem(true, true, "Celcius", "°C", "Minimum Temperature", "Monthly Minimum Temperature", [-10, 35], [false, false], temperatureMonthFocusManager, true, {
+    let minTemperatureMonthPartial = new VisDatasetItem(true, true, "Celcius", "°C", "Minimum Temperature", "Monthly Minimum Temperature", [-10, 35], [false, false], temperatureMonthFocusManager, true, {
       period: "month",
-      fill: "unfilled"
+      fill: "partial"
     });
-    let minTemperatureDayUnfilled = new VisDatasetItem(true, true, "Celcius", "°C", "Minimum Temperature", "Daily Minimum Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, true, {
+    let minTemperatureDayPartial = new VisDatasetItem(true, true, "Celcius", "°C", "Minimum Temperature", "Daily Minimum Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, true, {
       period: "day",
-      fill: "unfilled"
+      fill: "partial"
     });
     //////Max Temperature
-    let maxTemperatureMonthUnfilled = new VisDatasetItem(true, true, "Celcius", "°C", "Maximum Temperature", "Monthly Maximum Temperature", [-10, 35], [false, false], temperatureMonthFocusManager, true, {
+    let maxTemperatureMonthPartial = new VisDatasetItem(true, true, "Celcius", "°C", "Maximum Temperature", "Monthly Maximum Temperature", [-10, 35], [false, false], temperatureMonthFocusManager, true, {
       period: "month",
-      fill: "unfilled"
+      fill: "partial"
     });
-    let maxTemperatureDayUnfilled = new VisDatasetItem(true, true, "Celcius", "°C", "Maximum Temperature", "Daily Maximum Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, true, {
+    let maxTemperatureDayPartial = new VisDatasetItem(true, true, "Celcius", "°C", "Maximum Temperature", "Daily Maximum Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, true, {
       period: "day",
-      fill: "unfilled"
+      fill: "partial"
     });
     //////Mean Temperature
-    let meanTemperatureMonthUnfilled = new VisDatasetItem(false, true, "Celcius", "°C", "Mean Temperature", "Monthly Mean Temperature", [-10, 35], [false, false], temperatureMonthFocusManager, true, {
+    let meanTemperatureMonth = new VisDatasetItem(false, true, "Celcius", "°C", "Mean Temperature", "Monthly Mean Temperature", [-10, 35], [false, false], temperatureMonthFocusManager, true, {
       period: "month"
     });
-    let meanTemperatureDayUnfilled = new VisDatasetItem(false, true, "Celcius", "°C", "Mean Temperature", "Daily Mean Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, true, {
+    let meanTemperatureDay = new VisDatasetItem(false, true, "Celcius", "°C", "Mean Temperature", "Daily Mean Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, true, {
       period: "day"
     });
     //////DS Rainfall
@@ -286,22 +286,22 @@ export class DatasetFormManagerService {
       datatype: "temperature",
       aggregation: "max"
     }, rainfallMinMaxTempFormData, [
-      maxTemperatureMonthUnfilled,
-      maxTemperatureDayUnfilled
+      maxTemperatureMonthPartial,
+      maxTemperatureDayPartial
     ]);
     let minTemperatureVisDataset = new Dataset<VisDatasetItem>(minTemperatureDatasetDisplayData, {
       datatype: "temperature",
       aggregation: "min"
     }, rainfallMinMaxTempFormData, [
-      minTemperatureMonthUnfilled,
-      minTemperatureDayUnfilled
+      minTemperatureMonthPartial,
+      minTemperatureDayPartial
     ]);
     let meanTemperatureVisDataset = new Dataset<VisDatasetItem>(meanTemperatureDatasetDisplayData, {
       datatype: "temperature",
       aggregation: "mean"
     }, periodOnlyFormData, [
-      meanTemperatureDayUnfilled,
-      meanTemperatureMonthUnfilled
+      meanTemperatureDay,
+      meanTemperatureMonth
     ]);
     let dsRainfallVisDataset = new Dataset<VisDatasetItem>(dsRainfallDatasetDisplayData, {
       datatype: "downscaling_rainfall"
@@ -438,7 +438,7 @@ export class DatasetFormManagerService {
     let legacyRainfallFileGroup = new FileGroup(new DisplayData("", "", "d"), [legacyRainfallMapFile], [statewideProperty, rfMmUnitsProperty])
 
     let temperatureMapFileGroup = new FileGroup(new DisplayData("", "", "e"), [temperatureMapFile, standardErrorMapFile, metadataFile], [allExtentProperty, tempCUnitsProperty]);
-    let temperatureStationFileGroup = new FileGroup(new DisplayData("", "", "f"), [stationFile], [fillUnfilledProperty, statewideProperty, tempCUnitsProperty]);
+    let temperatureStationFileGroup = new FileGroup(new DisplayData("", "", "f"), [stationFile], [fillPartialProperty, statewideProperty, tempCUnitsProperty]);
 
     let dsRainfallStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "g"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalAllProperty]);
     let dsRainfallStatisticalChangeFileGroup = new FileGroup(new DisplayData("", "", "i"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodStatisticalFutureProperty]);
@@ -452,11 +452,11 @@ export class DatasetFormManagerService {
     let dsTemperatureDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "o"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalAllProperty]);
     let dsTemperatureDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "q"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
-    //note these can be combined with the vis timeseries stuff, just need to rework vistimeseries data to use this
+    //note these can be combined with the vis timeseries stuff, just need to rework vis timeseries data to use this
     let rainfallMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
     let temperatureRainfallDayTimeseriesHandler = new TimeseriesHandler(date1990, lastDay, dayPeriod, this.dateHandler);
     let legacyRainfallTimeseriesHandler = new TimeseriesHandler(date1920, date2012, monthPeriod, this.dateHandler);
-    let temperatureMonthTimeseriesHandler = new TimeseriesHandler(date1990, date2018, monthPeriod, this.dateHandler);
+    let temperatureMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
 
     //export items
     ////rainfall
