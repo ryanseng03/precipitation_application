@@ -39,7 +39,8 @@ export class DatasetFormManagerService {
     //////DS period
     let periodPresent = new FormValue(new DisplayData("Present day baseline values based on recorded climate data.", "Present Day", "present"), {period: "present"}, [true, true]);
     let periodMid = new FormValue(new DisplayData("Mid-century (2040-2069) projections.", "Mid-Century (2040-2069)", "mid"), {period: "mid"}, [true, true]);
-    let periodLate = new FormValue(new DisplayData("Late-century (2070-2099) projections.", "Late-Century (2070-2099)", "late"), {period: "end"}, [true, true]);
+    let periodLateStat = new FormValue(new DisplayData("Late-century (2070-2099) projections.", "Late-Century (2070-2099)", "late"), {period: "end"}, [true, true]);
+    let periodLateDyn = new FormValue(new DisplayData("Late-century (2080-2099) projections.", "Late-Century (2080-2099)", "late"), {period: "end"}, [true, true]);
 
     let periodNode = new FormNode(new DisplayData("The time period over which the data is measured.", "Time Period", "period"), [
       periodDay,
@@ -66,11 +67,11 @@ export class DatasetFormManagerService {
     let dsPeriodStatisticalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
       periodPresent,
       periodMid,
-      periodLate
+      periodLateStat
     ]);
     let dsPeriodDynamicalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
       periodPresent,
-      periodLate
+      periodLateDyn
     ]);
 
 
