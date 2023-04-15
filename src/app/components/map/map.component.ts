@@ -57,7 +57,13 @@ export class MapComponent implements OnInit {
     [band: string]: any
   };
   hoverHook: ParameterHook;
-
+  private rasterLayerActive: boolean;
+  private hoverData: HoverData = {
+    popupTimer: null,
+    crosshairTimer: null,
+    highlightedCell: null,
+    popup: null
+  };
 
   private selectedMarker: L.CircleMarker;
 
@@ -229,21 +235,12 @@ export class MapComponent implements OnInit {
     });
 
     this.map.on("movestart", () => {
-      if(this.hoverHook) {
-        this.hoverHook.uninstall();
-      }
-      L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
-      clearTimeout(this.crosshairThrottle);
-      this.crosshairThrottle = null;
-      L.DomUtil.addClass(this.mapElement.nativeElement, 'cursor-grabbing');
+      this.suspendHover();
     });
     this.map.on("moveend", () => {
       let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);
-      L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-grabbing');
-      if(this.hoverHook) {
-        this.hoverHook.install();
-      }
+      this.resumeHover();
     });
 
     //set timeout to prevent issues with map not propogating to overlay extension
@@ -292,15 +289,17 @@ export class MapComponent implements OnInit {
         this.hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
         //uninstall current hook and replace with update hook that updates raster
         rasterHook.uninstall();
-        let rasterLayerActive = true;
+        this.rasterLayerActive = true;
         rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
           //no raster for dataset, remove layers
-          if(rasterLayerActive && raster === null) {
+          if(this.rasterLayerActive && raster === null) {
             this.map.removeLayer(this.dataLayers["0"]);
             this.layerController.removeLayer(this.dataLayers["0"]);
-            rasterLayerActive = false
+            this.rasterLayerActive = false;
+            this.suspendHover();
           }
           else if(raster !== null) {
+            //this.hoverHook.install();
             this.active.data.raster = raster;
             bands = raster.getBands();
             //set layer data
@@ -308,12 +307,13 @@ export class MapComponent implements OnInit {
               let values = bands[band];
               this.dataLayers[band].setData(values);
             }
-            if(!rasterLayerActive) {
+            if(!this.rasterLayerActive) {
               //add rainfall layer to map as default
               this.map.addLayer(this.dataLayers["0"]);
               //for now at least only one layer, make sure to replace if multiple
               this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
-              rasterLayerActive = true;
+              this.rasterLayerActive = true;
+              this.resumeHover();
             }
           }
         });
@@ -368,10 +368,9 @@ export class MapComponent implements OnInit {
     }
   }
 
-  crosshairThrottle = null;
   crosshairHandler(position: L.LatLng, throttle: number) {
-    if(!this.crosshairThrottle) {
-      this.crosshairThrottle = setTimeout(() => {
+    if(!this.hoverData.crosshairTimer) {
+      this.hoverData.crosshairTimer = setTimeout(() => {
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
         if(this.dataRetreiver.geoPosToGridValue(header, data, position)) {
@@ -380,41 +379,37 @@ export class MapComponent implements OnInit {
         else {
           L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
         }
-        this.crosshairThrottle = null;
+        this.hoverData.crosshairTimer = null;
       }, throttle);
     }
   }
 
   hoverPopupHandler(timeout: number) {
-    let popupData: PopupData = {
-      popupTimer: null,
-      highlightedCell: null,
-      popup: null
-    };
+
 
     return (position: L.LatLng) => {
-      clearTimeout(popupData.popupTimer);
-      if(popupData.highlightedCell != null) {
-        this.map.removeLayer(popupData.highlightedCell);
-        popupData.highlightedCell = null;
+      clearTimeout(this.hoverData.popupTimer);
+      if(this.hoverData.highlightedCell != null) {
+        this.map.removeLayer(this.hoverData.highlightedCell);
+        this.hoverData.highlightedCell = null;
       }
       //close current hover popup if exists
-      if(popupData.popup != null) {
-        this.map.closePopup(popupData.popup);
-        popupData.popup = null;
+      if(this.hoverData.popup != null) {
+        this.map.closePopup(this.hoverData.popup);
+        this.hoverData.popup = null;
       }
       //if position is null mouse moved out of map
       if(position == null) {
         return;
       }
       this.crosshairHandler(position, 20);
-      popupData.popupTimer = setTimeout(() => {
+      this.hoverData.popupTimer = setTimeout(() => {
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
         let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
         //check if data exists at hovered point
         if(geojson != undefined) {
-          popupData.highlightedCell = L.geoJSON(geojson)
+          this.hoverData.highlightedCell = L.geoJSON(geojson)
           .setStyle({
             fillColor: "orange",
             weight: 3,
@@ -430,11 +425,11 @@ export class MapComponent implements OnInit {
           let valueLabel = labels.join("<br>");
 
           //popup cell value
-          popupData.popup = L.popup({ autoPan: false })
+          this.hoverData.popup = L.popup({ autoPan: false })
           .setLatLng(position);
           let content = `${valueLabel}<br>`;
-          popupData.popup.setContent(content);
-          popupData.popup.openOn(this.map);
+          this.hoverData.popup.setContent(content);
+          this.hoverData.popup.openOn(this.map);
         }
       }, timeout);
     }
@@ -600,6 +595,27 @@ export class MapComponent implements OnInit {
       weight: weight
     };
   }
+
+  suspendHover() {
+    //uninstall the hover hook if it exists
+    if(this.hoverHook) {
+      this.hoverHook.uninstall();
+    }
+    //remove the crosshair pointer class
+    L.DomUtil.removeClass(this.mapElement.nativeElement, 'cursor-crosshair');
+    //clear the hover timeouts and reset to null
+    clearTimeout(this.hoverData.crosshairTimer);
+    this.hoverData.crosshairTimer = null;
+    clearTimeout(this.hoverData.popupTimer);
+    this.hoverData.popupTimer = null;
+  }
+
+  resumeHover() {
+    //if the raster layer is active then install the hover hook, otherwise do nothing
+    if(this.rasterLayerActive) {
+      this.hoverHook.install();
+    }
+  }
 }
 
 //weight 5% radius?
@@ -628,8 +644,9 @@ interface DataPack {
   focus: FocusData<unknown>
 }
 
-interface PopupData {
-  popupTimer: any,
+interface HoverData {
+  crosshairTimer: NodeJS.Timeout,
+  popupTimer: NodeJS.Timeout,
   highlightedCell: L.Layer,
   popup: L.Popup
 }

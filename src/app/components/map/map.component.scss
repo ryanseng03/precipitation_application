@@ -4,7 +4,11 @@
 }
 
 .cursor-grabbing {
-    cursor: grabbing !important;
+    cursor: -webkit-grabbing;
+    cursor: -moz-grabbing;
+    cursor: -o-grabbing;
+    cursor: -ms-grabbing;
+    cursor: grabbing;
 }
 
 .cursor-crosshair {
