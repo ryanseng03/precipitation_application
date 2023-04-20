@@ -644,7 +644,7 @@ export class DatasetFormManagerService {
     let datasetFormDisplayData = new DisplayData("Select the type of data you would like to view. Hover over an option for a description of the dataset.", "Dataset", "dataset");
     //vis dataset groups
     let visDatasets = [rainfallVisDataset, legacyRainfallVisDataset, maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset, dsRainfallVisDataset, dsTemperatureVisDataset, ndviVisDataset];
-    let visDatasetSingles: Dataset<VisDatasetItem>[] = [];
+    let visDatasetSingles: Dataset<VisDatasetItem>[] = [ndviVisDataset];
     let visDatasetGroupers: DatasetSelectorGroup[] = [
       new DatasetSelectorGroup(historicalRainfallGrouperDisplayData, [rainfallVisDataset, legacyRainfallVisDataset]),
       new DatasetSelectorGroup(historicalTemperatureGrouperDisplayData, [maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset]),
@@ -1403,6 +1403,10 @@ export class TimeseriesData extends FocusManager<Moment> {
   private _stationPeriods: PeriodData[];
   private _dateHandler: DateManagerService;
 
+  private _next: (date: Moment) => Moment;
+  private _previous: (date: Moment) => Moment;
+
+
   constructor(start: Moment, end: Moment, period: PeriodData, nextPeriod: PeriodData, stationPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
     let coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
     super("timeseries", coverageLabel, defaultDate);
@@ -1412,6 +1416,14 @@ export class TimeseriesData extends FocusManager<Moment> {
     this._nextPeriod = nextPeriod;
     this._stationPeriods = stationPeriods;
     this._dateHandler = dateHandler;
+  }
+
+  next(time: Moment) {
+    return this._next(time);
+  }
+
+  previous(time: Moment) {
+    return this._previous(time);
   }
 
   addInterval(time: Moment, n: number = 1): Moment {
