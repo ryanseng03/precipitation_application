@@ -57,7 +57,7 @@ export class MapComponent implements OnInit {
     [band: string]: any
   };
   hoverHook: ParameterHook;
-  private rasterLayerActive: boolean;
+  private rasterLayerActive: boolean = false;
   private hoverData: HoverData = {
     popupTimer: null,
     crosshairTimer: null,
@@ -260,64 +260,54 @@ export class MapComponent implements OnInit {
       this.dataset = dataset;
     });
 
+    //install hover handler (requires raster to be set to work, start disabled)
+    let hoverTag = this.paramService.registerMapHover(this.map);
+    this.hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000), false);
     let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
-      if(raster) {
-        this.active.data.raster = raster;
-        let bands = raster.getBands();
-        let header = raster.getHeader();
-        for(let band in bands) {
-          let rasterOptions: RasterOptions = {
-            cacheEmpty: true,
-            colorScale: this.colorScheme,
-            data: {
-              header: header,
-              values: bands[band]
-            }
-          };
-          let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
-          //layerGroups.Types[this.layerLabelMap.getLabel(band)] = rasterLayer;
-          this.dataLayers[band] = rasterLayer;
-          rasterLayer.setOpacity(this.opacity);
+        for(let band in this.dataLayers) {
+          this.map.removeLayer(this.dataLayers[band]);
+          this.layerController.removeLayer(this.dataLayers[band]);
         }
-        //add rainfall layer to map as default
-        this.map.addLayer(this.dataLayers["0"]);
-        //for now at least only one layer, make sure to replace if multiple
-        this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
+        this.dataLayers = {};
 
-        //install hover handler (requires raster to be set to work)
-        let hoverTag = this.paramService.registerMapHover(this.map);
-        this.hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000));
-        //uninstall current hook and replace with update hook that updates raster
-        rasterHook.uninstall();
-        this.rasterLayerActive = true;
-        rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
-          //no raster for dataset, remove layers
-          if(this.rasterLayerActive && raster === null) {
-            this.map.removeLayer(this.dataLayers["0"]);
-            this.layerController.removeLayer(this.dataLayers["0"]);
-            this.rasterLayerActive = false;
-            this.suspendHover();
+        //no raster for dataset, remove layers
+        if(this.rasterLayerActive && raster === null) {
+          this.rasterLayerActive = false;
+          this.suspendHover();
+        }
+        else if(raster !== null) {
+          //this.hoverHook.install();
+          this.active.data.raster = raster;
+          let bands = raster.getBands();
+          let header = raster.getHeader();
+          //create new bands
+          for(let band in bands) {
+            let rasterOptions: RasterOptions = {
+              cacheEmpty: true,
+              colorScale: this.colorScheme,
+              data: {
+                header: header,
+                values: bands[band]
+              }
+            };
+            let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
+            this.dataLayers[band] = rasterLayer;
+            rasterLayer.setOpacity(this.opacity);
           }
-          else if(raster !== null) {
-            //this.hoverHook.install();
-            this.active.data.raster = raster;
-            bands = raster.getBands();
-            //set layer data
-            for(let band in bands) {
-              let values = bands[band];
-              this.dataLayers[band].setData(values);
-            }
-            if(!this.rasterLayerActive) {
-              //add rainfall layer to map as default
-              this.map.addLayer(this.dataLayers["0"]);
-              //for now at least only one layer, make sure to replace if multiple
-              this.layerController.addOverlay(this.dataLayers["0"], "Data Map");
-              this.rasterLayerActive = true;
-              this.resumeHover();
-            }
+          if(!this.rasterLayerActive) {
+            this.rasterLayerActive = true;
+            this.resumeHover();
           }
-        });
-      }
+          
+          let activeLayer = this.dataLayers[this.active.band];
+          //assume everything has a band 0 and use as default
+          if(activeLayer === undefined) {
+            activeLayer = this.dataLayers["0"];
+          }
+          this.map.addLayer(activeLayer);
+          //for now at least only one layer, make sure to replace if multiple
+          this.layerController.addOverlay(activeLayer, "Data Map");
+        }
     });
 
 
@@ -373,7 +363,8 @@ export class MapComponent implements OnInit {
       this.hoverData.crosshairTimer = setTimeout(() => {
         let header = this.active.data.raster.getHeader();
         let data = this.active.data.raster.getBands()[this.active.band];
-        if(this.dataRetreiver.geoPosToGridValue(header, data, position)) {
+        let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
+        if(value !== undefined) {
           L.DomUtil.addClass(this.mapElement.nativeElement, 'cursor-crosshair');
         }
         else {

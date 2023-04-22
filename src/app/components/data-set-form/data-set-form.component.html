@@ -20,13 +20,6 @@
           <mat-select
             disableOptionCentering="true"
             [formControl]="controls.datatype">
-            <mat-option
-              *ngFor="let dataset of formData.datasetFormData.datasetValues"
-              [value]="dataset.tag"
-              matTooltipPosition="right"
-              [matTooltip]="dataset.description">
-              {{dataset.label}}
-            </mat-option>
             <mat-optgroup
               *ngFor="let group of formData.datasetFormData.datasetGroups"
               [label]="group.label">
@@ -38,6 +31,13 @@
                 {{dataset.label}}
               </mat-option>
             </mat-optgroup>
+            <mat-option
+              *ngFor="let dataset of formData.datasetFormData.datasetValues"
+              [value]="dataset.tag"
+              matTooltipPosition="right"
+              [matTooltip]="dataset.description">
+              {{dataset.label}}
+            </mat-option>
           </mat-select>
         </mat-form-field>
         <mat-icon

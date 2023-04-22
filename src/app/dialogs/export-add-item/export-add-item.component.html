@@ -13,15 +13,7 @@
           <mat-label>{{formData.datasetFormData.label}}</mat-label>
           <mat-select
             disableOptionCentering="true"
-            [formControl]="controls.datatype.control"
-            >
-            <mat-option
-              *ngFor="let dataset of formData.datasetFormData.datasetValues"
-              [value]="dataset.tag"
-              matTooltipPosition="right"
-              [matTooltip]="dataset.description">
-              {{dataset.label}}
-            </mat-option>
+            [formControl]="controls.datatype.control">
             <mat-optgroup
               *ngFor="let group of formData.datasetFormData.datasetGroups"
               [label]="group.label">
@@ -33,6 +25,13 @@
                 {{dataset.label}}
               </mat-option>
             </mat-optgroup>
+            <mat-option
+              *ngFor="let dataset of formData.datasetFormData.datasetValues"
+              [value]="dataset.tag"
+              matTooltipPosition="right"
+              [matTooltip]="dataset.description">
+              {{dataset.label}}
+            </mat-option>
           </mat-select>
         </mat-form-field>
         <mat-icon
@@ -166,8 +165,7 @@
       label="Start Date"
       [min]="formData.datasetItem.timeseriesHandler.start"
       [max]="controls.dates.end"
-      [date]="controls.dates.start"
-      (dateChange)="validateSetDate($event, 'start')"
+      [(date)]="controls.dates.start"
       [period]="formData.datasetItem.timeseriesHandler.unit"
       [readonly]="false">
     </app-date-selector>
@@ -176,8 +174,7 @@
       label="End Date"
       [min]="controls.dates.start"
       [max]="formData.datasetItem.timeseriesHandler.end"
-      [date]="controls.dates.end"
-      (dateChange)="validateSetDate($event, 'end')"
+      [(date)]="controls.dates.end"
       [period]="formData.datasetItem.timeseriesHandler.unit"
       [readonly]="false">
     </app-date-selector>

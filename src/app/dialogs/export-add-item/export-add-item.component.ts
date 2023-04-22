@@ -238,17 +238,18 @@ export class ExportAddItemComponent {
     this.controls.fileGroups = {};
   }
 
-  validateSetDate(date: Moment, which: string) {
-    //debounce corrected value feedback
-    if(!this.dateDebounce) {
-      this.dateDebounce = true;
-      let correctedDate = this.formData.datasetItem.timeseriesHandler.roundToInterval(date);
-      this.controls.dates[which] = correctedDate;
-    }
-    else {
-      this.dateDebounce = false;
-    }
-  }
+  //don't need this, just allow it to set any date, api handles only getting valid date files
+  // validateSetDate(date: Moment, which: string) {
+  //   //debounce corrected value feedback
+  //   if(!this.dateDebounce) {
+  //     this.dateDebounce = true;
+  //     let correctedDate = this.formData.datasetItem.timeseriesHandler.roundToInterval(date);
+  //     this.controls.dates[which] = correctedDate;
+  //   }
+  //   else {
+  //     this.dateDebounce = false;
+  //   }
+  // }
 
   //return info about the export item
   cancel(): void {

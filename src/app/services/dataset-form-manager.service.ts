@@ -130,7 +130,7 @@ export class DatasetFormManagerService {
     let temperatureMonthFocusManager = new TimeseriesData(date1990, lastMonth, monthPeriod, yearPeriod, [monthPeriod, dayPeriod], this.dateHandler, date2018);
     let dsDynamicalFocusManager = new TimeSelectorData(dsPeriodDynamicalNode, periodPresent);
     let dsStatisticalFocusManager = new TimeSelectorData(dsPeriodStatisticalNode, periodPresent);
-    let ndviFocusManager = new TimeseriesData(dateNDVIStart, dateNDVIEnd, day16Period, yearPeriod, [], this.dateHandler, dateNDVIEnd);
+    let ndviFocusManager = new NDVITimeseriesData(dateNDVIStart, dateNDVIEnd, day16Period, yearPeriod, [], this.dateHandler, dateNDVIEnd);
 
     //Create Datasets
     ////Dataset Items
@@ -356,6 +356,7 @@ export class DatasetFormManagerService {
     let anomalyStandardErrorDisplayData = new DisplayData("The standard error values for the gridded map's anomaly values.", "Anomaly Standard Error", "anom_se");
     let metadataDisplayData = new DisplayData("Gridded map product metadata and error metrics.", "Metadata and Error Metrics", "metadata");
     let stationPartialDisplayData = new DisplayData("Processed station data including each station's metadata and values over a period of time", "Station Data", "station_data");
+    let ndviDisplayData = new DisplayData("A gridded normalized difference vegetation index (NDVI) map representing estimated values over the state of Hawaiʻi.", "NDVI Map", "data_map");
     //additional property nodes
     ////values
     //////spatial extents
@@ -414,6 +415,7 @@ export class DatasetFormManagerService {
     let dsPeriodStatisticalFutureProperty = new FileProperty(dsPeriodStatisticalNode.filter(["mid", "late"]), ["mid"]);
     let dsPeriodDynamicalAllProperty = new FileProperty(dsPeriodDynamicalNode, ["present"]);
     let dsPeriodDynamicalFutureProperty = new FileProperty(dsPeriodDynamicalNode.filter(["late"]), ["late"]);
+    let ndviPeriodProperty = new FileProperty(periodNode.filter(["16day"]), ["16day"]);
 
     //package files
     let rainfallMapFile = new FileData(rainfallMapDisplayData, geotiffFtype, ["metadata"]);
@@ -428,6 +430,7 @@ export class DatasetFormManagerService {
     let anomalyStandardErrorFile = new FileData(anomalyStandardErrorDisplayData, geotiffFtype, ["metadata"]);
     let metadataFile = new FileData(metadataDisplayData, txtFtype, []);
     let stationFile = new FileData(stationPartialDisplayData, csvFtype, []);
+    let ndviMapFile = new FileData(ndviDisplayData, geotiffFtype, []);
 
     //use if you want to add labeling to file groups in the future, unused for now
     // let griddedMapDisplayData = new DisplayData("Gridded mapped data files and metadata", "Map Data", "map_data");
@@ -444,7 +447,7 @@ export class DatasetFormManagerService {
     let dsRainfallStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "g"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodStatisticalAllProperty]);
     let dsRainfallStatisticalChangeFileGroup = new FileGroup(new DisplayData("", "", "i"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodStatisticalFutureProperty]);
 
-    let dsRainfallDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "a"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalAllProperty]);
+    let dsRainfallDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "j"), [dsRainfallMapFile], [statewideProperty, rfAllUnitsProperty, dsPeriodDynamicalAllProperty]);
     let dsRainfallDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "k"), [dsRainfallMapChangeFile], [statewideProperty, rfChangeUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
     let dsTemperatureStatisticalMapFileGroup = new FileGroup(new DisplayData("", "", "l"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodStatisticalAllProperty]);
@@ -453,11 +456,14 @@ export class DatasetFormManagerService {
     let dsTemperatureDynamicalMapFileGroup = new FileGroup(new DisplayData("", "", "o"), [dsTemperatureMapFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalAllProperty]);
     let dsTemperatureDynamicalChangeFileGroup = new FileGroup(new DisplayData("", "", "q"), [dsTemperatureMapChangeFile], [statewideProperty, tempAllUnitsProperty, dsPeriodDynamicalFutureProperty]);
 
+    let ndviFileGroup = new FileGroup(new DisplayData("", "", "r"), [ndviMapFile], [statewideProperty, ndviPeriodProperty]);
+
     //note these can be combined with the vis timeseries stuff, just need to rework vis timeseries data to use this
     let rainfallMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
     let temperatureRainfallDayTimeseriesHandler = new TimeseriesHandler(date1990, lastDay, dayPeriod, this.dateHandler);
     let legacyRainfallTimeseriesHandler = new TimeseriesHandler(date1920, date2012, monthPeriod, this.dateHandler);
     let temperatureMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
+    let ndviTimeseriesHandler = new TimeseriesHandler(dateNDVIStart, dateNDVIEnd, day16Period, this.dateHandler);
 
     //export items
     ////rainfall
@@ -571,6 +577,10 @@ export class DatasetFormManagerService {
       dsm: "dynamical",
       model: "rcp85"
     }, "Dynamically Downscaled Temperature (RCP 8.5)");
+    //NDVI
+    let ndviExportItem = new ExportDatasetItem([ndviFileGroup], {
+      period: "16day"
+    }, "NDVI", ndviTimeseriesHandler);
 
     ////Datasets
     let rainfallExportDataset = new Dataset<ExportDatasetItem>(rainfallDatasetDisplayData, {
@@ -631,6 +641,11 @@ export class DatasetFormManagerService {
       dsTemperatureDynamicalRcp45ExportItem,
       dsTemperatureDynamicalRcp85ExportItem
     ]);
+    let ndviExportDataset = new Dataset<ExportDatasetItem>(ndviDatasetDisplayData, {
+      datatype: "ndvi"
+    }, ndviFormData, [
+      ndviExportItem
+    ]);
 
 
 
@@ -653,8 +668,8 @@ export class DatasetFormManagerService {
     let visDatasetFormData = new DatasetFormData(datasetFormDisplayData, visDatasetSingles, visDatasetGroupers);
 
     //export dataset groups
-    let exportDatasets = [rainfallExportDataset, legacyRainfallExportDataset, maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset, dsRainfallExportDataset, dsTemperatureExportDataset];
-    let exportDatasetSingles: Dataset<ExportDatasetItem>[] = [];
+    let exportDatasets = [rainfallExportDataset, legacyRainfallExportDataset, maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset, dsRainfallExportDataset, dsTemperatureExportDataset, ndviExportDataset];
+    let exportDatasetSingles: Dataset<ExportDatasetItem>[] = [ndviExportDataset];
     let exportDatasetGroupers: DatasetSelectorGroup[] = [
       new DatasetSelectorGroup(historicalRainfallGrouperDisplayData, [rainfallExportDataset, legacyRainfallExportDataset]),
       new DatasetSelectorGroup(historicalTemperatureGrouperDisplayData, [maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset]),
@@ -1395,6 +1410,11 @@ export class TimeseriesHandler {
   }
 }
 
+
+
+//CUSTOM HANDLER IS A TEMPORARY PATCH FOR NDVI
+//should either use some kind of timeseries generator function or preferrably an API call to get next/previous/rounded dates based on actual available data
+//API call also allows for non-specific/variable periods
 export class TimeseriesData extends FocusManager<Moment> {
   private _start: Moment;
   private _end: Moment;
@@ -1402,10 +1422,6 @@ export class TimeseriesData extends FocusManager<Moment> {
   private _nextPeriod: PeriodData;
   private _stationPeriods: PeriodData[];
   private _dateHandler: DateManagerService;
-
-  private _next: (date: Moment) => Moment;
-  private _previous: (date: Moment) => Moment;
-
 
   constructor(start: Moment, end: Moment, period: PeriodData, nextPeriod: PeriodData, stationPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
     let coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
@@ -1416,14 +1432,6 @@ export class TimeseriesData extends FocusManager<Moment> {
     this._nextPeriod = nextPeriod;
     this._stationPeriods = stationPeriods;
     this._dateHandler = dateHandler;
-  }
-
-  next(time: Moment) {
-    return this._next(time);
-  }
-
-  previous(time: Moment) {
-    return this._previous(time);
   }
 
   addInterval(time: Moment, n: number = 1): Moment {
@@ -1484,6 +1492,48 @@ export class TimeseriesData extends FocusManager<Moment> {
 
   get stationPeriods(): PeriodData[] {
     return this._stationPeriods;
+  }
+}
+
+class NDVITimeseriesData extends TimeseriesData {
+
+  addInterval(time: Moment, n: number = 1): Moment {
+    let result = this.roundToInterval(time);
+    //if going forward, relatively simple, reset to beginning of year if going over year boundary
+    if(n > 0) {
+      for(let i = 0; i < n; i++) {
+        let year = result.year();
+        result.add(this.interval, this.unit);
+        if(year != result.year()) {
+          result.startOf("year");
+        }
+      }
+    }
+    //if going backwards need to get last date from previous year, just use rounding hack since this is exclusively for ndvi
+    else {
+      for(let i = 0; i > n; i--) {
+        let year = result.year();
+        result.subtract(this.interval, this.unit);
+        let newYear = result.year()
+        if(year != newYear) {
+          //should always end on 12/19 or 12/18 if leap year, so as a quick hack just go to 12/19 and round
+          result = this.roundToInterval(moment(`${newYear}-12-19`));
+        }
+      }
+    }
+    result = this.lockToRange(result);
+    return result;
+  }
+
+  roundToInterval(time: Moment) {
+    //start from beginning of year
+    let base = time.clone().startOf("year");
+    let timeClone = time.clone();
+    let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
+    let roundedDiff = Math.round(intervalDiff) * this.interval;
+    base.add(roundedDiff, this.unit);
+    base = this.lockToRange(base);
+    return base;
   }
 }
 

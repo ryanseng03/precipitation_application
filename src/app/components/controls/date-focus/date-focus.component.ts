@@ -53,12 +53,15 @@ export class DateFocusComponent implements OnInit {
   }
 
   dateChanged(date: Moment.Moment) {
-    date = this._timeseriesData.roundToInterval(date);
-    if(!date.isSame(this.setDate)) {
-      this.setDate = date;
+    let transformedDate = this._timeseriesData.roundToInterval(date);
+    if(!date.isSame(transformedDate)) {
+      this.controlDate = transformedDate;
+    }
+    else if(!transformedDate.isSame(this.setDate)) {
+      this.setDate = transformedDate;
       //check if any controls are disabled
-      this.setDisabled(date);
-      this.dateChange.emit(date);
+      this.setDisabled(transformedDate);
+      this.dateChange.emit(transformedDate);
     }
   }
 
@@ -106,7 +109,7 @@ export class DateFocusComponent implements OnInit {
         tooltip: `Move back ${ffUnitStr}`,
         icon: "ffl",
         trigger: () => {
-          this.moveDate(-timeseriesData.nextPeriod.interval, timeseriesData.nextPeriod.unit);
+          this.controlDate = timeseriesData.addInterval(this.setDate, -1);
         }
       });
     }
@@ -115,7 +118,7 @@ export class DateFocusComponent implements OnInit {
       tooltip: `Move back ${fUnitStr}`,
       icon: "fl",
       trigger: () => {
-        this.moveDate(-timeseriesData.interval, timeseriesData.unit);
+        this.controlDate = timeseriesData.addInterval(this.setDate, -1);
       }
     });
 
@@ -125,7 +128,7 @@ export class DateFocusComponent implements OnInit {
       tooltip: `Move forward ${fUnitStr}`,
       icon: "fr",
       trigger: () => {
-        this.moveDate(timeseriesData.interval, timeseriesData.unit);
+        this.controlDate = timeseriesData.addInterval(this.setDate, 1);
       }
     }];
 
@@ -134,7 +137,7 @@ export class DateFocusComponent implements OnInit {
         tooltip: `Move forward ${ffUnitStr}`,
         icon: "ffr",
         trigger: () => {
-          this.moveDate(timeseriesData.nextPeriod.interval, timeseriesData.nextPeriod.unit);
+          this.controlDate = timeseriesData.addInterval(this.setDate, 1);
         }
       });
     }
@@ -159,11 +162,11 @@ export class DateFocusComponent implements OnInit {
     }
   }
 
-  private moveDate(interval: number, unit: UnitOfTime) {
-    let newDate = this.setDate.clone();
-    newDate.add(interval, unit);
-    this.controlDate = newDate;
-  }
+  // private moveDate(interval: number, unit: UnitOfTime) {
+  //   let newDate = this.setDate.clone();
+  //   newDate.add(interval, unit);
+  //   this.controlDate = newDate;
+  // }
 
 }
 
