@@ -109,13 +109,13 @@ export class DateFocusComponent implements OnInit {
         tooltip: `Move back ${ffUnitStr}`,
         icon: "ffl",
         trigger: () => {
-          this.controlDate = timeseriesData.addInterval(this.setDate, -1);
+          this.controlDate = this.setDate.clone().subtract(timeseriesData.nextPeriod.interval, timeseriesData.nextPeriod.unit);
         }
       });
     }
 
     dateBack.push({
-      tooltip: `Move back ${fUnitStr}`,
+      tooltip: `Previous`,
       icon: "fl",
       trigger: () => {
         this.controlDate = timeseriesData.addInterval(this.setDate, -1);
@@ -125,7 +125,7 @@ export class DateFocusComponent implements OnInit {
 
 
     let dateForward: MoveData[] = [{
-      tooltip: `Move forward ${fUnitStr}`,
+      tooltip: `Next`,
       icon: "fr",
       trigger: () => {
         this.controlDate = timeseriesData.addInterval(this.setDate, 1);
@@ -137,7 +137,7 @@ export class DateFocusComponent implements OnInit {
         tooltip: `Move forward ${ffUnitStr}`,
         icon: "ffr",
         trigger: () => {
-          this.controlDate = timeseriesData.addInterval(this.setDate, 1);
+          this.controlDate = this.setDate.clone().add(timeseriesData.nextPeriod.interval, timeseriesData.nextPeriod.unit);
         }
       });
     }

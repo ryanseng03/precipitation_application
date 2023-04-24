@@ -16,7 +16,6 @@ export class ExportAddItemComponent {
   formData: ActiveFormData<ExportDatasetItem>;
   controls: ExportControlData;
   private lockDatasetUpdates: boolean;
-  private dateDebounce: boolean = false;
 
   private _formManager: FormManager<ExportDatasetItem>;
 
@@ -51,9 +50,7 @@ export class ExportAddItemComponent {
     else if(!initValues) {
       this.controls.dates = {
         start: this.formData.datasetItem.start,
-        end: this.formData.datasetItem.end,
-        unit: this.formData.datasetItem.unit,
-        interval: this.formData.datasetItem.interval
+        end: this.formData.datasetItem.end
       }
     }
     //setup main datatype control (always there, only needed once)
@@ -82,9 +79,7 @@ export class ExportAddItemComponent {
     if(!this.controls.dates && formData.datasetItem.start) {
       this.controls.dates = {
         start: this.formData.datasetItem.start,
-        end: this.formData.datasetItem.end,
-        unit: this.formData.datasetItem.unit,
-        interval: this.formData.datasetItem.interval
+        end: this.formData.datasetItem.end
       }
     }
     let {datatype, ...values} = formData.values;
@@ -272,7 +267,12 @@ export class ExportAddItemComponent {
       }
     }
     if(this.formData.datasetItem.start) {
-      exportData.state.dates = this.controls.dates;
+      exportData.state.dates = {
+        start: this.controls.dates.start,
+        end: this.controls.dates.end,
+        unit: this.formData.datasetItem.timeseriesHandler.unit,
+        interval: this.formData.datasetItem.timeseriesHandler.interval
+      };
     }
     let fileLabels = [];
     let datasetLabel = `${this.formData.datasetItem.label}`;
@@ -346,7 +346,10 @@ interface FileGroupControls {
 interface ExportControlData {
   datatype: ControlData,
   dataset: Controls,
-  dates?: DateState,
+  dates?: {
+    start: Moment,
+    end: Moment
+  },
   fileGroups: FileGroupControls
 }
 
