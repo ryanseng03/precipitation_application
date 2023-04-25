@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Moment } from 'moment';
-import { VisDatasetItem, FocusData, FocusManager, FormValue, TimeSelectorData, TimeseriesData } from 'src/app/services/dataset-form-manager.service';
+import { VisDatasetItem, FocusData, FormValue, TimeseriesData } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
 @Component({
@@ -9,43 +9,23 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
   styleUrls: ['./focus-control.component.scss']
 })
 export class FocusControlComponent implements OnInit {
-  focusManager: FocusManager<unknown>;
+  focusManager: TimeseriesData;
   date: Moment;
   selection: FormValue;
   lastFocus: FocusData<unknown>;
   datatype: string;
 
-  constructor(private paramService: EventParamRegistrarService) {
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
-      if(dataset) {
-        this.datatype = dataset.datatype;
-        this.focusManager = dataset.focusManager;
-        this.paramService.pushFocusData(this.lastFocus);
-      }
-    });
+
+
+  constructor() {
+
   }
 
   ngOnInit() {
   }
 
-  castTimeseriesManager(): TimeseriesData {
-    return <TimeseriesData>this.focusManager;
-  }
-
-  castSelectorManager(): TimeSelectorData {
-    return <TimeSelectorData>this.focusManager;
-  }
-
   setFocus(focus: unknown) {
-    if(this.focusManager.type == "timeseries") {
-      this.date = <Moment>focus;
-    }
-    else {
-      this.selection = <FormValue>focus;
-    }
-    let focusData = this.focusManager.getFocusData(focus);
-    this.lastFocus = focusData;
-    this.paramService.pushFocusData(focusData);
+
   }
 
 }

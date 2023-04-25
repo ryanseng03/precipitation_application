@@ -99,6 +99,7 @@ export class ViewContainerComponent implements OnInit {
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
+        dataset.focusManager.type == "timeseries"
         if(dataset.includeStations) {
           this.includeStations = true;
           setTimeout(() => {

@@ -2,7 +2,11 @@
   <div class="scroll-hide">
     <div #viewContainer class="view-container" (scroll)="containerScroll($event)">
       <div #dateControlComponent class="focus-control" [ngStyle]="{width: getDateControlWidth()}">
-        <app-focus-control></app-focus-control>
+        <app-date-focus
+          [timeseriesData]="castTimeseriesManager()"
+          [initValue]="date"
+          (dateChange)="setFocus($event)">
+        </app-date-focus>
       </div>
 
       <div class="view-component-wrapper">

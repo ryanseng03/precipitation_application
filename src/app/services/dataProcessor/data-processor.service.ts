@@ -23,6 +23,7 @@ export class DataProcessorService {
     this.lastReceivedId = 0;
     DataProcessorService.worker.onmessage = ({ data }) => {
       let { header, bandData, id } = data;
+      console.log(header);
       this.lastReceivedId = id;
       //if this is the data for the last request submitted then process and resolve
       if(this.workerId == id) {

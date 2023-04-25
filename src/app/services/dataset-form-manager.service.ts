@@ -1039,7 +1039,7 @@ export class VisDatasetItem extends DatasetItem {
   private _dataRange: [number, number];
   private _rangeAbsolute: [boolean, boolean];
   //when select date options should emit param data for date
-  private _focusManager: FocusManager<any>;
+  private _timeseriesData: TimeseriesData;
   private _reverseColors: boolean;
   private _datatype: string;
 
@@ -1053,7 +1053,7 @@ export class VisDatasetItem extends DatasetItem {
     this._rangeAbsolute = rangeAbsolute;
     this._reverseColors = reverseColors;
     this._datatype = datatype;
-    this._focusManager = focusManager;
+    this._timeseriesData = timeseriesData;
   }
 
   get datatype(): string {
@@ -1088,7 +1088,7 @@ export class VisDatasetItem extends DatasetItem {
     return this._reverseColors;
   }
 
-  get focusManager(): FocusManager<any> {
+  get timeseriesData(): FocusManager<any> {
     return this._focusManager;
   }
 
@@ -1129,52 +1129,52 @@ export class FocusData<T> {
   }
 }
 
-export abstract class FocusManager<T> {
-  private _type: string;
-  private _coverageLabel: string;
-  private _defaultValue: T;
+// export abstract class FocusManager<T> {
+//   private _type: string;
+//   private _coverageLabel: string;
+//   private _defaultValue: T;
 
-  constructor(type: string, coverageLabel: string, defaultValue: T) {
-    this._coverageLabel = coverageLabel;
-    this._type = type;
-    this._defaultValue = defaultValue;
-  }
+//   constructor(type: string, coverageLabel: string, defaultValue: T) {
+//     this._coverageLabel = coverageLabel;
+//     this._type = type;
+//     this._defaultValue = defaultValue;
+//   }
 
-  get type(): string {
-    return this._type;
-  }
+//   get type(): string {
+//     return this._type;
+//   }
 
-  abstract getFocusData(value: T): FocusData<T>;
+//   abstract getFocusData(value: T): FocusData<T>;
 
-  get coverageLabel(): string {
-    return this._coverageLabel;
-  };
+//   get coverageLabel(): string {
+//     return this._coverageLabel;
+//   };
 
-  get defaultValue(): T {
-    return this._defaultValue;
-  }
-}
+//   get defaultValue(): T {
+//     return this._defaultValue;
+//   }
+// }
 
-export class TimeSelectorData extends FocusManager<FormValue> {
-  private _formData: FormNode;
+// export class TimeSelectorData extends FocusManager<FormValue> {
+//   private _formData: FormNode;
 
-  constructor(formData: FormNode, defaultValue: FormValue) {
-    let labels = formData.values.map((value: FormValue) => {
-      return value.label;
-    });
-    let coverageLabel = labels.join(", ");
-    super("selector", coverageLabel, defaultValue);
-    this._formData = formData;
-  }
+//   constructor(formData: FormNode, defaultValue: FormValue) {
+//     let labels = formData.values.map((value: FormValue) => {
+//       return value.label;
+//     });
+//     let coverageLabel = labels.join(", ");
+//     super("selector", coverageLabel, defaultValue);
+//     this._formData = formData;
+//   }
 
-  get formData(): FormNode {
-    return this._formData;
-  }
+//   get formData(): FormNode {
+//     return this._formData;
+//   }
 
-  getFocusData(value: FormValue): FocusData<FormValue> {
-    return new FocusData(this.type, value.label, value.paramData, value);
-  }
-}
+//   getFocusData(value: FormValue): FocusData<FormValue> {
+//     return new FocusData(this.type, value.label, value.paramData, value);
+//   }
+// }
 
 export class PeriodData {
   private _unit: UnitOfTime;
@@ -1415,17 +1415,19 @@ export class TimeseriesHandler {
 //CUSTOM HANDLER IS A TEMPORARY PATCH FOR NDVI
 //should either use some kind of timeseries generator function or preferrably an API call to get next/previous/rounded dates based on actual available data
 //API call also allows for non-specific/variable periods
-export class TimeseriesData extends FocusManager<Moment> {
+export class TimeseriesData {
   private _start: Moment;
   private _end: Moment;
   private _period: PeriodData;
   private _nextPeriod: PeriodData;
   private _stationPeriods: PeriodData[];
   private _dateHandler: DateManagerService;
+  private _coverageLabel: string;
+  private _defaultDate: Moment;
 
   constructor(start: Moment, end: Moment, period: PeriodData, nextPeriod: PeriodData, stationPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
-    let coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
-    super("timeseries", coverageLabel, defaultDate);
+    this._coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
+    this._defaultDate = defaultDate;
     this._start = start;
     this._end = end;
     this._period = period;
@@ -1462,16 +1464,12 @@ export class TimeseriesData extends FocusManager<Moment> {
     return res;
   }
 
-  getFocusData(time: Moment): FocusData<Moment> {
-    return new FocusData(this.type, this._dateHandler.dateToString(time, this.unit, true), {date: this._dateHandler.dateToString(time, this.unit, false)}, time);
-  }
-
   get start(): Moment {
-    return this._start;
+    return this._start.clone();
   }
 
   get end(): Moment {
-    return this._end;
+    return this._end.clone();
   }
 
   get unit(): UnitOfTime {
@@ -1492,6 +1490,10 @@ export class TimeseriesData extends FocusManager<Moment> {
 
   get stationPeriods(): PeriodData[] {
     return this._stationPeriods;
+  }
+
+  get defaultDate(): Moment {
+    return this._defaultDate.clone();
   }
 }
 
