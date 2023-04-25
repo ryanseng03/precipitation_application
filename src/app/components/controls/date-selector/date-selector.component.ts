@@ -55,6 +55,11 @@ export class DateSelectorComponent implements OnInit, OnChanges {
   }
 
   setDate() {
+    //this service is global because of the weird format injector stuff, not sure how to use local values, so just set unit any time date changes (will only really do much if actually changed)
+    //check if the value was changed, if it was then need to feed back through to reset format
+    if(this.dateFormat.setDateFormat(<DateUnit>this.period)) {
+      this.dateControl.setValue(this.dateControl.value);
+    }
     let value = this.dateControl.value;
     if(value) {
       this.lastValidValue = value;
@@ -67,7 +72,7 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
   setFormatUnit() {
     let unit: DateUnit = <DateUnit>this.period;
-    this.dateFormat.setDateMinUnit(unit);
+    this.dateFormat.setDateFormat(unit);
     //reset value to get formatting correct
     this.dateControl.setValue(this.dateControl.value);
   }
@@ -114,7 +119,6 @@ export class DateSelectorComponent implements OnInit, OnChanges {
 
     if(changes.period) {
       this.setFormatUnit();
-      this.dateControl.setValue(this.dateControl.value);
     }
     if(dateChanged) {
       this.setDate();

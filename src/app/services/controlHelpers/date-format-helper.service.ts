@@ -20,7 +20,7 @@ export class DateFormatHelperService {
       monthYearLabel: 'MMMM YYYY',
       dateA11yLabel: 'LL',
       monthYearA11yLabel: 'MMMM YYYY',
-    },
+    }
   }
 
   monthFormat = {
@@ -32,7 +32,7 @@ export class DateFormatHelperService {
       monthYearLabel: 'MMMM YYYY',
       dateA11yLabel: 'LL',
       monthYearA11yLabel: 'MMMM YYYY',
-    },
+    }
   };
 
   dayFormat = {
@@ -44,25 +44,30 @@ export class DateFormatHelperService {
       monthYearLabel: 'MMMM YYYY',
       dateA11yLabel: 'LL',
       monthYearA11yLabel: 'MMMM YYYY',
-    },
+    }
   }
 
   getDateFormat() {
     return this.format;
   }
 
-  setDateMinUnit(unit: DateUnit) {
-    this.dateUnit = unit;
-    switch(unit) {
-      case "day": {
-        this.setAllProperties(this.dayFormat, this.format);
-        break;
+  setDateFormat(unit: DateUnit): boolean {
+    let changed = false;
+    if(unit != this.dateUnit) {
+      this.dateUnit = unit;
+      switch(unit) {
+        case "day": {
+          this.setAllProperties(this.dayFormat, this.format);
+          break;
+        }
+        case "month": {
+          this.setAllProperties(this.monthFormat, this.format);
+          break;
+        }
       }
-      case "month": {
-        this.setAllProperties(this.monthFormat, this.format);
-        break;
-      }
+      changed = true;
     }
+    return changed;
   }
 
   setAllProperties(source: Object, dest: Object) {
