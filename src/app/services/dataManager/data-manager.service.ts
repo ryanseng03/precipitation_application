@@ -206,8 +206,8 @@ export class DataManagerService {
         timeseriesQueries = [];
         selectedStation = station;
         //dispatch query if the dataset has a timeseries component and the selected station is not null
-        if(station && selectedDataset.focusManager.type == "timeseries") {
-          let timeseriesData: TimeseriesData = <TimeseriesData>selectedDataset.focusManager;
+        if(station && selectedDataset.timeseries) {
+          let timeseriesData: TimeseriesData = selectedDataset.timeseries;
           paramService.pushLoading({
             tag: "timeseries",
             loading: true

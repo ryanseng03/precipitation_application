@@ -1,22 +1,22 @@
 <div class="container">
   <div class="scroll-hide">
     <div #viewContainer class="view-container" (scroll)="containerScroll($event)">
-      <div #dateControlComponent class="focus-control" [ngStyle]="{width: getDateControlWidth()}">
+      <div *ngIf="dataset.timeseries" #dateControlComponent class="focus-control" [ngStyle]="{width: getDateControlWidth()}">
         <app-date-focus
-          [timeseriesData]="castTimeseriesManager()"
+          [timeseriesData]="dataset.timeseries"
           [initValue]="date"
-          (dateChange)="setFocus($event)">
+          (dateChange)="setDate($event)">
         </app-date-focus>
       </div>
 
       <div class="view-component-wrapper">
-        <div #formComponent class="view-component" [ngStyle]="!includeStations && {'padding-bottom': '0'}">
+        <div #formComponent class="view-component" [ngStyle]="!dataset.includeStations && {'padding-bottom': '0'}">
           <app-data-set-form></app-data-set-form>
         </div>
-        <div #tableComponent class="view-component" *ngIf="includeStations">
+        <div #tableComponent class="view-component" *ngIf="dataset.includeStations">
           <app-data-views></app-data-views>
         </div>
-        <div #timeseriesComponent class="view-component" *ngIf="includeStations">
+        <div #timeseriesComponent class="view-component" *ngIf="dataset.includeStations">
           <app-time-series
             [width]="_width">
           </app-time-series>

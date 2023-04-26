@@ -47,7 +47,7 @@ export class DateFocusComponent implements OnInit {
   }
 
   ngOnInit() {
-    let initDate = this.initValue ? this.initValue : this._timeseriesData.defaultValue;
+    let initDate = this.initValue ? this.initValue : this._timeseriesData.defaultDate;
     initDate = this._timeseriesData.roundToInterval(initDate);
     this.controlDate = initDate;
   }

@@ -270,14 +270,14 @@ export class ExportAddItemComponent {
       exportData.state.dates = {
         start: this.controls.dates.start,
         end: this.controls.dates.end,
-        unit: this.formData.datasetItem.timeseriesHandler.unit,
-        interval: this.formData.datasetItem.timeseriesHandler.interval
+        unit: this.formData.datasetItem.timeseries.unit,
+        interval: this.formData.datasetItem.timeseries.interval
       };
     }
     let fileLabels = [];
     let datasetLabel = `${this.formData.datasetItem.label}`;
-    if(this.formData.datasetItem.timeseriesHandler) {
-      datasetLabel += ` ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseriesHandler.getLabel(this.controls.dates.end)}`;
+    if(this.formData.datasetItem.timeseries) {
+      datasetLabel += ` ${this.formData.datasetItem.timeseries.getLabel(this.controls.dates.start)} - ${this.formData.datasetItem.timeseries.getLabel(this.controls.dates.end)}`;
     }
     exportData.labels.dataset = datasetLabel;
     for(let field in this.controls.dataset) {

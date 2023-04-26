@@ -4,7 +4,7 @@ import { Config, DbConService } from '../dataLoader/auxillary/dbCon/db-con.servi
 import { retry, catchError, take } from 'rxjs/operators';
 import { Observable, Subject, throwError } from "rxjs";
 import * as Moment from 'moment';
-import { ValueData } from 'src/app/models/Dataset';
+import { ValueData } from 'src/app/models/dataset';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
 import { AssetManagerService } from '../util/asset-manager.service';

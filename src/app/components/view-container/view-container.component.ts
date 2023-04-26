@@ -69,11 +69,8 @@ export class ViewContainerComponent implements OnInit {
   firstElement: HTMLElement;
   dateDebounce: boolean = false;
 
-  temp_start = moment("1990-01-01");
-  temp_end = moment("2022-01-01");
-  temp_period = "month";
+  dataset: VisDatasetItem;
 
-  includeStations: boolean;
 
 
   constructor(private scrollWidthService: ScrollbarWidthCalcService, private paramService: EventParamRegistrarService) {
@@ -99,9 +96,8 @@ export class ViewContainerComponent implements OnInit {
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
-        dataset.focusManager.type == "timeseries"
+        this.dataset = dataset;
         if(dataset.includeStations) {
-          this.includeStations = true;
           setTimeout(() => {
             this.navInfo = [defaultActive,
             {
@@ -116,7 +112,6 @@ export class ViewContainerComponent implements OnInit {
         }
         else {
           this.navInfo = [];
-          this.includeStations = false;
         }
         this.activeTileRef = defaultActive;
       }
@@ -244,6 +239,10 @@ export class ViewContainerComponent implements OnInit {
       }
     }
     return max + "px";
+  }
+
+  setDate(e) {
+    console.log("date set");
   }
 
 }
