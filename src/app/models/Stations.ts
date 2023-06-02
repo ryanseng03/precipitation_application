@@ -1,7 +1,7 @@
 import { KeyValue } from "@angular/common";
 import { StationMetadata } from "../services/filters/station-filtering.service";
 
-class MapLocationFormat {
+export class MapLocationFormat {
     private _title: string;
     private _formattedFields: {[field: string]: string};
 
@@ -30,13 +30,14 @@ class MapLocationFormat {
     }
 }
 
-abstract class MapLocation {
+export abstract class MapLocation {
     private static ROUND = 2;
 
     private _value: number;
     private _type: string;
     private _unit: string;
     private _unitShort: string;
+    protected _format: MapLocationFormat;
 
     constructor(type: string, value: number, unit: string, unitShort: string) {
         this._value = value;
@@ -68,8 +69,10 @@ abstract class MapLocation {
         }
         return label;
     }
-
-    abstract format(): MapLocationFormat;
+    
+    get format(): MapLocationFormat {
+        return this._format;
+    }
 
     protected roundValue(value: number): string {
         let roundFactor = Math.pow(10, Station.ROUND);
@@ -78,8 +81,30 @@ abstract class MapLocation {
     }
 }
 
-class Station extends MapLocation {
-    
+
+export class StationMetadata {
+    private _idField: string;
+    private _data: {[field: string]: string | number};
+
+    constructor(idField: string, data: {[field: string]: number | string}) {
+        this._idField = idField;
+        //validate data, must have certain fields
+        if(!data.name || !data.skn || !data.lat || !data.lng) {
+            
+        }
+        this._data = data;
+    }
+
+    get idField(): string {
+        return this._idField;
+    }
+
+    get id(): string {
+        return <string>this._data[this._idField];
+    }
+}
+
+export class Station extends MapLocation {
     private static FORMAT = {
         skn: {
             name: "SKN",
@@ -161,18 +186,35 @@ class Station extends MapLocation {
         }
     };
 
-    private _metadata: StationMetadata;
-
-    constructor(type: string, value: number, unit: string, unitShort: string, metadata: StationMetadata) {
-        let id_field = metadata.add.id_field;
-        super();
+    constructor(value: number, unit: string, unitShort: string, idField: string, ) {
+        super("station", value, unit, unitShort);
+        this.setFormat(metadata);
     }
 
-    format(): MapLocationFormat {
+    setFormat(metadata: StationMetadata): void {
         let title = "Station Data";
+        let data = {};
+        data[this.valueFieldLabel] = this.value;
+        let id_field = metadata.add.id_field;
+        for(let field in metadata.add) {
+            let formatData = Station.FORMAT[field];
+            if(formatData) {
+                let value = metadata.add[field];
+                if(formatData.values[value]) {
+                    value = formatData.values[value];
+                }
+                if(field == id_field) {
+                    value += " (Station ID)";
+                }
+                data[formatData.name] = value;
+            }
+        }
+        let format = new MapLocationFormat(title, data);
+        this._format = format;
     }
+}
 
-class V_Station extends MapLocation {
+export class V_Station extends MapLocation {
     private _cellData: CellData;
     private _location: L.LatLng;
 
@@ -180,6 +222,7 @@ class V_Station extends MapLocation {
         super("virtual_station", value, unit, unitShort);
         this._cellData = cellData;
         this._location = location;
+        this.setFormat();
     }
 
     get location(): L.LatLng {
@@ -190,8 +233,8 @@ class V_Station extends MapLocation {
         return this._cellData;
     }
 
-    format(): MapLocationFormat {
-        let title = "Map Data";
+    private setFormat(): void {
+        let title = "Map Location Data";
         let data = {
             "Row": this._cellData.row.toLocaleString(),
             "Col": this._cellData.col.toLocaleString(),
@@ -201,12 +244,12 @@ class V_Station extends MapLocation {
         };
         data[this.valueFieldLabel] = this.value;
         let format = new MapLocationFormat(title, data);
-        return format;
+        this._format = format;
     }
     
 }
 
-interface CellData {
+export interface CellData {
     row: number;
     col: number;
     cellWidthM: number;
@@ -215,61 +258,3 @@ interface CellData {
     cellHeightLat: number;
     cellExtent: L.LatLngBounds;
 }
-
-
-// // import Moment from "moment";
-// import { latLng, LatLng } from "leaflet";
-// // import { ValueData } from "./Dataset";
-
-// export class Station {
-
-//     private metadata: StationMetadata;
-//     public value: number;
-  
-//     constructor(metadata: any, value?: number) {
-//       this.value = value || null;
-//       this.metadata = new Proxy(metadata);
-//     }
-
-//     private proxyHandler = {
-//         get: (obj, prop) => {
-//             return prop in obj
-//         }
-//     }
-  
-//     setValue(value: number): void {
-//       this.value = value;
-//     }
-  
-//     getValue(): number | null {
-//       return this.value;
-//     }
-  
-//     get id(): string {
-//       return this.metadata.id;
-//     }
-  
-//     get location(): LatLng {
-//       return this.metadata.location;
-//     }
-  
-//     get lat(): number {
-//       return this.metadata.lat;
-//     }
-  
-//     get lng(): number {
-//       return this.metadata.lng;
-//     }
-  
-//     get elevation(): number {
-//       return this.metadata.elevation;
-//     }
-  
-//     getFieldValue(field: string): Range | string {
-//       return this.metadata.getFieldValue(field);
-//     }
-  
-//     getExtFields(): string[] {
-//       return this.metadata.getExtFields();
-//     }
-//   }

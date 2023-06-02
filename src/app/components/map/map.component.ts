@@ -15,6 +15,7 @@ import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leafl
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { DataManagerService } from 'src/app/services/dataManager/data-manager.service';
+import { Station, V_Station } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-map',
@@ -37,6 +38,8 @@ export class MapComponent implements OnInit {
     bounds: [ [14.050369038588524, -167.60742187500003], [26.522031143884014, -144.47021484375003] ]
   };
   //private R: any = L;
+
+  selectedMapCell: L.Layer;
 
   imageHiddenControls = ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-export"];
 
@@ -237,16 +240,22 @@ export class MapComponent implements OnInit {
     this.map.on("movestart", () => {
       this.suspendHover();
     });
+
     this.map.on("moveend", () => {
       let bounds: L.LatLngBounds = this.map.getBounds();
       this.paramService.pushMapBounds(bounds);
       this.resumeHover();
     });
 
+    this.map.on("click", (e: L.LeafletMouseEvent) => {
+      this.mapClickHandler(e.latlng);
+    });
+
     //set timeout to prevent issues with map not propogating to overlay extension
     setTimeout(() => {
       //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
       this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
+        console.log(stations);
         this.active.data.stations = stations;
         this.constructMarkerLayerPopulateMarkerData(stations);
       });
@@ -263,7 +272,7 @@ export class MapComponent implements OnInit {
     //install hover handler (requires raster to be set to work, start disabled)
     let hoverTag = this.paramService.registerMapHover(this.map);
     this.hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000), false);
-    let rasterHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
         for(let band in this.dataLayers) {
           this.map.removeLayer(this.dataLayers[band]);
           this.layerController.removeLayer(this.dataLayers[band]);
@@ -328,6 +337,11 @@ export class MapComponent implements OnInit {
 
   selectedStation = null;
   selectStation(station: SiteInfo) {
+    if(this.selectedMapCell != null) {
+      this.map.removeLayer(this.selectedMapCell);
+      this.selectedMapCell = null;
+    }
+
     this.selectedStation = station;
     if(station) {
       let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
@@ -352,7 +366,6 @@ export class MapComponent implements OnInit {
           if(marker.isPopupOpen && this.selectedMarker === marker) {
             marker.openPopup();
           }
-
         });
       }
     }
@@ -376,8 +389,6 @@ export class MapComponent implements OnInit {
   }
 
   hoverPopupHandler(timeout: number) {
-
-
     return (position: L.LatLng) => {
       clearTimeout(this.hoverData.popupTimer);
       if(this.hoverData.highlightedCell != null) {
@@ -408,7 +419,7 @@ export class MapComponent implements OnInit {
             color: "orange",
             fillOpacity: 0.2
           })
-          .addTo(this.map)
+          .addTo(this.map);
 
           let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
 
@@ -424,7 +435,47 @@ export class MapComponent implements OnInit {
         }
       }, timeout);
     }
+  }
 
+  mapClickHandler(position: L.LatLng) {
+    let header = this.active.data.raster.getHeader();
+    let data = this.active.data.raster.getBands()[this.active.band];
+    let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
+    let coords = this.dataRetreiver.geoPosToGridCoords(header, position);
+    let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
+    let bounds = this.dataRetreiver.getCellBoundsFromGeoPos(header, data, position);
+    
+    //check if data exists at clicked point
+    if(geojson != undefined) {
+      if(this.selectedMapCell != null) {
+        this.map.removeLayer(this.selectedMapCell);
+        this.selectedMapCell = null;
+      }
+
+      let dimensions = this.dataRetreiver.getBoundsWidthHeight(bounds);
+
+      this.selectedMapCell = L.geoJSON(geojson)
+      .setStyle({
+        fillColor: "black",
+        weight: 3,
+        opacity: 1,
+        color: "black",
+        fillOpacity: 0.2
+      })
+      .addTo(this.map);
+      
+      let virtualStation: V_Station = new V_Station(value, this.dataset.units, this.dataset.unitsShort, {
+        row: coords.y,
+        col: coords.x,
+        cellWidthM: dimensions.width,
+        cellHeightM: dimensions.height,
+        cellWidthLng: header.cellXSize,
+        cellHeightLat: header.cellYSize,
+        cellExtent: bounds
+      }, position);
+
+      this.paramService.pushMapLocation(virtualStation);
+    }
   }
 
 
@@ -472,6 +523,9 @@ export class MapComponent implements OnInit {
         marker.bindPopup(stationDetails, { autoPan: false, autoClose: false});
         marker.on("click", () => {
           this.paramService.pushSelectedStation(station);
+
+          // let stationData = new Station((value: number, this.dataset.units, unitShort: string, station.))
+          // this.paramService.pushMapLocation();
         });
         this.markerInfo.markerMap.set(station, marker);
         markerLayer.addLayer(marker);

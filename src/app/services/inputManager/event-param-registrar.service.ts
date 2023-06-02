@@ -5,6 +5,7 @@ import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { ColorScale } from 'src/app/models/colorScale';
 import { VisDatasetItem, FocusData } from '../dataset-form-manager.service';
+import { MapLocation } from 'src/app/models/Stations';
 
 @Injectable({
   providedIn: 'root'
@@ -22,9 +23,11 @@ export class EventParamRegistrarService {
     loading: "loading",
     mapBounds: "mapBounds",
     colorScale: "colorScale",
-    viewType: "viewType"
+    viewType: "viewType",
+    mapLocation: "location"
   };
 
+  private mapLocationSource: BehaviorSubject<MapLocation>
   private datasetSource: BehaviorSubject<VisDatasetItem>;
   private rasterSource: BehaviorSubject<RasterData>;
   private stationsSource: BehaviorSubject<any[]>;
@@ -52,6 +55,7 @@ export class EventParamRegistrarService {
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
     this.colorScaleSource = this.paramService.registerParameter<ColorScale>(EventParamRegistrarService.EVENT_TAGS.colorScale);
     this.viewTypeSource = this.paramService.registerParameter<string>(EventParamRegistrarService.EVENT_TAGS.viewType);
+    this.mapLocationSource = this.paramService.registerParameter<MapLocation>(EventParamRegistrarService.EVENT_TAGS.mapLocation);
   }
 
   pushDataset(dataset: VisDatasetItem): void {
@@ -96,6 +100,10 @@ export class EventParamRegistrarService {
 
   pushViewType(viewType: string): void {
     this.viewTypeSource.next(viewType);
+  }
+
+  pushMapLocation(location: MapLocation): void {
+    this.mapLocationSource.next(location);
   }
 
 

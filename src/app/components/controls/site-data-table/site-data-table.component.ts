@@ -30,6 +30,7 @@ export class SiteDataTableComponent implements OnInit {
   private __selected = null;
   dataMap: any = [];
   @Input() set selected(selected: any) {
+    console.log(selected);
     this.__selected = selected;
     if(selected) {
       this.dataMap = this.selected2datamap();
