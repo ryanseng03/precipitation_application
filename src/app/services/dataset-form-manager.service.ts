@@ -669,7 +669,8 @@ export class DatasetFormManagerService {
 
     //export dataset groups
     let exportDatasets = [rainfallExportDataset, legacyRainfallExportDataset, maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset, dsRainfallExportDataset, dsTemperatureExportDataset, ndviExportDataset];
-    let exportDatasetSingles: Dataset<ExportDatasetItem>[] = [ndviExportDataset];
+    //to reenable ndvi uncomment
+    let exportDatasetSingles: Dataset<ExportDatasetItem>[] = [/*ndviExportDataset*/];
     let exportDatasetGroupers: DatasetSelectorGroup[] = [
       new DatasetSelectorGroup(historicalRainfallGrouperDisplayData, [rainfallExportDataset, legacyRainfallExportDataset]),
       new DatasetSelectorGroup(historicalTemperatureGrouperDisplayData, [maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset]),
