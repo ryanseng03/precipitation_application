@@ -51,7 +51,6 @@ export class DataRetreiverService {
         };
       }
     }
-
     return coords;
   }
 
