@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { UtilityService } from "./utility.service";
-import {LatLng, latLng, bounds} from "leaflet";
+import {LatLng, latLng, bounds, LatLngBounds, latLngBounds} from "leaflet";
 import { ColorScale, Color } from '../../models/colorScale';
 //import { GeoJSON, Feature } from "geojson";
 import {RasterHeader, IndexedValues} from "../../models/RasterData";
+import { GeoJsonObject } from 'geojson';
 
 @Injectable({
   providedIn: 'root'
@@ -34,18 +35,15 @@ export class DataRetreiverService {
     return new LatLng(pos.lat - header.yllCorner, pos.lng - header.xllCorner);
   }
 
-
   //need to ensure in grid range,
   geoPosToGridCoords(header: RasterHeader, pos: LatLng): DecoupledCoords {
     let offset = this.offsetPosByLL(header, pos);
     let coords = null;
-    //values at boundaries, round down to nearest cellsize to get cell coord
-    //round to prevent floating point errors
-    let x = Math.round(this.util.roundToInterval(offset.lng, header.cellXSize, "down") / header.cellXSize);
+    let x = Math.floor(offset.lng / header.cellXSize);
     //check if in grid range, if not return null (otherwise will provide erroneous results when flattened)
     if(x >= 0 && x < header.nCols) {
-      //round to prevent floating point errors
-      let y = Math.round(header.nRows - this.util.roundToInterval(offset.lat, header.cellYSize, "down") / header.cellYSize);
+      let y = Math.floor(header.nRows - offset.lat / header.cellYSize);
+      //check range
       if(y >= 0 && y < header.nRows) {
         coords = {
           x: x,
@@ -53,7 +51,6 @@ export class DataRetreiverService {
         };
       }
     }
-
     return coords;
   }
 
@@ -90,8 +87,8 @@ export class DataRetreiverService {
   }
 
   //if !getNoValue just return null if the cell is background
-  getCellBoundsFromGeoPos(header: RasterHeader, data: IndexedValues, pos: LatLng, getNoValue: boolean = false): LatLng[] {
-    let bounds = null;
+  getCellBoundsFromGeoPos(header: RasterHeader, data: IndexedValues, pos: LatLng, getNoValue: boolean = false): LatLngBounds {
+    let bounds: LatLngBounds = null;
     //just start from here instead of using geoPosToGridValue to prevent need to recompute location
     let coords = this.geoPosToGridCoords(header, pos);
     //check if bounds in grid
@@ -105,14 +102,12 @@ export class DataRetreiverService {
         }
       }
       if(valid) {
-        let xll = header.xllCorner + header.cellXSize * coords.x;
-        let yll = header.yllCorner + header.cellYSize * (header.nRows - coords.y);
+        let lx = header.xllCorner + header.cellXSize * coords.x;
+        let uy = header.yllCorner + header.cellYSize * (header.nRows - coords.y);
         //counterclockwise
-        let ll = new LatLng(yll, xll);
-        let lr = new LatLng(yll, xll + header.cellXSize);
-        let ur = new LatLng(yll + header.cellYSize, xll + header.cellXSize);
-        let ul = new LatLng(yll + header.cellYSize, xll);
-        bounds = [ll, lr, ur, ul];
+        let ll = new LatLng(uy - header.cellYSize, lx);
+        let ur = new LatLng(uy, lx + header.cellXSize);
+        bounds = new LatLngBounds(ll, ur);
       }
 
     }
@@ -122,26 +117,56 @@ export class DataRetreiverService {
   //if no value at cell or out of bounds returns null
   //geojson uses long, lat
   //geojson counterclockwise
-  getGeoJSONCellFromGeoPos(header: RasterHeader, data: IndexedValues, pos: LatLng, getNoValue: boolean = false): any {
+  getGeoJSONCellFromGeoPos(header: RasterHeader, data: IndexedValues, pos: LatLng, getNoValue: boolean = false): GeoJsonObject {
     let geojson = null;
     let bounds = this.getCellBoundsFromGeoPos(header, data, pos, getNoValue);
 
     if(bounds != null) {
+      let n = bounds.getNorth();
+      let e = bounds.getEast();
+      let s = bounds.getSouth();
+      let w = bounds.getWest();
       geojson = {
         type: "Feature",
         geometry: {
           type: "Polygon",
-          coordinates: [[]]
+          coordinates: [[
+            [w, s],
+            [e, s],
+            [e, n],
+            [w, n],
+            [w, s]
+          ]]
         }
       };
-      let i: number;
-      for(i = 0; i < bounds.length; i++) {
-        geojson.geometry.coordinates[0].push([bounds[i].lng, bounds[i].lat]);
-      }
-      geojson.geometry.coordinates[0].push([bounds[0].lng, bounds[0].lat]);
     }
-
     return geojson;
+  }
+  
+
+  getBoundsWidthHeight(bounds: LatLngBounds) {
+    let ll = bounds.getSouthWest();
+    let ul = bounds.getNorthWest();
+    let lr = bounds.getSouthEast();
+    let xm = this.getDistance(ll, lr);
+    let ym = this.getDistance(ul, ll);
+    return {
+      width: xm,
+      height: ym
+    };
+  }
+
+  getDistance(p1: LatLng, p2: LatLng): number {
+    //radius of earth in km
+    const r = 6378.137;
+    let dLat = p2.lat * Math.PI / 180 - p1.lat * Math.PI / 180;
+    let dLon = p2.lng * Math.PI / 180 - p1.lng * Math.PI / 180;
+    let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    let d = r * c;
+    //km to meters
+    let m = d * 1000;
+    return m;
   }
 
   getGeoJSONBBox(geojson: any) {
