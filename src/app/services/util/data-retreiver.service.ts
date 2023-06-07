@@ -35,18 +35,15 @@ export class DataRetreiverService {
     return new LatLng(pos.lat - header.yllCorner, pos.lng - header.xllCorner);
   }
 
-
   //need to ensure in grid range,
   geoPosToGridCoords(header: RasterHeader, pos: LatLng): DecoupledCoords {
     let offset = this.offsetPosByLL(header, pos);
     let coords = null;
-    //values at boundaries, round down to nearest cellsize to get cell coord
-    //round to prevent floating point errors
-    let x = Math.round(this.util.roundToInterval(offset.lng, header.cellXSize, "down") / header.cellXSize);
+    let x = Math.floor(offset.lng / header.cellXSize);
     //check if in grid range, if not return null (otherwise will provide erroneous results when flattened)
     if(x >= 0 && x < header.nCols) {
-      //round to prevent floating point errors
-      let y = Math.round(header.nRows - this.util.roundToInterval(offset.lat, header.cellYSize, "down") / header.cellYSize);
+      let y = Math.floor(header.nRows - offset.lat / header.cellYSize);
+      //check range
       if(y >= 0 && y < header.nRows) {
         coords = {
           x: x,
@@ -106,11 +103,11 @@ export class DataRetreiverService {
         }
       }
       if(valid) {
-        let xll = header.xllCorner + header.cellXSize * coords.x;
-        let yll = header.yllCorner + header.cellYSize * (header.nRows - coords.y);
+        let lx = header.xllCorner + header.cellXSize * coords.x;
+        let uy = header.yllCorner + header.cellYSize * (header.nRows - coords.y);
         //counterclockwise
-        let ll = new LatLng(yll, xll);
-        let ur = new LatLng(yll + header.cellYSize, xll + header.cellXSize);
+        let ll = new LatLng(uy - header.cellYSize, lx);
+        let ur = new LatLng(uy, lx + header.cellXSize);
         bounds = new LatLngBounds(ll, ur);
       }
 

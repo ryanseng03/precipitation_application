@@ -8,10 +8,8 @@ import { EventParamRegistrarService, LoadingData, ParameterHook } from "../../se
 import "leaflet-groupedlayercontrol";
 import { RasterData, RasterHeader } from 'src/app/models/RasterData.js';
 import { SiteInfo } from 'src/app/models/SiteMetadata.js';
-import "leaflet.markercluster";
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
-// import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { DataManagerService } from 'src/app/services/dataManager/data-manager.service';
@@ -248,6 +246,7 @@ export class MapComponent implements OnInit {
     });
 
     this.map.on("click", (e: L.LeafletMouseEvent) => {
+      console.log(e.latlng);
       this.mapClickHandler(e.latlng);
     });
 
@@ -439,9 +438,13 @@ export class MapComponent implements OnInit {
 
   mapClickHandler(position: L.LatLng) {
     let header = this.active.data.raster.getHeader();
+    console.log(header);
     let data = this.active.data.raster.getBands()[this.active.band];
     let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
     let coords = this.dataRetreiver.geoPosToGridCoords(header, position);
+    let offset = this.dataRetreiver.offsetPosByLL(header, position);
+    console.log(offset);
+    console.log(coords);
     let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
     let bounds = this.dataRetreiver.getCellBoundsFromGeoPos(header, data, position);
     
