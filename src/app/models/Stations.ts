@@ -1,4 +1,4 @@
-import { KeyValue } from "@angular/common";
+import { KeyValue, formatNumber } from "@angular/common";
 import { LatLng } from "leaflet";
 
 
@@ -72,12 +72,73 @@ export abstract class MapLocation {
     get format(): MapLocationFormat {
         return this._format;
     }
-
-    
 }
 
 
 export class StationMetadata {
+    static readonly FORMAT = {
+        skn: {
+            name: "SKN"
+        },
+        name: {
+            name: "Name"
+        },
+        observer: {
+            name: "Observer"
+        },
+        network: {
+            name: "Network"
+        },
+        island: {
+            name: "Island",
+            translate: (value: string) => {
+                let trans = {
+                    BI: "Big Island",
+                    OA: "Oʻahu",
+                    MA: "Maui",
+                    KA: "Kauai",
+                    MO: "Molokaʻi",
+                    KO: "Kahoʻolawe",
+                    LA: "Lānaʻi"
+                }
+                return trans[value] ? trans[value] : value;
+            }
+        },
+        elevation_m: {
+            name: "Elevation (m)",
+            translate: (value: number) => {
+                return formatNumber(value, navigator.language, "1.2-2");
+            }
+        },
+        lat: {
+            name: "Latitude",
+            translate: (value: number) => {
+                return formatNumber(value, navigator.language, "1.4-4");
+            }
+        },
+        lng: {
+            name: "Longitude",
+            translate: (value: number) => {
+                return formatNumber(value, navigator.language, "1.4-4");
+            }
+        },
+        ncei_id: {
+            name: "NCEI ID"
+        },
+        nws_id: {
+            name: "NWS ID"
+        },
+        nesdis_id: {
+            name: "NESDIS ID"
+        },
+        scan_id: {
+            name: "Scan ID"
+        },
+        smart_node_rf_id: {
+            name: "Smart Node RFID"
+        }
+    };
+
     private _idField: string;
     private _data: {[field: string]: number | string};
     private _location: L.LatLng;
@@ -115,113 +176,32 @@ export class StationMetadata {
 }
 
 export class Station extends MapLocation {
-    private static FORMAT = {
-        skn: {
-            name: "SKN",
-            round: 0,
-            values: {}
-        },
-        name: {
-            name: "Name",
-            round: 0,
-            values: {}
-        },
-        observer: {
-            name: "Observer",
-            round: 0,
-            values: {}
-        },
-        network: {
-            name: "Network",
-            round: 0,
-            values: {}
-        },
-        island: {
-            name: "Island",
-            round: 0,
-            values: {
-                BI: "Big Island",
-                OA: "Oʻahu",
-                MA: "Maui",
-                KA: "Kauai",
-                MO: "Molokaʻi",
-                KO: "Kahoʻolawe",
-                LA: "Lānaʻi"
-              }
-        },
-        elevation_m: {
-            name: "Elevation (m)",
-            round: 2,
-            values: {}
-        },
-        lat: {
-            name: "Latitude",
-            round: 4,
-            values: {}
-        },
-        lng: {
-            name: "Longitude",
-            round: 4,
-            values: {}
-        },
-        ncei_id: {
-            name: "NCEI ID",
-            round: 0,
-            values: {}
-        },
-        nws_id: {
-            name: "NWS ID",
-            round: 0,
-            values: {}
-        },
-        nesdis_id: {
-            name: "NESDIS ID",
-            round: 0,
-            values: {}
-        },
-        scan_id: {
-            name: "Scan ID",
-            round: 0,
-            values: {}
-        },
-        smart_node_rf_id: {
-            name: "Smart Node RFID",
-            round: 0,
-            values: {}
-        },
-        value: {
-            name: "Value",
-            round: 2,
-            values: {}
+    constructor(value: number, unit: string, unitShort: string, metadata: StationMetadata) {
+        super("station", value, unit, unitShort);
+        this.setFormat(metadata);
+    }
+
+    private setFormat(metadata: StationMetadata): void {
+        let title = "Station Data";
+        let data = {};
+        data[this.valueFieldLabel] = this.value;
+        let idField = metadata.idField;
+        for(let field in metadata.fields) {
+            let formatData = StationMetadata.FORMAT[field];
+            if(formatData) {
+                let value = metadata.getValue(field);
+                if(formatData.translate) {
+                    value = formatData.translate(value);
+                }
+                if(field == idField) {
+                    value += " (Station ID)";
+                }
+                data[formatData.name] = value;
+            }
         }
-    };
-
-//     constructor(value: number, unit: string, unitShort: string, idField: string, ) {
-//         super("station", value, unit, unitShort);
-//         this.setFormat(metadata);
-//     }
-
-//     setFormat(metadata: StationMetadata): void {
-//         let title = "Station Data";
-//         let data = {};
-//         data[this.valueFieldLabel] = this.value;
-//         let id_field = metadata.add.id_field;
-//         for(let field in metadata.add) {
-//             let formatData = Station.FORMAT[field];
-//             if(formatData) {
-//                 let value = metadata.add[field];
-//                 if(formatData.values[value]) {
-//                     value = formatData.values[value];
-//                 }
-//                 if(field == id_field) {
-//                     value += " (Station ID)";
-//                 }
-//                 data[formatData.name] = value;
-//             }
-//         }
-//         let format = new MapLocationFormat(title, data);
-//         this._format = format;
-//     }
+        let format = new MapLocationFormat(title, data);
+        this._format = format;
+    }
 }
 
 export class V_Station extends MapLocation {
@@ -248,8 +228,8 @@ export class V_Station extends MapLocation {
         let data = {
             "Row": this._cellData.row.toLocaleString(),
             "Col": this._cellData.col.toLocaleString(),
-            // "Cell Width (m/°)": `${this.roundValue(this._cellData.cellWidthM)}/${this._cellData.cellWidthLng}`,
-            // "Cell Height (m/°)": `${this.roundValue(this._cellData.cellHeightM)}/${this._cellData.cellHeightLat}`,
+            "Cell Width (m/°)": `${formatNumber(this._cellData.cellWidthM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellWidthLng, navigator.language, "1.4-4")}`,
+            "Cell Height (m/°)": `${formatNumber(this._cellData.cellHeightM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellHeightLat, navigator.language, "1.4-4")}`,
             "Cell Extent (min longitude °, min latitude °, max longitude °, max latitude °)": this._cellData.cellExtent.toBBoxString()
         };
         data[this.valueFieldLabel] = this.value;

@@ -1,16 +1,14 @@
 import { Injectable } from '@angular/core';
-import { RasterData, IndexedValues, BandData, RasterHeader } from "../../models/RasterData";
-import {SiteValue, SiteInfo} from "../../models/SiteMetadata";
+import { RasterData } from "../../models/RasterData";
 import {DataRequestorService, RequestResults} from "../dataLoader/data-requestor.service";
 import Moment from 'moment';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
-
 import { RequestReject } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { LatLng } from 'leaflet';
 import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
-import moment from 'moment';
+import { StationMetadata } from 'src/app/models/Stations';
 
 
 
@@ -19,7 +17,6 @@ import moment from 'moment';
   providedIn: 'root'
 })
 export class DataManagerService {
-
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
     let selectedDataset: VisDatasetItem;
@@ -30,22 +27,17 @@ export class DataManagerService {
     });
 
     metadataReq.transform((data: any) => {
-      let metadata = {};
+      let metadataMap = {};
       for(let item of data) {
         //deconstruct
-        let { station_group, ...stationMetadata } = item;
-        //move id_field to some kind of header describing station group to avoid duplication?
-        let idField = stationMetadata.id_field;
-        //move this to some kind of header describing station group to avoid duplication?
-        //quality of life
-        stationMetadata.location = stationMetadata.elevation_m ? new LatLng(stationMetadata.lat, stationMetadata.lng, stationMetadata.elevation_m) : new LatLng(stationMetadata.lat, stationMetadata.lng)
-        stationMetadata.value = null;
-        let id = stationMetadata[idField];
+        let { station_group, id_field, ...stationMetadata } = item;
+        let metadata = new StationMetadata(id_field, stationMetadata)
         //yay for inconsistent data
-        id = this.getStandardizedNumericString(id);
-        metadata[id] = stationMetadata;
+        //value docs may have decimals that do not match, standardize id formats
+        let standardizedID = this.getStandardizedNumericString(metadata.id);
+        metadataMap[standardizedID] = metadata;
       }
-      return metadata;
+      return metadataMap;
     });
 
 

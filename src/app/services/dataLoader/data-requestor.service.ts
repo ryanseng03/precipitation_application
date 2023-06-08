@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { DbConService, RequestResults } from "./auxillary/dbCon/db-con.service";
 import { RasterData } from '../../models/RasterData';
 import {DataProcessorService} from "../dataProcessor/data-processor.service";
+import { StringMap } from 'src/app/models/types';
 
 //import { WebWorkerService } from 'ngx-web-worker';
 //import {workerGetInternalIndices} from "../../workers/geotiff_worker";
@@ -57,7 +58,7 @@ export class DataRequestorService {
     return response;
   }
 
-  getStationData(properties: any, delay?: number): RequestResults {
+  getStationData(properties: StringMap, delay?: number): RequestResults {
     properties = Object.assign({}, properties);
     delete properties.dateRange;
     let query = this.propertiesToQuery("hcdp_station_value", properties);
@@ -66,14 +67,14 @@ export class DataRequestorService {
     return response;
   }
 
-  getStationMetadata(properties: any, delay?: number): RequestResults {
+  getStationMetadata(properties: StringMap, delay?: number): RequestResults {
     let query = this.propertiesToQuery("hcdp_station_metadata", properties);
     let timingMessage = `Retreived station metadata`;
     let response = this.basicQueryDispatch(query, delay, timingMessage);
     return response;
   }
 
-  getStationTimeSeries(start: string, end: string, properties: any, delay?: number): RequestResults {
+  getStationTimeSeries(start: string, end: string, properties: StringMap, delay?: number): RequestResults {
     let query = this.propertiesToQuery("hcdp_station_value", properties);
     query = `{'$and':[${query},{'value.date':{'$gte':'${start}'}},{'value.date':{'$lt':'${end}'}}]}`;
     //let timingMessage = `Retreived station ${properties.station_id} timeseries for ${start}-${end}`;
@@ -98,6 +99,7 @@ export class DataRequestorService {
       if(response != null) {
         //extract value fields from results
         vals = response.result.map((metadata: any) => {
+          console.log(metadata);
           return metadata.value;
         });
       }
@@ -107,7 +109,7 @@ export class DataRequestorService {
     return response;
   }
 
-  private propertiesToQuery(name: string, properties: any): string {
+  private propertiesToQuery(name: string, properties: StringMap): string {
     let query = `{'name':'${name}'`
     for(let property in properties) {
       let value = properties[property];
