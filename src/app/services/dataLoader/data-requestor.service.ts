@@ -98,9 +98,8 @@ export class DataRequestorService {
       //if query is not cancelled extract value fields
       if(response != null) {
         //extract value fields from results
-        vals = response.result.map((metadata: any) => {
-          console.log(metadata);
-          return metadata.value;
+        vals = response.result.map((data: any) => {
+          return data.value;
         });
       }
       return vals;

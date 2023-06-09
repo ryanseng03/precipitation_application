@@ -1,4 +1,4 @@
-<div *ngIf="selectedStation === null; else loaded">
+<div *ngIf="selectedLocation === null; else loaded">
   <h2>
     Select a station to load time series data
   </h2>
@@ -7,7 +7,7 @@
 <ng-template #loaded>
   <app-rainfall-graph
     [complete]="complete"
-    [station]="selectedStation"
+    [station]="selectedLocation"
     [source]="source"
     [date]="date"
     [width]="width"

@@ -12,7 +12,7 @@ export class MapLocationFormat {
     }
 
     get formattedFields(): {[field: string]: string} {
-        return this._formattedFields;
+        return JSON.parse(JSON.stringify(this._formattedFields));
     }
 
     get formattedPairs(): KeyValue<string, string>[] {
@@ -34,15 +34,15 @@ export class MapLocationFormat {
 export abstract class MapLocation {
     private _value: number;
     private _type: string;
-    private _unit: string;
-    private _unitShort: string;
+    private _units: string;
+    private _unitsShort: string;
     protected _format: MapLocationFormat;
 
-    constructor(type: string, value: number, unit: string, unitShort: string) {
+    constructor(type: string, value: number, units: string, unitsShort: string) {
         this._value = value;
         this._type = type;
-        this._unit = unit;
-        this._unitShort = unitShort;
+        this._units = units;
+        this._unitsShort = unitsShort;
     }
 
     get type(): string {
@@ -54,21 +54,21 @@ export abstract class MapLocation {
     }
 
     get unit(): string {
-        return this._unit;
+        return this._units;
     }
 
     get unitShort(): string {
-        return this._unitShort;
+        return this._unitsShort;
     }
 
     protected get valueFieldLabel(): string {
         let label = "Value";
-        if(this._unitShort) {
-            label += ` (${this._unitShort})`;
+        if(this._unitsShort) {
+            label += ` (${this._unitsShort})`;
         }
         return label;
     }
-    
+
     get format(): MapLocationFormat {
         return this._format;
     }
@@ -176,9 +176,24 @@ export class StationMetadata {
 }
 
 export class Station extends MapLocation {
-    constructor(value: number, unit: string, unitShort: string, metadata: StationMetadata) {
-        super("station", value, unit, unitShort);
+	  private _metadata: StationMetadata;
+    private _id: string;
+
+    //note the id is hopefully temporary, this is separate from the metadata id because of the standardization issue with numeric ids (some datasets list them as X.0, some as X)
+    //should eventually standardize these before ingestion and fix db entries, for now just deal with mismatch by storing station id separate from metadata id and use standardization for comp
+    constructor(value: number, id: string, units: string, unitsShort: string, metadata: StationMetadata) {
+        super("station", value, units, unitsShort);
         this.setFormat(metadata);
+        this._metadata = metadata;
+        this._id = id;
+    }
+
+    get id(): string {
+        return this._id;
+    }
+
+    get metadata(): StationMetadata {
+        return this._metadata;
     }
 
     private setFormat(metadata: StationMetadata): void {
@@ -236,7 +251,7 @@ export class V_Station extends MapLocation {
         let format = new MapLocationFormat(title, data);
         this._format = format;
     }
-    
+
 }
 
 export interface CellData {

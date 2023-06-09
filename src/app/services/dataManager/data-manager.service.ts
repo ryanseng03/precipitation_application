@@ -8,7 +8,8 @@ import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { LatLng } from 'leaflet';
 import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
-import { StationMetadata } from 'src/app/models/Stations';
+import { Station, StationMetadata } from 'src/app/models/Stations';
+import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 
 
@@ -20,13 +21,13 @@ export class DataManagerService {
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
     let selectedDataset: VisDatasetItem;
-    let selectedStation: any;
+    let selectedStation: Station;
     //change to use station group listed in dataset
     let metadataReq: RequestResults = dataRequestor.getStationMetadata({
       station_group: "hawaii_climate_primary"
     });
 
-    metadataReq.transform((data: any) => {
+    metadataReq.transform((data: any[]) => {
       let metadataMap = {};
       for(let item of data) {
         //deconstruct
@@ -42,11 +43,11 @@ export class DataManagerService {
 
 
 
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: any[]) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
       if(stations && selectedStation) {
         let selected = null;
         for(let station of stations) {
-          let idField = station.id_field;
+          let idField = station.metadata.idField;
           if(station[idField] == selectedStation[idField]) {
             selected = station;
             break;
@@ -67,7 +68,6 @@ export class DataManagerService {
 
     let stationRes: RequestResults = null;
     let rasterRes: RequestResults = null;
-    let throttle = null;
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
       if(focus) {
         if(stationRes) {
@@ -99,23 +99,16 @@ export class DataManagerService {
           stationRes.transform((stationVals: any[]) => {
             //get metadata
             return metadataReq.toPromise()
-            .then((metadata: any) => {
-              let stations: any[] = stationVals.reduce((acc: any[], stationVal: any) => {
+            .then((metadataMap: {[id: string]: StationMetadata}) => {
+              let stations: Station[] = stationVals.reduce((acc: Station[], stationVal: any) => {
                 let stationId = stationVal.station_id;
                 //yay for inconsistent data
                 let standardizedStationId = this.getStandardizedNumericString(stationId);
                 let stationValue = stationVal.value;
-                let stationMetadata = metadata[standardizedStationId];
+                let stationMetadata = metadataMap[standardizedStationId];
                 if(stationMetadata) {
-                  let idField = stationMetadata.id_field;
-                  //TEMP
-                  //set station id (SKN) to id non-standardized id from incoming document so timeseries ret works properly (skn needs to match dataset documents)
-                  //uggh
-                  stationMetadata[idField] = stationId;
-                  stationMetadata.value = stationValue;
-                  //copy the station data to a new object to prevent comparison issues (won't trigger change detection because it's the same object)
-                  stationMetadata = Object.assign({}, stationMetadata);
-                  acc.push(stationMetadata);
+                  let station = new Station(stationValue, stationId, selectedDataset.units, selectedDataset.unitsShort, stationMetadata);
+                  acc.push(station);
                 }
                 else {
                   console.error(`Could not find metadata for station, station ID: ${stationId}.`);
@@ -151,10 +144,10 @@ export class DataManagerService {
         else {
           rasterPromise = Promise.resolve(null);
         }
-        let promises: [Promise<any>, Promise<any>] = [stationPromise, rasterPromise];
+        let promises: [Promise<Station[]>, Promise<RasterData>] = [stationPromise, rasterPromise];
 
         //don't have to wait to set data for each
-        promises[0].then((stationData: any[]) => {
+        promises[0].then((stationData: Station[]) => {
           paramService.pushStations(stationData);
         })
         .catch((reason: RequestReject) => {
@@ -188,7 +181,7 @@ export class DataManagerService {
 
     let timeseriesQueries = [];
     //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: Station) => {
       //don't trigger again if already handling this station
       if(!station || !selectedStation || selectedStation[station.id_field] !== station[station.id_field]) {
         //cancel outbound queries and reset query list

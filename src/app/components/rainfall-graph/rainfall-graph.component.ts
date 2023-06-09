@@ -3,6 +3,7 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
 import Moment  from 'moment';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { Observable } from 'rxjs';
+import { MapLocation } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-rainfall-graph',
@@ -62,9 +63,9 @@ export class RainfallGraphComponent implements OnInit {
     this.yaxis.title.text = axisLabel;
   }
 
-  __station: any = null;
+  __station: MapLocation = null;
   @Input() set station(station: SiteInfo) {
-    if(station && this.__station && this.__station[this.__station.id_field] !== station[this.__station.id_field]) {
+    if(station && this.__station && this.__station[this.__station.] !== station[this.__station.id_field]) {
       //reset data
       this.data = {};
     }

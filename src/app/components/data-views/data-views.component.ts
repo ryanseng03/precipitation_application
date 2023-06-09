@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Moment } from 'moment';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { Station } from 'src/app/models/Stations';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
@@ -14,7 +15,7 @@ export class DataViewsComponent implements OnInit {
 
   loading = true;
   stations: SiteInfo[] = null;
-  selectedStation: any;
+  selectedStation: Station;
   unit: string;
 
   filterControl: FormControl = new FormControl([]);
@@ -132,7 +133,7 @@ export class DataViewsComponent implements OnInit {
       this.loading = false;
       this.stations = stations;
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: SiteInfo) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: Station) => {
       this.selectedStation = station;
     });
 
@@ -158,8 +159,8 @@ export class DataViewsComponent implements OnInit {
     });
   }
 
-  selectStation(station: SiteInfo) {
-    this.paramService.pushSelectedStation(station);
+  selectStation(station: Station) {
+    this.paramService.pushSelectedLocation(station);
   }
 
 

@@ -1,7 +1,6 @@
-import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, AfterContentInit, ChangeDetectorRef, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
-import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { Component, AfterViewInit, ViewChildren, QueryList, ChangeDetectorRef, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
+import { Station } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-site-availability-table',
@@ -9,44 +8,30 @@ import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc
   styleUrls: ['./site-availability-table.component.scss']
   // changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SiteAvailabilityTableComponent implements AfterViewInit, AfterContentInit {
+export class SiteAvailabilityTableComponent implements AfterViewInit {
 
   @ViewChildren("dataRows") dataRows: QueryList<ElementRef>;
   @ViewChild("tbody", {static: false}) tbody: ElementRef;
 
-  islandNameMap = {
-    BI: "Big Island",
-    OA: "Oʻahu",
-    MA: "Maui",
-    KA: "Kauai",
-    MO: "Molokaʻi",
-    KO: "Kahoʻolawe"
-  }
-
-  @Input() set stations(stations: any[]) {
+  @Input() set stations(stations: Station[]) {
     this.tableData.rows = [];
     for(let station of stations) {
-      let values = [];
-      values.push(station.name);
-      values.push(station[station.id_field]);
-      let island = this.islandNameMap[station.island];
-      values.push(island);
+      let formattedFields = station.format.formattedFields;
       this.tableData.rows.push({
         station: station,
         element: null,
         selected: false,
-        values: values
+        values: [formattedFields.name, formattedFields[station.metadata.idField], formattedFields.island]
       });
     }
     //delay to give element refs time to update, then trigger station select in table if it exists
     setTimeout(() => {
       this.selected = this.selectedStation;
     }, 0);
-
   }
 
   selectedStation = null;
-  @Input() set selected(station: SiteInfo) {
+  @Input() set selected(station: Station) {
     this.selectedStation = station;
     if(station) {
       let index = this.siteMap.get(station);
@@ -64,17 +49,17 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     }
 
   }
-  @Output() selectedChange: EventEmitter<SiteInfo> = new EventEmitter<SiteInfo>();
+  @Output() selectedChange: EventEmitter<Station> = new EventEmitter<Station>();
 
 
   tableData: TableFormat;
-  siteMap: Map<SiteInfo, number>;
+  siteMap: Map<Station, number>;
   selectedRef: RowRef;
   scrollbarWidth: string;
 
   constructor(private cdr: ChangeDetectorRef, scrollWidthService: ScrollbarWidthCalcService) {
     this.scrollbarWidth = scrollWidthService.getScrollbarWidth() + "px";
-    this.siteMap = new Map<SiteInfo, number>();
+    this.siteMap = new Map<Station, number>();
     this.tableData = {
       header: ["Name", "Station ID", "Island"],
       rows: []
@@ -96,12 +81,6 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     this.dataRows.changes.subscribe((rows: QueryList<ElementRef>) => {
       this.generateRowMap(rows);
     });
-
-
-  }
-
-  ngAfterContentInit() {
-
   }
 
   setSelected(selected: ElementRef, i: number) {
@@ -125,7 +104,6 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     }
     this.selectedRef.selected = true;
   }
-
 }
 
 interface TableFormat {
@@ -134,10 +112,8 @@ interface TableFormat {
 }
 
 interface RowRef {
-  station: SiteInfo,
+  station: Station,
   element: ElementRef,
   selected: boolean,
   values: string[]
 }
-
-//class Two

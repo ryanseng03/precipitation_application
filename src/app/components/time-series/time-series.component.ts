@@ -4,6 +4,7 @@ import Moment from "moment";
 import { EventParamRegistrarService, LoadingData } from 'src/app/services/inputManager/event-param-registrar.service';
 import { Subject } from 'rxjs';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
+import { MapLocation } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-time-series',
@@ -14,7 +15,7 @@ export class TimeSeriesComponent implements OnInit {
 
   @Input() width: number;
 
-  selectedStation = null;
+  selectedLocation: MapLocation = null;
   complete = false;
 
   selected: SiteInfo;
@@ -24,8 +25,8 @@ export class TimeSeriesComponent implements OnInit {
 
   constructor(private paramService: EventParamRegistrarService) {
     this.source = new Subject<any>();
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
-      this.selectedStation = station;
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
+      this.selectedLocation = location;
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.loading, (loadData: LoadingData) => {
       if(loadData && loadData.tag == "timeseries") {
