@@ -122,27 +122,31 @@ export class DataRetreiverService {
     let bounds = this.getCellBoundsFromGeoPos(header, data, pos, getNoValue);
 
     if(bounds != null) {
-      let n = bounds.getNorth();
-      let e = bounds.getEast();
-      let s = bounds.getSouth();
-      let w = bounds.getWest();
-      geojson = {
-        type: "Feature",
-        geometry: {
-          type: "Polygon",
-          coordinates: [[
-            [w, s],
-            [e, s],
-            [e, n],
-            [w, n],
-            [w, s]
-          ]]
-        }
-      };
+      geojson = this.getGeoJSONCellFromBounds(bounds);
     }
     return geojson;
   }
-  
+
+  getGeoJSONCellFromBounds(bounds: LatLngBounds) {
+    let n = bounds.getNorth();
+    let e = bounds.getEast();
+    let s = bounds.getSouth();
+    let w = bounds.getWest();
+    let geojson = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[
+          [w, s],
+          [e, s],
+          [e, n],
+          [w, n],
+          [w, s]
+        ]]
+      }
+    };
+    return geojson;
+  }
 
   getBoundsWidthHeight(bounds: LatLngBounds) {
     let ll = bounds.getSouthWest();

@@ -37,8 +37,9 @@ export abstract class MapLocation {
     private _units: string;
     private _unitsShort: string;
     protected _format: MapLocationFormat;
+    private _location: L.LatLng;
 
-    constructor(type: string, value: number, units: string, unitsShort: string) {
+    constructor(type: string, value: number, units: string, unitsShort: string, location: L.LatLng) {
         this._value = value;
         this._type = type;
         this._units = units;
@@ -59,6 +60,10 @@ export abstract class MapLocation {
 
     get unitShort(): string {
         return this._unitsShort;
+    }
+
+    get location(): L.LatLng {
+        return this._location;
     }
 
     protected get valueFieldLabel(): string {
@@ -182,7 +187,7 @@ export class Station extends MapLocation {
     //note the id is hopefully temporary, this is separate from the metadata id because of the standardization issue with numeric ids (some datasets list them as X.0, some as X)
     //should eventually standardize these before ingestion and fix db entries, for now just deal with mismatch by storing station id separate from metadata id and use standardization for comp
     constructor(value: number, id: string, units: string, unitsShort: string, metadata: StationMetadata) {
-        super("station", value, units, unitsShort);
+        super("station", value, units, unitsShort, metadata.location);
         this.setFormat(metadata);
         this._metadata = metadata;
         this._id = id;
@@ -221,17 +226,11 @@ export class Station extends MapLocation {
 
 export class V_Station extends MapLocation {
     private _cellData: CellData;
-    private _location: L.LatLng;
 
     constructor(value: number, unit: string, unitShort: string, cellData: CellData, location: L.LatLng) {
-        super("virtual_station", value, unit, unitShort);
+        super("virtual_station", value, unit, unitShort, location);
         this._cellData = cellData;
-        this._location = location;
         this.setFormat();
-    }
-
-    get location(): L.LatLng {
-        return this._location;
     }
 
     get cellData(): CellData {

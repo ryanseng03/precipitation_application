@@ -8,7 +8,7 @@ import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { LatLng } from 'leaflet';
 import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
-import { Station, StationMetadata } from 'src/app/models/Stations';
+import { MapLocation, Station, StationMetadata } from 'src/app/models/Stations';
 import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 
@@ -21,7 +21,7 @@ export class DataManagerService {
 
   constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
     let selectedDataset: VisDatasetItem;
-    let selectedStation: Station;
+    let selectedLocation: MapLocation;
     //change to use station group listed in dataset
     let metadataReq: RequestResults = dataRequestor.getStationMetadata({
       station_group: "hawaii_climate_primary"
@@ -32,7 +32,7 @@ export class DataManagerService {
       for(let item of data) {
         //deconstruct
         let { station_group, id_field, ...stationMetadata } = item;
-        let metadata = new StationMetadata(id_field, stationMetadata)
+        let metadata = new StationMetadata(id_field, stationMetadata);
         //yay for inconsistent data
         //value docs may have decimals that do not match, standardize id formats
         let standardizedID = this.getStandardizedNumericString(metadata.id);
@@ -45,10 +45,9 @@ export class DataManagerService {
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
       if(stations && selectedStation) {
-        let selected = null;
+        let selected: Station = null;
         for(let station of stations) {
-          let idField = station.metadata.idField;
-          if(station[idField] == selectedStation[idField]) {
+          if(station.id == selectedStation.id) {
             selected = station;
             break;
           }
@@ -182,6 +181,9 @@ export class DataManagerService {
     let timeseriesQueries = [];
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: Station) => {
+      
+
+
       //don't trigger again if already handling this station
       if(!station || !selectedStation || selectedStation[station.id_field] !== station[station.id_field]) {
         //cancel outbound queries and reset query list

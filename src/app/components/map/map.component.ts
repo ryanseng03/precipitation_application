@@ -6,14 +6,13 @@ import { DataRetreiverService } from "../../services/util/data-retreiver.service
 import { LeafletRasterLayerService, R, RasterOptions } from "../../services/rasterLayerGeneration/leaflet-raster-layer.service";
 import { EventParamRegistrarService, LoadingData, ParameterHook } from "../../services/inputManager/event-param-registrar.service"
 import "leaflet-groupedlayercontrol";
-import { RasterData, RasterHeader } from 'src/app/models/RasterData.js';
-import { SiteInfo } from 'src/app/models/SiteMetadata.js';
+import { RasterData } from 'src/app/models/RasterData.js';
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { DataManagerService } from 'src/app/services/dataManager/data-manager.service';
-import { Station, V_Station } from 'src/app/models/Stations';
+import { MapLocation, Station, V_Station } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-map',
@@ -253,7 +252,7 @@ export class MapComponent implements OnInit {
     //set timeout to prevent issues with map not propogating to overlay extension
     setTimeout(() => {
       //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
-      this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: SiteInfo[]) => {
+      this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: Station[]) => {
         console.log(stations);
         this.active.data.stations = stations;
         this.constructMarkerLayerPopulateMarkerData(stations);
@@ -319,8 +318,8 @@ export class MapComponent implements OnInit {
     });
 
 
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
-      this.selectStation(station);
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
+      this.selectLocation(location);
     });
 
     this.map.on("layeradd", (addData: any) => {
@@ -333,9 +332,45 @@ export class MapComponent implements OnInit {
     this.invalidateSize()
   }
 
+  selectLocation(location: MapLocation) {
+    if(this.selectedMapCell != null) {
+      this.map.removeLayer(this.selectedMapCell);
+      this.selectedMapCell = null;
+    }
+    if(this.selectStation)
+
+    if(location.type == "station") {
+      let station = <Station>location;
+      this.selectedStation = station;
+    }
+    else if(location.type == "virtual_station") {
+      let virtualStation = <V_Station>location;
+      let geojson: any = this.dataRetreiver.getGeoJSONCellFromBounds(virtualStation.cellData.cellExtent);
+      if(geojson) {
+        this.selectedMapCell = L.geoJSON(geojson)
+        .setStyle({
+          fillColor: "black",
+          weight: 3,
+          opacity: 1,
+          color: "black",
+          fillOpacity: 0.2
+        })
+        .bindPopup("")
+        .addTo(this.map);
+
+        this.selectedMapCell.isPopupOpen
+      }
+
+    }
+    this.map.panTo(location.location, {animate: true});
+  }
+
+  
+
+
 
   selectedStation = null;
-  selectStation(station: SiteInfo) {
+  selectStation(station: Station) {
     if(this.selectedMapCell != null) {
       this.map.removeLayer(this.selectedMapCell);
       this.selectedMapCell = null;
@@ -477,7 +512,7 @@ export class MapComponent implements OnInit {
         cellExtent: bounds
       }, position);
 
-      this.paramService.pushMapLocation(virtualStation);
+      this.paramService.pushSelectedLocation(virtualStation);
     }
   }
 
@@ -509,7 +544,7 @@ export class MapComponent implements OnInit {
       let markers: RainfallStationMarker[] = [];
       this.markerInfo.markerMap.clear();
       let markerLayer = L.layerGroup();
-      stations.forEach((station: SiteInfo) => {
+      stations.forEach((station: Station) => {
         let hexFill = "#ffffff";
         if(this.colorScheme) {
           hexFill = this.colorScheme.getColorHex(station.value);
@@ -551,7 +586,14 @@ export class MapComponent implements OnInit {
     }
   }
 
-  getMarkerPopupText(station: any): string {
+  getPopupText(location: MapLocation): string {
+    let [ name, id, lat, lng ] = location.format.formattedFields;
+    let text = ```
+    <br> Lat: " + labels.lat + ", Lon: " + labels.lng
+    + <br> Value: ${valuesLabel}```;
+  }
+
+  getStationPopupText(station: Station): string {
     let labels = this.getCoordAndValueLabels(station);
     let valuesLabel = labels.valueLabels.join(", ");
     let stationDetails: string = "Name: " + station.name
@@ -559,6 +601,10 @@ export class MapComponent implements OnInit {
     + "<br> Lat: " + labels.lat + ", Lon: " + labels.lng
     + `<br> Value: ${valuesLabel}`;
     return stationDetails;
+  }
+
+  getVStationPopupText(vStation: V_Station): string {
+
   }
 
   getCoordAndValueLabels(station) {
@@ -673,7 +719,7 @@ interface RainfallStationMarkerInfo {
   pivotZoom: number,
   weightToRadiusFactor: number,
   pivotRadius: number,
-  markerMap: Map<SiteInfo, L.CircleMarker>
+  markerMap: Map<Station, L.CircleMarker>
 }
 
 interface RainfallStationMarker {
@@ -687,7 +733,7 @@ interface ActiveData {
 }
 
 interface DataPack {
-  stations: SiteInfo[],
+  stations: Station[],
   raster: RasterData,
   focus: FocusData<unknown>
 }
