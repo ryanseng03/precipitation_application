@@ -5,7 +5,7 @@ import { RasterData } from 'src/app/models/RasterData';
 import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { ColorScale } from 'src/app/models/colorScale';
 import { VisDatasetItem, FocusData } from '../dataset-form-manager.service';
-import { MapLocation, Station } from 'src/app/models/Stations';
+import { MapLocation, Station, StationMetadata } from 'src/app/models/Stations';
 
 @Injectable({
   providedIn: 'root'
@@ -23,10 +23,12 @@ export class EventParamRegistrarService {
     mapBounds: "mapBounds",
     colorScale: "colorScale",
     viewType: "viewType",
-    selectedLocation: "location"
+    selectedLocation: "location",
+    metadata: "metadata"
   };
 
-  private selectedLocationSource: BehaviorSubject<MapLocation>
+  private metadataSource: BehaviorSubject<StationMetadata[]>;
+  private selectedLocationSource: BehaviorSubject<MapLocation>;
   private datasetSource: BehaviorSubject<VisDatasetItem>;
   private rasterSource: BehaviorSubject<RasterData>;
   private stationsSource: BehaviorSubject<Station[]>;
@@ -53,6 +55,7 @@ export class EventParamRegistrarService {
     this.colorScaleSource = this.paramService.registerParameter<ColorScale>(EventParamRegistrarService.EVENT_TAGS.colorScale);
     this.viewTypeSource = this.paramService.registerParameter<string>(EventParamRegistrarService.EVENT_TAGS.viewType);
     this.selectedLocationSource = this.paramService.registerParameter<MapLocation>(EventParamRegistrarService.EVENT_TAGS.selectedLocation);
+    this.metadataSource = this.paramService.registerParameter<StationMetadata[]>(EventParamRegistrarService.EVENT_TAGS.metadata);
   }
 
   pushDataset(dataset: VisDatasetItem): void {
@@ -99,7 +102,9 @@ export class EventParamRegistrarService {
     this.selectedLocationSource.next(location);
   }
 
-
+  pushMetadata(metadata: StationMetadata[]) {
+    this.metadataSource.next(metadata);
+  }
 
   //can this be integrated with the rest of the stuff?
   //why not just have map logic in map component and push out values (originally made this way in case multiple maps, shouldn't be a concern anymore)

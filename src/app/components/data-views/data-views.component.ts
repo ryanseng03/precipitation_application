@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Moment } from 'moment';
-import { SiteInfo } from 'src/app/models/SiteMetadata';
-import { Station } from 'src/app/models/Stations';
+import { FormatData, MapLocation, Station, StationMetadata } from 'src/app/models/Stations';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
 
@@ -14,31 +12,13 @@ import { EventParamRegistrarService } from 'src/app/services/inputManager/event-
 export class DataViewsComponent implements OnInit {
 
   loading = true;
-  stations: SiteInfo[] = null;
-  selectedStation: Station;
+  stations: Station[] = null;
+  selected: Station;
   unit: string;
 
   filterControl: FormControl = new FormControl([]);
   fieldControl: FormControl = new FormControl(null);
-  field2label = {
-    skn: "SKN",
-    name: "Name",
-    observer: "Observer",
-    network: "Network",
-    island: "Island",
-    ncei_id: "NCEI ID",
-    nws_id: "NWS ID",
-    scan_id: "Scan ID",
-    smart_node_rf_id: "Smart Node RFID"
-  }
-  islandNameMap = {
-    BI: "Big Island",
-    OA: "Oʻahu",
-    MA: "Maui",
-    KA: "Kauai",
-    MO: "Molokaʻi",
-    KO: "Kahoʻolawe"
-  }
+
   fieldData = [];
   field2Data = {
     skn: new Set<string>(),
@@ -51,7 +31,7 @@ export class DataViewsComponent implements OnInit {
     scan_id: new Set<string>(),
     smart_node_rf_id: new Set<string>()
   }
-  unfilteredStations: SiteInfo[] = null;
+  unfilteredStations: Station[] = null;
   values: string[] = [];
 
 
@@ -105,8 +85,32 @@ export class DataViewsComponent implements OnInit {
       value: null
     });
 
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: SiteInfo[]) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.metadata, (metadata: StationMetadata[]) => {
+      //add in numeric filters by range, for now just handle string filters
+      let fieldData;
+      let valueData;
+      for(let item of metadata) {
+        let format = item.format;
+        for(let formatData of format.formatData) {
+          //add in numeric range handling
+          if(typeof formatData.value === "string") {
+            let fieldVals = values[formatData.formattedField];
+            if(!fieldVals) {
+              fieldVals = new Set<string>();
+              values[formatData.formattedField] = fieldVals;
+            }
+            fieldVals.add(formatData.formattedValue);
+          }
+        }
+      }
+      this.fields =
+    });
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
+      this.unfilteredStations = stations;
       if(stations) {
+        stations
+
+
         this.unfilteredStations = stations;
         for(let field in this.field2Data) {
           this.field2Data[field] = new Set<string>();
@@ -133,7 +137,7 @@ export class DataViewsComponent implements OnInit {
       this.loading = false;
       this.stations = stations;
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: Station) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
       this.selectedStation = station;
     });
 

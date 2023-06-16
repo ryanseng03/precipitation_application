@@ -38,6 +38,7 @@ export class DataManagerService {
         let standardizedID = this.getStandardizedNumericString(metadata.id);
         metadataMap[standardizedID] = metadata;
       }
+      paramService.pushMetadata(Object.values(metadataMap));
       return metadataMap;
     });
 
@@ -181,7 +182,7 @@ export class DataManagerService {
     let timeseriesQueries = [];
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: Station) => {
-      
+
 
 
       //don't trigger again if already handling this station

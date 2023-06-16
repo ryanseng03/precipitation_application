@@ -1,29 +1,35 @@
-import { KeyValue, formatNumber } from "@angular/common";
+import { formatNumber } from "@angular/common";
 import { LatLng } from "leaflet";
 
 
 export class MapLocationFormat {
     private _title: string;
-    private _formattedFields: {[field: string]: string};
+    private _formatMap: {[field: string]: FormatData};
 
-    constructor(title: string, formattedFields: {[field: string]: string}) {
+    constructor(title: string, data: FormatData[]) {
         this._title = title;
-        this._formattedFields = formattedFields;
-    }
-
-    get formattedFields(): {[field: string]: string} {
-        return JSON.parse(JSON.stringify(this._formattedFields));
-    }
-
-    get formattedPairs(): KeyValue<string, string>[] {
-        let pairs: KeyValue<string, string>[] = [];
-        for(let field in this._formattedFields) {
-            pairs.push({
-                key: field,
-                value: this._formattedFields[field]
-            });
+        this._formatMap = {};
+        for(let item of data) {
+            this._formatMap[item.field] = item;
         }
-        return pairs;
+    }
+
+    public getFieldFormat(field: string): FormatData {
+        return {
+           ...this._formatMap[field]
+        };
+    }
+
+    get formatData(): FormatData[] {
+        return Object.values(this._formatMap).map((data: FormatData) => {
+            return {
+                ...data
+            };
+        });
+    }
+
+    get fields(): string[] {
+        return Object.keys(this._formatMap);
     }
 
     get title(): string {
@@ -145,10 +151,11 @@ export class StationMetadata {
     };
 
     private _idField: string;
-    private _data: {[field: string]: number | string};
+    private _data: {[field: string]: MetadataValue};
     private _location: L.LatLng;
+    private _format: MapLocationFormat;
 
-    constructor(idField: string, data: {[field: string]: number | string}) {
+    constructor(idField: string, data: {[field: string]: MetadataValue}) {
         this._idField = idField;
         //validate data, must have id and lat lng at the bare minimum
         if(!data[idField]|| !data.lat || !data.lng) {
@@ -157,9 +164,10 @@ export class StationMetadata {
         this._data = data;
         let elevation = data.elevation_m === undefined ? <number>data.elevation_m : undefined;
         this._location = new LatLng(<number>data.lat, <number>data.lng, elevation);
+        this.setFormat();
     }
 
-    getValue(field: string): string | number {
+    public getValue(field: string): MetadataValue {
         return this._data[field];
     }
 
@@ -177,6 +185,38 @@ export class StationMetadata {
 
     get id(): string {
         return <string>this._data[this._idField];
+    }
+
+    get format(): MapLocationFormat {
+        return this._format;
+    }
+
+    private setFormat(): void {
+        let title = "Station Metadata";
+        let data: FormatData[] = [];
+
+        let idField = this._idField;
+        for(let field in this.fields) {
+            let formatData = StationMetadata.FORMAT[field];
+            if(formatData) {
+                let value = this._data[field];
+                let formattedValue = <string>value;
+                if(formatData.translate) {
+                    formattedValue = formatData.translate(value);
+                }
+                if(field == idField) {
+                    formattedValue += " (Station ID)";
+                }
+                data.push({
+                    field,
+                    formattedField: formatData.name,
+                    value,
+                    formattedValue
+                });
+            }
+        }
+        let format = new MapLocationFormat(title, data);
+        this._format = format;
     }
 }
 
@@ -203,22 +243,14 @@ export class Station extends MapLocation {
 
     private setFormat(metadata: StationMetadata): void {
         let title = "Station Data";
-        let data = {};
-        data[this.valueFieldLabel] = this.value;
-        let idField = metadata.idField;
-        for(let field in metadata.fields) {
-            let formatData = StationMetadata.FORMAT[field];
-            if(formatData) {
-                let value = metadata.getValue(field);
-                if(formatData.translate) {
-                    value = formatData.translate(value);
-                }
-                if(field == idField) {
-                    value += " (Station ID)";
-                }
-                data[formatData.name] = value;
-            }
-        }
+        let data: FormatData[] = [{
+            field: "value",
+            formattedField: this.valueFieldLabel,
+            value: this.value,
+            formattedValue: formatNumber(this.value, navigator.language, "1.2-2")
+        },
+        ...metadata.format.formatData];
+
         let format = new MapLocationFormat(title, data);
         this._format = format;
     }
@@ -239,14 +271,45 @@ export class V_Station extends MapLocation {
 
     private setFormat(): void {
         let title = "Map Location Data";
-        let data = {
-            "Row": this._cellData.row.toLocaleString(),
-            "Col": this._cellData.col.toLocaleString(),
-            "Cell Width (m/°)": `${formatNumber(this._cellData.cellWidthM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellWidthLng, navigator.language, "1.4-4")}`,
-            "Cell Height (m/°)": `${formatNumber(this._cellData.cellHeightM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellHeightLat, navigator.language, "1.4-4")}`,
-            "Cell Extent (min longitude °, min latitude °, max longitude °, max latitude °)": this._cellData.cellExtent.toBBoxString()
-        };
-        data[this.valueFieldLabel] = this.value;
+        let data: FormatData[] = [
+            {
+                field: "row",
+                formattedField: "Row",
+                value: this._cellData.row,
+                formattedValue: this._cellData.row.toLocaleString()
+            },
+            {
+                field: "col",
+                formattedField: "Column",
+                value: this._cellData.col,
+                formattedValue: this._cellData.col.toLocaleString()
+            },
+            {
+                field: "width",
+                formattedField: "Cell Width (m/°)",
+                value: [this._cellData.cellWidthM, this._cellData.cellWidthLng],
+                formattedValue: `${formatNumber(this._cellData.cellWidthM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellWidthLng, navigator.language, "1.4-4")}`
+            },
+            {
+                field: "height",
+                formattedField: "Cell Height (m/°)",
+                value: [this._cellData.cellHeightM, this._cellData.cellHeightLat],
+                formattedValue: `${formatNumber(this._cellData.cellHeightM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellHeightLat, navigator.language, "1.4-4")}`
+            },
+            {
+                field: "extent",
+                formattedField: "Cell Extent (min longitude °, min latitude °, max longitude °, max latitude °)",
+                value: this._cellData.cellExtent,
+                formattedValue: this._cellData.cellExtent.toBBoxString()
+            },
+            {
+                field: "value",
+                formattedField: this.valueFieldLabel,
+                value: this.value,
+                formattedValue: formatNumber(this.value, navigator.language, "1.2-2")
+            }
+        ];
+
         let format = new MapLocationFormat(title, data);
         this._format = format;
     }
@@ -262,3 +325,12 @@ export interface CellData {
     cellHeightLat: number;
     cellExtent: L.LatLngBounds;
 }
+
+export interface FormatData {
+    field: string
+    formattedField: string,
+    value: any,
+    formattedValue: string
+}
+
+export type MetadataValue = string | number;
