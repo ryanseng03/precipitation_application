@@ -181,7 +181,7 @@ export class DataManagerService {
 
     let timeseriesQueries = [];
     //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: Station) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
 
 
 

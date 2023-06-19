@@ -16,12 +16,16 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
   @Input() set stations(stations: Station[]) {
     this.tableData.rows = [];
     for(let station of stations) {
-      let formattedFields = station.format.formattedFields;
+      let formatValues = [
+        station.format.getFieldFormat("name").formattedValue,
+        station.format.getFieldFormat(station.metadata.idField).formattedValue,
+        station.format.getFieldFormat("island").formattedValue
+      ];
       this.tableData.rows.push({
         station: station,
         element: null,
         selected: false,
-        values: [formattedFields.name, formattedFields[station.metadata.idField], formattedFields.island]
+        values: formatValues
       });
     }
     //delay to give element refs time to update, then trigger station select in table if it exists
