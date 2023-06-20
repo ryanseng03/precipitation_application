@@ -8,7 +8,6 @@ import { EventParamRegistrarService, LoadingData, ParameterHook } from "../../se
 import "leaflet-groupedlayercontrol";
 import { RasterData, RasterHeader } from 'src/app/models/RasterData.js';
 import { SiteInfo } from 'src/app/models/SiteMetadata.js';
-import "leaflet.markercluster";
 import { RoseControlOptions } from '../leaflet-controls/leaflet-compass-rose/leaflet-compass-rose.component';
 import { LeafletLayerControlExtensionComponent } from '../leaflet-controls/leaflet-layer-control-extension/leaflet-layer-control-extension.component';
 // import { LeafletImageExportComponent } from "../leaflet-controls/leaflet-image-export/leaflet-image-export.component";
