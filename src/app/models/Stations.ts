@@ -50,6 +50,7 @@ export abstract class MapLocation {
         this._type = type;
         this._units = units;
         this._unitsShort = unitsShort;
+        this._location = location;
     }
 
     get type(): string {
@@ -272,6 +273,18 @@ export class V_Station extends MapLocation {
     private setFormat(): void {
         let title = "Map Location Data";
         let data: FormatData[] = [
+            {
+                field: "lat",
+                formattedField: "Latitude",
+                value: this._cellData.col,
+                formattedValue: `${formatNumber(this.location.lat, navigator.language, "1.4-4")}`
+            },
+            {
+                field: "lng",
+                formattedField: "Longitude",
+                value: this._cellData.col,
+                formattedValue: `${formatNumber(this.location.lng, navigator.language, "1.4-4")}`
+            },
             {
                 field: "row",
                 formattedField: "Row",

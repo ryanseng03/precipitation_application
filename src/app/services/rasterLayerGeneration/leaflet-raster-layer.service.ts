@@ -10,24 +10,25 @@ export let R: any = L;
   providedIn: 'root'
 })
 export class LeafletRasterLayerService {
-  //if rendered tiles should be limited to a relatively small set, no reason to add overhead on tiles that contain no data
-  private emptyTileCache: Set<string> = new Set<string>();
-
   constructor(private dataRetreiver: DataRetreiverService) {
-    let __this = this;
-
-    //add options, no value cache bool (can store cache here), coloring, geotiffdata
-
     R.GridLayer.RasterLayer = L.GridLayer.extend({
       initialize: function(options: RasterOptions) {
-        if(options.cacheEmpty == undefined) {
-          options.cacheEmpty = false;
+        let internalOpts: RasterOptionsInternal = {
+          ...options
+        };
+        if(options.cacheEmpty) {
+          internalOpts.cache = new Set<string>();
         }
-        L.Util.setOptions(this, options);
+        else if(options.cacheEmpty == undefined) {
+          internalOpts.cacheEmpty = false;
+        }
+        L.Util.setOptions(this, internalOpts);
       },
 
-      clearEmptyTileCache: () => {
-        this.emptyTileCache.clear();
+      clearEmptyTileCache: function() {
+        if(this.options.cache) {
+          this.options.cache.clear();
+        }
       },
 
       setData: function(values: IndexedValues, header?: RasterHeader) {
@@ -45,22 +46,16 @@ export class LeafletRasterLayerService {
         this.redraw();
       },
 
-      createTile: function(coords) {
-
+      createTile: function(coords: any) {
         let coordString = JSON.stringify(coords);
-
         let tile: HTMLCanvasElement = <HTMLCanvasElement>L.DomUtil.create('canvas', 'leaflet-tile');
 
-        if(!this.options.cacheEmpty || !__this.emptyTileCache.has(coordString)) {
-
-
+        if(!this.options.cacheEmpty || !this.options.cache.has(coordString)) {
           let ctx = tile.getContext("2d");
           let tileSize = this.getTileSize();
           tile.width = tileSize.x;
           tile.height = tileSize.y;
           let imgData = ctx.getImageData(0, 0, tileSize.x, tileSize.y);
-
-
 
           //get the coordinates of the tile corner, tile coords times scale
           let xMin = coords.x * tileSize.x;
@@ -79,7 +74,7 @@ export class LeafletRasterLayerService {
               //unproject fast enough that unnecessary to decouple
               let latlng: L.LatLng = this._map.unproject([x, y], coords.z);
 
-              let color = __this.dataRetreiver.geoPosToColor(this.options.data.header, this.options.data.values, latlng, this.options.colorScale);
+              let color = dataRetreiver.geoPosToColor(this.options.data.header, this.options.data.values, latlng, this.options.colorScale);
               if(color != undefined) {
                 hasValue = true;
                 imgData.data[colorOff] = color.r;
@@ -89,12 +84,11 @@ export class LeafletRasterLayerService {
               }
               colorOff += 4;
             }
-
           }
 
           //if caching empty tiles and tile had no values in it, add to empty tile cache
           if(this.options.cacheEmpty && !hasValue) {
-            __this.emptyTileCache.add(coordString);
+            this.options.cache.add(coordString);
           }
           ctx.putImageData(imgData, 0, 0);
         }
@@ -115,4 +109,8 @@ export interface RasterOptions {
     header: RasterHeader,
     values: IndexedValues
   }
+}
+
+interface RasterOptionsInternal extends RasterOptions {
+  cache?: Set<string>
 }

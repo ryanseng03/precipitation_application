@@ -42,7 +42,7 @@ export class DataManagerService {
       return metadataMap;
     });
 
-
+    let selectedStation: Station = null;
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
       if(stations && selectedStation) {
@@ -55,14 +55,14 @@ export class DataManagerService {
         }
         //delay to allow filtered station propogation before emitting
         setTimeout(() => {
-          paramService.pushSelectedStation(selected);
+          paramService.pushSelectedLocation(selected);
         }, 0);
       }
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       selectedDataset = dataset;
       //reset selected station and timeseries data
-      paramService.pushSelectedStation(null);
+      paramService.pushSelectedLocation(null);
     });
 
 
@@ -183,92 +183,96 @@ export class DataManagerService {
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
 
+      //VIRTUAL STATIONS
+      //...
 
-
-      //don't trigger again if already handling this station
-      if(!station || !selectedStation || selectedStation[station.id_field] !== station[station.id_field]) {
-        //cancel outbound queries and reset query list
-        for(let query of timeseriesQueries) {
-          query.cancel();
-        }
-        timeseriesQueries = [];
-        selectedStation = station;
-        //dispatch query if the dataset has a timeseries component and the selected station is not null
-        if(station && selectedDataset.focusManager.type == "timeseries") {
-          let timeseriesData: TimeseriesData = <TimeseriesData>selectedDataset.focusManager;
-          paramService.pushLoading({
-            tag: "timeseries",
-            loading: true
-          });
-          let datasetInfo: VisDatasetItem = selectedDataset;
-          const { stationParams } = datasetInfo;
-          let timeseriesPromises = [];
-          let startDate = timeseriesData.start;
-          let endDate = timeseriesData.end;
-          let periods = timeseriesData.stationPeriods;
-          for(let periodData of periods) {
-            let properties = {
-              station_id: station[station.id_field],
-              ...stationParams
-            }
-            //make sure to overwrite period from params
-            properties["period"] = periodData.tag;
-
-            //chunk queries by year
-            let date = startDate.clone();
-            while(date.isSameOrBefore(endDate)) {
-              let start_s: string = this.dateHandler.dateToString(date, periodData.unit);
-              date.add(1, "year");
-              let end_s: string = this.dateHandler.dateToString(date, periodData.unit);
-              //note query is [)
-              let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
-
-              timeseriesRes.transform((timeseriesData: any[]) => {
-                if(timeseriesData.length > 0) {
-                  let transformed = {
-                    stationId: timeseriesData[0].station_id,
-                    period: timeseriesData[0].period,
-                    values: timeseriesData.map((item: any) => {
-                      return {
-                        value: item.value,
-                        date: Moment(item.date)
-                      }
-                    })
-                  }
-                  return transformed;
-                }
-                else {
-                  return null;
-                }
-              });
-              timeseriesQueries.push(timeseriesRes);
-
-              let timeseriesPromise = timeseriesRes.toPromise();
-              timeseriesPromise.then((timeseriesData: any) => {
-                if(timeseriesData) {
-                  paramService.pushStationTimeseries(timeseriesData);
-                }
-              })
-              .catch((reason: RequestReject) => {
-                //if failed not cancelled print reason to stderr
-                if(!reason.cancelled) {
-                  console.error(reason.reason);
-                }
-              });
-
-              timeseriesPromises.push(timeseriesPromise);
-            }
+      //normal station
+      if(location && location.type == "station") {
+        let station = <Station>location;
+        //don't trigger again if already handling this station
+        if(!station || !selectedStation || selectedStation.id !== station.id) {
+          //cancel outbound queries and reset query list
+          for(let query of timeseriesQueries) {
+            query.cancel();
           }
-          //when all timeseries promises are complete push out loading complete signal
-          Promise.allSettled(timeseriesPromises).then(() => {
+          timeseriesQueries = [];
+          selectedStation = station;
+          //dispatch query if the dataset has a timeseries component and the selected station is not null
+          if(station && selectedDataset.focusManager.type == "timeseries") {
+            let timeseriesData: TimeseriesData = <TimeseriesData>selectedDataset.focusManager;
             paramService.pushLoading({
               tag: "timeseries",
-              loading: false
+              loading: true
             });
-          });
+            let datasetInfo: VisDatasetItem = selectedDataset;
+            const { stationParams } = datasetInfo;
+            let timeseriesPromises = [];
+            let startDate = timeseriesData.start;
+            let endDate = timeseriesData.end;
+            let periods = timeseriesData.stationPeriods;
+            for(let periodData of periods) {
+              let properties = {
+                station_id: station.id,
+                ...stationParams
+              }
+              //make sure to overwrite period from params
+              properties["period"] = periodData.tag;
+
+              //chunk queries by year
+              let date = startDate.clone();
+              while(date.isSameOrBefore(endDate)) {
+                let start_s: string = this.dateHandler.dateToString(date, periodData.unit);
+                date.add(1, "year");
+                let end_s: string = this.dateHandler.dateToString(date, periodData.unit);
+                //note query is [)
+                let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
+
+                timeseriesRes.transform((timeseriesData: any[]) => {
+                  if(timeseriesData.length > 0) {
+                    let transformed = {
+                      stationId: timeseriesData[0].station_id,
+                      period: timeseriesData[0].period,
+                      values: timeseriesData.map((item: any) => {
+                        return {
+                          value: item.value,
+                          date: Moment(item.date)
+                        }
+                      })
+                    }
+                    return transformed;
+                  }
+                  else {
+                    return null;
+                  }
+                });
+                timeseriesQueries.push(timeseriesRes);
+
+                let timeseriesPromise = timeseriesRes.toPromise();
+                timeseriesPromise.then((timeseriesData: any) => {
+                  if(timeseriesData) {
+                    paramService.pushStationTimeseries(timeseriesData);
+                  }
+                })
+                .catch((reason: RequestReject) => {
+                  //if failed not cancelled print reason to stderr
+                  if(!reason.cancelled) {
+                    console.error(reason.reason);
+                  }
+                });
+
+                timeseriesPromises.push(timeseriesPromise);
+              }
+            }
+            //when all timeseries promises are complete push out loading complete signal
+            Promise.allSettled(timeseriesPromises).then(() => {
+              paramService.pushLoading({
+                tag: "timeseries",
+                loading: false
+              });
+            });
+          }
         }
       }
-
     });
 
   }

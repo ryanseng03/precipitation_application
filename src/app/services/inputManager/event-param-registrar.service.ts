@@ -99,6 +99,7 @@ export class EventParamRegistrarService {
   }
 
   pushSelectedLocation(location: MapLocation): void {
+    console.log("pushed!", location);
     this.selectedLocationSource.next(location);
   }
 

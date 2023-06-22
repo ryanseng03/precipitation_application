@@ -1,18 +1,14 @@
 import { Injectable } from '@angular/core';
-import { UtilityService } from "./utility.service";
-import {LatLng, latLng, bounds, LatLngBounds, latLngBounds} from "leaflet";
+import { LatLng, LatLngBounds } from "leaflet";
 import { ColorScale, Color } from '../../models/colorScale';
-//import { GeoJSON, Feature } from "geojson";
-import {RasterHeader, IndexedValues} from "../../models/RasterData";
+import { RasterHeader, IndexedValues } from "../../models/RasterData";
 import { GeoJsonObject } from 'geojson';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataRetreiverService {
-
-
-  constructor(private util: UtilityService) {
+  constructor() {
   }
 
   tileXYToFlat(x: number, y: number, tileSize: L.Point): number {
@@ -22,7 +18,6 @@ export class DataRetreiverService {
   flattenGridCoords(header: RasterHeader, coords: DecoupledCoords): number {
     return header.nCols * coords.y + coords.x
   }
-
 
   decoupleGridIndex(header: RasterHeader, index: number): DecoupledCoords {
     return {
@@ -53,11 +48,6 @@ export class DataRetreiverService {
     }
     return coords;
   }
-
-  // geoPosToCellLL(pos: LatLng): LatLng {
-  //   if(pos.)
-  // }
-
 
   geoPosToGridIndex(header: RasterHeader, pos: LatLng): number | null {
     let index = null;
@@ -147,6 +137,7 @@ export class DataRetreiverService {
     };
     return geojson;
   }
+  
 
   getBoundsWidthHeight(bounds: LatLngBounds) {
     let ll = bounds.getSouthWest();
@@ -172,48 +163,6 @@ export class DataRetreiverService {
     let m = d * 1000;
     return m;
   }
-
-  getGeoJSONBBox(geojson: any) {
-    //get outer ring(s) and perform basic coordinate depth validation
-    //if multiple polygons/features, get bounding box of all shapes and subshapes
-    //evaluate if in outer bounding box, if is evaluate if in any inner bounding boxes, parse indices in inner bounding boxes that intersected
-
-  }
-
-  getBBoxFromCoordinates(coords: number[][]) {
-
-  }
-
-  // geoBBoxToGridBBox(bbox: BBox): GridBBox {
-  //   let keys = Object.keys(bbox);
-  //   let i: number;
-  //   for(i = 0; i < keys.length; i++) {
-
-  //   }
-  // }
-
-  getInternalCellsFromGeoJSON() {
-
-  }
-
-  getInternalValuesFromGeoJSON() {
-
-  }
-
-  getInternalCellAreaFromGeoJSON() {
-
-  }
-
-  getAverageRainfallFromGeoJSON() {
-
-  }
-
-  //do we want this?
-  getVolumetricRainfallFromGeoJSON() {
-
-  }
-
-
 }
 
 export interface BBox {

@@ -11,6 +11,7 @@ export class SiteDataTableComponent implements OnInit {
   data: FormatData[]
   @Input() set selected(selected: MapLocation) {
     if(selected) {
+      this.title = selected.format.title;
       this.data = selected.format.formatData;
     }
   };

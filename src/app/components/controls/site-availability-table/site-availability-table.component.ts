@@ -1,6 +1,6 @@
 import { Component, AfterViewInit, ViewChildren, QueryList, ChangeDetectorRef, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
-import { Station } from 'src/app/models/Stations';
+import { MapLocation, Station } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-site-availability-table',
@@ -30,14 +30,16 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     }
     //delay to give element refs time to update, then trigger station select in table if it exists
     setTimeout(() => {
-      this.selected = this.selectedStation;
+      this.selected = this.location;
     }, 0);
   }
 
-  selectedStation = null;
-  @Input() set selected(station: Station) {
-    this.selectedStation = station;
-    if(station) {
+  location: MapLocation = null;
+  @Input() set selected(location: MapLocation) {
+    this.location = location;
+    if(location && location.type == "station") {
+      //the location is a station
+      let station = <Station>location;
       let index = this.siteMap.get(station);
       //only select if station exists in table
       if(index !== undefined) {

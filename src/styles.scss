@@ -8,9 +8,9 @@
     @include angular-material-theme($dark-theme);
 }
 
-// .export-dialog {
-    
-// }
+.mat-tooltip {
+    font-size: 16px !important;
+}
 
 .export-dialog .mat-dialog-container {
     padding: 0;

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
+import { formatNumber } from '@angular/common';
 import * as L from "leaflet";
 import "leaflet-spin";
 import { ColorScale } from "../../models/colorScale";
@@ -318,7 +319,9 @@ export class MapComponent implements OnInit {
     });
 
 
+    console.log("CREATING LOCATION HOOK");
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
+      console.log("got location");
       this.selectLocation(location);
     });
 
@@ -333,11 +336,11 @@ export class MapComponent implements OnInit {
   }
 
   selectLocation(location: MapLocation) {
+    console.log("SELECT!");
     if(this.selectedMapCell != null) {
       this.map.removeLayer(this.selectedMapCell);
       this.selectedMapCell = null;
     }
-    if(this.selectStation)
 
     if(location.type == "station") {
       let station = <Station>location;
@@ -347,6 +350,7 @@ export class MapComponent implements OnInit {
       let virtualStation = <V_Station>location;
       let geojson: any = this.dataRetreiver.getGeoJSONCellFromBounds(virtualStation.cellData.cellExtent);
       if(geojson) {
+
         this.selectedMapCell = L.geoJSON(geojson)
         .setStyle({
           fillColor: "black",
@@ -355,10 +359,11 @@ export class MapComponent implements OnInit {
           color: "black",
           fillOpacity: 0.2
         })
-        .bindPopup("")
+        .bindPopup(this.getPopupText(virtualStation))
         .addTo(this.map);
 
-        this.selectedMapCell.isPopupOpen
+        console.log("popup");
+        this.selectedMapCell.openPopup();
       }
 
     }
@@ -482,25 +487,11 @@ export class MapComponent implements OnInit {
     console.log(coords);
     let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
     let bounds = this.dataRetreiver.getCellBoundsFromGeoPos(header, data, position);
-    
+    console.log(geojson);
     //check if data exists at clicked point
-    if(geojson != undefined) {
-      if(this.selectedMapCell != null) {
-        this.map.removeLayer(this.selectedMapCell);
-        this.selectedMapCell = null;
-      }
+    if(geojson !== undefined) {
 
       let dimensions = this.dataRetreiver.getBoundsWidthHeight(bounds);
-
-      this.selectedMapCell = L.geoJSON(geojson)
-      .setStyle({
-        fillColor: "black",
-        weight: 3,
-        opacity: 1,
-        color: "black",
-        fillOpacity: 0.2
-      })
-      .addTo(this.map);
       
       let virtualStation: V_Station = new V_Station(value, this.dataset.units, this.dataset.unitsShort, {
         row: coords.y,
@@ -511,6 +502,8 @@ export class MapComponent implements OnInit {
         cellHeightLat: header.cellYSize,
         cellExtent: bounds
       }, position);
+
+      console.log(virtualStation);
 
       this.paramService.pushSelectedLocation(virtualStation);
     }
@@ -530,12 +523,12 @@ export class MapComponent implements OnInit {
       pivotZoom: 10,
       weightToRadiusFactor: 0.4,
       pivotRadius: 7,
-      markerMap: new Map<SiteInfo, L.CircleMarker>()
+      markerMap: new Map<Station, L.CircleMarker>()
     }
   }
 
-  //why is this called three times at init?
-  constructMarkerLayerPopulateMarkerData(stations: SiteInfo[]): void {
+
+  constructMarkerLayerPopulateMarkerData(stations: Station[]): void {
     if(this.markerInfo.layer) {
       this.map.removeLayer(this.markerInfo.layer);
       this.layerController.removeLayer(this.markerInfo.layer);
@@ -557,13 +550,10 @@ export class MapComponent implements OnInit {
           fillColor: hexFill
         });
 
-        let stationDetails = this.getMarkerPopupText(station);
+        let stationDetails = this.getPopupText(station);
         marker.bindPopup(stationDetails, { autoPan: false, autoClose: false});
         marker.on("click", () => {
-          this.paramService.pushSelectedStation(station);
-
-          // let stationData = new Station((value: number, this.dataset.units, unitShort: string, station.))
-          // this.paramService.pushMapLocation();
+          this.paramService.pushSelectedLocation(station);
         });
         this.markerInfo.markerMap.set(station, marker);
         markerLayer.addLayer(marker);
@@ -586,39 +576,27 @@ export class MapComponent implements OnInit {
     }
   }
 
-  getPopupText(location: MapLocation): string {
-    let [ name, id, lat, lng ] = location.format.formattedFields;
-    let text = ```
-    <br> Lat: " + labels.lat + ", Lon: " + labels.lng
-    + <br> Value: ${valuesLabel}```;
+  getPopupText(location: MapLocation) {
+    let format = location.format;
+    let labels = this.getValueLabels(location.value);
+    let valuesLabel = labels.join(", ");
+    let posLabel = `Lat: ${format.getFieldFormat("lat").formattedValue}, Lon: ${format.getFieldFormat("lng").formattedValue}`;
+    let popupText = `${posLabel} <br> Value: ${valuesLabel}`;
+    if(location.type == "station") {
+      let station = <Station>location;
+      let stationInfoText = `Name: ${station.metadata.getValue("name")} <br> Station ID: ${station.id} <br> `
+      popupText = stationInfoText + popupText;
+    }
+    return popupText;
   }
 
-  getStationPopupText(station: Station): string {
-    let labels = this.getCoordAndValueLabels(station);
-    let valuesLabel = labels.valueLabels.join(", ");
-    let stationDetails: string = "Name: " + station.name
-    + "<br> Station ID: " + station[station.id_field]
-    + "<br> Lat: " + labels.lat + ", Lon: " + labels.lng
-    + `<br> Value: ${valuesLabel}`;
-    return stationDetails;
+  pos2Label(pos: L.LatLng) {
+    let text = `Lat: ${formatNumber(pos.lat, navigator.language, "1.4-4")}, Lon: ${formatNumber(pos.lng, navigator.language, "1.4-4")}`;
+    return text;
   }
 
-  getVStationPopupText(vStation: V_Station): string {
-
-  }
-
-  getCoordAndValueLabels(station) {
-    let lat = Math.round(station.lat * 100) / 100;
-    let lng = Math.round(station.lng * 100) / 100;
-    let valueLabels = this.getValueLabels(station.value);
-    return {
-      lat,
-      lng,
-      valueLabels
-    };
-  }
-
-  getValueLabels(value): string[] {
+  //move this to station format data
+  getValueLabels(value: number): string[] {
      //TEMP translations
      let translations = {
       mm: {

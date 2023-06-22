@@ -3,7 +3,7 @@ import { SiteInfo } from 'src/app/models/SiteMetadata';
 import Moment  from 'moment';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { Observable } from 'rxjs';
-import { MapLocation } from 'src/app/models/Stations';
+import { MapLocation, Station } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-rainfall-graph',
@@ -63,9 +63,9 @@ export class RainfallGraphComponent implements OnInit {
     this.yaxis.title.text = axisLabel;
   }
 
-  __station: MapLocation = null;
-  @Input() set station(station: SiteInfo) {
-    if(station && this.__station && this.__station[this.__station.] !== station[this.__station.id_field]) {
+  __station: Station = null;
+  @Input() set station(station: Station) {
+    if(station && this.__station && this.__station.id !== station.id) {
       //reset data
       this.data = {};
     }
@@ -121,7 +121,7 @@ export class RainfallGraphComponent implements OnInit {
       //deconstruct data
       const { period, stationId, values } = data;
       //ignore if station id is wrong
-      if(stationId == this.__station[this.__station.id_field]) {
+      if(stationId == this.__station.id) {
         let periodData = this.data[period];
         if(periodData === undefined) {
           periodData = {
@@ -142,7 +142,7 @@ export class RainfallGraphComponent implements OnInit {
               layout: {
                 width: this.w,
                 height: this.h,
-                title: `${this.__station.name} ${this.periodLableMap[period]} Data`,
+                title: `${this.__station.format.getFieldFormat("title").formattedValue} ${this.periodLableMap[period]} Data`,
                 xaxis: {
                   title: {
                     text: "Date",
