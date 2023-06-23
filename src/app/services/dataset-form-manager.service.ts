@@ -655,7 +655,7 @@ export class DatasetFormManagerService {
 
     let historicalRainfallGrouperDisplayData = new DisplayData("Datasets using empirical rainfall data.", "Historical Rainfall", "historical_rainfall");
     let historicalTemperatureGrouperDisplayData = new DisplayData("Datasets using empirical temperature data", "Historical Temperature", "historical_temperature");
-    let dsGrouperDisplayData = new DisplayData("Future climate projections using downscaling prediction methods.", "Downscaled Climate Projections", "downscaled");
+    let dsGrouperDisplayData = new DisplayData("Future climate projections using downscaling prediction methods.", "Future Climate Projections", "downscaled");
     let datasetFormDisplayData = new DisplayData("Select the type of data you would like to view. Hover over an option for a description of the dataset.", "Dataset", "dataset");
     //vis dataset groups
     let visDatasets = [rainfallVisDataset, legacyRainfallVisDataset, maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset, dsRainfallVisDataset, dsTemperatureVisDataset, ndviVisDataset];
