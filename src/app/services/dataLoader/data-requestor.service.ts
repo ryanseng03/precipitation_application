@@ -34,7 +34,7 @@ export class DataRequestorService {
     return response;
   }
 
-  getRaster(properties: any, delay?: number): RequestResults {
+  getRaster(properties: StringMap, delay?: number): RequestResults {
     let start = new Date().getTime();
     let response = this.dbcon.getRaster(properties, delay);
     response.transform((data: ArrayBuffer) => {
@@ -74,12 +74,16 @@ export class DataRequestorService {
     return response;
   }
 
-  getStationTimeSeries(start: string, end: string, properties: StringMap, delay?: number): RequestResults {
+  getStationTimeseries(start: string, end: string, properties: StringMap, delay?: number): RequestResults {
     let query = this.propertiesToQuery("hcdp_station_value", properties);
     query = `{'$and':[${query},{'value.date':{'$gte':'${start}'}},{'value.date':{'$lt':'${end}'}}]}`;
     //let timingMessage = `Retreived station ${properties.station_id} timeseries for ${start}-${end}`;
     let response = this.basicQueryDispatch(query, delay);
     return response;
+  }
+
+  getVStationTimeseries(start: string, end: string, properties: StringMap, delay?: number): RequestResults {
+    //row and column are the best thing to query on, use that
   }
 
   private basicQueryDispatch(query: string, delay?: number, timingMessage?: string): RequestResults {

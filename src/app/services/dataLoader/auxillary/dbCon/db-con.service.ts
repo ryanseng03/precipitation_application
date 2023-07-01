@@ -5,6 +5,12 @@ import { retry, catchError, take } from 'rxjs/operators';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
 import { StringMap } from 'src/app/models/types';
 
+//RENAME THIS TO API COM SERVICE OR SOMETHING LIKE THAT
+//SWITCH TO USE HCDP API ENDPOINTS, COMBINE ALL QUERY TYPES
+//DEPRECATE OLD API TOKEN
+
+//might want to make export manager stuff go through same thing, no real reason not to
+//for now swap export manager over to use hcdp api endpoint, but handle integration later (after better evaluation)
 
 export interface Config {
   oAuthAccessToken: string,
@@ -40,7 +46,7 @@ export class DbConService {
     return response;
   }
 
-  getRaster(params: StringMap, nodata?: number, delay?: number): GeotiffRequestResults {
+  getRaster(params: StringMap, delay?: number): GeotiffRequestResults {
     let response = new GeotiffRequestResults(this.http);
 
     this.initPromise.then((config: Config) => {
@@ -60,6 +66,8 @@ export class DbConService {
 }
 
 
+//add result T to value
+//maybe should do these modifications in a new branch then merge in for improved testing
 export abstract class RequestResults {
   protected sub: Subscription;
   protected timeout: NodeJS.Timeout;
@@ -198,6 +206,8 @@ export class GeotiffRequestResults extends RequestResults {
       let urlSuffix = `${GeotiffRequestResults.ENDPOINT}?${urlParams.join("&")}`;
       let url = `${urlSuffix}`;
       let head = new HttpHeaders()
+      //CHECK IF THESE ARE NECESSARY, IF ONLY NEED AUTH THEN JUST SWAP TO USE THAT AND STREAMLINE
+      //HAVE RESPONSE TYPE AS A SEPARATE PARAM
       .set("Cache-Control", "public, max-age=31536000")
       .set("Authorization", "Bearer " + params.config.oAuthAccessToken);
 

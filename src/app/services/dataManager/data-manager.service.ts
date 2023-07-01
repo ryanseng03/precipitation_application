@@ -8,7 +8,7 @@ import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { LatLng } from 'leaflet';
 import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
-import { MapLocation, Station, StationMetadata } from 'src/app/models/Stations';
+import { MapLocation, Station, StationMetadata, V_Station } from 'src/app/models/Stations';
 import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 
@@ -182,7 +182,30 @@ export class DataManagerService {
     let timeseriesQueries = [];
     //track selected station and emit series data based on
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
+      if(location) {
+        paramService.pushLoading({
+          tag: "timeseries",
+          loading: true
+        });
+        let timeseriesPromises: Promise<void>[] = []
+        switch(location.type) {
+          case "station": {
+            this.selectStation(<Station>location);
+            break;
+          }
+          case "virtual_station": {
+            this.selectVStation(<V_Station>location);
+            break;
+          }
+        }
 
+        Promise.allSettled(timeseriesPromises).then(() => {
+          paramService.pushLoading({
+            tag: "timeseries",
+            loading: false
+          });
+        });
+      }
       //VIRTUAL STATIONS
       //...
 
