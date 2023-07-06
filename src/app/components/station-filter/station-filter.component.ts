@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { FormatData, Station, StationMetadata } from 'src/app/models/Stations';
 
 @Component({
@@ -16,44 +17,43 @@ export class StationFilterComponent implements OnInit {
   }
   @Input() set metadata(metadata: StationMetadata[]) {
     let fieldData = {};
-    let valueData = {};
+    let valueData: {[field: string]: {display: string, value: string}[]} = {};
     //add in numeric filters by range, for now just handle string filters
     for(let item of metadata) {
-      for(let field of item.fields) {
-        let value = item.getValue(field);
-        if(typeof value == "string") {
-          fieldData[field] = value;
-          let fieldValueData = valueData[field];
+      let formatData = item.format.formatData;
+      console.log(formatData);
+      for(let formatItem of formatData) {
+        if(typeof formatItem.value == "string") {
+          fieldData[formatItem.field] = formatItem;
+          let fieldValueData = valueData[formatItem.field];
           if(fieldValueData === undefined) {
             fieldValueData = [];
-            valueData[field] = fieldValueData;
+            valueData[formatItem.field] = fieldValueData;
           }
-          fieldValueData.push(value);
+          fieldValueData.push({
+            display: formatItem.formattedValue,
+            value: formatItem.value
+          });
         }
       }
     }
-    fieldData = Object.values(fieldData);
+    this.fields = Object.values(fieldData);
+    this.values = valueData;
   }
   @Output() filtered: EventEmitter<Station[]> = new EventEmitter<Station[]>();
   
   filterData: FilterData[];
   fields: FormatData[];
-  values: {[field: string]: FormatData};
+  values: {[field: string]: {display: string, value: string}[]};
 
   constructor() {
     this.filterData = [];
     this.fields = [];
     this.values = {};
-    this.addFilterControls();
+    this.addFilter();
   }
 
   ngOnInit() {
-  }
-
-
-  clearFilters() {
-    this.filterData = [];
-    this.filterStations(this._stations, []);
   }
 
   private filterStations(stations: Station[], filters: StationFilter[]) {
@@ -70,38 +70,72 @@ export class StationFilterComponent implements OnInit {
     this.filtered.next(this._filteredStations);
   }
 
-  //add removal stuff too
-  addFilterControls() {
-    let controlData = {
-      fieldControl: new FormControl(null),
-      valueControl: new FormControl([]),
-      filter: null
-    };
-    this.filterData.push(controlData);
-    controlData.fieldControl.valueChanges.subscribe((data: FormatData) => {
-      controlData.valueControl.setValue([]);
-      if(controlData.filter !== null) {
-        controlData.filter.field = data;
+  private filterAll() {
+    let filters = this.filterData.reduce((acc: StationFilter[], data: FilterData) => {
+      if(data.filter !== null) {
+        acc.push(data.filter);
       }
-    });
-    controlData.valueControl.valueChanges.subscribe((data: FormatData[]) => {
-      if(controlData.filter === null && data.length > 0) {
-        controlData.filter = this.createFilter(controlData.fieldControl.value, data);
-        //new filter, can just run filtered stations through it
-      }
-      else if(controlData.filter !== null) {
-        controlData.filter.values = data;
-      }
-    });
+      return acc;
+    }, []);
+    this.filterStations(this._stations, filters);
   }
 
-  private createFilter(field: FormatData, values: FormatData[]): StationFilter {
-    let fieldStr = field.field;
-    let valuesStr = values.map((value: FormatData) => {
-      return value.value;
+  addFilter() {
+    let filterData: FilterData = {
+      fieldControl: new FormControl(null),
+      valueControl: new FormControl([]),
+      fieldSub: null,
+      valueSub: null,
+      filter: null
+    };
+    
+    filterData.fieldSub = filterData.fieldControl.valueChanges.subscribe((field: string) => {
+      filterData.valueControl.setValue([]);
+      if(filterData.filter !== null) {
+        filterData.filter.field = field;
+      }
     });
-    let filter = new StationFilter(fieldStr, valuesStr);
-    return filter;
+    filterData.valueSub = filterData.valueControl.valueChanges.subscribe((values: string[]) => {
+      if(filterData.filter === null && values.length > 0) {
+        filterData.filter = new StationFilter(filterData.fieldControl.value, values);
+        this.filterStations(this._filteredStations, [filterData.filter]);
+      }
+      else if(values.length == 0) {
+        filterData.filter = null;
+        this.filterAll();
+      }
+      else {
+        filterData.filter.values = values;
+        this.filterAll();
+      }
+    });
+    this.filterData.push(filterData);
+  }
+
+  removeFilter(index: number) {
+    //cleanup subs
+    this.filterData[index].fieldSub.unsubscribe();
+    this.filterData[index].valueSub.unsubscribe();
+    //delete filter data
+    this.filterData.splice(index, 1);
+    //add init filter if none remaining
+    if(this.filterData.length < 1) {
+      this.addFilter();
+    }
+    this.filterAll();
+  }
+
+  clearFilters() {
+    //cleanup subs
+    for(let filter of this.filterData) {
+      filter.fieldSub.unsubscribe();
+      filter.valueSub.unsubscribe();
+    }
+    //reset filter data
+    this.filterData = [];
+    //add an intial filter form
+    this.addFilter();
+    this.filterAll();
   }
 
   private getFilters(): StationFilter[] {
@@ -115,9 +149,17 @@ export class StationFilterComponent implements OnInit {
   }
 }
 
+//replace
+interface SelectData {
+  display: string,
+  value: string
+}
+
 interface FilterData {
   fieldControl: FormControl,
   valueControl: FormControl,
+  fieldSub: Subscription,
+  valueSub: Subscription,
   filter: StationFilter
 }
 

@@ -1,8 +1,8 @@
-.multi-select-shift {
-    transform: translateY(calc(0.09375em + 1px));
-}
 .filter-component {
-    display: inline-block;
+    display: inline-block;  
+    padding-right: 10px;
+}
+
+.filter-box {
     padding: 20px;
-    padding-top: 0;
 }

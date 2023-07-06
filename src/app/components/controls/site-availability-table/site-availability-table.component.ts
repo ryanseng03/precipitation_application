@@ -18,7 +18,7 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     for(let station of stations) {
       let formatValues = [
         station.format.getFieldFormat("name").formattedValue,
-        station.format.getFieldFormat(station.metadata.idField).formattedValue,
+        station.format.getFieldFormat(station.metadata.idField).value,
         station.format.getFieldFormat("island").formattedValue
       ];
       this.tableData.rows.push({

@@ -319,10 +319,12 @@ export class MapComponent implements OnInit {
     });
 
 
-    console.log("CREATING LOCATION HOOK");
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
       console.log("got location");
-      this.selectLocation(location);
+      if(location) {
+        this.selectLocation(location);
+      }
+      
     });
 
     this.map.on("layeradd", (addData: any) => {
@@ -585,14 +587,12 @@ export class MapComponent implements OnInit {
     if(location.type == "station") {
       let station = <Station>location;
       let stationInfoText = `Name: ${station.metadata.getValue("name")} <br> Station ID: ${station.id} <br> `
-      popupText = stationInfoText + popupText;
+      popupText = `<h4>Station</h4>${stationInfoText}${popupText}`;
+    }
+    else {
+      popupText = `<h4>Virtual Station</h4>${popupText}`;
     }
     return popupText;
-  }
-
-  pos2Label(pos: L.LatLng) {
-    let text = `Lat: ${formatNumber(pos.lat, navigator.language, "1.4-4")}, Lon: ${formatNumber(pos.lng, navigator.language, "1.4-4")}`;
-    return text;
   }
 
   //move this to station format data

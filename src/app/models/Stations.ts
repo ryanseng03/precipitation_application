@@ -196,17 +196,13 @@ export class StationMetadata {
         let title = "Station Metadata";
         let data: FormatData[] = [];
 
-        let idField = this._idField;
-        for(let field in this.fields) {
+        for(let field of this.fields) {
             let formatData = StationMetadata.FORMAT[field];
             if(formatData) {
                 let value = this._data[field];
                 let formattedValue = <string>value;
                 if(formatData.translate) {
                     formattedValue = formatData.translate(value);
-                }
-                if(field == idField) {
-                    formattedValue += " (Station ID)";
                 }
                 data.push({
                     field,

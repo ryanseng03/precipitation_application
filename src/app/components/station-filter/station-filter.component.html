@@ -1,28 +1,53 @@
-<h4>
-    Filter Stations
-</h4>
-<div *ngFor class="filter-component">
-    <mat-form-field>
-        <mat-label>
-            Field
-        </mat-label>
-        <mat-select disableOptionCentering
-            [formControl]="fieldControl">
-            <mat-option *ngFor="let field of fieldData" [value]="field.value">{{field.label}}</mat-option>
-        </mat-select>
-    </mat-form-field>
+<div class="filter-box">
+    <h4>
+        Filter Stations
+    </h4>
+    <div *ngFor="let filterItem of filterData; index as i">
+        <div class="filter-component">
+            <mat-form-field>
+                <mat-label>
+                    Field
+                </mat-label>
+                <mat-select disableOptionCentering
+                    [formControl]="filterItem.fieldControl">
+                    <mat-option *ngFor="let field of fields" [value]="field.field">{{field.formattedField}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+        
+        <div class="filter-component" *ngIf="filterItem.fieldControl.value">
+            <div class="filter-component multi-select-shift">
+                <mat-select-autocomplete
+                    [placeholder]="'Values'"
+                    [options]="values[filterItem.fieldControl.value]"
+                    [multiple]="true"
+                    ngDefaultControl
+                    [formControl]="filterItem.valueControl">
+                </mat-select-autocomplete>
+            </div>
+            <div class="filter-component">
+                <button 
+                    mat-mini-fab
+                    matTooltip="Remove filter"
+                    color="warn"
+                    (click)="removeFilter(i)">
+                    <mat-icon>clear</mat-icon>
+                </button>
+            </div>  
+        </div>
+    </div>
+    <div class="filter-component">
+        <button
+            mat-mini-fab
+            matTooltip="Add filter"
+            color="primary"
+            (click)="addFilter()"
+            [disabled]="filterData[filterData.length - 1].fieldControl.value === null">
+            <mat-icon>add</mat-icon>
+    </button>
+    </div>
+    <div class="filter-component">
+        <button mat-raised-button color="warn" (click)="clearFilters()">Clear All Filters</button>
+    </div>
 </div>
 
-<div class="filter-component multi-select-shift">
-    <mat-select-autocomplete
-        [placeholder]="'Values'"
-        [options]="values"
-        [multiple]="true"
-        ngDefaultControl
-        [formControl]="filterControl"
-        [disabled]="!fieldControl.value">
-    </mat-select-autocomplete>
-</div>
-<div class="filter-component">
-    <button mat-raised-button color="warn" (click)="clearFilter()" [disabled]="!filterControl.value || filterControl.value.length < 1">Clear Filter</button>
-</div>

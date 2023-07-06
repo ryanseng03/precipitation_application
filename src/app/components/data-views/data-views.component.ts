@@ -23,7 +23,10 @@ export class DataViewsComponent implements OnInit {
       this.metadata = metadata;
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
-      this.stations = stations
+      console.log(stations);
+      
+      this.stations = stations;
+      this.loading = false;
     });
 
 
@@ -31,7 +34,7 @@ export class DataViewsComponent implements OnInit {
 
 
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: Station[]) => {
-      this.loading = false;
+      
       this.filteredStations = stations;
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
