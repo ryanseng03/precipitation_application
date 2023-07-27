@@ -241,7 +241,12 @@ export class RainfallGraphComponent implements OnInit {
           let index = (<Moment.Moment>date).diff(startDate, period, false);
           periodData.graph.data[0].y[index] = value;
         }
+
+        //trigger graph data to update by copying data object
+        periodData.graph.data = JSON.parse(JSON.stringify(periodData.graph.data));
       }
+
+
     });
   }
 
