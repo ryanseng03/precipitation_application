@@ -25,7 +25,6 @@ import { MatSliderModule } from '@angular/material/slider';
 import { RfSiteDetailsComponent } from './components/rf-site-details/rf-site-details.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {MatSelectModule} from "@angular/material/select";
-import { DisplayValuePipe } from './pipes/display-value.pipe';
 import { SiteDataTableComponent } from './components/controls/site-data-table/site-data-table.component';
 import { SiteAvailabilityTableComponent } from './components/controls/site-availability-table/site-availability-table.component';
 import { DataSetFormComponent } from './components/data-set-form/data-set-form.component'
@@ -38,7 +37,6 @@ import { AngularResizedEventModule } from 'angular-resize-event';
 import { DataViewsComponent } from './components/data-views/data-views.component';
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import { SelectAutocompleteModule } from 'mat-select-autocomplete';
-import { FilterPipe } from './pipes/filter.pipe';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatToolbarModule} from '@angular/material/toolbar';
 
@@ -85,13 +83,11 @@ PlotlyModule.plotlyjs = PlotlyJS;
     VisComponent,
     DateSelectorComponent,
     RfSiteDetailsComponent,
-    DisplayValuePipe,
     SiteDataTableComponent,
     SiteAvailabilityTableComponent,
     DataSetFormComponent,
     DateFocusComponent,
     DataViewsComponent,
-    FilterPipe,
     NavbarComponent,
     RainfallGraphComponent,
     LeafletColorScaleComponent,

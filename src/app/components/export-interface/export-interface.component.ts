@@ -188,6 +188,7 @@ export class ExportInterfaceComponent implements OnInit, OnChanges {
         this.exportActivityMonitor.active = false;
       })
       .catch((e) => {
+        console.error(e);
         this.errorService.notify("error", "An error occured while requesting the download package.");
         this.exportActivityMonitor.active = false;
       });
