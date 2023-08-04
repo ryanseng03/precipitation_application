@@ -31,7 +31,7 @@ export class RainfallGraphComponent implements OnInit {
     buttonData: {
       month: "Zoom to month",
       year: "Zoom to year",
-      all: "All station data"
+      all: "All data"
     },
     ranges: {
       month: null,
@@ -40,7 +40,7 @@ export class RainfallGraphComponent implements OnInit {
     }
   };
 
-  periodLableMap = {
+  periodLabelMap = {
     day: "Daily",
     month: "Monthly"
   }
@@ -124,6 +124,7 @@ export class RainfallGraphComponent implements OnInit {
       if(stationId == this.__station.id) {
         let periodData = this.data[period];
         if(periodData === undefined) {
+          let title = `${this.__station.format.getFieldFormat("name")?.formattedValue || "Virtual Station"} ${this.periodLabelMap[period]} Data`;
           periodData = {
             dates: [],
             graph: {
@@ -142,7 +143,7 @@ export class RainfallGraphComponent implements OnInit {
               layout: {
                 width: this.w,
                 height: this.h,
-                title: `${this.__station.format.getFieldFormat("title").formattedValue} ${this.periodLableMap[period]} Data`,
+                title,
                 xaxis: {
                   title: {
                     text: "Date",
@@ -242,7 +243,12 @@ export class RainfallGraphComponent implements OnInit {
           let index = (<Moment.Moment>date).diff(startDate, period, false);
           periodData.graph.data[0].y[index] = value;
         }
+
+        //trigger graph data to update by copying data object
+        periodData.graph.data = JSON.parse(JSON.stringify(periodData.graph.data));
       }
+
+
     });
   }
 

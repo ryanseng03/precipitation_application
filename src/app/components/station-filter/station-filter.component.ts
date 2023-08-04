@@ -21,7 +21,6 @@ export class StationFilterComponent implements OnInit {
     //add in numeric filters by range, for now just handle string filters
     for(let item of metadata) {
       let formatData = item.format.formatData;
-      console.log(formatData);
       for(let formatItem of formatData) {
         if(typeof formatItem.value == "string") {
           fieldData[formatItem.field] = formatItem;

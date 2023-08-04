@@ -82,9 +82,9 @@ export class DataRequestorService {
     return response;
   }
 
-  getVStationTimeseries(start: string, end: string, properties: StringMap, delay?: number): RequestResults {
-    //row and column are the best thing to query on, use that
-  }
+  // getVStationTimeseries(start: string, end: string, properties: StringMap, delay?: number): RequestResults {
+  //   //row and column are the best thing to query on, use that
+  // }
 
   private basicQueryDispatch(query: string, delay?: number, timingMessage?: string): RequestResults {
     let start = new Date().getTime();

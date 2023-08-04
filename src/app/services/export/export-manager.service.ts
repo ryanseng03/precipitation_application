@@ -1,14 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpEvent, HttpResponse, HttpErrorResponse, HttpEventType } from '@angular/common/http';
-import { Config, DbConService } from '../dataLoader/auxillary/dbCon/db-con.service';
-import { retry, catchError, take } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpEvent, HttpErrorResponse, HttpEventType } from '@angular/common/http';
+import { RequestFactoryService } from '../requests/request-factory.service';
+import { retry, catchError } from 'rxjs/operators';
 import { Observable, Subject, throwError } from "rxjs";
-import * as Moment from 'moment';
-import { ValueData } from 'src/app/models/types';
-import { DateManagerService } from '../dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
-import { AssetManagerService } from '../util/asset-manager.service';
 import { UnitOfTime } from '../dataset-form-manager.service';
+import { Moment } from 'moment';
 
 @Injectable({
   providedIn: 'root'
@@ -26,103 +23,41 @@ export class ExportManagerService {
   };
 
   static readonly EXPORT_PACKAGE_NAME = "HCDP_data.zip"
-  //config?
-  static readonly EXPORT_BASE_URL = "https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/";
 
   //lets just set a maximum number of files instead of a size for simplicity
   static readonly MAX_INSTANT_PACKAGE_FILES = 150;
   // static readonly AVERAGE_FILE_SIZE = 1;
   static readonly F_PART_SIZE_UL_MB = 4;
 
-  ///////////////////////
-  static readonly ENDPOINT_INSTANT = "https://cistore.its.hawaii.edu/genzip/instant/splitlink";
-  static readonly ENDPOINT_EMAIL = "https://cistore.its.hawaii.edu/genzip/email/";
-  ///////////////////////
 
-  private initPromise: Promise<Config>;
-  constructor(private http: HttpClient, private dbcon: DbConService, private dateService: DateManagerService, assetService: AssetManagerService) {
-    let url = assetService.getAssetURL(DbConService.CONFIG_FILE);
-    this.initPromise = <Promise<Config>>(this.http.get(url, { responseType: "json" }).toPromise());
+  constructor(private http: HttpClient, private reqFactory: RequestFactoryService) {
+
   }
 
   async submitEmailPackageReq(reqs: ResourceReq[], email: string): Promise<void> {
-    let config: Config = await this.initPromise;
     let reqBody = {
       data: reqs,
       email: email
     };
-    let head = new HttpHeaders()
-    .set("Authorization", "Bearer " + config.oAuthAccessToken);
-    const responseType: "text" = "text";
-    let reqOpts = {
-      headers: head,
-      responseType: responseType,
-    };
-    let endpoint = ExportManagerService.ENDPOINT_EMAIL;
-    let start = new Date().getTime();
-    return new Promise<void>((resolve, reject) => {
-      this.http.post(endpoint, reqBody, reqOpts)
-      .pipe(
-        retry(3),
-        take(1),
-        catchError((e: HttpErrorResponse) => {
-          return throwError(e);
-        })
-      )
-      .subscribe((response: string) => {
-        let time = new Date().getTime() - start;
-        let timeSec = time / 1000;
-        console.log(`Got request confirmation, time elapsed ${timeSec} seconds`);
-        resolve();
-      }, (error: any) => {
-        console.error(error);
-        reject(error);
-      });
-    });
+    let req = await this.reqFactory.submitEmailPackageReq(reqBody);
+    return req.toPromise();
   }
 
   async submitInstantDownloadReq(reqs: ResourceReq[], email: string): Promise<Observable<number>> {
-    let config: Config = await this.initPromise;
     let reqBody = {
       data: reqs,
       email: email
     };
-    let head = new HttpHeaders()
-    .set("Authorization", "Bearer " + config.oAuthAccessToken);
-    const responseType: "json" = "json";
-    let reqOpts = {
-      headers: head,
-      responseType: responseType,
-    };
-    let endpoint = ExportManagerService.ENDPOINT_INSTANT;
-
-    return new Promise<Observable<number>>((resolve, reject) => {
-      let start = new Date().getTime()
-      this.http.post(endpoint, reqBody, reqOpts)
-        .pipe(
-          retry(3),
-          take(1),
-          catchError((e: HttpErrorResponse) => {
-            return throwError(e);
-          })
-        )
-        .subscribe(async (response: any) => {
-          let time = new Date().getTime() - start;
-          let timeSec = time / 1000;
-          console.log(`Got generated file names, time elapsed ${timeSec} seconds`);
-          let files: string[] = response.files;
-          let downloadData: DownloadData = this.getFiles(files);
-          //resolve with data monitor
-          resolve(downloadData.progress);
-          //when data download finished download to browser
-          downloadData.data.then((data: Blob) => {
-            this.downloadBlob(data, ExportManagerService.EXPORT_PACKAGE_NAME);
-          })
-          .catch((e: any) => {/*error logging and all that should be handled elsewhere, progress monitor should also get error for popping up client message*/});
-        }, (error: any) => {
-          console.error(error);
-          reject(error);
-        });
+    let req = await this.reqFactory.submitInstantDownloadReq(reqBody);
+    return req.toPromise()
+    .then((files: string[]) => {
+      let downloadData: DownloadData = this.getFiles(files);
+      //when data download finished download to browser
+      downloadData.data.then((data: Blob) => {
+        this.downloadBlob(data, ExportManagerService.EXPORT_PACKAGE_NAME);
+      });
+      //resolve with data monitor
+      return downloadData.progress;
     });
   }
 
@@ -138,7 +73,7 @@ export class ExportManagerService {
     window.URL.revokeObjectURL(url);
   }
 
-
+  //keep handling this stuff here since it's more complex than the generic request handling is meant to handle and don't need config or anything
   private getFiles(files: string[]): DownloadData {
     let progress = new Subject<number>();
 
@@ -232,11 +167,18 @@ export interface FileData {
 
 export interface DateInfo {
   dates: {
-    start: Moment.Moment,
-    end: Moment.Moment
+    start: Moment,
+    end: Moment
   },
   period: UnitOfTime
 }
+
+
+interface DownloadData {
+  progress: Observable<number>,
+  data: Promise<Blob>
+}
+
 
 export interface ExportInfo {
   dateInfo?: FileDateInfo,
@@ -245,11 +187,16 @@ export interface ExportInfo {
 }
 
 interface FileDateInfo {
-  dates: [Moment.Moment, Moment.Moment],
+  dates: [Moment, Moment],
   period: string,
 }
 
-interface DownloadData {
-  progress: Observable<number>,
-  data: Promise<Blob>
+
+interface ValueLayer {
+  values: ValueInfo[]
+}
+
+interface ValueInfo {
+  value: string,
+  next: ValueLayer
 }

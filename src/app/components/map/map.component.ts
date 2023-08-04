@@ -246,7 +246,6 @@ export class MapComponent implements OnInit {
     });
 
     this.map.on("click", (e: L.LeafletMouseEvent) => {
-      console.log(e.latlng);
       this.mapClickHandler(e.latlng);
     });
 
@@ -254,7 +253,6 @@ export class MapComponent implements OnInit {
     setTimeout(() => {
       //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
       this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: Station[]) => {
-        console.log(stations);
         this.active.data.stations = stations;
         this.constructMarkerLayerPopulateMarkerData(stations);
       });
@@ -264,7 +262,7 @@ export class MapComponent implements OnInit {
 
     this.layerController.addLayers(this.baseLayers);
 
-    let datasetHook = this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       this.dataset = dataset;
     });
 
@@ -284,7 +282,6 @@ export class MapComponent implements OnInit {
           this.suspendHover();
         }
         else if(raster !== null) {
-          //this.hoverHook.install();
           this.active.data.raster = raster;
           let bands = raster.getBands();
           let header = raster.getHeader();
@@ -320,11 +317,9 @@ export class MapComponent implements OnInit {
 
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
-      console.log("got location");
       if(location) {
         this.selectLocation(location);
       }
-      
     });
 
     this.map.on("layeradd", (addData: any) => {
@@ -338,7 +333,6 @@ export class MapComponent implements OnInit {
   }
 
   selectLocation(location: MapLocation) {
-    console.log("SELECT!");
     if(this.selectedMapCell != null) {
       this.map.removeLayer(this.selectedMapCell);
       this.selectedMapCell = null;
@@ -346,44 +340,39 @@ export class MapComponent implements OnInit {
 
     if(location.type == "station") {
       let station = <Station>location;
-      this.selectedStation = station;
+      this.selectStation(station);
     }
     else if(location.type == "virtual_station") {
       let virtualStation = <V_Station>location;
-      let geojson: any = this.dataRetreiver.getGeoJSONCellFromBounds(virtualStation.cellData.cellExtent);
-      if(geojson) {
-
-        this.selectedMapCell = L.geoJSON(geojson)
-        .setStyle({
-          fillColor: "black",
-          weight: 3,
-          opacity: 1,
-          color: "black",
-          fillOpacity: 0.2
-        })
-        .bindPopup(this.getPopupText(virtualStation))
-        .addTo(this.map);
-
-        console.log("popup");
-        this.selectedMapCell.openPopup();
-      }
-
+      this.selectVStation(virtualStation);
     }
     this.map.panTo(location.location, {animate: true});
   }
 
   
+  selectVStation(virtualStation: V_Station) {
+    let geojson: any = this.dataRetreiver.getGeoJSONCellFromBounds(virtualStation.cellData.cellExtent);
+    if(geojson) {
+      this.selectedMapCell = L.geoJSON(geojson)
+      .setStyle({
+        fillColor: "black",
+        weight: 3,
+        opacity: 1,
+        color: "black",
+        fillOpacity: 0.2
+      })
+      .bindPopup(this.getPopupText(virtualStation), { autoPan: false, autoClose: false })
+      .addTo(this.map);
+      this.selectedMapCell.openPopup();
+    }
+  }
 
-
-
-  selectedStation = null;
   selectStation(station: Station) {
     if(this.selectedMapCell != null) {
       this.map.removeLayer(this.selectedMapCell);
       this.selectedMapCell = null;
     }
 
-    this.selectedStation = station;
     if(station) {
       let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
       //ignore if station doesn't exist
@@ -392,7 +381,6 @@ export class MapComponent implements OnInit {
         if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
           this.selectedMarker.closePopup();
         }
-        this.map.panTo(station.location, {animate: true});
         this.selectedMarker = marker;
         //popup sometimes still closes when moving mouse for some reason, but this helps some
         //moveend isn't always triggered when finished, so use this as a fallback
@@ -480,21 +468,14 @@ export class MapComponent implements OnInit {
 
   mapClickHandler(position: L.LatLng) {
     let header = this.active.data.raster.getHeader();
-    console.log(header);
     let data = this.active.data.raster.getBands()[this.active.band];
     let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
     let coords = this.dataRetreiver.geoPosToGridCoords(header, position);
-    let offset = this.dataRetreiver.offsetPosByLL(header, position);
-    console.log(offset);
-    console.log(coords);
     let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
     let bounds = this.dataRetreiver.getCellBoundsFromGeoPos(header, data, position);
-    console.log(geojson);
     //check if data exists at clicked point
-    if(geojson !== undefined) {
-
+    if(geojson !== null) {
       let dimensions = this.dataRetreiver.getBoundsWidthHeight(bounds);
-      
       let virtualStation: V_Station = new V_Station(value, this.dataset.units, this.dataset.unitsShort, {
         row: coords.y,
         col: coords.x,
@@ -504,8 +485,6 @@ export class MapComponent implements OnInit {
         cellHeightLat: header.cellYSize,
         cellExtent: bounds
       }, position);
-
-      console.log(virtualStation);
 
       this.paramService.pushSelectedLocation(virtualStation);
     }
@@ -570,7 +549,6 @@ export class MapComponent implements OnInit {
 
       //adjust markers
       this.updateMarkers();
-
 
       this.markerInfo.layer = markerLayer;
       this.layerController.addOverlay(markerLayer, "Data Stations");

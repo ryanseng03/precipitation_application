@@ -68,9 +68,18 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     this.siteMap = new Map<Station, number>();
     this.tableData = {
       header: ["Name", "Station ID", "Island"],
+      sortOrder: [true, true, true],
+      sorted: -1,
       rows: []
     }
+  }
 
+  getSortSymbol(i: number): string {
+    let symbol = "";
+    if(i == this.tableData.sorted) {
+      symbol = this.tableData.sortOrder[i] ? "▾" : "▴";
+    }
+    return symbol;
   }
 
   generateRowMap(rows: QueryList<ElementRef>) {
@@ -110,10 +119,28 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     }
     this.selectedRef.selected = true;
   }
+
+  sort(i: number) {
+    this.tableData.rows.sort((a: RowRef, b: RowRef) => {
+      let order = this.tableData.sortOrder[i];
+      let sort: number = 1;
+      if(a.values[i] < b.values[i]) {
+        sort = -1;
+      }
+      if(!order) {
+        sort *= -1;
+      }
+      return sort;
+    });
+    this.tableData.sortOrder[i] = !this.tableData.sortOrder[i];
+    this.tableData.sorted = i;
+  }
 }
 
 interface TableFormat {
   header: string[],
+  sortOrder: boolean[],
+  sorted: number,
   rows: RowRef[]
 }
 

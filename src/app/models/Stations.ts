@@ -295,21 +295,21 @@ export class V_Station extends MapLocation {
             },
             {
                 field: "width",
-                formattedField: "Cell Width (m/°)",
+                formattedField: "Cell Width (m, °)",
                 value: [this._cellData.cellWidthM, this._cellData.cellWidthLng],
-                formattedValue: `${formatNumber(this._cellData.cellWidthM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellWidthLng, navigator.language, "1.4-4")}`
+                formattedValue: `${formatNumber(this._cellData.cellWidthM, navigator.language, "1.2-2")}, ${formatNumber(this._cellData.cellWidthLng, navigator.language, "1.4-4")}`
             },
             {
                 field: "height",
-                formattedField: "Cell Height (m/°)",
+                formattedField: "Cell Height (m, °)",
                 value: [this._cellData.cellHeightM, this._cellData.cellHeightLat],
-                formattedValue: `${formatNumber(this._cellData.cellHeightM, navigator.language, "1.2-2")}/${formatNumber(this._cellData.cellHeightLat, navigator.language, "1.4-4")}`
+                formattedValue: `${formatNumber(this._cellData.cellHeightM, navigator.language, "1.2-2")}, ${formatNumber(this._cellData.cellHeightLat, navigator.language, "1.4-4")}`
             },
             {
                 field: "extent",
                 formattedField: "Cell Extent (min longitude °, min latitude °, max longitude °, max latitude °)",
                 value: this._cellData.cellExtent,
-                formattedValue: this._cellData.cellExtent.toBBoxString()
+                formattedValue: this._cellData.cellExtent.toBBoxString().split(",").join(", ")
             },
             {
                 field: "value",

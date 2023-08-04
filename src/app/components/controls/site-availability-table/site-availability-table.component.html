@@ -1,7 +1,7 @@
 <table>
   <thead [ngStyle]="{'padding-right': scrollbarWidth}">
       <tr>
-        <th *ngFor="let column of tableData.header">{{column}}</th>
+        <th class="selectable" *ngFor="let column of tableData.header; let i = index" (click)="sort(i, 0)">{{column}} {{getSortSymbol(i)}}</th>
       </tr>
   </thead>
   <tbody #tbody>

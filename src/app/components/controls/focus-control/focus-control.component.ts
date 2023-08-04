@@ -20,7 +20,10 @@ export class FocusControlComponent implements OnInit {
       if(dataset) {
         this.datatype = dataset.datatype;
         this.focusManager = dataset.focusManager;
-        this.paramService.pushFocusData(this.lastFocus);
+        //make sure all dataset events propogate before pushing focus
+        setTimeout(() => {
+          this.paramService.pushFocusData(this.lastFocus);
+        }, 0);
       }
     });
   }

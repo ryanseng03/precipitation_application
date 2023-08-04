@@ -1,172 +1,34 @@
-// .internal-table {
-//     table-layout: fixed;
-//     width: 100%;
-// }
-
 .header {
     background: rgb(28, 58, 97);
     color: white;
-    padding: 10px 0px;
+    padding: 10px;
     font-weight: 500;
+    text-align: left;
 }
 
 table {
     border-collapse: collapse;
+    table-layout: auto;
+    width: 100%;
 }
 
 table, th, td {
     border: 1px solid black;
 }
 
-.collapsible-wrapper {
-    overflow: hidden;
-}
-
 .wrapper {
     padding: 0;
 }
 
-.selector {
-    height: 25px;
-    width: calc(100% - 36px);
+td.field-cell {
     background: rgb(56, 117, 194);
     color: white;
-    cursor: pointer;
-    padding: 5px 18px;
-    line-height: 25px;
 }
-
-// .outer-table tr:nth-of-type(even) {
-//     background-color: gainsboro;
-// }
-
-.embeded-cell {
-    padding: 0px;
-}
-
-.selector:hover {
-    background: rgb(28, 58, 97);
-}
-
-.label-left {
-    float: left;
-}
-
-.label-right {
-    float: right;
-}
-
-// .internal-table thead {
-//     display: block;
-// }
-
-// .internal-table tbody {
-//     table-layout: fixed;
-//     display: block;
-//     height: 100px;
-//     width: 100%;
-//     overflow-y: scroll;
-// }
-
-// .internal-table thead tr {
-//     display: table;
-//     table-layout: fixed;
-//     width: 500px;
-// }
-
-// // .internal-table thead td {
-// //     display: table;
-// //     table-layout: fixed;
-// //     width: 50%;
-// // }
-
-
-.internal-table {
-    table-layout: fixed;
-    border-collapse: collapse;
-    width: 100%;
-    max-height: 500px;
-}
-
-.internal-table tbody {
-  display: block;
-  width: 100%;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  //outer height (500px) -30 header height -10 header padding
-  max-height: 460px;
-}
-
-.internal-table tr {
-    display: table;
-}
-
-// .internal-table tbody tr {
-//     width: 100%;
-// }
-
-.internal-table tr {
-    width: 100%;
-}
-
 
 thead {
   height: 30px;
 }
 
-.internal-table thead {
-    display: block;
-    // padding: 5px 0px;
-    width: 100%;
- }
-
-.internal-table thead {
-    background: rgb(56, 117, 194);
-    color: white;
-}
-
-
-
 td {
-    padding: 5px;
-    font-size: 14px;
-}
-
-.internal-table td {
-    text-align: left;
-    width: 50%;
-}
-
-.internal-table th {
-    border: none;
-    text-align: left;
-    width: 50%;
-    line-height: 25px;
-}
-
-.internal-table th:nth-child(1) {
-    padding: 0px 5px;
-}
-
-
-.field-cell {
-    background: rgb(56, 117, 194);
-    color: white;
-}
-
-.loading {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.loading-text {
-  padding: 10px;
-  font-size: 20px;
-  display: inline-block;
-}
-
-.loading-symbol {
-  padding: 10px;
-  display: inline-block;
+    padding: 5px 10px;
 }

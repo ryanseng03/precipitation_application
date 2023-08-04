@@ -27,13 +27,11 @@
           (selectedChange)="selectStation($event)">
         </app-site-availability-table>
       </div>
-      <div *ngIf="selectedStation" class="site-data-table">
+      <div *ngIf="selected" class="site-data-table">
         <app-site-data-table
           [selected]="selected">
         </app-site-data-table>
       </div>
-
-
     </div>
   </ng-template>
 

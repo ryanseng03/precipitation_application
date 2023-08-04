@@ -1,17 +1,12 @@
 import { Injectable } from '@angular/core';
 import { RasterData } from "../../models/RasterData";
-import {DataRequestorService, RequestResults} from "../dataLoader/data-requestor.service";
-import Moment from 'moment';
+import { RequestFactoryService } from "../requests/request-factory.service";
+import { RequestResults, RequestReject } from "../requests/request.service";
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
-import { RequestReject } from '../dataLoader/auxillary/dbCon/db-con.service';
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
-import { LatLng } from 'leaflet';
-import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
+import { FocusData, TimeseriesData, UnitOfTime, VisDatasetItem } from '../dataset-form-manager.service';
 import { MapLocation, Station, StationMetadata, V_Station } from 'src/app/models/Stations';
-import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
-
-
 
 
 @Injectable({
@@ -19,15 +14,114 @@ import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 })
 export class DataManagerService {
 
-  constructor(private dataRequestor: DataRequestorService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
-    let selectedDataset: VisDatasetItem;
-    let selectedLocation: MapLocation;
+  constructor(private reqFactory: RequestFactoryService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
+    this.lastLocation = null;
+    this.dataset = null;
+    this.queries = {
+      timeseries: []
+    };
+    this.init();
+  }
+
+  lastLocation: MapLocation;
+  dataset: VisDatasetItem;
+  queries: {
+    timeseries: RequestResults[]
+  }
+
+  async execTimeseries(exec: (start: string, end: string, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any): Promise<void> {
+    let startTime = new Date().getTime();
+    //cancel outbound queries and reset query list
+    for(let query of this.queries.timeseries) {
+      query.cancel();
+    }
+    this.queries.timeseries = [];
+    //set loading
+    //delay so executes after loading from previous query cancelled if still running
+    setTimeout(() => {
+      this.paramService.pushLoading({
+        tag: "timeseries",
+        loading: true
+      });
+    }, 0);
+    const chunkPeriod = "year";
+    const timeseriesData: TimeseriesData = <TimeseriesData>this.dataset.focusManager;
+    const start = timeseriesData.start;
+    const end = timeseriesData.end;
+    let date = start.clone();
+    while(date.isSameOrBefore(end)) {
+      let start_s: string = date.toISOString();
+      date.add(1, chunkPeriod);
+      let end_s: string = date.toISOString();
+      for(let periodData of timeseriesData.stationPeriods) {
+        properties.period = periodData.tag;
+        let timeseriesRes = await exec(start_s, end_s, properties, false);
+        this.queries.timeseries.push(timeseriesRes);
+      }
+    }
+
+    let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
+      return res.toPromise()
+      .then((timeseriesData: any) => {
+        if(timeseriesData) {
+          this.paramService.pushStationTimeseries(timeseriesData);
+        }
+      })
+      .catch((reason: RequestReject) => {
+        //if failed not cancelled print reason to stderr
+        if(!reason.cancelled) {
+          console.error(reason.reason);
+          //throw to promise.all for error message
+          throw new Error(reason.reason);
+        }
+      });
+    });
+    Promise.allSettled(queryPromises).then(() => {
+      let time = new Date().getTime() - startTime;
+      let timeSec = time / 1000;
+      console.log(`Timeseries retreival for ${start.toISOString()}-${end.toISOString()} completed or canceled, time elapsed ${timeSec} seconds`);
+      this.paramService.pushLoading({
+        tag: "timeseries",
+        loading: false
+      });
+    });
+    Promise.all(queryPromises).then().catch(() => {
+      this.errorPop.notify("error", `An error occurred while retrieving the timeseries data. Some of the timeseries data could not be retrieved.`);
+    });
+  }
+
+  async selectStation(station: Station): Promise<void> {
+    if(this.lastLocation?.type != "station" || station.id != (<Station>this.lastLocation).id) {
+      const { stationParams } = this.dataset;
+      let properties: any = {
+        station_id: station.id,
+        ...stationParams
+      }
+      this.execTimeseries(this.reqFactory.getStationTimeseries.bind(this.reqFactory), properties);
+    }
+  }
+
+  async selectVStation(location: V_Station): Promise<void> {
+    const { row, col } = location.cellData;
+    if(this.lastLocation?.type != "virtual_station" || row != (<V_Station>this.lastLocation).cellData.row || col != (<V_Station>this.lastLocation).cellData.col) {
+      const { rasterParams } = this.dataset;
+      let properties: any = {
+        row,
+        col,
+        ...rasterParams
+      }
+      this.execTimeseries(this.reqFactory.getVStationTimeseries.bind(this.reqFactory), properties);
+    }
+  }
+  
+
+  async init() {
     //change to use station group listed in dataset
-    let metadataReq: RequestResults = dataRequestor.getStationMetadata({
+    let metadataReq: RequestResults = await this.reqFactory.getStationMetadata({
       station_group: "hawaii_climate_primary"
     });
 
-    metadataReq.transform((data: any[]) => {
+    metadataReq.transformData((data: any) => {
       let metadataMap = {};
       for(let item of data) {
         //deconstruct
@@ -38,13 +132,13 @@ export class DataManagerService {
         let standardizedID = this.getStandardizedNumericString(metadata.id);
         metadataMap[standardizedID] = metadata;
       }
-      paramService.pushMetadata(Object.values(metadataMap));
+      this.paramService.pushMetadata(Object.values(metadataMap));
       return metadataMap;
     });
 
     let selectedStation: Station = null;
 
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
       if(stations && selectedStation) {
         let selected: Station = null;
         for(let station of stations) {
@@ -55,20 +149,20 @@ export class DataManagerService {
         }
         //delay to allow filtered station propogation before emitting
         setTimeout(() => {
-          paramService.pushSelectedLocation(selected);
+          this.paramService.pushSelectedLocation(selected);
         }, 0);
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
-      selectedDataset = dataset;
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
+      this.dataset = dataset;
       //reset selected station and timeseries data
-      paramService.pushSelectedLocation(null);
+      this.paramService.pushSelectedLocation(null);
     });
 
 
     let stationRes: RequestResults = null;
     let rasterRes: RequestResults = null;
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, (focus: FocusData<unknown>) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.focusData, async (focus: FocusData<unknown>) => {
       if(focus) {
         if(stationRes) {
           stationRes.cancel();
@@ -77,11 +171,9 @@ export class DataManagerService {
           rasterRes.cancel();
         }
 
-        let datasetInfo: VisDatasetItem = selectedDataset;
+        const { includeStations, includeRaster, rasterParams, stationParams, units, unitsShort } = this.dataset;
 
-        const { includeStations, includeRaster, rasterParams, stationParams } = datasetInfo;
-
-        paramService.pushLoading({
+        this.paramService.pushLoading({
           tag: "vis",
           loading: true
         });
@@ -94,9 +186,9 @@ export class DataManagerService {
             ...focus.paramData,
             ...stationParams
           }
-          stationRes = dataRequestor.getStationData(properties);
+          stationRes = await this.reqFactory.getStationData(properties);
           //transform by combining with station data
-          stationRes.transform((stationVals: any[]) => {
+          stationRes.transformData((stationVals: any[]) => {
             //get metadata
             return metadataReq.toPromise()
             .then((metadataMap: {[id: string]: StationMetadata}) => {
@@ -107,7 +199,7 @@ export class DataManagerService {
                 let stationValue = stationVal.value;
                 let stationMetadata = metadataMap[standardizedStationId];
                 if(stationMetadata) {
-                  let station = new Station(stationValue, stationId, selectedDataset.units, selectedDataset.unitsShort, stationMetadata);
+                  let station = new Station(stationValue, stationId, units, unitsShort, stationMetadata);
                   acc.push(station);
                 }
                 else {
@@ -120,7 +212,7 @@ export class DataManagerService {
             .catch((reason: RequestReject) => {
               if(!reason.cancelled) {
                 console.error(reason);
-                errorPop.notify("error", `Could not retreive station metadata.`);
+                this.errorPop.notify("error", `Could not retreive station metadata.`);
                 return [];
               }
             });
@@ -138,7 +230,7 @@ export class DataManagerService {
             ...focus.paramData,
             ...rasterParams
           }
-          rasterRes = dataRequestor.getRaster(properties);
+          rasterRes = await this.reqFactory.getRaster(properties);
           rasterPromise = rasterRes.toPromise();
         }
         else {
@@ -148,29 +240,29 @@ export class DataManagerService {
 
         //don't have to wait to set data for each
         promises[0].then((stationData: Station[]) => {
-          paramService.pushStations(stationData);
+          this.paramService.pushStations(stationData);
         })
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
             console.error(reason.reason);
-            errorPop.notify("error", `Could not retreive station data.`);
-            paramService.pushStations(null);
+            this.errorPop.notify("error", `Could not retreive station data.`);
+            this.paramService.pushStations(null);
           }
         });
 
         promises[1].then((raster: RasterData) => {
-          paramService.pushRaster(raster);
+          this.paramService.pushRaster(raster);
         })
         .catch((reason: RequestReject) => {
           if(!reason.cancelled) {
             console.error(reason.reason);
-            errorPop.notify("error", `Could not retreive raster data.`);
-            paramService.pushRaster(null);
+            this.errorPop.notify("error", `Could not retreive raster data.`);
+            this.paramService.pushRaster(null);
           }
         });
         //when both done send loading complete signal
         Promise.allSettled(promises).finally(() => {
-          paramService.pushLoading({
+          this.paramService.pushLoading({
             tag: "vis",
             loading: false
           });
@@ -179,15 +271,16 @@ export class DataManagerService {
     });
 
 
-    let timeseriesQueries = [];
     //track selected station and emit series data based on
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
-      if(location) {
-        paramService.pushLoading({
-          tag: "timeseries",
-          loading: true
-        });
-        let timeseriesPromises: Promise<void>[] = []
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, async (location: MapLocation) => {
+      if(location && this.dataset.focusManager.type == "timeseries") {
+        //has to go after old queries canceled!!!
+        setTimeout(() => {
+          this.paramService.pushLoading({
+            tag: "timeseries",
+            loading: true
+          });
+        }, 0);
         switch(location.type) {
           case "station": {
             this.selectStation(<Station>location);
@@ -198,104 +291,8 @@ export class DataManagerService {
             break;
           }
         }
-
-        Promise.allSettled(timeseriesPromises).then(() => {
-          paramService.pushLoading({
-            tag: "timeseries",
-            loading: false
-          });
-        });
       }
-      //VIRTUAL STATIONS
-      //...
 
-      //normal station
-      if(location && location.type == "station") {
-        let station = <Station>location;
-        //don't trigger again if already handling this station
-        if(!station || !selectedStation || selectedStation.id !== station.id) {
-          //cancel outbound queries and reset query list
-          for(let query of timeseriesQueries) {
-            query.cancel();
-          }
-          timeseriesQueries = [];
-          selectedStation = station;
-          //dispatch query if the dataset has a timeseries component and the selected station is not null
-          if(station && selectedDataset.focusManager.type == "timeseries") {
-            let timeseriesData: TimeseriesData = <TimeseriesData>selectedDataset.focusManager;
-            paramService.pushLoading({
-              tag: "timeseries",
-              loading: true
-            });
-            let datasetInfo: VisDatasetItem = selectedDataset;
-            const { stationParams } = datasetInfo;
-            let timeseriesPromises = [];
-            let startDate = timeseriesData.start;
-            let endDate = timeseriesData.end;
-            let periods = timeseriesData.stationPeriods;
-            for(let periodData of periods) {
-              let properties = {
-                station_id: station.id,
-                ...stationParams
-              }
-              //make sure to overwrite period from params
-              properties["period"] = periodData.tag;
-
-              //chunk queries by year
-              let date = startDate.clone();
-              while(date.isSameOrBefore(endDate)) {
-                let start_s: string = this.dateHandler.dateToString(date, periodData.unit);
-                date.add(1, "year");
-                let end_s: string = this.dateHandler.dateToString(date, periodData.unit);
-                //note query is [)
-                let timeseriesRes = dataRequestor.getStationTimeSeries(start_s, end_s, properties);
-
-                timeseriesRes.transform((timeseriesData: any[]) => {
-                  if(timeseriesData.length > 0) {
-                    let transformed = {
-                      stationId: timeseriesData[0].station_id,
-                      period: timeseriesData[0].period,
-                      values: timeseriesData.map((item: any) => {
-                        return {
-                          value: item.value,
-                          date: Moment(item.date)
-                        }
-                      })
-                    }
-                    return transformed;
-                  }
-                  else {
-                    return null;
-                  }
-                });
-                timeseriesQueries.push(timeseriesRes);
-
-                let timeseriesPromise = timeseriesRes.toPromise();
-                timeseriesPromise.then((timeseriesData: any) => {
-                  if(timeseriesData) {
-                    paramService.pushStationTimeseries(timeseriesData);
-                  }
-                })
-                .catch((reason: RequestReject) => {
-                  //if failed not cancelled print reason to stderr
-                  if(!reason.cancelled) {
-                    console.error(reason.reason);
-                  }
-                });
-
-                timeseriesPromises.push(timeseriesPromise);
-              }
-            }
-            //when all timeseries promises are complete push out loading complete signal
-            Promise.allSettled(timeseriesPromises).then(() => {
-              paramService.pushLoading({
-                tag: "timeseries",
-                loading: false
-              });
-            });
-          }
-        }
-      }
     });
 
   }
@@ -310,8 +307,6 @@ export class DataManagerService {
     }
     return standardized;
   }
-
-
 
 }
 

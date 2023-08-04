@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
-import { DbConService } from './db-con.service';
+import { RequestService } from './request.service';
 
-describe('DbConService', () => {
+describe('RequestService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: DbConService = TestBed.get(DbConService);
+    const service: RequestService = TestBed.get(RequestService);
     expect(service).toBeTruthy();
   });
 });
