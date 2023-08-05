@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { ParameterStoreService, ParameterHook } from "./auxillary/parameter-store.service"
 import { BehaviorSubject, Observable } from 'rxjs';
 import { RasterData } from 'src/app/models/RasterData';
-import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { ColorScale } from 'src/app/models/colorScale';
 import { VisDatasetItem, FocusData } from '../dataset-form-manager.service';
 import { MapLocation, Station, StationMetadata } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +18,7 @@ export class EventParamRegistrarService {
     filteredStations: "filteredStations",
     focusData: "focus",
     dataset: "dataset",
-    stationTimeseries: "stationTimeseries",
+    timeseries: "timeseries",
     loading: "loading",
     mapBounds: "mapBounds",
     colorScale: "colorScale",
@@ -33,7 +33,7 @@ export class EventParamRegistrarService {
   private rasterSource: BehaviorSubject<RasterData>;
   private stationsSource: BehaviorSubject<Station[]>;
   private filteredStationsSource: BehaviorSubject<Station[]>;
-  private stationTimeseriesSource: BehaviorSubject<any>;
+  private timeseriesSource: BehaviorSubject<TimeseriesGraphData>;
   private focusDataSource: BehaviorSubject<FocusData<unknown>>;
   private loadingSource: BehaviorSubject<LoadingData>;
   private mapBoundsSource: BehaviorSubject<L.LatLngBounds>;
@@ -48,7 +48,7 @@ export class EventParamRegistrarService {
     this.rasterSource = this.paramService.registerParameter<RasterData>(EventParamRegistrarService.EVENT_TAGS.raster);
     this.stationsSource = this.paramService.registerParameter<Station[]>(EventParamRegistrarService.EVENT_TAGS.stations);
     this.filteredStationsSource = this.paramService.registerParameter<Station[]>(EventParamRegistrarService.EVENT_TAGS.filteredStations);
-    this.stationTimeseriesSource = this.paramService.registerParameter<any>(EventParamRegistrarService.EVENT_TAGS.stationTimeseries);
+    this.timeseriesSource = this.paramService.registerParameter<TimeseriesGraphData>(EventParamRegistrarService.EVENT_TAGS.timeseries);
     this.focusDataSource = this.paramService.registerParameter<FocusData<unknown>>(EventParamRegistrarService.EVENT_TAGS.focusData);
     this.loadingSource = this.paramService.registerParameter<LoadingData>(EventParamRegistrarService.EVENT_TAGS.loading);
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
@@ -78,8 +78,8 @@ export class EventParamRegistrarService {
     this.filteredStationsSource.next(stations);
   }
 
-  pushStationTimeseries(seriesData: any) {
-    this.stationTimeseriesSource.next(seriesData);
+  pushTimeseries(seriesData: TimeseriesGraphData) {
+    this.timeseriesSource.next(seriesData);
   }
 
   pushFocusData(data: FocusData<unknown>): void {

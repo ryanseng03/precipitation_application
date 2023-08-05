@@ -7,6 +7,7 @@ import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
 import { FocusData, TimeseriesData, UnitOfTime, VisDatasetItem } from '../dataset-form-manager.service';
 import { MapLocation, Station, StationMetadata, V_Station } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
 
 
 @Injectable({
@@ -29,7 +30,11 @@ export class DataManagerService {
     timeseries: RequestResults[]
   }
 
-  async execTimeseries(exec: (start: string, end: string, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any): Promise<void> {
+  async execTimeseries(exec: (start: string, end: string, period: UnitOfTime, location: MapLocation, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any, location: MapLocation): Promise<void> {
+    const chunkSize: {interval: number, unit: UnitOfTime} = {
+      interval: 5,
+      unit: "year"
+    };
     let startTime = new Date().getTime();
     //cancel outbound queries and reset query list
     for(let query of this.queries.timeseries) {
@@ -44,27 +49,27 @@ export class DataManagerService {
         loading: true
       });
     }, 0);
-    const chunkPeriod = "year";
+   
     const timeseriesData: TimeseriesData = <TimeseriesData>this.dataset.focusManager;
     const start = timeseriesData.start;
     const end = timeseriesData.end;
     let date = start.clone();
     while(date.isSameOrBefore(end)) {
       let start_s: string = date.toISOString();
-      date.add(1, chunkPeriod);
+      date.add(chunkSize.interval, chunkSize.unit);
       let end_s: string = date.toISOString();
       for(let periodData of timeseriesData.stationPeriods) {
         properties.period = periodData.tag;
-        let timeseriesRes = await exec(start_s, end_s, properties, false);
+        let timeseriesRes = await exec(start_s, end_s, <UnitOfTime>periodData.tag, location, properties, false);
         this.queries.timeseries.push(timeseriesRes);
       }
     }
 
     let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
       return res.toPromise()
-      .then((timeseriesData: any) => {
+      .then((timeseriesData: TimeseriesGraphData) => {
         if(timeseriesData) {
-          this.paramService.pushStationTimeseries(timeseriesData);
+          this.paramService.pushTimeseries(timeseriesData);
         }
       })
       .catch((reason: RequestReject) => {
@@ -97,7 +102,7 @@ export class DataManagerService {
         station_id: station.id,
         ...stationParams
       }
-      this.execTimeseries(this.reqFactory.getStationTimeseries.bind(this.reqFactory), properties);
+      this.execTimeseries(this.reqFactory.getStationTimeseries.bind(this.reqFactory), properties, station);
     }
   }
 
@@ -106,11 +111,12 @@ export class DataManagerService {
     if(this.lastLocation?.type != "virtual_station" || row != (<V_Station>this.lastLocation).cellData.row || col != (<V_Station>this.lastLocation).cellData.col) {
       const { rasterParams } = this.dataset;
       let properties: any = {
+        extent: "statewide",
         row,
         col,
         ...rasterParams
       }
-      this.execTimeseries(this.reqFactory.getVStationTimeseries.bind(this.reqFactory), properties);
+      this.execTimeseries(this.reqFactory.getVStationTimeseries.bind(this.reqFactory), properties, location);
     }
   }
   

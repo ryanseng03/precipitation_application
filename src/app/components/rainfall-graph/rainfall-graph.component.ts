@@ -1,9 +1,10 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
-import { SiteInfo } from 'src/app/models/SiteMetadata';
-import Moment  from 'moment';
+import { Component, OnInit, Input } from '@angular/core';
+import Moment from 'moment';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { Observable } from 'rxjs';
-import { MapLocation, Station } from 'src/app/models/Stations';
+import { MapLocation, Station, V_Station } from 'src/app/models/Stations';
+import { UnitOfTime } from 'src/app/services/dataset-form-manager.service';
+import { CsvGenService } from 'src/app/services/export/csv-gen.service';
 
 @Component({
   selector: 'app-rainfall-graph',
@@ -14,11 +15,7 @@ export class RainfallGraphComponent implements OnInit {
   loading: boolean = false;
   data: any = {};
 
-  yaxis = {
-    title: {
-      text: "",
-    }
-  };
+  yaxisText: string;
 
   w = 900;
   h = 500;
@@ -31,7 +28,7 @@ export class RainfallGraphComponent implements OnInit {
     buttonData: {
       month: "Zoom to month",
       year: "Zoom to year",
-      all: "All data"
+      all: "Zoom to all data"
     },
     ranges: {
       month: null,
@@ -60,21 +57,21 @@ export class RainfallGraphComponent implements OnInit {
   }
 
   @Input() set axisLabel(axisLabel: string) {
-    this.yaxis.title.text = axisLabel;
+    this.yaxisText = axisLabel;
   }
 
-  __station: Station = null;
-  @Input() set station(station: Station) {
-    if(station && this.__station && this.__station.id !== station.id) {
+  _location: MapLocation = null;
+  @Input() set location(location: MapLocation) {
+    if(location && this._location && !location.equal(this._location)) {
       //reset data
       this.data = {};
     }
-    this.__station = station;
+    this._location = location;
   }
 
   @Input() complete: boolean;
 
-  @Input() source: Observable<any>;
+  @Input() source: Observable<TimeseriesGraphData>;
 
 
   __date: Moment.Moment = null;
@@ -97,7 +94,6 @@ export class RainfallGraphComponent implements OnInit {
   }
 
 
-
   setRange(dataPeriod: string, rangePeriod: string) {
     //log zoom applied
     this.zoomData[dataPeriod] = rangePeriod;
@@ -106,25 +102,50 @@ export class RainfallGraphComponent implements OnInit {
       title: {
         text: "Date",
       }
+    };
+    this.data[dataPeriod].graph.layout.yaxis = {
+      autorange: true,
+      title: {
+        text: this.yaxisText,
+      }
+    };
+  }
+
+
+  constructor(private dateHandler: DateManagerService, private csvGen: CsvGenService) {
+
+  }
+
+  downloadCSV(period: string) {
+    let dates = this.data[period].graph.data[0].x;
+    let values = this.data[period].graph.data[0].y;
+    let data = [["date", "value"]];
+    //zip dates and values into data
+    for(let i = 0; i < dates.length; i++) {
+      data.push([dates[i], values[i]]);
     }
+    let fname = `${period}_timeseries.csv`;
+    if(this._location.type == "station") {
+      let station = <Station>this._location;
+      fname = `station_${station.id}_${fname}`;
+    }
+    else if(this._location.type == "virtual_station") {
+      let virtualStation = <V_Station>this._location;
+      fname = `virtual_station_${virtualStation.location.lat}_${virtualStation.location.lng}_${fname}`;
+    }
+    this.csvGen.createCSV(data, fname);
   }
-
-
-  constructor(private dateHandler: DateManagerService, private cd: ChangeDetectorRef) {
-
-  }
-
-
 
   ngOnInit() {
-    this.source.subscribe((data: any) => {
+    this.source.subscribe((data: TimeseriesGraphData) => {
+      console.log(data);
       //deconstruct data
-      const { period, stationId, values } = data;
-      //ignore if station id is wrong
-      if(stationId == this.__station.id) {
+      const { period, location, values } = data;
+      //ignore if different location (probably old data)
+      if(location.equal(this._location)) {
         let periodData = this.data[period];
         if(periodData === undefined) {
-          let title = `${this.__station.format.getFieldFormat("name")?.formattedValue || "Virtual Station"} ${this.periodLabelMap[period]} Data`;
+          let title = `${this._location.format.getFieldFormat("name")?.formattedValue || "Virtual Station"} ${this.periodLabelMap[period]} Data`;
           periodData = {
             dates: [],
             graph: {
@@ -133,7 +154,7 @@ export class RainfallGraphComponent implements OnInit {
                     x: [],
                     y: [],
                     type: "scatter",
-                    mode: "lines+points",
+                    mode: "lines",
                     connectgaps: false,
                     marker: {
                       color: "blue"
@@ -149,7 +170,12 @@ export class RainfallGraphComponent implements OnInit {
                     text: "Date",
                   },
                 },
-                yaxis: this.yaxis
+                yaxis: {
+                  autorange: true,
+                  title: {
+                    text: this.yaxisText,
+                  }
+                }
               }
             }
           }
@@ -247,9 +273,19 @@ export class RainfallGraphComponent implements OnInit {
         //trigger graph data to update by copying data object
         periodData.graph.data = JSON.parse(JSON.stringify(periodData.graph.data));
       }
-
-
     });
   }
+}
 
+
+export interface TimeseriesGraphData {
+  location: MapLocation,
+  //should make this more specific
+  period: UnitOfTime,
+  values: TimeseriesGraphDataPoint[]
+}
+
+export interface TimeseriesGraphDataPoint {
+  value: number,
+  date: Moment.Moment
 }

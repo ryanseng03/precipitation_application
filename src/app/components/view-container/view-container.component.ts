@@ -36,11 +36,11 @@ export class ViewContainerComponent implements OnInit {
   //just set scrollbar width once for efficiency, on macs it's fine to have the scrollbar visible while scrolling
   //also it seems like getting the scrollbar width on a mac might not work even while scrolling
   @Input() set visible(state: boolean) {
-    if(state) {
-      let element: HTMLElement = this.viewContainer.nativeElement;
-      let scrollbarWidth: number = this.scrollWidthService.getScrollbarWidth();
-      element.style.paddingRight = scrollbarWidth + "px";
-    }
+    // if(state) {
+    //   let element: HTMLElement = this.viewContainer.nativeElement;
+    //   let scrollbarWidth: number = this.scrollWidthService.getScrollbarWidth();
+    //   element.style.paddingRight = scrollbarWidth + "px";
+    // }
   }
   _width: number;
   @Input() set width(width: number) {
@@ -74,11 +74,19 @@ export class ViewContainerComponent implements OnInit {
   temp_period = "month";
 
   includeStations: boolean;
+  enableSmoothScroll: boolean;
 
-
-  constructor(private scrollWidthService: ScrollbarWidthCalcService, private paramService: EventParamRegistrarService) {
+  constructor(private paramService: EventParamRegistrarService) {
     this.scrollTimeoutHandle = null;
     this.navInfo = [];
+    this.enableSmoothScroll = true;
+    addEventListener("mousedown", () => {
+      this.enableSmoothScroll = false;
+    });
+    addEventListener("mouseup", (e: Event) => {
+      this.enableSmoothScroll = true;
+      this.containerScroll(e);
+    });
   }
 
   ngOnInit() {
@@ -156,10 +164,9 @@ export class ViewContainerComponent implements OnInit {
     this.activeTileRef = nav;
   }
 
-  // [ngStyle]="{'padding-right': getScrollBarWidth(viewContainer)}"
   containerScroll(e: Event): void {
-    //only manage scroll logic if there are navs
-    if(this.navInfo.length > 0) {
+    //only manage scroll logic if there are navs and smooth scroll enabled
+    if(this.navInfo.length > 0 && this.enableSmoothScroll) {
       let containerElement: HTMLElement = this.viewContainer.nativeElement;
       let lastScrollLocal = this.lastScrollPos;
       this.lastScrollPos = containerElement.scrollTop;
@@ -242,7 +249,7 @@ export class ViewContainerComponent implements OnInit {
         }
       }
     }
-    return max + "px";
+    return (max - 1) + "px";
   }
 
 }

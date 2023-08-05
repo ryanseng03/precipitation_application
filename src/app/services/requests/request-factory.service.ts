@@ -2,7 +2,10 @@ import { Injectable } from '@angular/core';
 import { RequestService, RequestResults } from "./request.service";
 import { RasterData } from '../../models/RasterData';
 import { DataProcessorService } from "../dataProcessor/data-processor.service";
-import moment from 'moment';
+import moment, { unitOfTime } from 'moment';
+import { MapLocation } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
+import { UnitOfTime } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +13,7 @@ import moment from 'moment';
 export class RequestFactoryService {
   //decouple for easy testing of API changes
   static readonly API_KEYS = {
-    hcdp: "hcdp_api",
+    hcdp: "cistore",
     tapis: "hcdp_api"
   };
 
@@ -74,7 +77,7 @@ export class RequestFactoryService {
     return response;  
   }
 
-  async getVStationTimeseries(start: string, end: string, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
+  async getVStationTimeseries(start: string, end: string, period: UnitOfTime, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
     let params = {
       ...properties,
       start,
@@ -91,12 +94,12 @@ export class RequestFactoryService {
       let entries = Object.entries(timeseriesData);
       if(entries.length > 0) {
         transformed = {
-          stationId: null,
-          period: null,
+          location,
+          period,
           values: entries.map((pair: [string, number]) => {
             return {
-              value: pair[0],
-              date: moment(pair[1])
+              value: pair[1],
+              date: moment(pair[0])
             };
           })
         };
@@ -141,16 +144,16 @@ export class RequestFactoryService {
     return response;
   }
 
-  async getStationTimeseries(start: string, end: string, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
+  async getStationTimeseries(start: string, end: string, period: UnitOfTime, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
     let query = this.propertiesToQuery("hcdp_station_value", properties);
     query = `{'$and':[${query},{'value.date':{'$gte':'${start}'}},{'value.date':{'$lt':'${end}'}}]}`;
     let timingMessage = printTiming ? `Retreived station ${properties.station_id} timeseries for ${start}-${end}`: undefined;
     let response = await this.tapisQueryDispatch(query, timingMessage, delay);
     response.transformData((timeseriesData: any[]) => {
       if(timeseriesData.length > 0) {
-        let transformed = {
-          stationId: timeseriesData[0].station_id,
-          period: timeseriesData[0].period,
+        let transformed: TimeseriesGraphData = {
+          location,
+          period,
           values: timeseriesData.map((item: any) => {
             return {
               value: item.value,

@@ -53,6 +53,8 @@ export abstract class MapLocation {
         this._location = location;
     }
 
+    public abstract equal(other: MapLocation): boolean;
+
     get type(): string {
         return this._type;
     }
@@ -230,6 +232,10 @@ export class Station extends MapLocation {
         this._id = id;
     }
 
+    public equal(other: MapLocation): boolean {
+        return this.type == other.type && this._id == (<Station>other).id;
+    }
+
     get id(): string {
         return this._id;
     }
@@ -260,6 +266,10 @@ export class V_Station extends MapLocation {
         super("virtual_station", value, unit, unitShort, location);
         this._cellData = cellData;
         this.setFormat();
+    }
+
+    public equal(other: MapLocation): boolean {
+        return this.type == other.type && this._cellData.col == (<V_Station>other).cellData.col && this._cellData.row == (<V_Station>other).cellData.row;
     }
 
     get cellData(): CellData {

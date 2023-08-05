@@ -5,6 +5,7 @@ import { EventParamRegistrarService, LoadingData } from 'src/app/services/inputM
 import { Subject } from 'rxjs';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
 import { MapLocation } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from '../rainfall-graph/rainfall-graph.component';
 
 @Component({
   selector: 'app-time-series',
@@ -19,12 +20,12 @@ export class TimeSeriesComponent implements OnInit {
   complete = false;
 
   selected: SiteInfo;
-  source: Subject<any>;
+  source: Subject<TimeseriesGraphData>;
   date: Moment.Moment;
   axisLabel: string;
 
   constructor(private paramService: EventParamRegistrarService) {
-    this.source = new Subject<any>();
+    this.source = new Subject<TimeseriesGraphData>();
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
       this.selectedLocation = location;
     });
@@ -33,7 +34,7 @@ export class TimeSeriesComponent implements OnInit {
         this.complete = !loadData.loading;
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stationTimeseries, (data: any) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.timeseries, (data: TimeseriesGraphData) => {
       if(data) {
         this.source.next(data);
       }
