@@ -148,12 +148,6 @@ export class StationFilterComponent implements OnInit {
   }
 }
 
-//replace
-interface SelectData {
-  display: string,
-  value: string
-}
-
 interface FilterData {
   fieldControl: FormControl,
   valueControl: FormControl,

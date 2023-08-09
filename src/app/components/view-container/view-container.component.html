@@ -5,13 +5,13 @@
     </div>
 
     <div class="view-component-wrapper">
-      <div #formComponent class="view-component" [ngStyle]="!includeStations && {'padding-bottom': '0'}">
+      <div #formComponent class="view-component">
         <app-data-set-form></app-data-set-form>
       </div>
-      <div #tableComponent class="view-component" *ngIf="includeStations">
+      <div #tableComponent class="view-component">
         <app-data-views></app-data-views>
       </div>
-      <div #timeseriesComponent class="view-component" *ngIf="includeStations">
+      <div #timeseriesComponent class="view-component" *ngIf="hasTimeseries">
         <app-time-series
           [width]="_width">
         </app-time-series>

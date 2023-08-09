@@ -4,10 +4,16 @@
         <th class="selectable" *ngFor="let column of tableData.header; let i = index" (click)="sort(i, 0)">{{column}} {{getSortSymbol(i)}}</th>
       </tr>
   </thead>
-  <tbody #tbody>
-      <tr #dataRows class="data-row selectable" *ngFor="let row of tableData.rows; index as i" [ngClass]="{'highlight': row.selected}" (click)="setSelected($event.currentTarget, i)">
+  <tbody #tbody *ngIf="tableData.rows.length > 0; else noStations">
+      <tr #dataRows class="data-row selectable" *ngFor="let row of tableData.rows; index as i" [ngClass]="{'highlight': row.selected}" (click)="setSelected(i)">
         <td *ngFor="let column of row.values">{{column}}</td>
       </tr>
   </tbody>
-
+  <ng-template #noStations>
+    <tr>
+      <td colspan="100">
+        No stations match the filters provided.
+      </td>
+    </tr>
+  </ng-template>
 </table>

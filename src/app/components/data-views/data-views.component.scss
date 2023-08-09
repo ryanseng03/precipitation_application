@@ -9,12 +9,6 @@
   padding: 10px;
 }
 
-.main-container {
-  display: inline-flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-}
-
 .filter-container {
   display: block;
   clear: both;
@@ -28,4 +22,8 @@ h4 {
 
 .tables {
   display: block;
+}
+
+.hidden {
+  display: none;
 }

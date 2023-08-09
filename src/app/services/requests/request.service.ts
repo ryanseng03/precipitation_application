@@ -11,11 +11,15 @@ import { ErrorPopupService } from 'src/app/services/errorHandling/error-popup.se
 })
 export class RequestService {
   private static readonly CONFIG_FILE = "api_config.json";
+  private static readonly MAX_REQS = 10;
   static readonly MAX_URI = 2000;
   static readonly MAX_POINTS = 10000;
   
-
+  
   private initPromise: Promise<Config>;
+  private reqQueue: Queue<RequestResults>;
+  private reqs: Set<RequestResults>;
+
 
   constructor(private http: HttpClient, assetService: AssetManagerService, private errorPop: ErrorPopupService) {
     let url = assetService.getAssetURL(RequestService.CONFIG_FILE);
@@ -24,6 +28,52 @@ export class RequestService {
       console.error(`Loading this project for the first time? You need a configuration file with connection information. Please contact the developers at hcdp@hawaii.edu for help setting this up.\n\nError getting config: ${e}`);
       errorPop.notify("error", `An unexpected error occured. Unable to retrieve API config.`);
     });
+
+    this.reqQueue = new Queue<RequestResults>();
+  }
+
+  private exec(req: RequestResults) {
+    //execute the request
+    req.exec();
+    //put request in the execution set
+    this.reqs.add(req);
+  }
+
+  private next() {
+    let nextReq: RequestResults;
+    //find first request in queue that is not complete
+    do {
+      //get the next request from the queue
+      let nextReq = this.reqQueue.dequeue();
+      //if the request has not already completed, break, otherwise just remove from queue and move on
+      if(!nextReq.complete) {
+        break;
+      }
+    }
+    while(nextReq)
+    //if nextReq is not null execute the request and add to execution set
+    if(nextReq) {
+      this.exec(nextReq);
+    }
+  }
+
+  
+  private queue(req: RequestResults) {
+    //when request completes remove from execution set and replace if there are items in the queue
+    req.toPromise().finally(() => {
+      //remove this request from the set of executing requests, and if it was in the set pull the next request from the queue
+      if(this.reqs.delete(req)) {
+        this.next();
+      }
+    });
+    //if the execution set has room execute the request
+    if(this.reqs.size < RequestService.MAX_REQS) {
+      this.exec(req);
+    }
+    //otherwise put in queue
+    else {
+      this.reqQueue.enqueue(req);
+    }
   }
 
   private constructURL(api: string, endpoint: string, port?: number, params?: Object) {
@@ -124,6 +174,19 @@ interface ReqHandle<T> {
   reject: (value: any) => void
 }
 
+//public version of RequestResults (fix naming)
+export class r {
+  public cancel: () => void;
+  public transformData: (transform: (value: any) => any) => void;
+  public toPromise: () => Promise<any>;
+
+  constructor(cancel: () => void, transformData: (transform: (value: any) => any) => void, toPromise: () => Promise<any>) {
+    this.cancel = cancel;
+    this.transformData = transformData;
+    this.toPromise = toPromise;
+  }
+}
+
 export class RequestResults {
   protected sub: Subscription;
   protected timeout: NodeJS.Timeout;
@@ -206,6 +269,53 @@ export class RequestResults {
     return this.data.promise;
   }
 }
+
+class Queue<T> {
+  private _size: number;
+  private head: QueueNode<T>;
+  private tail: QueueNode<T>;
+
+  constructor() {
+    this._size = 0;
+    this.head = this.tail = null;
+  }
+
+  enqueue(value: T) {
+    let node: QueueNode<T> = {
+      value,
+      next: null
+    }
+    if(this.tail) {
+      this.tail.next = node;
+    }
+    else {
+      this.head = node;
+    }
+    this.tail = node;
+    this._size++;
+  }
+
+  dequeue(): T {
+    let node = this.head;
+    let value = null;
+    if(node) {
+      this.head = node.next;
+      this._size--;
+      value = node.value;
+    }
+    return value;
+  }
+
+  get size(): number {
+    return this._size;
+  }
+}
+
+interface QueueNode<T> {
+  value: T,
+  next: QueueNode<T>
+}
+
 
 interface Config {
   [id: string]: APIData

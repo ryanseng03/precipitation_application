@@ -3,7 +3,6 @@ import { Component, OnInit, ViewChild, ElementRef, HostListener, Input } from '@
 import moment, { Moment } from 'moment';
 import { VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
-import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
 
 @Component({
   selector: 'app-view-container',
@@ -52,6 +51,7 @@ export class ViewContainerComponent implements OnInit {
   }
 
   date: Moment;
+  hasTimeseries: boolean;
 
   nav2Component: {
     form: ElementRef,
@@ -73,7 +73,6 @@ export class ViewContainerComponent implements OnInit {
   temp_end = moment("2022-01-01");
   temp_period = "month";
 
-  includeStations: boolean;
   enableSmoothScroll: boolean;
 
   constructor(private paramService: EventParamRegistrarService) {
@@ -107,25 +106,19 @@ export class ViewContainerComponent implements OnInit {
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
-        if(dataset.includeStations) {
-          this.includeStations = true;
-          setTimeout(() => {
-            this.navInfo = [defaultActive,
-            {
-              label: "Stations",
-              element: this.tableComponent.nativeElement
-            },
-            {
+        this.hasTimeseries = dataset.focusManager.type == "timeseries";
+        setTimeout(() => {
+          this.navInfo = [defaultActive, {
+            label: "Locations",
+            element: this.tableComponent.nativeElement
+          }];
+          if(this.hasTimeseries) {
+            this.navInfo.push({
               label: "Time Series",
               element: this.timeseriesComponent.nativeElement
-            }];
-          }, 0);
-        }
-        else {
-          this.navInfo = [];
-          this.includeStations = false;
-        }
-        this.activeTileRef = defaultActive;
+            });
+          }
+        }, 0);
       }
     });
   }

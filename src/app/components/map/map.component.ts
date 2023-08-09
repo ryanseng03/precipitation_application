@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
-import { formatNumber } from '@angular/common';
 import * as L from "leaflet";
 import "leaflet-spin";
 import { ColorScale } from "../../models/colorScale";
@@ -38,19 +37,12 @@ export class MapComponent implements OnInit {
   //private R: any = L;
 
   selectedMapCell: L.Layer;
-
   imageHiddenControls = ["leaflet-control-zoom", "leaflet-control-layers", "leaflet-control-export"];
-
   markerInfo: RainfallStationMarkerInfo;
-
   colorScheme: ColorScale;
-
   roseOptions: RoseControlOptions;
-  // markerClusterLayer: any;
-
   options: L.MapOptions;
-  // private drawnItems: L.FeatureGroup;
-  // private drawOptions: any;
+
   map: L.Map;
   private baseLayers: any;
   active: ActiveData;
@@ -67,8 +59,11 @@ export class MapComponent implements OnInit {
   };
 
   private selectedMarker: L.CircleMarker;
+  private newSelection: boolean;
+  private markerPopupOpen: boolean;
 
   dataset: VisDatasetItem;
+  selectedLocation: MapLocation;
 
   private _viewType: string;
 
@@ -101,6 +96,7 @@ export class MapComponent implements OnInit {
       })
     };
     this.dataLayers = {};
+    this.newSelection = true;
 
     this.options = {
       layers: this.baseLayers["Satellite (Google)"],
@@ -175,9 +171,7 @@ export class MapComponent implements OnInit {
           fillColor: hex
         });
       }
-
     }
-
   }
 
   private loading: number = 0;
@@ -186,6 +180,7 @@ export class MapComponent implements OnInit {
     if(load) {
       (<any>this.map).spin(true, {color: "white", length: 20});
       this.loading++;
+
     }
     else {
       (<any>this.map).spin(false);
@@ -253,8 +248,21 @@ export class MapComponent implements OnInit {
     setTimeout(() => {
       //want filtered, should anything be done with the unfiltered stations? gray them out or just exclude them? can always change
       this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.filteredStations, (stations: Station[]) => {
+        if(this.selectedMarker) {
+          this.markerPopupOpen = this.selectedMarker.isPopupOpen();
+        }
+        else {
+          this.markerPopupOpen = false;
+        }
         this.active.data.stations = stations;
         this.constructMarkerLayerPopulateMarkerData(stations);
+        if(this.selectedLocation?.type == "station") {
+          let newMarker = this.markerInfo.markerMap[(<Station>this.selectedLocation).id];
+          if(newMarker) {
+            this.newSelection = false;
+            newMarker.fire("click");
+          }
+        }
       });
     }, 0);
 
@@ -270,56 +278,60 @@ export class MapComponent implements OnInit {
     let hoverTag = this.paramService.registerMapHover(this.map);
     this.hoverHook = this.paramService.createParameterHook(hoverTag, this.hoverPopupHandler(1000), false);
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.raster, (raster: RasterData) => {
-        for(let band in this.dataLayers) {
-          this.map.removeLayer(this.dataLayers[band]);
-          this.layerController.removeLayer(this.dataLayers[band]);
-        }
-        this.dataLayers = {};
+      for(let band in this.dataLayers) {
+        this.map.removeLayer(this.dataLayers[band]);
+        this.layerController.removeLayer(this.dataLayers[band]);
+      }
+      this.dataLayers = {};
+      this.active.data.raster = raster;
 
-        //no raster for dataset, remove layers
-        if(this.rasterLayerActive && raster === null) {
-          this.rasterLayerActive = false;
-          this.suspendHover();
+      //no raster for dataset, remove layers
+      if(this.rasterLayerActive && raster === null) {
+        this.rasterLayerActive = false;
+        this.suspendHover();
+      }
+      else if(raster !== null) {
+        let bands = raster.getBands();
+        let header = raster.getHeader();
+        //create new bands
+        for(let band in bands) {
+          let rasterOptions: RasterOptions = {
+            cacheEmpty: true,
+            colorScale: this.colorScheme,
+            data: {
+              header: header,
+              values: bands[band]
+            }
+          };
+          let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
+          this.dataLayers[band] = rasterLayer;
+          rasterLayer.setOpacity(this.opacity);
         }
-        else if(raster !== null) {
-          this.active.data.raster = raster;
-          let bands = raster.getBands();
-          let header = raster.getHeader();
-          //create new bands
-          for(let band in bands) {
-            let rasterOptions: RasterOptions = {
-              cacheEmpty: true,
-              colorScale: this.colorScheme,
-              data: {
-                header: header,
-                values: bands[band]
-              }
-            };
-            let rasterLayer = R.gridLayer.RasterLayer(rasterOptions);
-            this.dataLayers[band] = rasterLayer;
-            rasterLayer.setOpacity(this.opacity);
-          }
-          if(!this.rasterLayerActive) {
-            this.rasterLayerActive = true;
-            this.resumeHover();
-          }
-          
-          let activeLayer = this.dataLayers[this.active.band];
-          //assume everything has a band 0 and use as default
-          if(activeLayer === undefined) {
-            activeLayer = this.dataLayers["0"];
-          }
-          this.map.addLayer(activeLayer);
-          //for now at least only one layer, make sure to replace if multiple
-          this.layerController.addOverlay(activeLayer, "Data Map");
+        if(!this.rasterLayerActive) {
+          this.rasterLayerActive = true;
+          this.resumeHover();
         }
+        
+        let activeLayer = this.dataLayers[this.active.band];
+        //assume everything has a band 0 and use as default
+        if(activeLayer === undefined) {
+          activeLayer = this.dataLayers["0"];
+        }
+        this.map.addLayer(activeLayer);
+        //for now at least only one layer, make sure to replace if multiple
+        this.layerController.addOverlay(activeLayer, "Data Map");
+
+        if(this.selectedLocation?.type == "virtual_station") {
+          this.newSelection = false;
+          this.mapClickHandler(this.selectedLocation.location);
+        }
+      }
     });
 
 
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
-      if(location) {
-        this.selectLocation(location);
-      }
+      this.selectedLocation = location;
+      this.selectLocation(location);
     });
 
     this.map.on("layeradd", (addData: any) => {
@@ -333,24 +345,35 @@ export class MapComponent implements OnInit {
   }
 
   selectLocation(location: MapLocation) {
-    if(this.selectedMapCell != null) {
+    //only open the popup if this is a new selection or the popup was already open
+    let openPopup: boolean = this.newSelection;
+    if(this.selectedMapCell) {
+      openPopup = openPopup || this.selectedMapCell.isPopupOpen();
       this.map.removeLayer(this.selectedMapCell);
       this.selectedMapCell = null;
     }
-
-    if(location.type == "station") {
-      let station = <Station>location;
-      this.selectStation(station);
+    else {
+      openPopup = openPopup || this.markerPopupOpen;
     }
-    else if(location.type == "virtual_station") {
-      let virtualStation = <V_Station>location;
-      this.selectVStation(virtualStation);
+    if(location) {
+      if(location.type == "station") {
+        let station = <Station>location;
+        this.selectStation(station, openPopup);
+      }
+      else if(location.type == "virtual_station") {
+        let virtualStation = <V_Station>location;
+        this.selectVStation(virtualStation, openPopup);
+      }
+      //only pan if this is a new selection (not after new raster or station set with same location)
+      if(this.newSelection) {
+        this.map.panTo(location.location, {animate: true});
+      }
     }
-    this.map.panTo(location.location, {animate: true});
+    this.newSelection = true;
   }
 
   
-  selectVStation(virtualStation: V_Station) {
+  selectVStation(virtualStation: V_Station, openPopup: boolean) {
     let geojson: any = this.dataRetreiver.getGeoJSONCellFromBounds(virtualStation.cellData.cellExtent);
     if(geojson) {
       this.selectedMapCell = L.geoJSON(geojson)
@@ -363,40 +386,43 @@ export class MapComponent implements OnInit {
       })
       .bindPopup(this.getPopupText(virtualStation), { autoPan: false, autoClose: false })
       .addTo(this.map);
-      this.selectedMapCell.openPopup();
+      if(openPopup) {
+        this.selectedMapCell.openPopup();
+      }
     }
   }
 
-  selectStation(station: Station) {
+  selectStation(station: Station, openPopup: boolean) {
     if(this.selectedMapCell != null) {
       this.map.removeLayer(this.selectedMapCell);
       this.selectedMapCell = null;
     }
 
     if(station) {
-      let marker: L.CircleMarker = this.markerInfo.markerMap.get(station);
+      let marker: L.CircleMarker = this.markerInfo.markerMap[station.id];
       //ignore if station doesn't exist
       if(marker) {
-        //stationMarkers.zoomToShowLayer(marker, () => {
-        if(this.selectedMarker !== undefined && this.selectedMarker.isPopupOpen()) {
+        if(this.selectedMarker?.isPopupOpen()) {
           this.selectedMarker.closePopup();
         }
-        this.selectedMarker = marker;
-        //popup sometimes still closes when moving mouse for some reason, but this helps some
-        //moveend isn't always triggered when finished, so use this as a fallback
-        setTimeout(() => {
-          if(marker.isPopupOpen && this.selectedMarker === marker) {
-            marker.openPopup();
-          }
-        }, 300);
-        //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
-        //think something about it already moving interferes with the popup repositioning
-        this.map.once("moveend", () => {
-          if(marker.isPopupOpen && this.selectedMarker === marker) {
-            marker.openPopup();
-          }
-        });
+        if(openPopup) {
+          //popup sometimes still closes when moving mouse for some reason, but this helps some
+          //moveend isn't always triggered when finished, so use this as a fallback
+          setTimeout(() => {
+            if(!marker.isPopupOpen() && this.selectedMarker === marker) {
+              marker.openPopup();
+            }
+          }, 300);
+          //use as callback to animation end, otherwise movement bugs the popup and it immediately closes
+          //think something about it already moving interferes with the popup repositioning
+          this.map.once("moveend", () => {
+            if(!marker.isPopupOpen() && this.selectedMarker === marker) {
+              marker.openPopup();
+            }
+          });
+        }
       }
+      this.selectedMarker = marker;
     }
   }
 
@@ -467,26 +493,28 @@ export class MapComponent implements OnInit {
   }
 
   mapClickHandler(position: L.LatLng) {
-    let header = this.active.data.raster.getHeader();
-    let data = this.active.data.raster.getBands()[this.active.band];
-    let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
-    let coords = this.dataRetreiver.geoPosToGridCoords(header, position);
-    let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
-    let bounds = this.dataRetreiver.getCellBoundsFromGeoPos(header, data, position);
-    //check if data exists at clicked point
-    if(geojson !== null) {
-      let dimensions = this.dataRetreiver.getBoundsWidthHeight(bounds);
-      let virtualStation: V_Station = new V_Station(value, this.dataset.units, this.dataset.unitsShort, {
-        row: coords.y,
-        col: coords.x,
-        cellWidthM: dimensions.width,
-        cellHeightM: dimensions.height,
-        cellWidthLng: header.cellXSize,
-        cellHeightLat: header.cellYSize,
-        cellExtent: bounds
-      }, position);
-
-      this.paramService.pushSelectedLocation(virtualStation);
+    if(this.active.data.raster) {
+      let header = this.active.data.raster.getHeader();
+      let data = this.active.data.raster.getBands()[this.active.band];
+      let geojson = this.dataRetreiver.getGeoJSONCellFromGeoPos(header, data, position);
+      let coords = this.dataRetreiver.geoPosToGridCoords(header, position);
+      let value = this.dataRetreiver.geoPosToGridValue(header, data, position);
+      let bounds = this.dataRetreiver.getCellBoundsFromGeoPos(header, data, position);
+      //check if data exists at clicked point
+      if(geojson !== null) {
+        let dimensions = this.dataRetreiver.getBoundsWidthHeight(bounds);
+        let virtualStation: V_Station = new V_Station(value, this.dataset.units, this.dataset.unitsShort, {
+          row: coords.y,
+          col: coords.x,
+          cellWidthM: dimensions.width,
+          cellHeightM: dimensions.height,
+          cellWidthLng: header.cellXSize,
+          cellHeightLat: header.cellYSize,
+          cellExtent: bounds
+        }, position);
+        
+        this.paramService.pushSelectedLocation(virtualStation);
+      }
     }
   }
 
@@ -504,7 +532,7 @@ export class MapComponent implements OnInit {
       pivotZoom: 10,
       weightToRadiusFactor: 0.4,
       pivotRadius: 7,
-      markerMap: new Map<Station, L.CircleMarker>()
+      markerMap: {}
     }
   }
 
@@ -516,7 +544,7 @@ export class MapComponent implements OnInit {
     }
     if(stations !== null) {
       let markers: RainfallStationMarker[] = [];
-      this.markerInfo.markerMap.clear();
+      this.markerInfo.markerMap = {};
       let markerLayer = L.layerGroup();
       stations.forEach((station: Station) => {
         let hexFill = "#ffffff";
@@ -536,7 +564,7 @@ export class MapComponent implements OnInit {
         marker.on("click", () => {
           this.paramService.pushSelectedLocation(station);
         });
-        this.markerInfo.markerMap.set(station, marker);
+        this.markerInfo.markerMap[station.id] = marker;
         markerLayer.addLayer(marker);
         let stationMarker: RainfallStationMarker = {
           marker: marker,
@@ -619,14 +647,6 @@ export class MapComponent implements OnInit {
     }
   }
 
-
-
-
-//   marker.marker.setStyle({weight: weight});
-  //marker.marker.setRadius(radius);
-
-
-
   getMarkerSizing() {
     let radius: number;
     let zoom = this.map.getZoom();
@@ -675,7 +695,7 @@ interface RainfallStationMarkerInfo {
   pivotZoom: number,
   weightToRadiusFactor: number,
   pivotRadius: number,
-  markerMap: Map<Station, L.CircleMarker>
+  markerMap: {[stationID: string]: L.CircleMarker}
 }
 
 interface RainfallStationMarker {

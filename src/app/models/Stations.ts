@@ -317,9 +317,9 @@ export class V_Station extends MapLocation {
             },
             {
                 field: "extent",
-                formattedField: "Cell Extent (min longitude °, min latitude °, max longitude °, max latitude °)",
+                formattedField: "Cell Extent (West longtitude °, South latitude °, East longitude °, North latitude °)",
                 value: this._cellData.cellExtent,
-                formattedValue: this._cellData.cellExtent.toBBoxString().split(",").join(", ")
+                formattedValue: `${formatNumber(this._cellData.cellExtent.getWest(), navigator.language, "1.4-4")}, ${formatNumber(this._cellData.cellExtent.getSouth(), navigator.language, "1.4-4")}, ${formatNumber(this._cellData.cellExtent.getEast(), navigator.language, "1.4-4")}, ${formatNumber(this._cellData.cellExtent.getNorth(), navigator.language, "1.4-4")}`
             },
             {
                 field: "value",

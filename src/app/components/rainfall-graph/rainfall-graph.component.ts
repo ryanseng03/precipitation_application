@@ -138,7 +138,6 @@ export class RainfallGraphComponent implements OnInit {
 
   ngOnInit() {
     this.source.subscribe((data: TimeseriesGraphData) => {
-      console.log(data);
       //deconstruct data
       const { period, location, values } = data;
       //ignore if different location (probably old data)

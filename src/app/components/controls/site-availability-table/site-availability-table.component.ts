@@ -28,6 +28,9 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
         values: formatValues
       });
     }
+    //this is going to be reversed by the sort function, want to keep the same as before so pre-swap to maintain order
+    this.tableData.sortOrder = !this.tableData.sortOrder;
+    this.sort(this.tableData.sorted);
     //delay to give element refs time to update, then trigger station select in table if it exists
     setTimeout(() => {
       this.selected = this.location;
@@ -40,11 +43,15 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     if(location && location.type == "station") {
       //the location is a station
       let station = <Station>location;
-      let index = this.siteMap.get(station);
+      let index = this.siteMap[station.id];
       //only select if station exists in table
       if(index !== undefined) {
-        this.selectFromTable(index);
-        this.cdr.detectChanges();
+        //give time to propogate new station data if changing date
+        setTimeout(() => {
+          this.selectFromTable(index);
+          this.cdr.detectChanges();
+        }, 0);
+        
       }
     }
     else {
@@ -59,16 +66,16 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
 
 
   tableData: TableFormat;
-  siteMap: Map<Station, number>;
+  siteMap: {[id: string]: number};
   selectedRef: RowRef;
   scrollbarWidth: string;
 
   constructor(private cdr: ChangeDetectorRef, scrollWidthService: ScrollbarWidthCalcService) {
     this.scrollbarWidth = scrollWidthService.getScrollbarWidth() + "px";
-    this.siteMap = new Map<Station, number>();
+    this.siteMap = {};
     this.tableData = {
       header: ["Name", "Station ID", "Island"],
-      sortOrder: [true, true, true],
+      sortOrder: true,
       sorted: -1,
       rows: []
     }
@@ -77,17 +84,17 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
   getSortSymbol(i: number): string {
     let symbol = "";
     if(i == this.tableData.sorted) {
-      symbol = this.tableData.sortOrder[i] ? "▾" : "▴";
+      symbol = this.tableData.sortOrder ? "▴" : "▾";
     }
     return symbol;
   }
 
   generateRowMap(rows: QueryList<ElementRef>) {
-    this.siteMap.clear();
+    this.siteMap = {};
     rows.forEach((row: ElementRef, i: number) => {
       let rowRef = this.tableData.rows[i];
       rowRef.element = row;
-      this.siteMap.set(rowRef.station, i);
+      this.siteMap[rowRef.station.id] = i;
     });
   }
 
@@ -98,10 +105,15 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
     });
   }
 
-  setSelected(selected: ElementRef, i: number) {
-    let station = this.tableData.rows[i].station;
+  setSelected(i: number) {
+    if(this.selectedRef) {
+      this.selectedRef.selected = false;
+    }
+    let ref = this.tableData.rows[i]
+    ref.selected = true;
     // this.paramService.pushSiteSelect(site);
-    this.selectedChange.emit(station);
+    this.selectedChange.emit(ref.station);
+    this.selectedRef = ref;
   }
 
   selectFromTable(rowIndex: number) {
@@ -121,25 +133,28 @@ export class SiteAvailabilityTableComponent implements AfterViewInit {
   }
 
   sort(i: number) {
+    if(i < 0) {
+      return;
+    }
+    let order = true;
+    if(this.tableData.sorted == i) {
+      order = !this.tableData.sortOrder;
+    }
     this.tableData.rows.sort((a: RowRef, b: RowRef) => {
-      let order = this.tableData.sortOrder[i];
-      let sort: number = 1;
-      if(a.values[i] < b.values[i]) {
-        sort = -1;
-      }
+      let sort: number = a.values[i].localeCompare(b.values[i], undefined, {sensitivity: "base"});
       if(!order) {
         sort *= -1;
       }
       return sort;
     });
-    this.tableData.sortOrder[i] = !this.tableData.sortOrder[i];
     this.tableData.sorted = i;
+    this.tableData.sortOrder = order;
   }
 }
 
 interface TableFormat {
   header: string[],
-  sortOrder: boolean[],
+  sortOrder: boolean,
   sorted: number,
   rows: RowRef[]
 }

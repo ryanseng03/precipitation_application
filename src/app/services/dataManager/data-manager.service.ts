@@ -30,7 +30,7 @@ export class DataManagerService {
     timeseries: RequestResults[]
   }
 
-  async execTimeseries(exec: (start: string, end: string, period: UnitOfTime, location: MapLocation, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any, location: MapLocation): Promise<void> {
+  private async execTimeseries(exec: (start: string, end: string, period: UnitOfTime, location: MapLocation, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any, location: MapLocation): Promise<void> {
     const chunkSize: {interval: number, unit: UnitOfTime} = {
       interval: 5,
       unit: "year"
@@ -54,6 +54,7 @@ export class DataManagerService {
     const start = timeseriesData.start;
     const end = timeseriesData.end;
     let date = start.clone();
+    console.log(timeseriesData.stationPeriods);
     while(date.isSameOrBefore(end)) {
       let start_s: string = date.toISOString();
       date.add(chunkSize.interval, chunkSize.unit);
@@ -68,8 +69,9 @@ export class DataManagerService {
     let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
       return res.toPromise()
       .then((timeseriesData: TimeseriesGraphData) => {
+        console.log(timeseriesData);
         if(timeseriesData) {
-          this.paramService.pushTimeseries(timeseriesData);
+          //this.paramService.pushTimeseries(timeseriesData);
         }
       })
       .catch((reason: RequestReject) => {
@@ -95,7 +97,7 @@ export class DataManagerService {
     });
   }
 
-  async selectStation(station: Station): Promise<void> {
+  private selectStation(station: Station) {
     if(this.lastLocation?.type != "station" || station.id != (<Station>this.lastLocation).id) {
       const { stationParams } = this.dataset;
       let properties: any = {
@@ -106,7 +108,7 @@ export class DataManagerService {
     }
   }
 
-  async selectVStation(location: V_Station): Promise<void> {
+  private selectVStation(location: V_Station) {
     const { row, col } = location.cellData;
     if(this.lastLocation?.type != "virtual_station" || row != (<V_Station>this.lastLocation).cellData.row || col != (<V_Station>this.lastLocation).cellData.col) {
       const { rasterParams } = this.dataset;
@@ -121,7 +123,7 @@ export class DataManagerService {
   }
   
 
-  async init() {
+  private async init() {
     //change to use station group listed in dataset
     let metadataReq: RequestResults = await this.reqFactory.getStationMetadata({
       station_group: "hawaii_climate_primary"
@@ -278,15 +280,8 @@ export class DataManagerService {
 
 
     //track selected station and emit series data based on
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, async (location: MapLocation) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
       if(location && this.dataset.focusManager.type == "timeseries") {
-        //has to go after old queries canceled!!!
-        setTimeout(() => {
-          this.paramService.pushLoading({
-            tag: "timeseries",
-            loading: true
-          });
-        }, 0);
         switch(location.type) {
           case "station": {
             this.selectStation(<Station>location);
@@ -298,6 +293,7 @@ export class DataManagerService {
           }
         }
       }
+      this.lastLocation = location;
 
     });
 
