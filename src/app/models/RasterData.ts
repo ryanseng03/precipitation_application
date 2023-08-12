@@ -74,7 +74,6 @@ export class RasterData {
         }
         let subStat: UpdateStatus<null>;
         let band: string;
-        let values: IndexedValues;
         for(band in bands) {
             subStat = this.addBand(band, bands[band]);
             if(subStat.code != UpdateFlags.OK) {

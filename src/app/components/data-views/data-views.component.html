@@ -1,69 +1,38 @@
 
-<div *ngIf="loading; else data">
+<div *ngIf="loading">
   <app-loading-component></app-loading-component>
 </div>
-
-<ng-template #data>
-
-  <div *ngIf="stations === null; else available">
-    <h2>
-      No station data is available for this dataset
-    </h2>
-  </div>
-  <ng-template #available>
+<!-- don't want to destroy everything while loading so just hide it -->
+<div #data [ngClass] = "{'hidden': loading}">
+  <div *ngIf="stations?.length > 0">
     <div class="filter-container">
-      <h4>
-        Filter Stations
-      </h4>
-      <div class="filter-component">
-        <mat-form-field>
-          <mat-label>
-            Field
-          </mat-label>
-          <mat-select disableOptionCentering
-            [formControl]="fieldControl">
-            <mat-option *ngFor="let field of fieldData" [value]="field.value">{{field.label}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-
-
-
-      <div class="filter-component multi-select-shift">
-        <mat-select-autocomplete
-          [placeholder]="'Values'"
-          [options]="values"
-          [multiple]="true"
-          ngDefaultControl
-          [formControl]="filterControl"
-          [disabled]="!fieldControl.value">
-        </mat-select-autocomplete>
-      </div>
-      <div class="filter-component">
-        <button mat-raised-button color="warn" (click)="clearFilter()" [disabled]="!filterControl.value || filterControl.value.length < 1">Clear Filter</button>
-      </div>
-    </div>
-    <div class="main-container">
-      <div class="filter-table">
-        <app-site-availability-table
+      <app-station-filter
         [stations]="stations"
-        [selected]="selectedStation"
+        [metadata]="metadata"
+        (filtered)="pushFiltered($event)">
+      </app-station-filter>
+      
+    </div>
+    <div class="filter-table">
+      <app-site-availability-table
+        [stations]="filteredStations"
+        [selected]="selected"
         (selectedChange)="selectStation($event)">
       </app-site-availability-table>
-      </div>
-      <div *ngIf="selectedStation" class="site-data-table">
-        <app-site-data-table
-          [unit]="unit"
-          [selected]="selectedStation">
-        </app-site-data-table>
-      </div>
-
-
     </div>
+  </div>
+ 
+  <div *ngIf="selected; else selectMessage" class="site-data-table">
+    <app-site-data-table
+      [selected]="selected">
+    </app-site-data-table>
+  </div>
+  <ng-template #selectMessage>
+    <h2>
+      Select a station or click on the map to view information about that location.
+    </h2>
   </ng-template>
-
-
-</ng-template>
+</div>
 
 
 

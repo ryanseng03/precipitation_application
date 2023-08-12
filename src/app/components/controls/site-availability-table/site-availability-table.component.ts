@@ -1,7 +1,6 @@
-import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, AfterContentInit, ChangeDetectorRef, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import {EventParamRegistrarService} from "../../../services/inputManager/event-param-registrar.service";
-import { SiteInfo } from 'src/app/models/SiteMetadata';
+import { Component, AfterViewInit, ViewChildren, QueryList, ChangeDetectorRef, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc.service';
+import { MapLocation, Station } from 'src/app/models/Stations';
 
 @Component({
   selector: 'app-site-availability-table',
@@ -9,51 +8,50 @@ import { ScrollbarWidthCalcService } from 'src/app/services/scrollbar-width-calc
   styleUrls: ['./site-availability-table.component.scss']
   // changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SiteAvailabilityTableComponent implements AfterViewInit, AfterContentInit {
+export class SiteAvailabilityTableComponent implements AfterViewInit {
 
   @ViewChildren("dataRows") dataRows: QueryList<ElementRef>;
   @ViewChild("tbody", {static: false}) tbody: ElementRef;
 
-  islandNameMap = {
-    BI: "Big Island",
-    OA: "Oʻahu",
-    MA: "Maui",
-    KA: "Kauai",
-    MO: "Molokaʻi",
-    KO: "Kahoʻolawe"
-  }
-
-  @Input() set stations(stations: any[]) {
+  @Input() set stations(stations: Station[]) {
     this.tableData.rows = [];
     for(let station of stations) {
-      let values = [];
-      values.push(station.name);
-      values.push(station[station.id_field]);
-      let island = this.islandNameMap[station.island];
-      values.push(island);
+      let formatValues = [
+        station.format.getFieldFormat("name").formattedValue,
+        station.format.getFieldFormat(station.metadata.idField).value,
+        station.format.getFieldFormat("island").formattedValue
+      ];
       this.tableData.rows.push({
         station: station,
         element: null,
         selected: false,
-        values: values
+        values: formatValues
       });
     }
+    //this is going to be reversed by the sort function, want to keep the same as before so pre-swap to maintain order
+    this.tableData.sortOrder = !this.tableData.sortOrder;
+    this.sort(this.tableData.sorted);
     //delay to give element refs time to update, then trigger station select in table if it exists
     setTimeout(() => {
-      this.selected = this.selectedStation;
+      this.selected = this.location;
     }, 0);
-
   }
 
-  selectedStation = null;
-  @Input() set selected(station: SiteInfo) {
-    this.selectedStation = station;
-    if(station) {
-      let index = this.siteMap.get(station);
+  location: MapLocation = null;
+  @Input() set selected(location: MapLocation) {
+    this.location = location;
+    if(location && location.type == "station") {
+      //the location is a station
+      let station = <Station>location;
+      let index = this.siteMap[station.id];
       //only select if station exists in table
       if(index !== undefined) {
-        this.selectFromTable(index);
-        this.cdr.detectChanges();
+        //give time to propogate new station data if changing date
+        setTimeout(() => {
+          this.selectFromTable(index);
+          this.cdr.detectChanges();
+        }, 0);
+        
       }
     }
     else {
@@ -64,30 +62,39 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     }
 
   }
-  @Output() selectedChange: EventEmitter<SiteInfo> = new EventEmitter<SiteInfo>();
+  @Output() selectedChange: EventEmitter<Station> = new EventEmitter<Station>();
 
 
   tableData: TableFormat;
-  siteMap: Map<SiteInfo, number>;
+  siteMap: {[id: string]: number};
   selectedRef: RowRef;
   scrollbarWidth: string;
 
   constructor(private cdr: ChangeDetectorRef, scrollWidthService: ScrollbarWidthCalcService) {
     this.scrollbarWidth = scrollWidthService.getScrollbarWidth() + "px";
-    this.siteMap = new Map<SiteInfo, number>();
+    this.siteMap = {};
     this.tableData = {
       header: ["Name", "Station ID", "Island"],
+      sortOrder: true,
+      sorted: -1,
       rows: []
     }
+  }
 
+  getSortSymbol(i: number): string {
+    let symbol = "";
+    if(i == this.tableData.sorted) {
+      symbol = this.tableData.sortOrder ? "▴" : "▾";
+    }
+    return symbol;
   }
 
   generateRowMap(rows: QueryList<ElementRef>) {
-    this.siteMap.clear();
+    this.siteMap = {};
     rows.forEach((row: ElementRef, i: number) => {
       let rowRef = this.tableData.rows[i];
       rowRef.element = row;
-      this.siteMap.set(rowRef.station, i);
+      this.siteMap[rowRef.station.id] = i;
     });
   }
 
@@ -96,18 +103,17 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     this.dataRows.changes.subscribe((rows: QueryList<ElementRef>) => {
       this.generateRowMap(rows);
     });
-
-
   }
 
-  ngAfterContentInit() {
-
-  }
-
-  setSelected(selected: ElementRef, i: number) {
-    let station = this.tableData.rows[i].station;
+  setSelected(i: number) {
+    if(this.selectedRef) {
+      this.selectedRef.selected = false;
+    }
+    let ref = this.tableData.rows[i]
+    ref.selected = true;
     // this.paramService.pushSiteSelect(site);
-    this.selectedChange.emit(station);
+    this.selectedChange.emit(ref.station);
+    this.selectedRef = ref;
   }
 
   selectFromTable(rowIndex: number) {
@@ -126,18 +132,36 @@ export class SiteAvailabilityTableComponent implements AfterViewInit, AfterConte
     this.selectedRef.selected = true;
   }
 
+  sort(i: number) {
+    if(i < 0) {
+      return;
+    }
+    let order = true;
+    if(this.tableData.sorted == i) {
+      order = !this.tableData.sortOrder;
+    }
+    this.tableData.rows.sort((a: RowRef, b: RowRef) => {
+      let sort: number = a.values[i].localeCompare(b.values[i], undefined, {sensitivity: "base"});
+      if(!order) {
+        sort *= -1;
+      }
+      return sort;
+    });
+    this.tableData.sorted = i;
+    this.tableData.sortOrder = order;
+  }
 }
 
 interface TableFormat {
   header: string[],
+  sortOrder: boolean,
+  sorted: number,
   rows: RowRef[]
 }
 
 interface RowRef {
-  station: SiteInfo,
+  station: Station,
   element: ElementRef,
   selected: boolean,
   values: string[]
 }
-
-//class Two

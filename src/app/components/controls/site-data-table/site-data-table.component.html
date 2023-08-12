@@ -1,15 +1,14 @@
 <div class="wrapper">
-  <table class="outer-table">
+  <table>
     <tr>
         <th colspan="2" class="header">
-          Station Metadata
+          {{title}}
         </th>
     </tr>
-    <tr *ngFor="let data of dataMap">
-      <td class="field-cell">{{data.field}}</td>
-      <td>{{data.value}}</td>
+    <tr *ngFor="let item of data">
+      <td class="field-cell">{{item.formattedField}}</td>
+      <td>{{item.formattedValue}}</td>
     </tr>
-
   </table>
 </div>
 

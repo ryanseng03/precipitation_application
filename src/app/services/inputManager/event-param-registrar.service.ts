@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { ParameterStoreService, ParameterHook } from "./auxillary/parameter-store.service"
 import { BehaviorSubject, Observable } from 'rxjs';
 import { RasterData } from 'src/app/models/RasterData';
-import { SiteInfo } from 'src/app/models/SiteMetadata';
 import { ColorScale } from 'src/app/models/colorScale';
 import { VisDatasetItem, FocusData } from '../dataset-form-manager.service';
+import { MapLocation, Station, StationMetadata } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
 
 @Injectable({
   providedIn: 'root'
@@ -15,22 +16,24 @@ export class EventParamRegistrarService {
     raster: "raster",
     stations: "stations",
     filteredStations: "filteredStations",
-    selectedStation: "selectedStation",
     focusData: "focus",
     dataset: "dataset",
-    stationTimeseries: "stationTimeseries",
+    timeseries: "timeseries",
     loading: "loading",
     mapBounds: "mapBounds",
     colorScale: "colorScale",
-    viewType: "viewType"
+    viewType: "viewType",
+    selectedLocation: "location",
+    metadata: "metadata"
   };
 
+  private metadataSource: BehaviorSubject<StationMetadata[]>;
+  private selectedLocationSource: BehaviorSubject<MapLocation>;
   private datasetSource: BehaviorSubject<VisDatasetItem>;
   private rasterSource: BehaviorSubject<RasterData>;
-  private stationsSource: BehaviorSubject<any[]>;
-  private filteredStationsSource: BehaviorSubject<any[]>;
-  private selectedStationSource: BehaviorSubject<any>;
-  private stationTimeseriesSource: BehaviorSubject<any>;
+  private stationsSource: BehaviorSubject<Station[]>;
+  private filteredStationsSource: BehaviorSubject<Station[]>;
+  private timeseriesSource: BehaviorSubject<TimeseriesGraphData>;
   private focusDataSource: BehaviorSubject<FocusData<unknown>>;
   private loadingSource: BehaviorSubject<LoadingData>;
   private mapBoundsSource: BehaviorSubject<L.LatLngBounds>;
@@ -41,17 +44,18 @@ export class EventParamRegistrarService {
   constructor(private paramService: ParameterStoreService) {
     this.tagGen = new UniqueTagID();
 
-    this.datasetSource = this.paramService.registerParameter<any>(EventParamRegistrarService.EVENT_TAGS.dataset);
+    this.datasetSource = this.paramService.registerParameter<VisDatasetItem>(EventParamRegistrarService.EVENT_TAGS.dataset);
     this.rasterSource = this.paramService.registerParameter<RasterData>(EventParamRegistrarService.EVENT_TAGS.raster);
-    this.stationsSource = this.paramService.registerParameter<any[]>(EventParamRegistrarService.EVENT_TAGS.stations);
-    this.filteredStationsSource = this.paramService.registerParameter<any[]>(EventParamRegistrarService.EVENT_TAGS.filteredStations);
-    this.selectedStationSource = this.paramService.registerParameter<SiteInfo>(EventParamRegistrarService.EVENT_TAGS.selectedStation);
-    this.stationTimeseriesSource = this.paramService.registerParameter<any>(EventParamRegistrarService.EVENT_TAGS.stationTimeseries);
+    this.stationsSource = this.paramService.registerParameter<Station[]>(EventParamRegistrarService.EVENT_TAGS.stations);
+    this.filteredStationsSource = this.paramService.registerParameter<Station[]>(EventParamRegistrarService.EVENT_TAGS.filteredStations);
+    this.timeseriesSource = this.paramService.registerParameter<TimeseriesGraphData>(EventParamRegistrarService.EVENT_TAGS.timeseries);
     this.focusDataSource = this.paramService.registerParameter<FocusData<unknown>>(EventParamRegistrarService.EVENT_TAGS.focusData);
     this.loadingSource = this.paramService.registerParameter<LoadingData>(EventParamRegistrarService.EVENT_TAGS.loading);
     this.mapBoundsSource = this.paramService.registerParameter<L.LatLngBounds>(EventParamRegistrarService.EVENT_TAGS.mapBounds);
     this.colorScaleSource = this.paramService.registerParameter<ColorScale>(EventParamRegistrarService.EVENT_TAGS.colorScale);
     this.viewTypeSource = this.paramService.registerParameter<string>(EventParamRegistrarService.EVENT_TAGS.viewType);
+    this.selectedLocationSource = this.paramService.registerParameter<MapLocation>(EventParamRegistrarService.EVENT_TAGS.selectedLocation);
+    this.metadataSource = this.paramService.registerParameter<StationMetadata[]>(EventParamRegistrarService.EVENT_TAGS.metadata);
   }
 
   pushDataset(dataset: VisDatasetItem): void {
@@ -66,20 +70,16 @@ export class EventParamRegistrarService {
     this.rasterSource.next(raster);
   }
 
-  pushStations(stations: any[]): void {
+  pushStations(stations: Station[]): void {
     this.stationsSource.next(stations);
   }
 
-  pushFilteredStations(stations: any[]): void {
+  pushFilteredStations(stations: Station[]): void {
     this.filteredStationsSource.next(stations);
   }
 
-  pushSelectedStation(station: any): void {
-    this.selectedStationSource.next(station);
-  }
-
-  pushStationTimeseries(seriesData: any) {
-    this.stationTimeseriesSource.next(seriesData);
+  pushTimeseries(seriesData: TimeseriesGraphData) {
+    this.timeseriesSource.next(seriesData);
   }
 
   pushFocusData(data: FocusData<unknown>): void {
@@ -98,7 +98,13 @@ export class EventParamRegistrarService {
     this.viewTypeSource.next(viewType);
   }
 
+  pushSelectedLocation(location: MapLocation): void {
+    this.selectedLocationSource.next(location);
+  }
 
+  pushMetadata(metadata: StationMetadata[]) {
+    this.metadataSource.next(metadata);
+  }
 
   //can this be integrated with the rest of the stuff?
   //why not just have map logic in map component and push out values (originally made this way in case multiple maps, shouldn't be a concern anymore)

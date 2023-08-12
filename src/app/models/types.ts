@@ -23,7 +23,7 @@ let data = {
 
 }
 
-type ValueData<T> = {
+export type ValueData<T> = {
     id: string,
     label: string,
     descriptor: string,

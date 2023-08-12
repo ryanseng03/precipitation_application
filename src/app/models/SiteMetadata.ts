@@ -210,8 +210,8 @@ export class SiteInfo {
         return this.info.date;
     }
 
-    public static getFields() {
-        return ["skn", "name", "observer", "network", "island", "elevation", "lat", "lng", "nceiID", "nwsID", "scanID", "smartNodeRfID", "value", "type", "date"];
+    getFields() {
+        return Object.keys(this.info);
     }
 
 }

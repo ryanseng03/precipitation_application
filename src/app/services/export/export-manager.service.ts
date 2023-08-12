@@ -3,11 +3,9 @@ import { HttpClient, HttpHeaders, HttpEvent, HttpErrorResponse, HttpEventType } 
 import { RequestFactoryService } from '../requests/request-factory.service';
 import { retry, catchError } from 'rxjs/operators';
 import { Observable, Subject, throwError } from "rxjs";
-import * as Moment from 'moment';
-import { DateManagerService } from '../dateManager/date-manager.service';
 import { ResourceReq } from 'src/app/models/exportData';
-import { AssetManagerService } from '../util/asset-manager.service';
 import { UnitOfTime } from '../dataset-form-manager.service';
+import { Moment } from 'moment';
 
 @Injectable({
   providedIn: 'root'
@@ -32,9 +30,7 @@ export class ExportManagerService {
   static readonly F_PART_SIZE_UL_MB = 4;
 
 
-
-
-  constructor(private http: HttpClient, private reqFactory: RequestFactoryService, private dateService: DateManagerService, assetService: AssetManagerService) {
+  constructor(private http: HttpClient, private reqFactory: RequestFactoryService) {
 
   }
 
@@ -46,7 +42,6 @@ export class ExportManagerService {
     let req = await this.reqFactory.submitEmailPackageReq(reqBody);
     return req.toPromise();
   }
-
 
   async submitInstantDownloadReq(reqs: ResourceReq[], email: string): Promise<Observable<number>> {
     let reqBody = {
@@ -125,6 +120,9 @@ export class ExportManagerService {
               progress.complete();
             }
           }
+        }, (e: HttpErrorResponse) => {
+          progress.error(e);
+          return Promise.reject(e);
         });
       }
     })
@@ -132,6 +130,7 @@ export class ExportManagerService {
       return new Blob(responses, {type: "application/zip"});
     })
     .catch((e: any) => {
+      console.log("error caught!");
       //error out progress and reject
       progress.error(e);
       return Promise.reject(e);
@@ -165,7 +164,6 @@ export class ExportManagerService {
   }
 }
 
-
 export interface FileData {
   dates?: DateInfo,
   fields: {[item: string]: string | number}
@@ -173,8 +171,8 @@ export interface FileData {
 
 export interface DateInfo {
   dates: {
-    start: Moment.Moment,
-    end: Moment.Moment
+    start: Moment,
+    end: Moment
   },
   period: UnitOfTime
 }
@@ -193,7 +191,7 @@ export interface ExportInfo {
 }
 
 interface FileDateInfo {
-  dates: [Moment.Moment, Moment.Moment],
+  dates: [Moment, Moment],
   period: string,
 }
 

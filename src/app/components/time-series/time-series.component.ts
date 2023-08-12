@@ -4,6 +4,8 @@ import Moment from "moment";
 import { EventParamRegistrarService, LoadingData } from 'src/app/services/inputManager/event-param-registrar.service';
 import { Subject } from 'rxjs';
 import { VisDatasetItem, FocusData } from 'src/app/services/dataset-form-manager.service';
+import { MapLocation } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from '../rainfall-graph/rainfall-graph.component';
 
 @Component({
   selector: 'app-time-series',
@@ -14,25 +16,25 @@ export class TimeSeriesComponent implements OnInit {
 
   @Input() width: number;
 
-  selectedStation = null;
+  selectedLocation: MapLocation = null;
   complete = false;
 
   selected: SiteInfo;
-  source: Subject<any>;
+  source: Subject<TimeseriesGraphData>;
   date: Moment.Moment;
   axisLabel: string;
 
   constructor(private paramService: EventParamRegistrarService) {
-    this.source = new Subject<any>();
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, (station: any) => {
-      this.selectedStation = station;
+    this.source = new Subject<TimeseriesGraphData>();
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
+      this.selectedLocation = location;
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.loading, (loadData: LoadingData) => {
       if(loadData && loadData.tag == "timeseries") {
         this.complete = !loadData.loading;
       }
     });
-    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stationTimeseries, (data: any) => {
+    paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.timeseries, (data: TimeseriesGraphData) => {
       if(data) {
         this.source.next(data);
       }
@@ -45,7 +47,10 @@ export class TimeSeriesComponent implements OnInit {
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
-        let axisLabel = `${dataset.datatype} (${dataset.units})`;
+        let axisLabel = dataset.datatype;
+        if(dataset.units) {
+          axisLabel += ` (${dataset.units})`
+        }
         this.axisLabel = axisLabel;
       }
     });

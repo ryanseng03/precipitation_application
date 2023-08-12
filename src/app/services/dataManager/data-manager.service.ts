@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { RasterData } from "../../models/RasterData";
 import { RequestFactoryService } from "../requests/request-factory.service";
 import { RequestResults, RequestReject } from "../requests/request.service";
-import Moment from 'moment';
 import {EventParamRegistrarService} from "../inputManager/event-param-registrar.service";
 import { ErrorPopupService } from '../errorHandling/error-popup.service';
 import { DateManagerService } from '../dateManager/date-manager.service';
-import { LatLng } from 'leaflet';
-import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manager.service';
+import { FocusData, TimeseriesData, UnitOfTime, VisDatasetItem } from '../dataset-form-manager.service';
+import { MapLocation, Station, StationMetadata, V_Station } from 'src/app/models/Stations';
+import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
 
 
 @Injectable({
@@ -16,58 +16,151 @@ import { FocusData, TimeseriesData, VisDatasetItem } from '../dataset-form-manag
 export class DataManagerService {
 
   constructor(private reqFactory: RequestFactoryService, private paramService: EventParamRegistrarService, private errorPop: ErrorPopupService, private dateHandler: DateManagerService) {
+    this.lastLocation = null;
+    this.dataset = null;
+    this.queries = {
+      timeseries: []
+    };
     this.init();
   }
 
-  async init() {
-    let selectedDataset: VisDatasetItem;
-    let selectedStation: any;
+  lastLocation: MapLocation;
+  dataset: VisDatasetItem;
+  queries: {
+    timeseries: RequestResults[]
+  }
+
+  private async execTimeseries(exec: (start: string, end: string, timeseriesData: TimeseriesData, location: MapLocation, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any, location: MapLocation): Promise<void> {
+    let startTime = new Date().getTime();
+    //cancel outbound queries and reset query list
+    for(let query of this.queries.timeseries) {
+      query.cancel();
+    }
+    this.queries.timeseries = [];
+    //set loading
+    //delay so executes after loading from previous query cancelled if still running
+    setTimeout(() => {
+      this.paramService.pushLoading({
+        tag: "timeseries",
+        loading: true
+      });
+    }, 0);
+   
+    for(let timeseriesData of this.dataset.timeseriesData) {
+      const start = timeseriesData.start;
+      const end = timeseriesData.end;
+      //go backwards so newer data loaded first
+      let date = end.clone();
+      while(date.isSameOrAfter(start)) {
+        let end_s: string = date.toISOString();
+        date.subtract(300 * timeseriesData.interval, timeseriesData.unit);
+        let start_s: string = date.toISOString();
+      
+        properties.period = timeseriesData.period.tag;
+        let timeseriesRes = await exec(start_s, end_s, timeseriesData, location, properties, false);
+        this.queries.timeseries.push(timeseriesRes);
+      }
+    }
+    
+
+    let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
+      return res.toPromise()
+      .then((timeseriesData: TimeseriesGraphData) => {
+        if(timeseriesData) {
+          this.paramService.pushTimeseries(timeseriesData);
+        }
+      })
+      .catch((reason: RequestReject) => {
+        //if failed not cancelled print reason to stderr
+        if(!reason.cancelled) {
+          console.error(reason.reason);
+          //throw to promise.all for error message
+          throw new Error(reason.reason);
+        }
+      });
+    });
+    Promise.allSettled(queryPromises).then(() => {
+      let time = new Date().getTime() - startTime;
+      let timeSec = time / 1000;
+      console.log(`Timeseries retreival completed or canceled, time elapsed ${timeSec} seconds`);
+      this.paramService.pushLoading({
+        tag: "timeseries",
+        loading: false
+      });
+    });
+    Promise.all(queryPromises).then().catch(() => {
+      this.errorPop.notify("error", `An error occurred while retrieving the timeseries data. Some of the timeseries data could not be retrieved.`);
+    });
+  }
+
+  private selectStation(station: Station) {
+    if(this.lastLocation?.type != "station" || station.id != (<Station>this.lastLocation).id) {
+      const { stationParams } = this.dataset;
+      let properties: any = {
+        station_id: station.id,
+        ...stationParams
+      }
+      this.execTimeseries(this.reqFactory.getStationTimeseries.bind(this.reqFactory), properties, station);
+    }
+  }
+
+  private selectVStation(location: V_Station) {
+    const { row, col } = location.cellData;
+    if(this.lastLocation?.type != "virtual_station" || row != (<V_Station>this.lastLocation).cellData.row || col != (<V_Station>this.lastLocation).cellData.col) {
+      const { rasterParams } = this.dataset;
+      let properties: any = {
+        extent: "statewide",
+        row,
+        col,
+        ...rasterParams
+      }
+      this.execTimeseries(this.reqFactory.getVStationTimeseries.bind(this.reqFactory), properties, location);
+    }
+  }
+  
+
+  private async init() {
     //change to use station group listed in dataset
     let metadataReq: RequestResults = await this.reqFactory.getStationMetadata({
       station_group: "hawaii_climate_primary"
     });
 
     metadataReq.transformData((data: any) => {
-      let metadata = {};
+      let metadataMap = {};
       for(let item of data) {
         //deconstruct
-        let { station_group, ...stationMetadata } = item;
-        //move id_field to some kind of header describing station group to avoid duplication?
-        let idField = stationMetadata.id_field;
-        //move this to some kind of header describing station group to avoid duplication?
-        //quality of life
-        stationMetadata.location = stationMetadata.elevation_m ? new LatLng(stationMetadata.lat, stationMetadata.lng, stationMetadata.elevation_m) : new LatLng(stationMetadata.lat, stationMetadata.lng)
-        stationMetadata.value = null;
-        let id = stationMetadata[idField];
+        let { station_group, id_field, ...stationMetadata } = item;
+        let metadata = new StationMetadata(id_field, stationMetadata);
         //yay for inconsistent data
-        id = this.getStandardizedNumericString(id);
-        metadata[id] = stationMetadata;
+        //value docs may have decimals that do not match, standardize id formats
+        let standardizedID = this.getStandardizedNumericString(metadata.id);
+        metadataMap[standardizedID] = metadata;
       }
-      return metadata;
+      this.paramService.pushMetadata(Object.values(metadataMap));
+      return metadataMap;
     });
 
+    let selectedStation: Station = null;
 
-
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: any[]) => {
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
       if(stations && selectedStation) {
-        let selected = null;
+        let selected: Station = null;
         for(let station of stations) {
-          let idField = station.id_field;
-          if(station[idField] == selectedStation[idField]) {
+          if(station.id == selectedStation.id) {
             selected = station;
             break;
           }
         }
         //delay to allow filtered station propogation before emitting
         setTimeout(() => {
-          this.paramService.pushSelectedStation(selected);
+          this.paramService.pushSelectedLocation(selected);
         }, 0);
       }
     });
     this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
-      selectedDataset = dataset;
+      this.dataset = dataset;
       //reset selected station and timeseries data
-      this.paramService.pushSelectedStation(null);
+      this.paramService.pushSelectedLocation(null);
     });
 
 
@@ -82,9 +175,7 @@ export class DataManagerService {
           rasterRes.cancel();
         }
 
-        let datasetInfo: VisDatasetItem = selectedDataset;
-
-        const { includeStations, includeRaster, rasterParams, stationParams } = datasetInfo;
+        const { includeStations, includeRaster, rasterParams, stationParams, units, unitsShort } = this.dataset;
 
         this.paramService.pushLoading({
           tag: "vis",
@@ -98,29 +189,22 @@ export class DataManagerService {
           let properties = {
             ...focus.paramData,
             ...stationParams
-          }
+          };
           stationRes = await this.reqFactory.getStationData(properties);
           //transform by combining with station data
           stationRes.transformData((stationVals: any[]) => {
             //get metadata
             return metadataReq.toPromise()
-            .then((metadata: any) => {
-              let stations: any[] = stationVals.reduce((acc: any[], stationVal: any) => {
+            .then((metadataMap: {[id: string]: StationMetadata}) => {
+              let stations: Station[] = stationVals.reduce((acc: Station[], stationVal: any) => {
                 let stationId = stationVal.station_id;
                 //yay for inconsistent data
                 let standardizedStationId = this.getStandardizedNumericString(stationId);
                 let stationValue = stationVal.value;
-                let stationMetadata = metadata[standardizedStationId];
+                let stationMetadata = metadataMap[standardizedStationId];
                 if(stationMetadata) {
-                  let idField = stationMetadata.id_field;
-                  //TEMP
-                  //set station id (SKN) to id non-standardized id from incoming document so timeseries ret works properly (skn needs to match dataset documents)
-                  //uggh
-                  stationMetadata[idField] = stationId;
-                  stationMetadata.value = stationValue;
-                  //copy the station data to a new object to prevent comparison issues (won't trigger change detection because it's the same object)
-                  stationMetadata = Object.assign({}, stationMetadata);
-                  acc.push(stationMetadata);
+                  let station = new Station(stationValue, stationId, units, unitsShort, stationMetadata);
+                  acc.push(station);
                 }
                 else {
                   console.error(`Could not find metadata for station, station ID: ${stationId}.`);
@@ -156,10 +240,10 @@ export class DataManagerService {
         else {
           rasterPromise = Promise.resolve(null);
         }
-        let promises: [Promise<any>, Promise<any>] = [stationPromise, rasterPromise];
+        let promises: [Promise<Station[]>, Promise<RasterData>] = [stationPromise, rasterPromise];
 
         //don't have to wait to set data for each
-        promises[0].then((stationData: any[]) => {
+        promises[0].then((stationData: Station[]) => {
           this.paramService.pushStations(stationData);
         })
         .catch((reason: RequestReject) => {
@@ -191,98 +275,21 @@ export class DataManagerService {
     });
 
 
-    let timeseriesQueries = [];
     //track selected station and emit series data based on
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedStation, async (station: any) => {
-      //don't trigger again if already handling this station
-      if(!station || !selectedStation || selectedStation[station.id_field] !== station[station.id_field]) {
-        //cancel outbound queries and reset query list
-        for(let query of timeseriesQueries) {
-          query.cancel();
-        }
-        timeseriesQueries = [];
-        selectedStation = station;
-        //dispatch query if the dataset has a timeseries component and the selected station is not null
-        if(station && selectedDataset.focusManager.type == "timeseries") {
-          let timeseriesData: TimeseriesData = <TimeseriesData>selectedDataset.focusManager;
-          setTimeout(() => {
-            this.paramService.pushLoading({
-              tag: "timeseries",
-              loading: true
-            });
-          }, 0);
-          let datasetInfo: VisDatasetItem = selectedDataset;
-          const { stationParams } = datasetInfo;
-          let timeseriesPromises = [];
-          let startDate = timeseriesData.start;
-          let endDate = timeseriesData.end;
-          let periods = timeseriesData.stationPeriods;
-
-          let i = 0
-          for(let periodData of periods) {
-            let properties = {
-              station_id: station[station.id_field],
-              ...stationParams
-            }
-            //make sure to overwrite period from params
-            properties["period"] = periodData.tag;
-
-            //chunk queries by year
-            let date = startDate.clone();
-            
-            while(date.isSameOrBefore(endDate)) {
-              let start_s: string = this.dateHandler.dateToString(date, periodData.unit);
-              date.add(1, "year");
-              let end_s: string = this.dateHandler.dateToString(date, periodData.unit);
-              //note query is [)
-              let timeseriesRes = await this.reqFactory.getStationTimeSeries(start_s, end_s, properties);
-
-              timeseriesRes.transformData((timeseriesData: any[]) => {
-                i++;
-                if(timeseriesData.length > 0) {
-                  let transformed = {
-                    stationId: timeseriesData[0].station_id,
-                    period: timeseriesData[0].period,
-                    values: timeseriesData.map((item: any) => {
-                      return {
-                        value: item.value,
-                        date: Moment(item.date)
-                      }
-                    })
-                  }
-                  return transformed;
-                }
-                else {
-                  return null;
-                }
-              });
-              timeseriesQueries.push(timeseriesRes);
-
-              let timeseriesPromise = timeseriesRes.toPromise();
-              timeseriesPromise.then((timeseriesData: any) => {
-                if(timeseriesData) {
-                  this.paramService.pushStationTimeseries(timeseriesData);
-                }
-              })
-              .catch((reason: RequestReject) => {
-                //if failed not cancelled print reason to stderr
-                if(!reason.cancelled) {
-                  console.error(reason.reason);
-                }
-              });
-
-              timeseriesPromises.push(timeseriesPromise);
-            }
+    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.selectedLocation, (location: MapLocation) => {
+      if(location && this.dataset.focusManager.type == "timeseries") {
+        switch(location.type) {
+          case "station": {
+            this.selectStation(<Station>location);
+            break;
           }
-          //when all timeseries promises are complete push out loading complete signal
-          Promise.allSettled(timeseriesPromises).then(() => {
-            this.paramService.pushLoading({
-              tag: "timeseries",
-              loading: false
-            });
-          });
+          case "virtual_station": {
+            this.selectVStation(<V_Station>location);
+            break;
+          }
         }
       }
+      this.lastLocation = location;
 
     });
 
