@@ -4,7 +4,7 @@
     <div class="button-container" *ngFor="let rangePeriod of rangeData.periodRanges[item.key]">
       <button mat-flat-button color="primary" (click)="setRange(item.key, rangePeriod)">{{rangeData.buttonData[rangePeriod]}}</button>
     </div>
-    <button mat-flat-button color="primary" (click)="downloadCSV(item.key)">Download as CSV</button>
+    <button mat-flat-button color="primary" (click)="downloadCSV(item.key)" [disabled]="!complete">Download as CSV</button>
     <plotly-plot [data]="item.value.graph.data" [layout]="item.value.graph.layout"></plotly-plot>
   </div>
 </div>

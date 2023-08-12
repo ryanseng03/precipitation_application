@@ -22,8 +22,8 @@ export class DataViewsComponent implements OnInit {
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.stations, (stations: Station[]) => {
       this.stations = stations;
-      //if stations is null won't be filtered, just propogate
-      if(stations === null) {
+      //if stations is null or empty won't be filtered, just propogate
+      if(!stations || stations.length == 0) {
         this.pushFiltered(stations);
       }
     });

@@ -47,7 +47,10 @@ export class TimeSeriesComponent implements OnInit {
     });
     paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.dataset, (dataset: VisDatasetItem) => {
       if(dataset) {
-        let axisLabel = `${dataset.datatype} (${dataset.units})`;
+        let axisLabel = dataset.datatype;
+        if(dataset.units) {
+          axisLabel += ` (${dataset.units})`
+        }
         this.axisLabel = axisLabel;
       }
     });

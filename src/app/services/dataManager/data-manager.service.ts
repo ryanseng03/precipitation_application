@@ -30,11 +30,7 @@ export class DataManagerService {
     timeseries: RequestResults[]
   }
 
-  private async execTimeseries(exec: (start: string, end: string, period: UnitOfTime, location: MapLocation, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any, location: MapLocation): Promise<void> {
-    const chunkSize: {interval: number, unit: UnitOfTime} = {
-      interval: 5,
-      unit: "year"
-    };
+  private async execTimeseries(exec: (start: string, end: string, timeseriesData: TimeseriesData, location: MapLocation, properties: Object, printTiming?: boolean, delay?: number) => Promise<RequestResults>, properties: any, location: MapLocation): Promise<void> {
     let startTime = new Date().getTime();
     //cancel outbound queries and reset query list
     for(let query of this.queries.timeseries) {
@@ -50,28 +46,28 @@ export class DataManagerService {
       });
     }, 0);
    
-    const timeseriesData: TimeseriesData = <TimeseriesData>this.dataset.focusManager;
-    const start = timeseriesData.start;
-    const end = timeseriesData.end;
-    let date = start.clone();
-    console.log(timeseriesData.stationPeriods);
-    while(date.isSameOrBefore(end)) {
-      let start_s: string = date.toISOString();
-      date.add(chunkSize.interval, chunkSize.unit);
-      let end_s: string = date.toISOString();
-      for(let periodData of timeseriesData.stationPeriods) {
-        properties.period = periodData.tag;
-        let timeseriesRes = await exec(start_s, end_s, <UnitOfTime>periodData.tag, location, properties, false);
+    for(let timeseriesData of this.dataset.timeseriesData) {
+      const start = timeseriesData.start;
+      const end = timeseriesData.end;
+      //go backwards so newer data loaded first
+      let date = end.clone();
+      while(date.isSameOrAfter(start)) {
+        let end_s: string = date.toISOString();
+        date.subtract(300 * timeseriesData.interval, timeseriesData.unit);
+        let start_s: string = date.toISOString();
+      
+        properties.period = timeseriesData.period.tag;
+        let timeseriesRes = await exec(start_s, end_s, timeseriesData, location, properties, false);
         this.queries.timeseries.push(timeseriesRes);
       }
     }
+    
 
     let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
       return res.toPromise()
       .then((timeseriesData: TimeseriesGraphData) => {
-        console.log(timeseriesData);
         if(timeseriesData) {
-          //this.paramService.pushTimeseries(timeseriesData);
+          this.paramService.pushTimeseries(timeseriesData);
         }
       })
       .catch((reason: RequestReject) => {
@@ -86,7 +82,7 @@ export class DataManagerService {
     Promise.allSettled(queryPromises).then(() => {
       let time = new Date().getTime() - startTime;
       let timeSec = time / 1000;
-      console.log(`Timeseries retreival for ${start.toISOString()}-${end.toISOString()} completed or canceled, time elapsed ${timeSec} seconds`);
+      console.log(`Timeseries retreival completed or canceled, time elapsed ${timeSec} seconds`);
       this.paramService.pushLoading({
         tag: "timeseries",
         loading: false
@@ -193,7 +189,7 @@ export class DataManagerService {
           let properties = {
             ...focus.paramData,
             ...stationParams
-          }
+          };
           stationRes = await this.reqFactory.getStationData(properties);
           //transform by combining with station data
           stationRes.transformData((stationVals: any[]) => {

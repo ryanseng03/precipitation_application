@@ -26,15 +26,20 @@ export class DataProcessorService {
       this.lastReceivedId = id;
       //if this is the data for the last request submitted then process and resolve
       if(this.workerId == id) {
-        let geotiffData: RasterData = new RasterData(header);
-        for(let band in bandData) {
-          let values: IndexedValues = new Map<number, number>(bandData[band]);
-          let rasterStat = geotiffData.addBand(band, values);
-          if(rasterStat.code != UpdateFlags.OK) {
-            throw new Error("Error adding band to raster: " + band);
-          }
+        if(header === null) {
+          this.resolver(null);
         }
-        this.resolver(geotiffData);
+        else {
+          let geotiffData: RasterData = new RasterData(header);
+          for(let band in bandData) {
+            let values: IndexedValues = new Map<number, number>(bandData[band]);
+            let rasterStat = geotiffData.addBand(band, values);
+            if(rasterStat.code != UpdateFlags.OK) {
+              throw new Error("Error adding band to raster: " + band);
+            }
+          }
+          this.resolver(geotiffData);
+        }
         this.resolver = null;
       }
       //otherwise submit latest request data to worker

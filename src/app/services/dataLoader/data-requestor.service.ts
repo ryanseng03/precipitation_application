@@ -4,9 +4,6 @@ import { RasterData } from '../../models/RasterData';
 import {DataProcessorService} from "../dataProcessor/data-processor.service";
 import { StringMap } from 'src/app/models/types';
 
-//import { WebWorkerService } from 'ngx-web-worker';
-//import {workerGetInternalIndices} from "../../workers/geotiff_worker";
-
 export { RequestResults };
 
 //main service for data requestor, handles requests, gets and combines site metadata and values with site management services
@@ -48,7 +45,7 @@ export class DataRequestorService {
         //transform array buffer to raster data
         return this.processor.getRasterDataFromGeoTIFFArrayBuffer(data, DataRequestorService.GEOTIFF_NODATA)
         .then((rasterData: RasterData) => {
-          return rasterData
+          return rasterData;
         });
       }
 

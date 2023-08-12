@@ -3,7 +3,7 @@ import Moment from 'moment';
 import { DateManagerService } from 'src/app/services/dateManager/date-manager.service';
 import { Observable } from 'rxjs';
 import { MapLocation, Station, V_Station } from 'src/app/models/Stations';
-import { UnitOfTime } from 'src/app/services/dataset-form-manager.service';
+import { TimeseriesData, UnitOfTime } from 'src/app/services/dataset-form-manager.service';
 import { CsvGenService } from 'src/app/services/export/csv-gen.service';
 
 @Component({
@@ -23,7 +23,8 @@ export class RainfallGraphComponent implements OnInit {
   rangeData = {
     periodRanges: {
       day: ["month", "year", "all"],
-      month: ["year", "all"]
+      month: ["year", "all"],
+      "16day": ["year", "all"]
     },
     buttonData: {
       month: "Zoom to month",
@@ -39,7 +40,8 @@ export class RainfallGraphComponent implements OnInit {
 
   periodLabelMap = {
     day: "Daily",
-    month: "Monthly"
+    month: "Monthly",
+    "16day": "16 Day"
   }
 
   zoomData: any = {}
@@ -97,8 +99,10 @@ export class RainfallGraphComponent implements OnInit {
   setRange(dataPeriod: string, rangePeriod: string) {
     //log zoom applied
     this.zoomData[dataPeriod] = rangePeriod;
+    //clone range so don't alter source
+    let xrange = this.rangeData.ranges[rangePeriod] ? [...this.rangeData.ranges[rangePeriod]]: null;
     this.data[dataPeriod].graph.layout.xaxis = {
-      range: this.rangeData.ranges[rangePeriod],
+      range: xrange,
       title: {
         text: "Date",
       }
@@ -124,7 +128,7 @@ export class RainfallGraphComponent implements OnInit {
     for(let i = 0; i < dates.length; i++) {
       data.push([dates[i], values[i]]);
     }
-    let fname = `${period}_timeseries.csv`;
+    let fname = `${this.yaxisText}_${period}_timeseries.csv`;
     if(this._location.type == "station") {
       let station = <Station>this._location;
       fname = `station_${station.id}_${fname}`;
@@ -139,12 +143,12 @@ export class RainfallGraphComponent implements OnInit {
   ngOnInit() {
     this.source.subscribe((data: TimeseriesGraphData) => {
       //deconstruct data
-      const { period, location, values } = data;
+      let { timeseriesData, location, values } = data;
       //ignore if different location (probably old data)
       if(location.equal(this._location)) {
-        let periodData = this.data[period];
+        let periodData = this.data[timeseriesData.period.tag];
         if(periodData === undefined) {
-          let title = `${this._location.format.getFieldFormat("name")?.formattedValue || "Virtual Station"} ${this.periodLabelMap[period]} Data`;
+          let title = `${this._location.format.getFieldFormat("name")?.formattedValue || "Virtual Station"} ${this.periodLabelMap[timeseriesData.period.tag]} Data`;
           periodData = {
             dates: [],
             graph: {
@@ -178,41 +182,37 @@ export class RainfallGraphComponent implements OnInit {
               }
             }
           }
-          this.data[period] = periodData;
-          this.setRange(period, this.zoomData[period]);
+          this.data[timeseriesData.period.tag] = periodData;
+          this.setRange(timeseriesData.period.tag, this.zoomData[timeseriesData.period.tag]);
         }
 
-        let chunkStartDate = null;
-        let chunkEndDate = null;
-        for(let item of values) {
-          //deconstruct item
-          let date = item.date;
-          if(chunkStartDate === null) {
-            chunkStartDate = date;
-            chunkEndDate = date;
-          }
-          else {
-            if(date.isBefore(chunkStartDate)) {
-              chunkStartDate = date;
-            }
-            else if(date.isAfter(chunkEndDate)) {
-              chunkEndDate = date;
-            }
-          }
-        }
+        
 
-        let startDate = null;
-        let endDate = null;
+        //sort the data
+        values.sort((a: TimeseriesGraphDataPoint, b: TimeseriesGraphDataPoint) => {
+          let order = 1;
+          if(a.date.isBefore(b.date)) {
+            order = -1;
+          }
+          else if(a.date.isSame(b.date)) {
+            order = 0;
+          }
+          return order;
+        });
+        let chunkStartDate = values[0].date;
+        let chunkEndDate = values[values.length - 1].date;
+
+        let chunkStart: number = 0;
         if(periodData.dates.length > 0) {
-          startDate = periodData.dates[0];
-          endDate = periodData.dates[periodData.dates.length - 1];
+          let startDate = periodData.dates[0];
+          let endDate = periodData.dates[periodData.dates.length - 1];
           if(chunkStartDate.isBefore(startDate)) {
-            let newDates = this.dateHandler.expandDates(chunkStartDate, startDate, period);
+            let newDates = timeseriesData.expandDates(chunkStartDate, startDate);
             //strip the last value (current start date)
             newDates.pop();
             //create date strings
             let newDateStrings = newDates.map((date: Moment.Moment) => {
-              return this.dateHandler.dateToString(date, period);
+              return this.dateHandler.dateToString(date, timeseriesData.period.unit);
             });
             //create values to add, fill with null (note setting current date values will be handled in next part)
             let newValues = new Array(newDates.length).fill(null);
@@ -225,13 +225,14 @@ export class RainfallGraphComponent implements OnInit {
             startDate = chunkStartDate;
           }
           if(chunkEndDate.isAfter(endDate)) {
+            chunkStart = periodData.graph.data[0].y.length - 1;
             //create dates to add
-            let newDates = this.dateHandler.expandDates(endDate, chunkEndDate, period);
+            let newDates = timeseriesData.expandDates(endDate, chunkEndDate);
             //strip the first value (current end date)
             newDates.shift();
             //create date strings
             let newDateStrings = newDates.map((date: Moment.Moment) => {
-              return this.dateHandler.dateToString(date, period);
+              return this.dateHandler.dateToString(date, timeseriesData.period.unit);
             });
             //create values to add, fill with null (note setting current date values will be handled in next part)
             let newValues = new Array(newDates.length).fill(null);
@@ -245,11 +246,9 @@ export class RainfallGraphComponent implements OnInit {
           }
         }
         else {
-          startDate = chunkStartDate;
-          endDate = chunkEndDate;
-          let newDates = this.dateHandler.expandDates(chunkStartDate, chunkEndDate, period);
+          let newDates = timeseriesData.expandDates(chunkStartDate, chunkEndDate);
           let newDateStrings = newDates.map((date: Moment.Moment) => {
-            return this.dateHandler.dateToString(date, period);
+            return this.dateHandler.dateToString(date, timeseriesData.period.unit);
           });
           //create values to add, fill with null (note setting current date values will be handled in next part)
           let newValues = new Array(newDates.length).fill(null);
@@ -259,14 +258,17 @@ export class RainfallGraphComponent implements OnInit {
           //extend values array
           periodData.graph.data[0].y = newValues;
         }
-
-        //set values
-        for(let item of values) {
-          //deconstruct item
-          const {value, date} = item;
-          //get date index based on period offset from startDate
-          let index = (<Moment.Moment>date).diff(startDate, period, false);
-          periodData.graph.data[0].y[index] = value;
+        let dateSearchI = chunkStart;
+        for(let i = 0; i < values.length && dateSearchI < periodData.dates.length; i++) {
+          const {value, date} = values[i];
+          let dataDate = periodData.dates[dateSearchI];
+          while(dateSearchI < periodData.dates.length && !dataDate.isSame(date)) {
+            dataDate = periodData.dates[++dateSearchI]
+          }
+          if(dataDate.isSame(date)) {
+            periodData.graph.data[0].y[dateSearchI] = value;
+          }
+          dateSearchI++;
         }
 
         //trigger graph data to update by copying data object
@@ -279,8 +281,7 @@ export class RainfallGraphComponent implements OnInit {
 
 export interface TimeseriesGraphData {
   location: MapLocation,
-  //should make this more specific
-  period: UnitOfTime,
+  timeseriesData: TimeseriesData,
   values: TimeseriesGraphDataPoint[]
 }
 

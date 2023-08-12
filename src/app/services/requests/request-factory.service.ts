@@ -5,7 +5,7 @@ import { DataProcessorService } from "../dataProcessor/data-processor.service";
 import moment, { unitOfTime } from 'moment';
 import { MapLocation } from 'src/app/models/Stations';
 import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
-import { UnitOfTime } from '../dataset-form-manager.service';
+import { TimeseriesData, UnitOfTime } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ import { UnitOfTime } from '../dataset-form-manager.service';
 export class RequestFactoryService {
   //decouple for easy testing of API changes
   static readonly API_KEYS = {
-    hcdp: "cistore",
+    hcdp: "cistore_test",
     tapis: "hcdp_api"
   };
 
@@ -77,7 +77,7 @@ export class RequestFactoryService {
     return response;  
   }
 
-  async getVStationTimeseries(start: string, end: string, period: UnitOfTime, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
+  async getVStationTimeseries(start: string, end: string, timeseriesData: TimeseriesData, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
     let params = {
       ...properties,
       start,
@@ -85,17 +85,17 @@ export class RequestFactoryService {
     };
     let response = await this.reqService.get(RequestFactoryService.API_KEYS.hcdp, "raster_timeseries", "json", params, undefined, undefined, delay);
     let startTime = new Date().getTime();
-    response.transformData((timeseriesData: {[date: string]: number}) => {
+    response.transformData((data: {[date: string]: number}) => {
       if(printTiming) {
         this.printTiming(`Retreived virtual station timeseries for ${start}-${end}`, startTime);
       }
       let transformed = null;
       //what to put in stationId and period? Test with null, will this work? Probably need period
-      let entries = Object.entries(timeseriesData);
+      let entries = Object.entries(data);
       if(entries.length > 0) {
         transformed = {
           location,
-          period,
+          timeseriesData,
           values: entries.map((pair: [string, number]) => {
             return {
               value: pair[1],
@@ -144,17 +144,17 @@ export class RequestFactoryService {
     return response;
   }
 
-  async getStationTimeseries(start: string, end: string, period: UnitOfTime, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
+  async getStationTimeseries(start: string, end: string, timeseriesData: TimeseriesData, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
     let query = this.propertiesToQuery("hcdp_station_value", properties);
     query = `{'$and':[${query},{'value.date':{'$gte':'${start}'}},{'value.date':{'$lt':'${end}'}}]}`;
     let timingMessage = printTiming ? `Retreived station ${properties.station_id} timeseries for ${start}-${end}`: undefined;
     let response = await this.tapisQueryDispatch(query, timingMessage, delay);
-    response.transformData((timeseriesData: any[]) => {
-      if(timeseriesData.length > 0) {
+    response.transformData((data: any[]) => {
+      if(data.length > 0) {
         let transformed: TimeseriesGraphData = {
           location,
-          period,
-          values: timeseriesData.map((item: any) => {
+          timeseriesData,
+          values: data.map((item: any) => {
             return {
               value: item.value,
               date: moment(item.date)
