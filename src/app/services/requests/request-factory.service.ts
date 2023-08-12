@@ -13,7 +13,7 @@ import { TimeseriesData, UnitOfTime } from '../dataset-form-manager.service';
 export class RequestFactoryService {
   //decouple for easy testing of API changes
   static readonly API_KEYS = {
-    hcdp: "cistore_test",
+    hcdp: "cistore",
     tapis: "hcdp_api"
   };
 
