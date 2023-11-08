@@ -265,7 +265,7 @@ export class RainfallGraphComponent implements OnInit {
           while(dateSearchI < periodData.dates.length && !dataDate.isSame(date)) {
             dataDate = periodData.dates[++dateSearchI]
           }
-          if(dataDate.isSame(date)) {
+          if(dataDate?.isSame(date)) {
             periodData.graph.data[0].y[dateSearchI] = value;
           }
           dateSearchI++;
