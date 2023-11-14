@@ -64,6 +64,7 @@ export class DatasetFormManagerService {
       seasonDry,
       seasonWet
     ]);
+    dsPeriodNode
     let dsPeriodStatisticalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
       periodPresent,
       periodMid,
@@ -96,12 +97,14 @@ export class DatasetFormManagerService {
     let dsRainfallFormData = new FormData([
       dsmNode,
       climateNode,
-      seasonNode
+      seasonNode,
+      dsPeriodStatisticalNode
     ], []);
     //temperature downscaling data
     let dsTemperatureFormData = new FormData([
       dsmNode,
-      climateNode
+      climateNode,
+      dsPeriodStatisticalNode
     ], []);
     let ndviFormData = new FormData([
       periodNode
@@ -178,7 +181,12 @@ export class DatasetFormManagerService {
       period: "day"
     });
     //////DS Rainfall
-    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsStatisticalFocusManager, null, false, {
+
+    let model = [["rcp45", "RCP 4.5"], ["rcp85", "RCP 8.5"]];
+    let season = [["annual", "Annual"], ["wet", "Wet Season"], ["dry", "Dry Season"]];
+    let period = [["present", "Present Day"], ["mid"], ["end"]];
+
+    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], null, null, false, {
       dsm: "statistical",
       model: "rcp45",
       season: "annual"
@@ -208,7 +216,7 @@ export class DatasetFormManagerService {
       model: "rcp85",
       season: "dry"
     });
-    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], dsDynamicalFocusManager, null, false, {
+    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], null, null, false, {
       dsm: "dynamical",
       model: "rcp45",
       season: "annual"
@@ -1163,26 +1171,26 @@ export abstract class FocusManager<T> {
   }
 }
 
-export class TimeSelectorData extends FocusManager<FormValue> {
-  private _formData: FormNode;
+// export class TimeSelectorData extends FocusManager<FormValue> {
+//   private _formData: FormNode;
 
-  constructor(formData: FormNode, defaultValue: FormValue) {
-    let labels = formData.values.map((value: FormValue) => {
-      return value.label;
-    });
-    let coverageLabel = labels.join(", ");
-    super("selector", coverageLabel, defaultValue);
-    this._formData = formData;
-  }
+//   constructor(formData: FormNode, defaultValue: FormValue) {
+//     let labels = formData.values.map((value: FormValue) => {
+//       return value.label;
+//     });
+//     let coverageLabel = labels.join(", ");
+//     super("selector", coverageLabel, defaultValue);
+//     this._formData = formData;
+//   }
 
-  get formData(): FormNode {
-    return this._formData;
-  }
+//   get formData(): FormNode {
+//     return this._formData;
+//   }
 
-  getFocusData(value: FormValue): FocusData<FormValue> {
-    return new FocusData(this.type, value.label, value.paramData, value);
-  }
-}
+//   getFocusData(value: FormValue): FocusData<FormValue> {
+//     return new FocusData(this.type, value.label, value.paramData, value);
+//   }
+// }
 
 export class PeriodData {
   private _unit: UnitOfTime;
@@ -1208,143 +1216,6 @@ export class PeriodData {
   }
 }
 
-// //STATEFUL VERSION NOT GOOD FOR EXPORT BECAUSE YOU NEED A RANGE INSIDE, STATELESS IS MORE USEFUL, SHOULD PROBABLY NIX THIS AND USE STATELESS IN GENERAL
-// export class TimeseriesState {
-//   private _start: Moment;
-//   private _end: Moment;
-//   private _state: Moment;
-//   private _period: PeriodData;
-
-//   constructor(start: Moment, end: Moment, period: PeriodData, initDate?: Moment) {
-//     this._start = start;
-//     this._end = end;
-//     this._period = period;
-//     this._state = initDate ? initDate.clone() : start.clone();
-//   }
-
-//   addInterval(n: number = 1): Moment {
-//     this._state.add(n * this.interval, this.unit);
-//     this.lockToRange();
-//     return this._state;
-//   }
-
-//   correctState(): Moment {
-//     let base = this._start.clone();
-//     let intervalDiff = this._state.diff(base, this.unit) / this.interval;
-//     let roundedDiff = Math.round(intervalDiff) * this.interval;
-//     base.add(roundedDiff, this.unit);
-//     this._state = base;
-//     return this.lockToRange();
-//   }
-
-//   private lockToRange(): Moment {
-//     if(this._state.isBefore(this._start)) {
-//       this._state = this._start.clone();
-//     }
-//     else if(this._state.isAfter(this._end)) {
-//       this._state = this._end.clone();
-//     }
-//     return this._state;
-//   }
-
-//   get start(): Moment {
-//     return this._start;
-//   }
-
-//   get end(): Moment {
-//     return this._end;
-//   }
-
-//   get unit(): UnitOfTime {
-//     return this._period.unit;
-//   }
-
-//   get interval(): number {
-//     return this._period.interval;
-//   }
-
-//   get period(): PeriodData {
-//     return this._period;
-//   }
-
-//   get state(): Moment {
-//     return this._state;
-//   }
-// }
-
-// export class PeriodController {
-//   private _start: Moment;
-//   private _end: Moment;
-//   private _period: PeriodData;
-//   private _dateHandler: DateManagerService;
-//   private _coverageLabel: string;
-
-//   constructor(start: Moment, end: Moment, period: PeriodData, timeseriesPeriods: PeriodData[], dateHandler: DateManagerService, defaultDate: Moment) {
-//     //keep coverage label
-//     //also add in date formatter for passed date, can use to get formatted date for period data for passed date
-//     this._coverageLabel = `${dateHandler.dateToString(start, period.unit, true)} - ${dateHandler.dateToString(end, period.unit, true)}`;
-//     this._start = start;
-//     this._end = end;
-//     this._period = period;
-//     this._dateHandler = dateHandler;
-//   }
-
-//   getLabel(date: Moment): string {
-//     return `${this._dateHandler.dateToString(date, this._period.unit, true)}`
-//   }
-
-//   addInterval(time: Moment, n: number = 1): Moment {
-//     let result = this.roundToInterval(time);
-//     result.add(n * this.interval, this.unit);
-//     result = this.lockToRange(result);
-//     return result;
-//   }
-
-//   roundToInterval(time: Moment) {
-//     let base = this._start.clone();
-//     let timeClone = time.clone();
-//     let intervalDiff = timeClone.diff(base, this.unit) / this.interval;
-//     let roundedDiff = Math.round(intervalDiff) * this.interval;
-//     base.add(roundedDiff, this.unit);
-//     base = this.lockToRange(base);
-//     return base;
-//   }
-
-//   lockToRange(time: Moment) {
-//     let res: Moment = time;
-//     if(time.isBefore(this._start)) {
-//       res = this._start.clone();
-//     }
-//     else if(time.isAfter(this._end)) {
-//       res = this._end.clone();
-//     }
-//     return res;
-//   }
-
-//   get start(): Moment {
-//     return this._start;
-//   }
-
-//   get end(): Moment {
-//     return this._end;
-//   }
-
-//   get unit(): UnitOfTime {
-//     return this._period.unit;
-//   }
-
-//   get interval(): number {
-//     return this._period.interval;
-//   }
-
-//   get period(): PeriodData {
-//     return this._period;
-//   }
-
-//   get coverageLabel(): string {
-//     return this.coverageLabel;
-//   }
-// }
 
 export class TimeseriesHandler {
   private _start: Moment;
@@ -1905,4 +1776,10 @@ export class FormManager<T extends DatasetItem> {
       values: this._values
     };
   }
+}
+
+
+export class UnitManager {
+
+  translate() {}
 }
