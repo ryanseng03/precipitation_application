@@ -64,7 +64,6 @@ export class DatasetFormManagerService {
       seasonDry,
       seasonWet
     ]);
-    dsPeriodNode
     let dsPeriodStatisticalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
       periodPresent,
       periodMid,
@@ -97,15 +96,12 @@ export class DatasetFormManagerService {
     let dsRainfallFormData = new FormData([
       dsmNode,
       climateNode,
-      seasonNode,
-      dsPeriodStatisticalNode
+      seasonNode
     ], []);
     //temperature downscaling data
     let dsTemperatureFormData = new FormData([
       dsmNode,
-      climateNode,
-      dsPeriodStatisticalNode
-    ], []);
+      climateNode    ], []);
     let ndviFormData = new FormData([
       periodNode
     ], []);
@@ -1171,26 +1167,26 @@ export abstract class FocusManager<T> {
   }
 }
 
-// export class TimeSelectorData extends FocusManager<FormValue> {
-//   private _formData: FormNode;
+export class TimeSelectorData extends FocusManager<FormValue> {
+  private _formData: FormNode;
 
-//   constructor(formData: FormNode, defaultValue: FormValue) {
-//     let labels = formData.values.map((value: FormValue) => {
-//       return value.label;
-//     });
-//     let coverageLabel = labels.join(", ");
-//     super("selector", coverageLabel, defaultValue);
-//     this._formData = formData;
-//   }
+  constructor(formData: FormNode, defaultValue: FormValue) {
+    let labels = formData.values.map((value: FormValue) => {
+      return value.label;
+    });
+    let coverageLabel = labels.join(", ");
+    super("selector", coverageLabel, defaultValue);
+    this._formData = formData;
+  }
 
-//   get formData(): FormNode {
-//     return this._formData;
-//   }
+  get formData(): FormNode {
+    return this._formData;
+  }
 
-//   getFocusData(value: FormValue): FocusData<FormValue> {
-//     return new FocusData(this.type, value.label, value.paramData, value);
-//   }
-// }
+  getFocusData(value: FormValue): FocusData<FormValue> {
+    return new FocusData(this.type, value.label, value.paramData, value);
+  }
+}
 
 export class PeriodData {
   private _unit: UnitOfTime;

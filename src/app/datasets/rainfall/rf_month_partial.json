@@ -1,0 +1,54 @@
+{
+  "label": "Monthly Rainfall",
+  "categories": [{
+    "id": "station",
+    "label": "Station Data",
+    "description": "These options apply only to the station data displayed on the map. Gridded map products are generated using partial filled station data."
+  }],
+  "selector": [{
+    "id": "datatype",
+    "category": null,
+    "value": {
+      "id": "rainfall",
+      "label": "Rainfall",
+      "description": "Rainfall data (1990 - present)"
+    }
+  }, {
+    "id": "period",
+    "category": null,
+    "value": {
+      "id": "month",
+      "label": "Monthly",
+      "description": "Data measured at a monthly time scale"
+    }
+  }, {
+    "id": "fill",
+    "label": "Data Fill",
+    "description": "The type of processing the station data goes through.",
+    "category": "station",
+    "value": {
+      "id": "partial",
+      "label": "Partial Filled",
+      "description": "This data has undergone QA/QC and is partially filled using statistical techniques to estimate some missing station values."
+    }
+  }],
+  "raster_query_params": {
+    "datatype": "rainfall",
+    "production": "new",
+    "period": "month"
+  },
+  "station_query_params": {
+    "datatype": "rainfall",
+    "production": "new",
+    "period": "month",
+    "fill": "partial"
+  },
+  "data_range": [0, 650],
+  "range_absolute": [true, false],
+  "reverse_colors": false,
+  "timeseries_data": {
+    "range": ["1990-01-01", null],
+    "handler": "month"
+  },
+  "unit_handler": "mm"
+}
