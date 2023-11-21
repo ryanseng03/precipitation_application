@@ -471,7 +471,7 @@ export class DatasetFormManagerService {
       }
     }
 
-    
+
     //////DS Temperature
     let dsTemperatureStatisticalRcp45ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalChangeFileGroup], {
       dsm: "statistical",
@@ -1061,12 +1061,34 @@ export abstract class FocusManager<T> {
   }
 }
 
+export class Form {
+  node: FormNode
+}
+
+//USE VALUE PARAMDATA FOR SELECTED TO INSERT PROPERTIES
+//view type and unit are specific
+//some units might not be available for all view types
+export class OptionData {
+  //the nodes have all the information
+  private _nodes: FormNode[];
+
+  //valid combos of options, use to create stripped down nodes
+  constructor(nodes: FormNode[], states: StringMap[]) {
+
+  }
+
+  setValue() {
+
+  }
+}
+
+
+//should remove
 export class TimeSelectorData extends FocusManager<FormValue> {
   private _formData: FormNode;
 
   constructor(formData: FormNode, defaultValue: FormValue) {
-    let coverageLabel = undefined;
-    super("selector", coverageLabel, defaultValue);
+    super("selector", undefined, defaultValue);
     this._formData = formData;
   }
 
@@ -1347,10 +1369,16 @@ export class FormCategory {
 export class FormNode {
   private _displayData: DisplayData
   private _values: FormValue[];
+  private _defaultValue: FormValue;
 
-  constructor(displayData: DisplayData, values: FormValue[]) {
+  constructor(displayData: DisplayData, values: FormValue[], defaultValue: FormValue = null) {
     this._displayData = displayData;
     this._values = values;
+    this._defaultValue = defaultValue;
+  }
+
+  get defaultValue(): FormValue {
+    return this._defaultValue;
   }
 
   get description(): string {
@@ -1373,12 +1401,19 @@ export class FormNode {
     return this._values;
   }
 
-  public filter(valueTags: string[]): FormNode {
+  public filter(valueTags: string[], defaultValue?: string): FormNode {
     let tagSet = new Set(valueTags);
+    if(defaultValue === undefined && this._defaultValue !== null) {
+      defaultValue = this._defaultValue.tag;
+    }
+    let newDefault = null;
     let filteredValues = this._values.filter((value: FormValue) => {
+      if(defaultValue !== undefined && value.tag == defaultValue) {
+        newDefault = value;
+      }
       return tagSet.has(value.tag);
     });
-    return new FormNode(this._displayData, filteredValues);
+    return new FormNode(this._displayData, filteredValues, newDefault);
   }
 }
 
