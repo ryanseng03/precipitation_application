@@ -9,269 +9,135 @@
   <div class="form-body">
     <div class="control-group">
       <div class="control">
-        <mat-form-field>
-          <mat-label>{{formData.datasetFormData.label}}</mat-label>
-          <mat-select
-            disableOptionCentering="true"
-            [formControl]="controls.datatype.control">
-            <mat-optgroup
-              *ngFor="let group of formData.datasetFormData.datasetGroups"
-              [label]="group.label">
-              <mat-option
-                *ngFor="let dataset of group.values"
-                [value]="dataset.tag"
-                matTooltipPosition="right"
-                [matTooltip]="dataset.description">
-                {{dataset.label}}
-              </mat-option>
-            </mat-optgroup>
-            <mat-option
-              *ngFor="let dataset of formData.datasetFormData.datasetValues"
-              [value]="dataset.tag"
-              matTooltipPosition="right"
-              [matTooltip]="dataset.description">
-              {{dataset.label}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-icon
-          aria-hidden="false"
-          aria-label="Tooltip"
-          matTooltipPosition="right"
-          [matTooltip]="formData.datasetFormData.description"
-          inline="true">
-          help
-        </mat-icon>
+        <app-selector
+          [label]="formData.datasetFormData.label"
+          [tooltip]="formData.datasetFormData.description"
+          [values]="formData.datasetFormData.datasetValues"
+          [groupValues]="formData.datasetFormData.datasetGroups"
+          [control]="controls.datatype.control"
+        ></app-selector>
       </div>
     </div>
     <div class="control-group control-subgroup">
       <div
         *ngFor="let field of formData.datasetItem.formData.default"
         class="control">
-        <div *ngIf="field.values.length > 1;else single">
-          <mat-form-field>
-            <mat-label>{{field.label}}</mat-label>
-            <mat-select
-              disableOptionCentering="true"
-              [formControl]="controls.dataset[field.tag].control">
-              <mat-option
-                *ngFor="let value of field.values"
-                [value]="value.tag"
-                matTooltipPosition="right"
-                [matTooltip]="value.description">
-                {{value.label}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-icon
-            aria-hidden="false"
-            aria-label="Tooltip"
-            matTooltipPosition="right"
-            [matTooltip]="field.description"
-            inline="true">
-            help
-          </mat-icon>
-        </div>
-       <ng-template #single>
-        <!-- make sure there is one to prevent oob error (should always be one though) -->
-        <ng-container *ngIf="field.values.length == 1">
-          <mat-label
-            [matTooltip]="field.values[0].description"
-            matTooltipPosition="right">
-            {{field.label}}: {{field.values[0].label}}
-          </mat-label>
-          <mat-icon
-            aria-hidden="false"
-            aria-label="Tooltip"
-            matTooltipPosition="right"
-            [matTooltip]="field.description"
-            inline="true">
-            help
-          </mat-icon>
-        </ng-container>
-       </ng-template>
+          <app-selector
+            [label]="field.label"
+            [tooltip]="field.description"
+            [values]="field.values"
+            [control]="controls.dataset[field.tag].control"
+          ></app-selector>
       </div>
     </div>
 
     <div
       *ngFor="let category of formData.datasetItem.formData.categorized"
       class="control-group">
-      <h4 class="inline-block">
-        {{category.label}}
-      </h4>
-      <mat-icon
-        aria-hidden="false"
-        aria-label="Tooltip"
-        matTooltipPosition="right"
-        [matTooltip]="category.description"
-        inline="true">
-        help
-      </mat-icon>
+      <div class="category-label">
+        <h4 class="inline-block">
+          {{category.label}}
+        </h4>
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Tooltip"
+          matTooltipPosition="right"
+          [matTooltip]="category.description"
+          inline="true">
+          help
+        </mat-icon>
+      </div>
       <div class="control-subgroup">
         <div
           *ngFor="let field of category.nodes"
           class="control">
-          <div *ngIf="field.values.length > 1; else singleCat">
-            <mat-form-field>
-              <mat-label>{{field.label}}</mat-label>
-              <mat-select
-                disableOptionCentering="true"
-                [formControl]="controls.dataset[field.tag].control">
-                <mat-option
-                  *ngFor="let value of field.values"
-                  [value]="value.tag"
-                  matTooltipPosition="right"
-                  [matTooltip]="value.description">
-                  {{value.label}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-icon
-              aria-hidden="false"
-              aria-label="Tooltip"
-              matTooltipPosition="right"
-              [matTooltip]="field.description"
-              inline="true">
-              help
-            </mat-icon>
-          </div>
-          <ng-template #singleCat>
-            <!-- make sure there is one to prevent oob error (should always be one though) -->
-            <ng-container *ngIf="field.values.length == 1">
-              <mat-label
-                [matTooltip]="field.values[0].description"
-                matTooltipPosition="right">
-                {{field.label}}: {{field.values[0].label}}
-              </mat-label>
-              <mat-icon
-                aria-hidden="false"
-                aria-label="Tooltip"
-                matTooltipPosition="right"
-                [matTooltip]="field.description"
-                inline="true">
-                help
-              </mat-icon>
-            </ng-container>
-          </ng-template>
-        </div>
-    </div>
-  </div>
-
-  <div class="spacer"></div>
-
-  <div *ngIf="formData.datasetItem.timeseriesHandler">
-    <app-date-selector
-      class="date-select"
-      label="Start Date"
-      [min]="formData.datasetItem.timeseriesHandler.start"
-      [max]="controls.dates.end"
-      [(date)]="controls.dates.start"
-      [period]="formData.datasetItem.timeseriesHandler.unit"
-      [readonly]="false">
-    </app-date-selector>
-    <app-date-selector
-      class="date-select"
-      label="End Date"
-      [min]="controls.dates.start"
-      [max]="formData.datasetItem.timeseriesHandler.end"
-      [(date)]="controls.dates.end"
-      [period]="formData.datasetItem.timeseriesHandler.unit"
-      [readonly]="false">
-    </app-date-selector>
-  </div>
-
-  <div>
-    <div *ngFor="let fileGroup of formData.datasetItem.fileGroups" class="file-group">
-      <h4>
-        File Properties
-      </h4>
-      <div class="file-group-control-block">
-        <div *ngFor="let properties of fileGroup.additionalProperties" class="inline-control">
-          <div *ngIf="properties.formData.values.length > 1; else singleOpt">
-            <mat-form-field>
-              <mat-label>{{properties.formData.label}}</mat-label>
-              <mat-select
-                [formControl]="controls.fileGroups[fileGroup.tag].fileProps[properties.formData.tag].control"
-                disableOptionCentering="true"
-                multiple>
-                <mat-option
-                  *ngFor="let value of properties.formData.values"
-                  [value]="value.tag"
-                  matTooltipPosition="right"
-                  [matTooltip]="value.description">
-                  {{value.label}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-icon
-              aria-hidden="false"
-              aria-label="Tooltip"
-              matTooltipPosition="right"
-              [matTooltip]="properties.formData.description"
-              inline="true">
-              help
-            </mat-icon>
-
-          </div>
-          <ng-template #singleOpt>
-            <!-- make sure there is one to prevent oob error (should always be one though) -->
-            <ng-container *ngIf="properties.formData.values.length == 1">
-              <mat-label
-                [matTooltip]="properties.formData.values[0].description"
-                matTooltipPosition="right">
-                {{properties.formData.label}}: {{properties.formData.values[0].label}}
-              </mat-label>
-              <mat-icon
-                aria-hidden="false"
-                aria-label="Tooltip"
-                matTooltipPosition="right"
-                [matTooltip]="properties.formData.description"
-                inline="true">
-                help
-              </mat-icon>
-            </ng-container>
-          </ng-template>
+          <app-selector
+            [label]="field.label"
+            [tooltip]="field.description"
+            [values]="field.values"
+            [control]="controls.dataset[field.tag].control"
+          ></app-selector>
         </div>
       </div>
-
-
-      <h4>
-        Files
-      </h4>
-      <table>
-        <tr *ngFor="let fileData of fileGroup.fileData">
-          <td>
-            <mat-checkbox class="checkbox"
-              [formControl]="controls.fileGroups[fileGroup.tag].files[fileData.tag].data.control">
-            </mat-checkbox>
-            {{fileData.label}}
-            <mat-icon
-              aria-hidden="false"
-              aria-label="Tooltip"
-              matTooltipPosition="right"
-              [matTooltip]="fileData.description"
-              inline="true">
-              help
-            </mat-icon>
-
-          </td>
-          <td>
-            Filetype: {{fileData.fileType.type}} (.{{fileData.fileType.ext}})
-            <mat-icon
-              aria-hidden="false"
-              aria-label="Tooltip"
-              matTooltipPosition="right"
-              [matTooltip]="fileData.fileType.description"
-              inline="true">
-              help
-            </mat-icon>
-          </td>
-        </tr>
-      </table>
-
-
     </div>
-  </div>
+
+    <div class="spacer"></div>
+
+    <div *ngIf="formData.datasetItem.timeseriesHandler">
+      <app-date-selector
+        class="date-select"
+        label="Start Date"
+        [min]="formData.datasetItem.timeseriesHandler.start"
+        [max]="controls.dates.end"
+        [(date)]="controls.dates.start"
+        [period]="formData.datasetItem.timeseriesHandler.unit"
+        [readonly]="false">
+      </app-date-selector>
+      <app-date-selector
+        class="date-select"
+        label="End Date"
+        [min]="controls.dates.start"
+        [max]="formData.datasetItem.timeseriesHandler.end"
+        [(date)]="controls.dates.end"
+        [period]="formData.datasetItem.timeseriesHandler.unit"
+        [readonly]="false">
+      </app-date-selector>
+    </div>
+
+    <div>
+      <div *ngFor="let fileGroup of formData.datasetItem.fileGroups" class="file-group">
+        <h4>
+          File Properties
+        </h4>
+        <div class="file-group-control-block">
+          <div *ngFor="let properties of fileGroup.additionalProperties" class="inline-control">
+            <app-selector
+              [label]="properties.formData.label"
+              [tooltip]="properties.formData.description"
+              [values]="properties.formData.values"
+              [control]="controls.fileGroups[fileGroup.tag].fileProps[properties.formData.tag].control"
+              multiselect
+            ></app-selector>
+          </div>
+        </div>
+
+        <h4>
+          Files
+        </h4>
+        <table>
+          <tr *ngFor="let fileData of fileGroup.fileData">
+            <td>
+              <mat-checkbox class="checkbox"
+                [formControl]="controls.fileGroups[fileGroup.tag].files[fileData.tag].data.control">
+              </mat-checkbox>
+              {{fileData.label}}
+              <mat-icon
+                aria-hidden="false"
+                aria-label="Tooltip"
+                matTooltipPosition="right"
+                [matTooltip]="fileData.description"
+                inline="true">
+                help
+              </mat-icon>
+
+            </td>
+            <td>
+              Filetype: {{fileData.fileType.type}} (.{{fileData.fileType.ext}})
+              <mat-icon
+                aria-hidden="false"
+                aria-label="Tooltip"
+                matTooltipPosition="right"
+                [matTooltip]="fileData.fileType.description"
+                inline="true">
+                help
+              </mat-icon>
+            </td>
+          </tr>
+        </table>
+
+
+      </div>
+    </div>
   </div>
 
   <div class="form-buttons">

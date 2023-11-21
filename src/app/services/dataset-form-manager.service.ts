@@ -96,12 +96,20 @@ export class DatasetFormManagerService {
     let dsRainfallFormData = new FormData([
       dsmNode,
       climateNode,
+      seasonNode,
+      dsPeriodStatisticalNode
+    ], []);
+    let dsRainfallFormDataExport = new FormData([
+      dsmNode,
+      climateNode,
       seasonNode
     ], []);
     //temperature downscaling data
     let dsTemperatureFormData = new FormData([
       dsmNode,
-      climateNode    ], []);
+      climateNode,
+      // dsPeriodStatisticalNode
+    ], []);
     let ndviFormData = new FormData([
       periodNode
     ], []);
@@ -177,71 +185,27 @@ export class DatasetFormManagerService {
       period: "day"
     });
     //////DS Rainfall
-
+    let dsRainfallItems = [];
+    let dsm = [["statistical", "Statistically Downscaled"], ["dynamical", "Dynamically Downscaled"]];
     let model = [["rcp45", "RCP 4.5"], ["rcp85", "RCP 8.5"]];
-    let season = [["annual", "Annual"], ["wet", "Wet Season"], ["dry", "Dry Season"]];
-    let period = [["present", "Present Day"], ["mid"], ["end"]];
+    let season = [["annual", "Annual", [0, 10000]], ["wet", "Wet Season", [0, 5000]], ["dry", "Dry Season", [0, 5000]]];
+    let period = [["present", "Present Day"], ["mid", "Mid Century"], ["late", "End Century"]];
+    for(let dsmItem of dsm) {
+      for(let modelItem of model) {
+        for(let seasonItem of season) {
+          for(let periodItem of period) {
+            let datasetItem = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", `${dsmItem[1]} ${seasonItem[1]} Rainfall (${modelItem[1]}) - ${periodItem[1]}`, <[number, number]>seasonItem[2], [true, false], dsStatisticalFocusManager, null, false, {
+              dsm: dsmItem[0],
+              model: modelItem[0],
+              season: <string>seasonItem[0],
+              ds_period: periodItem[0]
+            });
+            dsRainfallItems.push(datasetItem);
+          }
+        }
+      }
+    }
 
-    let dsRainfallStatisticalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], null, null, false, {
-      dsm: "statistical",
-      model: "rcp45",
-      season: "annual"
-    });
-    let dsRainfallStatisticalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, null, false, {
-      dsm: "statistical",
-      model: "rcp45",
-      season: "wet"
-    });
-    let dsRainfallStatisticalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsStatisticalFocusManager, null, false, {
-      dsm: "statistical",
-      model: "rcp45",
-      season: "dry"
-    });
-    let dsRainfallStatisticalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsStatisticalFocusManager, null, false, {
-      dsm: "statistical",
-      model: "rcp85",
-      season: "annual"
-    });
-    let dsRainfallStatisticalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, null, false, {
-      dsm: "statistical",
-      model: "rcp85",
-      season: "wet"
-    });
-    let dsRainfallStatisticalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Statistically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsStatisticalFocusManager, null, false, {
-      dsm: "statistical",
-      model: "rcp85",
-      season: "dry"
-    });
-    let dsRainfallDynamicalRcp45Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 4.5)", [0, 10000], [true, false], null, null, false, {
-      dsm: "dynamical",
-      model: "rcp45",
-      season: "annual"
-    });
-    let dsRainfallDynamicalRcp45Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, null, false, {
-      dsm: "dynamical",
-      model: "rcp45",
-      season: "wet"
-    });
-    let dsRainfallDynamicalRcp45Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)", [0, 5000], [true, false], dsDynamicalFocusManager, null, false, {
-      dsm: "dynamical",
-      model: "rcp45",
-      season: "dry"
-    });
-    let dsRainfallDynamicalRcp85Annual = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Annual Rainfall (RCP 8.5)", [0, 10000], [true, false], dsDynamicalFocusManager, null, false, {
-      dsm: "dynamical",
-      model: "rcp85",
-      season: "annual"
-    });
-    let dsRainfallDynamicalRcp85Wet = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, null, false, {
-      dsm: "dynamical",
-      model: "rcp85",
-      season: "wet"
-    });
-    let dsRainfallDynamicalRcp85Dry = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)", [0, 5000], [true, false], dsDynamicalFocusManager, null, false, {
-      dsm: "dynamical",
-      model: "rcp85",
-      season: "dry"
-    });
     //////DS Temperature
     let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsStatisticalFocusManager, null, true, {
       dsm: "statistical",
@@ -311,20 +275,7 @@ export class DatasetFormManagerService {
     ]);
     let dsRainfallVisDataset = new Dataset<VisDatasetItem>(dsRainfallDatasetDisplayData, {
       datatype: "downscaling_rainfall"
-    }, dsRainfallFormData, [
-      dsRainfallStatisticalRcp45Annual,
-      dsRainfallStatisticalRcp45Dry,
-      dsRainfallStatisticalRcp45Wet,
-      dsRainfallStatisticalRcp85Annual,
-      dsRainfallStatisticalRcp85Dry,
-      dsRainfallStatisticalRcp85Wet,
-      dsRainfallDynamicalRcp45Annual,
-      dsRainfallDynamicalRcp45Dry,
-      dsRainfallDynamicalRcp45Wet,
-      dsRainfallDynamicalRcp85Annual,
-      dsRainfallDynamicalRcp85Dry,
-      dsRainfallDynamicalRcp85Wet
-    ]);
+    }, dsRainfallFormData, dsRainfallItems);
     let dsTemperatureVisDataset = new Dataset<VisDatasetItem>(dsTemperatureDatasetDisplayData, {
       datatype: "downscaling_temperature"
     }, dsTemperatureFormData, [
@@ -505,66 +456,22 @@ export class DatasetFormManagerService {
     }, "Daily Mean Temperature", temperatureRainfallDayTimeseriesHandler);
     ////ds
     //////DS Rainfall
-    let dsRainfallStatisticalRcp45AnnualExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
-      dsm: "statistical",
-      model: "rcp45",
-      season: "annual"
-    }, "Statistically Downscaled Annual Rainfall (RCP 4.5)");
-    let dsRainfallStatisticalRcp45WetExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
-      dsm: "statistical",
-      model: "rcp45",
-      season: "wet"
-    }, "Statistically Downscaled Wet Season Rainfall (RCP 4.5)");
-    let dsRainfallStatisticalRcp45DryExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
-      dsm: "statistical",
-      model: "rcp45",
-      season: "dry"
-    }, "Statistically Downscaled Dry Season Rainfall (RCP 4.5)");
-    let dsRainfallStatisticalRcp85AnnualExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
-      dsm: "statistical",
-      model: "rcp85",
-      season: "annual"
-    }, "Statistically Downscaled Annual Rainfall (RCP 8.5)");
-    let dsRainfallStatisticalRcp85WetExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
-      dsm: "statistical",
-      model: "rcp85",
-      season: "wet"
-    }, "Statistically Downscaled Wet Season Rainfall (RCP 8.5)");
-    let dsRainfallStatisticalRcp85DryExportItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
-      dsm: "statistical",
-      model: "rcp85",
-      season: "dry"
-    }, "Statistically Downscaled Dry Season Rainfall (RCP 8.5)");
-    let dsRainfallDynamicalRcp45AnnualExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
-      dsm: "dynamical",
-      model: "rcp45",
-      season: "annual"
-    }, "Dynamically Downscaled Annual Rainfall (RCP 4.5)");
-    let dsRainfallDynamicalRcp45WetExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
-      dsm: "dynamical",
-      model: "rcp45",
-      season: "wet"
-    }, "Dynamically Downscaled Wet Season Rainfall (RCP 4.5)");
-    let dsRainfallDynamicalRcp45DryExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
-      dsm: "dynamical",
-      model: "rcp45",
-      season: "dry"
-    }, "Dynamically Downscaled Dry Season Rainfall (RCP 4.5)");
-    let dsRainfallDynamicalRcp85AnnualExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
-      dsm: "dynamical",
-      model: "rcp85",
-      season: "annual"
-    }, "Dynamically Downscaled Annual Rainfall (RCP 8.5)");
-    let dsRainfallDynamicalRcp85WetExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
-      dsm: "dynamical",
-      model: "rcp85",
-      season: "wet"
-    }, "Dynamically Downscaled Wet Season Rainfall (RCP 8.5)");
-    let dsRainfallDynamicalRcp85DryExportItem = new ExportDatasetItem([dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup], {
-      dsm: "dynamical",
-      model: "rcp85",
-      season: "dry"
-    }, "Dynamically Downscaled Dry Season Rainfall (RCP 8.5)");
+
+    let dsRainfallExportItems = [];
+    for(let dsmItem of dsm) {
+      for(let modelItem of model) {
+        for(let seasonItem of season) {
+          let datasetItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
+            dsm: dsmItem[0],
+            model: modelItem[0],
+            season: <string>seasonItem[0]
+          }, `${dsm[1]} ${seasonItem[1]} Rainfall (${modelItem[1]})`);
+          dsRainfallExportItems.push(datasetItem);
+        }
+      }
+    }
+
+    
     //////DS Temperature
     let dsTemperatureStatisticalRcp45ExportItem = new ExportDatasetItem([dsTemperatureStatisticalMapFileGroup, dsTemperatureStatisticalChangeFileGroup], {
       dsm: "statistical",
@@ -624,20 +531,7 @@ export class DatasetFormManagerService {
     ]);
     let dsRainfallExportDataset = new Dataset<ExportDatasetItem>(dsRainfallDatasetDisplayData, {
       datatype: "downscaling_rainfall"
-    }, dsRainfallFormData, [
-      dsRainfallStatisticalRcp45AnnualExportItem,
-      dsRainfallStatisticalRcp45DryExportItem,
-      dsRainfallStatisticalRcp45WetExportItem,
-      dsRainfallStatisticalRcp85AnnualExportItem,
-      dsRainfallStatisticalRcp85DryExportItem,
-      dsRainfallStatisticalRcp85WetExportItem,
-      dsRainfallDynamicalRcp45AnnualExportItem,
-      dsRainfallDynamicalRcp45DryExportItem,
-      dsRainfallDynamicalRcp45WetExportItem,
-      dsRainfallDynamicalRcp85AnnualExportItem,
-      dsRainfallDynamicalRcp85DryExportItem,
-      dsRainfallDynamicalRcp85WetExportItem
-    ]);
+    }, dsRainfallFormDataExport, dsRainfallExportItems);
     let dsTemperatureExportDataset = new Dataset<ExportDatasetItem>(dsTemperatureDatasetDisplayData, {
       datatype: "downscaling_temperature"
     }, dsTemperatureFormData, [
@@ -759,7 +653,7 @@ export class DatasetFormData {
   }
 }
 
-class DatasetSelectorGroup {
+export class DatasetSelectorGroup {
   private _displayData: DisplayData;
   private _values: DisplayData[];
 
@@ -1171,10 +1065,7 @@ export class TimeSelectorData extends FocusManager<FormValue> {
   private _formData: FormNode;
 
   constructor(formData: FormNode, defaultValue: FormValue) {
-    let labels = formData.values.map((value: FormValue) => {
-      return value.label;
-    });
-    let coverageLabel = labels.join(", ");
+    let coverageLabel = undefined;
     super("selector", coverageLabel, defaultValue);
     this._formData = formData;
   }
@@ -1184,7 +1075,7 @@ export class TimeSelectorData extends FocusManager<FormValue> {
   }
 
   getFocusData(value: FormValue): FocusData<FormValue> {
-    return new FocusData(this.type, value.label, value.paramData, value);
+    return new FocusData(this.type, undefined, value.paramData, value);
   }
 }
 

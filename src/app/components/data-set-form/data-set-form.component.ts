@@ -17,9 +17,20 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   changes: boolean = false;
   label: string = "";
 
+  unitControl: FormControl;
+  viewControl: FormControl;
+  dataset: VisDatasetItem;
+
+  focusControl = <HTMLElement>document.getElementsByClassName("focus-control")[0];
+  display: string;
+
   private _formManager: FormManager<VisDatasetItem>;
 
   constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService) {
+    this.unitControl = new FormControl("c");
+    this.viewControl = new FormControl("pc");
+    this.display = this.focusControl.style.display;
+
     this._formManager = formService.visFormManager;
     let formData = this._formManager.getFormData();
     this.formData = formData;
@@ -61,12 +72,24 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
   }
 
-
-
   updateDataset() {
     this.changes = false;
     let dataset: VisDatasetItem = this.formData.datasetItem;
     this.label = dataset.label;
+    this.dataset = dataset;
+    if(dataset.focusManager.type == "selector") {
+      this.focusControl.style.display = "none";
+    }
+    else {
+      this.focusControl.style.display = this.display;
+    }
+    
     this.paramService.pushDataset(dataset);
+    this.formData.datasetFormData.datasetGroups
+  }
+
+
+  mutate() {
+    
   }
 }
