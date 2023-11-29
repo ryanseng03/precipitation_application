@@ -7,13 +7,15 @@
   [opacity]="opacity"
   (opacityChange)="setOpacity($event)"
   (colorScheme)="setColorScheme($event)"
-  [dataset]="dataset"
   defaultScheme="viridis"
+  [reverseColors]="dataset.reverseColors"
+  [dataRange]="dataset.dataRange"
+  [displayStyle]="dataset.displayStyle"
 ></app-leaflet-layer-control-extension>
 <app-leaflet-color-scale
   [map]="map"
   [colorScale]="colorScheme"
-  [datatype]="dataset.datatype"
+  [datatype]="dataset.dataypeLabel"
   [units]="dataset.unitsShort"
   [rangeAbsolute]="dataset.rangeAbsolute"
 ></app-leaflet-color-scale>

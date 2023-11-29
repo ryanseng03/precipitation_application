@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
-import { ActiveFormData, DatasetFormManagerService, FormManager, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { ActiveFormData, DatasetFormManagerService, FocusData, FormManager, FormNode, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 @Component({
@@ -17,20 +17,13 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   changes: boolean = false;
   label: string = "";
 
-  unitControl: FormControl;
-  viewControl: FormControl;
-  dataset: VisDatasetItem;
+  optionNodes: {node: FormNode, control: FormControl}[];
 
-  focusControl = <HTMLElement>document.getElementsByClassName("focus-control")[0];
-  display: string;
+  dataset: VisDatasetItem;
 
   private _formManager: FormManager<VisDatasetItem>;
 
   constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService) {
-    this.unitControl = new FormControl("c");
-    this.viewControl = new FormControl("pc");
-    this.display = this.focusControl.style.display;
-
     this._formManager = formService.visFormManager;
     let formData = this._formManager.getFormData();
     this.formData = formData;
@@ -77,19 +70,39 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     let dataset: VisDatasetItem = this.formData.datasetItem;
     this.label = dataset.label;
     this.dataset = dataset;
-    if(dataset.focusManager.type == "selector") {
-      this.focusControl.style.display = "none";
-    }
-    else {
-      this.focusControl.style.display = this.display;
-    }
     
     this.paramService.pushDataset(dataset);
-    this.formData.datasetFormData.datasetGroups
+
+    this.updateOptionData();
   }
 
-
-  mutate() {
-    
+  updateOptionData() {
+    if(this.dataset.optionData) {
+      let typeControl = new FormControl(this.dataset.optionData.type)
+      this.optionNodes = [{
+        node: this.dataset.optionData.typeNode,
+        control: typeControl
+      }];
+      typeControl.valueChanges.subscribe((type: string) => {
+        this.dataset.optionData.type = type;
+        this.updateOptionData();
+      });
+      if(this.dataset.optionData.unitNode) {
+        let unitControl = new FormControl(this.dataset.optionData.unit);
+        this.optionNodes.push({
+          node: this.dataset.optionData.unitNode,
+          control: unitControl
+        });
+        unitControl.valueChanges.subscribe((unit: string) => {
+          this.dataset.optionData.unit = unit;
+          this.updateOptionData();
+        });
+      }
+      let focusData = new FocusData("selector", undefined, this.dataset.optionData.paramData, this.dataset.optionData);
+      this.paramService.pushFocusData(focusData);
+    }
+    else {
+      this.optionNodes = [];
+    }
   }
 }

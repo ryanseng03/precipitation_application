@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
 import {Map, Control, DomUtil, DomEvent, Layer} from 'leaflet';
 import { MatSliderChange } from '@angular/material/slider';
 import { FormControl } from '@angular/forms';
@@ -8,8 +8,7 @@ import { ColorGeneratorService, XMLColorSchemeData } from 'src/app/services/rast
 import { ColorScale } from 'src/app/models/colorScale';
 import { CustomColorSchemeService } from 'src/app/services/helpers/custom-color-scheme.service';
 import { AssetManagerService } from 'src/app/services/util/asset-manager.service';
-import { EventParamRegistrarService } from 'src/app/services/inputManager/event-param-registrar.service';
-import { VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { DisplayStyle } from 'src/app/services/dataset-form-manager.service';
 import { StringMap } from 'src/app/models/types';
 
 @Component({
@@ -17,11 +16,7 @@ import { StringMap } from 'src/app/models/types';
   templateUrl: './leaflet-layer-control-extension.component.html',
   styleUrls: ['./leaflet-layer-control-extension.component.scss']
 })
-export class LeafletLayerControlExtensionComponent implements OnInit {
-
-  //TEMP
-  private percentRange: [number, number] = [-50, 50];
-  private absoluteRange: [number, number] = [-1000, 1000];
+export class LeafletLayerControlExtensionComponent implements OnInit, OnChanges {
 
   private _map: Map;
   public control: Control.Layers;
@@ -49,32 +44,14 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   customColorSchemes: {[tag: string]: XMLColorSchemeData};
   private forbiddenNames: Set<string>;
   private debounce: boolean;
-  private type: string;
 
   @Input() opacity: number;
   @Output() opacityChange: EventEmitter<number>;
-
   @Output() colorScheme: EventEmitter<ColorScale>;
-
   @Input() defaultScheme: string;
-
-  private _dataset: VisDatasetItem;
-  @Input() set dataset(dataset: VisDatasetItem) {
-    this._dataset = dataset;
-    //temp
-    if(dataset.datatype == "Temperature") {
-      this.absoluteRange = [1.25, 4.5];
-    }
-    else {
-      let range = dataset.dataRange[1] - dataset.dataRange[0];
-      this.absoluteRange = [-range / 10.0, range / 10.0];
-    }
-
-
-
-    this.schemeControl.setValue(this.schemeControl.value);
-  }
-
+  @Input() reverseColors: boolean;
+  @Input() dataRange: [number, number];
+  @Input() displayStyle: DisplayStyle;
 
   @Input() set map(map: Map) {
     if(map) {
@@ -101,10 +78,9 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
           //reopen control on click after close (selectors new context causes the control to close, need timeout to delegate to after control closure)
           //note control closure is not always immediate, so just set to 10ms delay to catch most instances
           DomEvent.addListener(control, "click", () => {
-          setTimeout(() => {
-            this.expand();
-          }, 10);
-
+            setTimeout(() => {
+              this.expand();
+            }, 10);
           });
         },
         _addContainer: function() {
@@ -121,7 +97,18 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     return this._map
   }
 
-  constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService, private paramService: EventParamRegistrarService) {
+  ngOnChanges(changes: SimpleChanges) {
+    if(this.displayStyle == "standard") {
+      this.baseColorSchemes = this.directColorSchemes;
+      this.schemeControl.setValue(this.lastDirect);
+    }
+    else {
+      this.baseColorSchemes = this.divergingColorSchemes;
+      this.schemeControl.setValue(this.lastDiverging);
+    }
+  }
+
+  constructor(public helper: CustomColorSchemeService, public dialog: MatDialog, private colors: ColorGeneratorService, private assetService: AssetManagerService) {
     this.opacityChange = new EventEmitter<number>();
     this.colorScheme = new EventEmitter<ColorScale>();
     this.schemeControl = new FormControl();
@@ -142,29 +129,14 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.viewType, (type: string) => {
-      this.type = type;
-      if(this.baseColorSchemes == this.directColorSchemes) {
-        this.lastDirect = this.schemeControl.value;
-      }
-      else if(type !== null) {
-        this.lastDiverging = this.schemeControl.value;
-      }
-      if(type === null || type == "direct") {
-        this.baseColorSchemes = this.directColorSchemes;
-        this.schemeControl.setValue(this.lastDirect);
-      }
-      else if(type == "percent") {
-        this.baseColorSchemes = this.divergingColorSchemes;
-        this.schemeControl.setValue(this.lastDiverging);
+    this.schemeControl.valueChanges.subscribe((scheme: string) => {
+      if(this.displayStyle == "standard") {
+        this.lastDirect = scheme;
       }
       else {
-        this.baseColorSchemes = this.divergingColorSchemes;
-        this.schemeControl.setValue(this.lastDiverging);
+        this.lastDiverging = scheme;
       }
     });
-
-
 
 
     let chain = new RevertableCancellationChain();
@@ -256,22 +228,13 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
         }
       });
     });
-
   }
 
-  //note you are recomputing the color scheme every time one is selected, only really need to compute all of them once when the dataset changes, maybe should change this
+  //note you are recomputing the color scheme every time one is selected, only really need to compute first times selected with current params/precompute all, maybe should change this
   //also wouldn't need promise chaining and all that if precomputed
   getColorScheme(scheme: string): Promise<[string, ColorScale]> {
-    let range: [number, number];
-    if(this.type == "absolute") {
-      range = this.absoluteRange;
-    }
-    else if(this.type == "percent") {
-      range = this.percentRange;
-    }
-    else {
-      range = this._dataset.dataRange;
-    }
+    let range: [number, number] = this.dataRange;
+    let reverseColors: boolean = this.reverseColors;
 
     let getColorSchemeFromAssetFile = (fname: string, reverse?: boolean): Promise<ColorScale> => {
       return this.colors.getColorSchemeFromAssetFile(fname, range, reverse).then((data: XMLColorSchemeData) => {
@@ -282,42 +245,42 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
     let p: Promise<[string, ColorScale]>;
     switch(scheme) {
       case "mono": {
-        let colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale(range, this._dataset.reverseColors);
+        let colorScheme = this.colors.getDefaultMonochromaticRainfallColorScale(range, reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "rainbow": {
-        let colorScheme = this.colors.getDefaultRainbowRainfallColorScale(range, this._dataset.reverseColors);
+        let colorScheme = this.colors.getDefaultRainbowRainfallColorScale(range, reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "turbo": {
-        let colorScheme = this.colors.getTurboColorScale(range, this._dataset.reverseColors);
+        let colorScheme = this.colors.getTurboColorScale(range, reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "usgs": {
-        let colorScheme = this.colors.getUSGSColorScale(range, this._dataset.reverseColors);
+        let colorScheme = this.colors.getUSGSColorScale(range, reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "viridis": {
-        let colorScheme = this.colors.getViridisColorScale(range, this._dataset.reverseColors);
+        let colorScheme = this.colors.getViridisColorScale(range, reverseColors);
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
         break;
       }
       case "diverging": {
         let colorScheme: ColorScale;
-        if(this._dataset.datatype == "Temperature") {
-          colorScheme = this.colors.getIncreasingColorScale(range, this._dataset.reverseColors);
+        if(this.displayStyle == "increasing") {
+          colorScheme = this.colors.getIncreasingColorScale(range, true);
         }
         else {
-          colorScheme = this.colors.getDivergentColorScale(range, this._dataset.reverseColors);
+          colorScheme = this.colors.getDivergentColorScale(range, reverseColors);
         }
         let data: [string, ColorScale] = [scheme, colorScheme]
         p = Promise.resolve(data);
@@ -325,7 +288,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc1": {
         let url = this.assetService.getAssetURL("/colorschemes/1-3wbgy.xml")
-        p = getColorSchemeFromAssetFile(url, !this._dataset.reverseColors).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, !reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -333,7 +296,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc2": {
         let url = this.assetService.getAssetURL("/colorschemes/1-bluegary1.xml");
-        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -341,7 +304,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc3": {
         let url = this.assetService.getAssetURL("/colorschemes/4-3wbgy.xml");
-        p = getColorSchemeFromAssetFile(url, !this._dataset.reverseColors).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, !reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -349,7 +312,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc4": {
         let url = this.assetService.getAssetURL("/colorschemes/13-4w_grphgrnl.xml");
-        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -357,7 +320,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc5": {
         let url = this.assetService.getAssetURL("/colorschemes/17-5wdkcool.xml");
-        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -365,7 +328,7 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
       }
       case "tacc6": {
         let url = this.assetService.getAssetURL("/colorschemes/18-5w_coolcrisp2.xml");
-        p = getColorSchemeFromAssetFile(url, this._dataset.reverseColors).then((colorScale: ColorScale) => {
+        p = getColorSchemeFromAssetFile(url, reverseColors).then((colorScale: ColorScale) => {
           let data: [string, ColorScale] = [scheme, colorScale];
           return data;
         });
@@ -398,7 +361,6 @@ export class LeafletLayerControlExtensionComponent implements OnInit {
 
     return p;
   }
-
 }
 
 //simple cancellable promise wrapper allows cancel flag to be set and checked when running callbacks

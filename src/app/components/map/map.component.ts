@@ -65,8 +65,6 @@ export class MapComponent implements OnInit {
   dataset: VisDatasetItem;
   selectedLocation: MapLocation;
 
-  private _viewType: string;
-
   constructor(private paramService: EventParamRegistrarService, private dataRetreiver: DataRetreiverService, private assetService: AssetManagerService, private dataManager: DataManagerService, private layerService: LeafletRasterLayerService) {
     let roseImage = "/arrows/nautical.svg";
     let roseURL = assetService.getAssetURL(roseImage);
@@ -520,9 +518,7 @@ export class MapComponent implements OnInit {
 
 
   ngOnInit() {
-    this.paramService.createParameterHook(EventParamRegistrarService.EVENT_TAGS.viewType, (viewType: string) => {
-      this._viewType = viewType;
-    });
+
   }
 
   initMarkerInfo() {
@@ -611,16 +607,28 @@ export class MapComponent implements OnInit {
         },
         translationUnit: "in"
       },
+      in: {
+        f: (value: number) => {
+          return value * 25.4;
+        },
+        translationUnit: "mm"
+      },
       "°C": {
         f: (value: number) => {
           return (value * (9 / 5)) + 32;
         },
         translationUnit: "°F"
+      },
+      "°F": {
+        f: (value: number) => {
+          return (value - 32) * (5 / 9);
+        },
+        translationUnit: "°C"
       }
     };
 
     //TEMP WORKAROUNDS
-    let unit = this._viewType == "percent" ? "%" : this.dataset.unitsShort;
+    let unit = this.dataset.unitsShort;
     let valueLabels = [];
 
     let roundedValue = Math.round(value * 100) / 100;
@@ -628,7 +636,7 @@ export class MapComponent implements OnInit {
     valueLabels.push(valueLabel);
 
     let translationData = translations[unit];
-    if((unit == "mm" || !this._viewType || this._viewType == "direct") && translationData) {
+    if(this.dataset.displayStyle == "standard" && translationData) {
       let translationValue = translationData.f(value);
       let translationUnit = translationData.translationUnit;
       let roundedTranslationValue = Math.round(translationValue * 100) / 100;

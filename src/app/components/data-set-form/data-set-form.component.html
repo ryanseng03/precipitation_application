@@ -78,22 +78,19 @@
       </p>
     </div>
 
-    <div class="form-container" *ngIf="dataset.focusManager.type == 'selector'">
+    <div class="form-container" *ngIf="optionNodes.length > 0">
       <div class="sep"></div>
       <div class="instant-props">
         <h3 class="subh3">
           Display Options
         </h3>
-        <!-- CHANGE SOURCE -->
-        <div
-          *ngFor="let field of formData.datasetItem.formData.default"
-          class="control">
-            <app-selector
-              [label]="field.label"
-              [tooltip]="field.description"
-              [values]="field.values"
-              [control]="controls[field.tag]"
-            ></app-selector>
+        <div *ngFor="let item of optionNodes">
+          <app-selector
+            [label]="item.node.label"
+            [tooltip]="item.node.description"
+            [values]="item.node.values"
+            [control]="item.control"
+          ></app-selector>
         </div>
       </div>
     </div>

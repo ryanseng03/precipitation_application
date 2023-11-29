@@ -1,5 +1,5 @@
 
-<div class="wrapper">
+<div class="wrapper" [ngClass]="{single: (groupValues || []).length <= 0 && (values || []).length <= 1 && flattenSingle}">
     <div class="selector" *ngIf="(groupValues || []).length > 0 || (values || []).length > 1 || !flattenSingle;else single">
         <mat-form-field>
             <mat-label>{{label}}</mat-label>

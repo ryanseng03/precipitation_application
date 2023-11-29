@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import moment, { Moment, unitOfTime } from 'moment';
-import { StringMap } from '../models/types';
+import { StringMap, ValueData } from '../models/types';
 import { DateManagerService } from './dateManager/date-manager.service';
 
 
@@ -39,8 +39,61 @@ export class DatasetFormManagerService {
     //////DS period
     let periodPresent = new FormValue(new DisplayData("Present day baseline values based on recorded climate data.", "Present Day", "present"), {period: "present"}, [true, true]);
     let periodMid = new FormValue(new DisplayData("Mid-century (2040-2069) projections.", "Mid-Century (2040-2069)", "mid"), {period: "mid"}, [true, true]);
-    let periodLateStat = new FormValue(new DisplayData("Late-century (2070-2099) projections.", "Late-Century (2070-2099)", "late"), {period: "end"}, [true, true]);
-    let periodLateDyn = new FormValue(new DisplayData("Late-century (2080-2099) projections.", "Late-Century (2080-2099)", "late"), {period: "end"}, [true, true]);
+    let periodLateStat = new FormValue(new DisplayData("Late-century (2070-2099) projections.", "Late-Century (2070-2099)", "late_s"), {period: "end"}, [true, true]);
+    let periodLateDyn = new FormValue(new DisplayData("Late-century (2080-2099) projections.", "Late-Century (2080-2099)", "late_d"), {period: "end"}, [true, true]);
+
+    ////values
+    //////spatial extents
+    let statewideSpatialExtent = new FormValue(new DisplayData("Data covering the entire state of Hawaiʻi.", "Statewide", "statewide"), {
+      extent: "statewide"
+    }, null);
+    let hawaiiSpatialExtent = new FormValue(new DisplayData("Data covering Hawaiʻi county.", "Hawaiʻi", "bi"), {
+      extent: "bi"
+    }, null);
+    let mauiSpatialExtent = new FormValue(new DisplayData("Data covering Maui county.", "Maui", "mn"), {
+      extent: "mn"
+    }, null);
+    let honoluluSpatialExtent = new FormValue(new DisplayData("Data covering Honolulu county.", "Honolulu", "oa"), {
+      extent: "oa"
+    }, null);
+    let kauaiSpatialExtent = new FormValue(new DisplayData("Data covering Kauaʻi county.", "Kauaʻi", "ka"), {
+      extent: "ka"
+    }, null);
+    //////units
+    let mmUnits = new FormValue(new DisplayData("Values in millimeters", "mm", "mm"), {
+      units: "mm"
+    }, null);
+    let inUnits = new FormValue(new DisplayData("Values in inches", "in", "in"), {
+      units: "in"
+    }, null);
+    let cUnits = new FormValue(new DisplayData("Values in degrees celcius", "°C", "c"), {
+      units: "celcius"
+    }, null);
+    let fUnits = new FormValue(new DisplayData("Values in degrees fahrenheit", "°F", "f"), {
+      units: "fahrenheit"
+    }, null);
+    let kUnits = new FormValue(new DisplayData("Values in kelvin", "K", "k"), {
+      units: "kelvin"
+    }, null);
+    let percentUnits = new FormValue(new DisplayData("Percent change", "%", "percent"), {
+      units: "percent"
+    }, null);
+
+
+    let percentChangeView = new FormValue(new DisplayData("Percent change in value relative to present day conditions.", "Percent change", "percent"), {
+      type: "percent"
+    }, null);
+    let absoluteChangeView = new FormValue(new DisplayData("Change in value relative to present day conditions.", "Absolute change", "absolute"), {
+      type: "absolute"
+    }, null);
+    let valueView = new FormValue(new DisplayData("Projected value", "Value", "direct"), {
+      type: "direct"
+    }, null);
+
+    
+    let viewTypeDisplayData = new DisplayData("How should the data be viewed? Either view the data directly or relative to present conditions.", "View Type", "view");
+    let viewTypeNodeRf = new FormNode(viewTypeDisplayData, [absoluteChangeView, percentChangeView, valueView], absoluteChangeView);
+    let viewTypeNodeTemp = new FormNode(viewTypeDisplayData, [absoluteChangeView, valueView], absoluteChangeView);
 
     let periodNode = new FormNode(new DisplayData("The time period over which the data is measured.", "Time Period", "period"), [
       periodDay,
@@ -64,6 +117,7 @@ export class DatasetFormManagerService {
       seasonDry,
       seasonWet
     ]);
+    
     let dsPeriodStatisticalNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
       periodPresent,
       periodMid,
@@ -73,6 +127,39 @@ export class DatasetFormManagerService {
       periodPresent,
       periodLateDyn
     ]);
+
+    let dsPeriodNode = new FormNode(new DisplayData("The period of coverage for the data to display, including baseline present day data and future projections", "Data Period", "ds_period"), [
+      periodPresent,
+      periodMid,
+      periodLateStat,
+      periodLateDyn
+    ]);
+
+    let extentDisplayData = new DisplayData("The area of coverage for the data.", "Spatial Extent", "extent");
+    let unitsDisplayData = new DisplayData("The units the data are represented in.", "Units", "units");
+    let extentNode = new FormNode(extentDisplayData, [statewideSpatialExtent, hawaiiSpatialExtent, mauiSpatialExtent, honoluluSpatialExtent, kauaiSpatialExtent]);
+    let rfUnitsNode = new FormNode(unitsDisplayData, [mmUnits, inUnits, percentUnits]);
+    let tempUnitsNode = new FormNode(unitsDisplayData, [cUnits, fUnits]);
+
+    let rfdsUnitsNode = new FormNode(unitsDisplayData, [mmUnits, inUnits]);
+    let tempdsUnitsNode = new FormNode(unitsDisplayData, [cUnits, fUnits]);
+    //let percentUnitsNode = new FormNode(unitsDisplayData, [percentUnits]);
+
+    let rfdsMap = {
+      percent: null,
+      absolute: rfdsUnitsNode,
+      direct: rfdsUnitsNode
+    };
+    let tempdsMap = {
+      percent: null,
+      absolute: tempdsUnitsNode,
+      direct: tempdsUnitsNode
+    };
+
+    // private percentRange: [number, number] = [-50, 50];
+    // private absoluteRange: [number, number] = [-1000, 1000];
+
+    
 
 
     ////categories
@@ -97,7 +184,7 @@ export class DatasetFormManagerService {
       dsmNode,
       climateNode,
       seasonNode,
-      dsPeriodStatisticalNode
+      dsPeriodNode
     ], []);
     let dsRainfallFormDataExport = new FormData([
       dsmNode,
@@ -105,10 +192,14 @@ export class DatasetFormManagerService {
       seasonNode
     ], []);
     //temperature downscaling data
+    let dsTemperatureFormDataExport = new FormData([
+      dsmNode,
+      climateNode
+    ], []);
     let dsTemperatureFormData = new FormData([
       dsmNode,
       climateNode,
-      // dsPeriodStatisticalNode
+      dsPeriodNode
     ], []);
     let ndviFormData = new FormData([
       periodNode
@@ -184,46 +275,152 @@ export class DatasetFormManagerService {
     let meanTemperatureDay = new VisDatasetItem(false, true, "Celcius", "°C", "Mean Temperature", "Daily Mean Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, [temperatureMonthFocusManager, temperatureRainfallDayFocusManager], true, {
       period: "day"
     });
-    //////DS Rainfall
-    let dsRainfallItems = [];
+
+    //////DS 
     let dsm = [["statistical", "Statistically Downscaled"], ["dynamical", "Dynamically Downscaled"]];
     let model = [["rcp45", "RCP 4.5"], ["rcp85", "RCP 8.5"]];
     let season = [["annual", "Annual", [0, 10000]], ["wet", "Wet Season", [0, 5000]], ["dry", "Dry Season", [0, 5000]]];
-    let period = [["present", "Present Day"], ["mid", "Mid Century"], ["late", "End Century"]];
+    ////////Rainfall
+    let dsRainfallItems = [];
     for(let dsmItem of dsm) {
+      let period = [["present", "Present Day"], ["mid", "2040-2069"], ["late_s", "2070-2099"]];
+      if(dsmItem[0] == "dynamical") {
+        period = [["present", "Present Day"], ["late_d", "2080-2099"]];
+      }
       for(let modelItem of model) {
         for(let seasonItem of season) {
           for(let periodItem of period) {
-            let datasetItem = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", `${dsmItem[1]} ${seasonItem[1]} Rainfall (${modelItem[1]}) - ${periodItem[1]}`, <[number, number]>seasonItem[2], [true, false], dsStatisticalFocusManager, null, false, {
+
+            //RF
+            //need different maps for each thing
+            let unitRepMap: ViewDataMap = {
+              percent: {
+                displayStyle: "diverging",
+                units: {
+                  percent: {
+                    unit: "Percent",
+                    short: "%",
+                    range: [-50, 50]
+                  }
+                }
+              },
+              absolute: {
+                displayStyle: "diverging",
+                units: {
+                  mm: {
+                    unit: "Millimeters",
+                    short: "mm",
+                    range: seasonItem[0] == "annual" ? [-1000, 1000] : [-500, 500]
+                  },
+                  in: {
+                    unit: "Inches",
+                    short: "in",
+                    range: seasonItem[0] == "annual" ? [-39, 39] : [-20, 20]
+                  }
+                }
+              },
+              direct: {
+                displayStyle: "standard",
+                units: {
+                  mm: {
+                    unit: "Millimeters",
+                    short: "mm",
+                    range: seasonItem[0] == "annual" ? [0, 10000] : [0, 5000]
+                  },
+                  in: {
+                    unit: "Inches",
+                    short: "in",
+                    range: seasonItem[0] == "annual" ? [0, 394] : [0, 197]
+                  }
+                }
+              }
+            }
+
+            let rfdsOptionData: OptionData = new OptionData(viewTypeNodeRf, rfdsMap, unitRepMap, "absolute", "mm");
+            let rfdsPresentOptionData: OptionData = new OptionData(viewTypeNodeRf.filter(["direct"]), rfdsMap, unitRepMap, "direct", "mm");
+
+
+            let optionData = periodItem[0] == "present" ? rfdsPresentOptionData : rfdsOptionData;
+            let datasetItem = new VisDatasetItem(false, true, "Millimeters", "mm", "Rainfall", `${dsmItem[1]} ${seasonItem[1]} Rainfall (${modelItem[1]}) — ${periodItem[1]}`, <[number, number]>seasonItem[2], [true, false], dsStatisticalFocusManager, null, false, {
               dsm: dsmItem[0],
               model: modelItem[0],
               season: <string>seasonItem[0],
               ds_period: periodItem[0]
-            });
+            }, optionData);
             dsRainfallItems.push(datasetItem);
           }
         }
       }
     }
 
-    //////DS Temperature
-    let dsTemperatureStatisticalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsStatisticalFocusManager, null, true, {
-      dsm: "statistical",
-      model: "rcp45"
-    });
-    let dsTemperatureStatisticalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Statistically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsStatisticalFocusManager, null, true, {
-      dsm: "statistical",
-      model: "rcp85"
-    });
-    let dsTemperatureDynamicalRcp45 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 4.5)", [-10, 35], [false, false], dsDynamicalFocusManager, null, true, {
-      dsm: "dynamical",
-      model: "rcp45"
-    });
-    let dsTemperatureDynamicalRcp85 = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", "Dynamically Downscaled Temperature (RCP 8.5)", [-10, 35], [false, false], dsDynamicalFocusManager, null, true, {
-      dsm: "dynamical",
-      model: "rcp85"
-    });
-    //NDVI
+    ////////Temperature
+    let dsTemperatureItems = [];
+    for(let dsmItem of dsm) {
+      let period = [["present", "Present Day"], ["mid", "2040-2069"], ["late_s", "2070-2099"]];
+      if(dsmItem[0] == "dynamical") {
+        period = [["present", "Present Day"], ["late_d", "2080-2099"]];
+      }
+      for(let modelItem of model) {
+        for(let periodItem of period) {
+          let unitRepMap: ViewDataMap = {
+            percent: {
+              displayStyle: "increasing",
+              units: {
+                percent: {
+                  unit: "Percent",
+                  short: "%",
+                  range: [-50, 50]
+                }
+              }
+            },
+            absolute: {
+              displayStyle: "increasing",
+              units: {
+                c: {
+                  unit: "Celcius",
+                  short: "°C",
+                  range: [1.25, 4.25]
+                },
+                f: {
+                  unit: "Fahrenheit",
+                  short: "°F",
+                  range: [2.25, 7.65]
+                }
+              }
+            },
+            direct: {
+              displayStyle: "standard",
+              units: {
+                c: {
+                  unit: "Celcius",
+                  short: "°C",
+                  range: [-10, 35]
+                },
+                f: {
+                  unit: "Fahrenheit",
+                  short: "°F",
+                  range: [14, 95]
+                }
+              }
+            }
+          }
+
+          let tempdsOptionData: OptionData = new OptionData(viewTypeNodeTemp, tempdsMap, unitRepMap, "absolute", "c");
+          let tempdsPresentOptionData: OptionData = new OptionData(viewTypeNodeTemp.filter(["direct"]), tempdsMap, unitRepMap, "direct", "c");
+
+
+          let optionData = periodItem[0] == "present" ? tempdsPresentOptionData : tempdsOptionData;
+          let datasetItem = new VisDatasetItem(false, true, "Celcius", "°C", "Temperature", `${dsmItem[1]} Temperature (${modelItem[1]}) — ${periodItem[1]}`, [-10, 35], [true, false], dsStatisticalFocusManager, null, false, {
+            dsm: dsmItem[0],
+            model: modelItem[0],
+            ds_period: periodItem[0]
+          }, optionData);
+          dsTemperatureItems.push(datasetItem);
+        }
+      }
+    }
+
+    //////NDVI
     let ndvi = new VisDatasetItem(false, true, "", "", "NDVI", "NDVI", [-0.2, 1], [false, true], ndviFocusManager, [ndviFocusManager], false, {
       period: "16day"
     });
@@ -278,12 +475,7 @@ export class DatasetFormManagerService {
     }, dsRainfallFormData, dsRainfallItems);
     let dsTemperatureVisDataset = new Dataset<VisDatasetItem>(dsTemperatureDatasetDisplayData, {
       datatype: "downscaling_temperature"
-    }, dsTemperatureFormData, [
-      dsTemperatureStatisticalRcp45,
-      dsTemperatureStatisticalRcp85,
-      dsTemperatureDynamicalRcp45,
-      dsTemperatureDynamicalRcp85
-    ]);
+    }, dsTemperatureFormData, dsTemperatureItems);
     let ndviVisDataset = new Dataset<VisDatasetItem>(ndviDatasetDisplayData, {
       datatype: "ndvi"
     }, ndviFormData, [
@@ -314,48 +506,13 @@ export class DatasetFormManagerService {
     let stationPartialDisplayData = new DisplayData("Processed station data including each station's metadata and values over a period of time", "Station Data", "station_data");
     let ndviDisplayData = new DisplayData("A gridded normalized difference vegetation index (NDVI) map representing estimated values over the state of Hawaiʻi.", "NDVI Map", "data_map");
     //additional property nodes
-    ////values
-    //////spatial extents
-    let statewideSpatialExtent = new FormValue(new DisplayData("Data covering the entire state of Hawaiʻi.", "Statewide", "statewide"), {
-      extent: "statewide"
-    }, null);
-    let hawaiiSpatialExtent = new FormValue(new DisplayData("Data covering Hawaiʻi county.", "Hawaiʻi", "bi"), {
-      extent: "bi"
-    }, null);
-    let mauiSpatialExtent = new FormValue(new DisplayData("Data covering Maui county.", "Maui", "mn"), {
-      extent: "mn"
-    }, null);
-    let honoluluSpatialExtent = new FormValue(new DisplayData("Data covering Honolulu county.", "Honolulu", "oa"), {
-      extent: "oa"
-    }, null);
-    let kauaiSpatialExtent = new FormValue(new DisplayData("Data covering Kauaʻi county.", "Kauaʻi", "ka"), {
-      extent: "ka"
-    }, null);
-    //////units
-    let mmUnits = new FormValue(new DisplayData("Values in millimeters", "mm", "mm"), {
-      units: "mm"
-    }, null);
-    let inUnits = new FormValue(new DisplayData("Values in inches", "in", "in"), {
-      units: "in"
-    }, null);
-    let cUnits = new FormValue(new DisplayData("Values in degrees celcius", "°C", "c"), {
-      units: "celcius"
-    }, null);
-    let fUnits = new FormValue(new DisplayData("Values in degrees fahrenheit", "°F", "f"), {
-      units: "fahrenheit"
-    }, null);
-    let kUnits = new FormValue(new DisplayData("Values in kelvin", "K", "k"), {
-      units: "kelvin"
-    }, null);
-    let percentUnits = new FormValue(new DisplayData("Percent change", "%", "percent"), {
-      units: "percent"
-    }, null);
+    
+
+
+
+
     ////nodes
-    let extentDisplayData = new DisplayData("The area of coverage for the data.", "Spatial Extent", "extent");
-    let unitsDisplayData = new DisplayData("The units the data are represented in.", "Units", "units");
-    let extentNode = new FormNode(extentDisplayData, [statewideSpatialExtent, hawaiiSpatialExtent, mauiSpatialExtent, honoluluSpatialExtent, kauaiSpatialExtent]);
-    let rfUnitsNode = new FormNode(unitsDisplayData, [mmUnits, inUnits, percentUnits]);
-    let tempUnitsNode = new FormNode(unitsDisplayData, [cUnits, fUnits]);
+    
     //fileProperties
     let allExtentProperty = new FileProperty(extentNode, ["statewide"]);
     let statewideProperty = new FileProperty(extentNode.filter(["statewide"]), ["statewide"]);
@@ -368,9 +525,9 @@ export class DatasetFormManagerService {
     let fillPartialProperty = new FileProperty(fillNode.filter(["partial"]), ["partial"]);
     let fillUnfilledProperty = new FileProperty(fillNode.filter(["unfilled"]), ["unfilled"]);
     let dsPeriodStatisticalAllProperty = new FileProperty(dsPeriodStatisticalNode, ["present"]);
-    let dsPeriodStatisticalFutureProperty = new FileProperty(dsPeriodStatisticalNode.filter(["mid", "late"]), ["mid"]);
+    let dsPeriodStatisticalFutureProperty = new FileProperty(dsPeriodStatisticalNode.filter(["mid", "late_s"]), ["mid"]);
     let dsPeriodDynamicalAllProperty = new FileProperty(dsPeriodDynamicalNode, ["present"]);
-    let dsPeriodDynamicalFutureProperty = new FileProperty(dsPeriodDynamicalNode.filter(["late"]), ["late"]);
+    let dsPeriodDynamicalFutureProperty = new FileProperty(dsPeriodDynamicalNode.filter(["late_d"]), ["late"]);
     let ndviPeriodProperty = new FileProperty(periodNode.filter(["16day"]), ["16day"]);
 
     //package files
@@ -459,13 +616,17 @@ export class DatasetFormManagerService {
 
     let dsRainfallExportItems = [];
     for(let dsmItem of dsm) {
+      let fileGroupData = [dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup];
+      if(dsmItem[0] == "dynamical") {
+        fileGroupData = [dsRainfallDynamicalMapFileGroup, dsRainfallDynamicalChangeFileGroup]
+      }
       for(let modelItem of model) {
         for(let seasonItem of season) {
-          let datasetItem = new ExportDatasetItem([dsRainfallStatisticalMapFileGroup, dsRainfallStatisticalChangeFileGroup], {
+          let datasetItem = new ExportDatasetItem(fileGroupData, {
             dsm: dsmItem[0],
             model: modelItem[0],
             season: <string>seasonItem[0]
-          }, `${dsm[1]} ${seasonItem[1]} Rainfall (${modelItem[1]})`);
+          }, `${dsmItem[1]} ${seasonItem[1]} Rainfall (${modelItem[1]})`);
           dsRainfallExportItems.push(datasetItem);
         }
       }
@@ -534,7 +695,7 @@ export class DatasetFormManagerService {
     }, dsRainfallFormDataExport, dsRainfallExportItems);
     let dsTemperatureExportDataset = new Dataset<ExportDatasetItem>(dsTemperatureDatasetDisplayData, {
       datatype: "downscaling_temperature"
-    }, dsTemperatureFormData, [
+    }, dsTemperatureFormDataExport, [
       dsTemperatureStatisticalRcp45ExportItem,
       dsTemperatureStatisticalRcp85ExportItem,
       dsTemperatureDynamicalRcp45ExportItem,
@@ -943,8 +1104,9 @@ export class VisDatasetItem extends DatasetItem {
   private _reverseColors: boolean;
   private _datatype: string;
   private _timeseriesData: TimeseriesData[];
+  private _optionData: OptionData;
 
-  constructor(includeStations: boolean, includeRaster: boolean, units: string, unitsShort: string, datatype: string, label: string, dataRange: [number, number], rangeAbsolute: [boolean, boolean], focusManager: FocusManager<any>, timeseriesData: TimeseriesData[], reverseColors: boolean, values: StringMap) {
+  constructor(includeStations: boolean, includeRaster: boolean, units: string, unitsShort: string, datatype: string, label: string, dataRange: [number, number], rangeAbsolute: [boolean, boolean], focusManager: FocusManager<any>, timeseriesData: TimeseriesData[], reverseColors: boolean, values: StringMap, optionData?: OptionData) {
     super(values, label);
     this._includeRaster = includeRaster;
     this._includeStations = includeStations;
@@ -956,6 +1118,19 @@ export class VisDatasetItem extends DatasetItem {
     this._datatype = datatype;
     this._focusManager = focusManager;
     this._timeseriesData = timeseriesData;
+    this._optionData = optionData;
+  }
+
+  get optionData(): OptionData {
+    return this._optionData;
+  }
+
+  get dataypeLabel(): string {
+    let label = this._datatype;
+    if(this.displayStyle !== "standard") {
+      label += " Change";
+    }
+    return label;
   }
 
   get datatype(): string {
@@ -971,15 +1146,19 @@ export class VisDatasetItem extends DatasetItem {
   }
 
   get units(): string {
-    return this._units;
+    return this._optionData?.unitData.unit || this._units;
   }
 
   get unitsShort(): string {
-    return this._unitsShort;
+    return this._optionData?.unitData.short || this._unitsShort;
   }
 
   get dataRange(): [number, number] {
-    return this._dataRange;
+    return this._optionData?.unitData.range || this._dataRange;
+  }
+
+  get displayStyle(): DisplayStyle {
+    return this._optionData?.displayStyle || "standard";
   }
 
   get rangeAbsolute(): [boolean, boolean] {
@@ -1065,20 +1244,89 @@ export class Form {
   node: FormNode
 }
 
-//USE VALUE PARAMDATA FOR SELECTED TO INSERT PROPERTIES
-//view type and unit are specific
-//some units might not be available for all view types
+export interface ViewDataMap {
+  [view: string]: ViewData
+}
+
+export interface ViewData {
+  displayStyle: DisplayStyle,
+  units: {
+    [unit: string]: UnitData
+  }
+}
+export interface UnitData {
+  unit: string
+  short: string,
+  range: [number, number]
+}
+
+
 export class OptionData {
-  //the nodes have all the information
-  private _nodes: FormNode[];
+  private _typeNode: FormNode;
+  private unitMap: {[type: string]: FormNode};
+  private _viewDataMap: ViewDataMap;
+  private _type: string;
+  private _unit: string;
 
   //valid combos of options, use to create stripped down nodes
-  constructor(nodes: FormNode[], states: StringMap[]) {
-
+  constructor(typeNode: FormNode, unitMap: {[type: string]: FormNode}, viewDataMap: ViewDataMap, defaultType: string, defaultUnit: string) {
+    this._typeNode = typeNode;
+    this.unitMap = unitMap;
+    this._viewDataMap = viewDataMap;
+    this._type = defaultType;
+    this._unit = defaultUnit;
   }
 
-  setValue() {
+  public getUnitNode(type: string) {
+    return this.unitMap[type];
+  }
 
+  get unitNode(): FormNode {
+    return this.getUnitNode(this._type);
+  }
+
+  get displayStyle() {
+    return this._viewDataMap[this._type].displayStyle;
+  }
+
+  get unitData() {
+    return this._viewDataMap[this._type].units[this.unit];
+  }
+  get typeNode(): FormNode {
+    return this._typeNode;
+  }
+
+  get type(): string {
+    return this._type;
+  }
+
+  get unit(): string {
+    return this._type == "percent"? "percent" : this._unit;
+  }
+
+  set type(type: string) {
+    this._type = type;
+  }
+
+  set unit(unit: string) {
+    this._unit = unit;
+  }
+
+  get paramData(): StringMap {
+    let valueParamData = this._typeNode.values.filter((value: FormValue) => {
+      return value.tag == this._type;
+    })[0].paramData;
+    let unitParamData = {};
+    if(this.unitNode) {
+      unitParamData = this.unitNode.values.filter((value: FormValue) => {
+        return value.tag == this._unit;
+      })[0].paramData;
+    }
+
+    return {
+      ...valueParamData,
+      ...unitParamData
+    };
   }
 }
 
@@ -1291,7 +1539,6 @@ export class TimeseriesData extends FocusManager<Moment> {
 }
 
 class NDVITimeseriesData extends TimeseriesData {
-
   addInterval(time: Moment, n: number = 1, lock: boolean = true): Moment {
     let result = this.roundToInterval(time);
     //if going forward, relatively simple, reset to beginning of year if going over year boundary
@@ -1700,8 +1947,4 @@ export class FormManager<T extends DatasetItem> {
   }
 }
 
-
-export class UnitManager {
-
-  translate() {}
-}
+export type DisplayStyle = "diverging" | "standard" | "increasing";
