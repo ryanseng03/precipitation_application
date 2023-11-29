@@ -1,6 +1,6 @@
 <div class="container">
   <div #viewContainer class="view-container" (scroll)="containerScroll($event)">
-    <div #dateControlComponent class="focus-control" [ngStyle]="{width: getDateControlWidth()}">
+    <div *ngIf="hasTimeseries" #dateControlComponent class="focus-control" [ngStyle]="{width: getDateControlWidth()}">
       <app-focus-control></app-focus-control>
     </div>
 

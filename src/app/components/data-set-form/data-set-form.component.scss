@@ -25,9 +25,7 @@ p {
   margin-top: 0;
 }
 
-// .form-body {
-//   padding-bottom: 20px;
-// }
+
 .control-subgroup {
   padding-left: 20px;
 }
@@ -62,3 +60,23 @@ mat-icon {
   padding-left: 10px;
 }
 
+.form-container {
+  display: inline-flex;
+}
+
+.sep {
+  width: 1px;
+  background-color: gray;
+}
+
+.ds-form {
+  padding-right: 20px;
+}
+
+.instant-props {
+  padding-left: 25px;
+}
+
+.category-label {
+  white-space: nowrap;
+}

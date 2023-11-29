@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
-import { ActiveFormData, DatasetFormManagerService, FormManager, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
+import { ActiveFormData, DatasetFormManagerService, FocusData, FormManager, FormNode, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
 import { StringMap } from '@angular/compiler/src/compiler_facade_interface';
 
 @Component({
@@ -16,6 +16,10 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   debounce: boolean = false;
   changes: boolean = false;
   label: string = "";
+
+  optionNodes: {node: FormNode, control: FormControl}[];
+
+  dataset: VisDatasetItem;
 
   private _formManager: FormManager<VisDatasetItem>;
 
@@ -61,12 +65,44 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
   }
 
-
-
   updateDataset() {
     this.changes = false;
     let dataset: VisDatasetItem = this.formData.datasetItem;
     this.label = dataset.label;
+    this.dataset = dataset;
+    
     this.paramService.pushDataset(dataset);
+
+    this.updateOptionData();
+  }
+
+  updateOptionData() {
+    if(this.dataset.optionData) {
+      let typeControl = new FormControl(this.dataset.optionData.type)
+      this.optionNodes = [{
+        node: this.dataset.optionData.typeNode,
+        control: typeControl
+      }];
+      typeControl.valueChanges.subscribe((type: string) => {
+        this.dataset.optionData.type = type;
+        this.updateOptionData();
+      });
+      if(this.dataset.optionData.unitNode) {
+        let unitControl = new FormControl(this.dataset.optionData.unit);
+        this.optionNodes.push({
+          node: this.dataset.optionData.unitNode,
+          control: unitControl
+        });
+        unitControl.valueChanges.subscribe((unit: string) => {
+          this.dataset.optionData.unit = unit;
+          this.updateOptionData();
+        });
+      }
+      let focusData = new FocusData("selector", undefined, this.dataset.optionData.paramData, this.dataset.optionData);
+      this.paramService.pushFocusData(focusData);
+    }
+    else {
+      this.optionNodes = [];
+    }
   }
 }

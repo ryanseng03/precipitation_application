@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { RequestService, RequestResults } from "./request.service";
 import { RasterData } from '../../models/RasterData';
 import { DataProcessorService } from "../dataProcessor/data-processor.service";
-import moment, { unitOfTime } from 'moment';
+import moment from 'moment';
 import { MapLocation } from 'src/app/models/Stations';
 import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
 import { TimeseriesData, UnitOfTime } from '../dataset-form-manager.service';
@@ -13,7 +13,7 @@ import { TimeseriesData, UnitOfTime } from '../dataset-form-manager.service';
 export class RequestFactoryService {
   //decouple for easy testing of API changes
   static readonly API_KEYS = {
-    hcdp: "cistore",
+    hcdp: "cistore_test",
     tapis: "hcdp_api"
   };
 

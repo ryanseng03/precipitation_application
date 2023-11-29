@@ -1,0 +1,49 @@
+
+<div class="wrapper" [ngClass]="{single: (groupValues || []).length <= 0 && (values || []).length <= 1 && flattenSingle}">
+    <div class="selector" *ngIf="(groupValues || []).length > 0 || (values || []).length > 1 || !flattenSingle;else single">
+        <mat-form-field>
+            <mat-label>{{label}}</mat-label>
+            <mat-select
+                disableOptionCentering="true"
+                [formControl]="control"
+                [multiple]="multiselect">
+                <mat-optgroup
+                    *ngFor="let group of groupValues || []"
+                    [label]="group.label">
+                    <mat-option
+                        *ngFor="let value of group.values"
+                        [value]="value.tag"
+                        [matTooltipPosition]="valueTooltipPosition"
+                        [matTooltip]="value.description">
+                        {{value.label}}
+                    </mat-option>
+                </mat-optgroup>
+                <mat-option
+                    *ngFor="let value of values || []"
+                    [value]="value.tag"
+                    [matTooltipPosition]="valueTooltipPosition"
+                    [matTooltip]="value.description">
+                    {{value.label}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+    <ng-template class="selector" #single>
+        <!-- make sure there is one to prevent oob error if empty -->
+        <ng-container *ngIf="(values || []).length == 1">
+            <mat-label
+                [matTooltip]="values[0].description"
+                matTooltipPosition="right">
+                {{label}}: {{values[0].label}}
+            </mat-label>
+        </ng-container>
+    </ng-template>
+    <mat-icon
+        aria-hidden="false"
+        aria-label="Tooltip"
+        [matTooltipPosition]="tooltipPosition"
+        [matTooltip]="tooltip"
+        inline="true">
+        help
+    </mat-icon>
+</div>

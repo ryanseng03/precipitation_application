@@ -72,6 +72,7 @@ import { LeafletImageExportComponent } from './components/leaflet-controls/leafl
 import { DateGroupSelectorComponent } from './components/controls/date-group-selector/date-group-selector.component';
 import { FocusControlComponent } from './components/controls/focus-control/focus-control.component';
 import { StationFilterComponent } from './components/station-filter/station-filter.component';
+import { SelectorComponent } from './components/controls/selector/selector.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -109,7 +110,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     LeafletImageExportComponent,
     DateGroupSelectorComponent,
     FocusControlComponent,
-    StationFilterComponent
+    StationFilterComponent,
+    SelectorComponent
   ],
   imports: [
     MatProgressBarModule,

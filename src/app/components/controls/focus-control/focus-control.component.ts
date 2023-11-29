@@ -20,10 +20,12 @@ export class FocusControlComponent implements OnInit {
       if(dataset) {
         this.datatype = dataset.datatype;
         this.focusManager = dataset.focusManager;
-        //make sure all dataset events propogate before pushing focus
-        setTimeout(() => {
-          this.paramService.pushFocusData(this.lastFocus);
-        }, 0);
+        if(this.focusManager.type == "timeseries") {
+          //make sure all dataset events propogate before pushing focus
+          setTimeout(() => {
+            this.paramService.pushFocusData(this.lastFocus);
+          }, 0);
+        }
       }
     });
   }
@@ -42,13 +44,11 @@ export class FocusControlComponent implements OnInit {
   setFocus(focus: unknown) {
     if(this.focusManager.type == "timeseries") {
       this.date = <Moment>focus;
+      let focusData = this.focusManager.getFocusData(focus);
+      this.lastFocus = focusData;
+      this.paramService.pushFocusData(focusData);
     }
-    else {
-      this.selection = <FormValue>focus;
-    }
-    let focusData = this.focusManager.getFocusData(focus);
-    this.lastFocus = focusData;
-    this.paramService.pushFocusData(focusData);
+    
   }
 
 }

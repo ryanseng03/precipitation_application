@@ -6,11 +6,12 @@
         <p>
           {{dataset}}
         </p>
-        <hr>
-        <p>
-          {{date}}
-        </p>
-          
+        <div *ngIf="date">
+          <hr>
+          <p>
+            {{date}}
+          </p>
+        </div>
       </div>
     </div>
   </div>
