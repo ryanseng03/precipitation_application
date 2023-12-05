@@ -150,6 +150,7 @@ export class RequestFactoryService {
     let timingMessage = printTiming ? `Retreived station ${properties.station_id} timeseries for ${start}-${end}`: undefined;
     let response = await this.tapisQueryDispatch(query, timingMessage, delay);
     response.transformData((data: any[]) => {
+      console.log(start, end, data);
       if(data.length > 0) {
         let transformed: TimeseriesGraphData = {
           location,

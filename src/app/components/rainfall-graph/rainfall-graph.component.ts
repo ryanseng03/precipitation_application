@@ -199,6 +199,13 @@ export class RainfallGraphComponent implements OnInit {
           }
           return order;
         });
+        let dedupValues = [];
+        for(let i = 1; i < values.length; i++) {
+          if(!values[i].date.isSame(values[i - 1].date)) {
+            dedupValues.push(values[i]);
+          }
+        }
+        values = dedupValues;
         let chunkStartDate = values[0].date;
         let chunkEndDate = values[values.length - 1].date;
 
@@ -259,6 +266,7 @@ export class RainfallGraphComponent implements OnInit {
           periodData.graph.data[0].y = newValues;
         }
         let dateSearchI = chunkStart;
+
         for(let i = 0; i < values.length && dateSearchI < periodData.dates.length; i++) {
           const {value, date} = values[i];
           let dataDate = periodData.dates[dateSearchI];

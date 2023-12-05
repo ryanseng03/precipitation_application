@@ -66,6 +66,7 @@ export class DataManagerService {
     let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
       return res.toPromise()
       .then((timeseriesData: TimeseriesGraphData) => {
+        console.log(timeseriesData);
         if(timeseriesData) {
           this.paramService.pushTimeseries(timeseriesData);
         }
@@ -79,7 +80,7 @@ export class DataManagerService {
         }
       });
     });
-    Promise.allSettled(queryPromises).then(() => {
+    Promise.allSettled(queryPromises).then((t) => {
       let time = new Date().getTime() - startTime;
       let timeSec = time / 1000;
       console.log(`Timeseries retreival completed or canceled, time elapsed ${timeSec} seconds`);
