@@ -1,17 +1,7 @@
 <div *ngIf="focusManager">
-  <div *ngIf="focusManager.type == 'timeseries' else groupSelector">
-    <app-date-focus
-      [timeseriesData]="castTimeseriesManager()"
-      [initValue]="date"
-      (dateChange)="setFocus($event)">
-    </app-date-focus>
-  </div>
-  <ng-template #groupSelector>
-    <app-date-group-selector
-      [timeSelectorData]="castSelectorManager()"
-      [initValue]="selection"
-      [datatype]="datatype"
-      (selectionChange)="setFocus($event)">
-    </app-date-group-selector>
-  </ng-template>
+  <app-date-focus
+    [timeseriesData]="castTimeseriesManager()"
+    [initValue]="date"
+    (dateChange)="setFocus($event)">
+  </app-date-focus>
 </div>

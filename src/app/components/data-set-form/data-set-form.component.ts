@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import {EventParamRegistrarService} from "../../services/inputManager/event-param-registrar.service";
 import { FormControl } from '@angular/forms';
 import { ActiveFormData, DatasetFormManagerService, FocusData, FormManager, FormNode, VisDatasetItem } from 'src/app/services/dataset-form-manager.service';
@@ -23,7 +23,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
 
   private _formManager: FormManager<VisDatasetItem>;
 
-  constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService) {
+  constructor(private paramService: EventParamRegistrarService, private formService: DatasetFormManagerService, private cdr: ChangeDetectorRef) {
     this._formManager = formService.visFormManager;
     let formData = this._formManager.getFormData();
     this.formData = formData;
@@ -60,6 +60,25 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
+    let params = ["datatype", "period", "dsm", "model", "season", "ds_period", "fill"]
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    for(let param of params) {
+      let value = urlParams.get(param);
+      let control = this.controls[param];
+      if(value && control) {
+        control.setValue(value);
+      }
+    }
+    if(this.changes) {
+      //let changes propogate before pushing
+      setTimeout(() => {
+        this.updateDataset();
+        //trigger change detection
+        this.cdr.detectChanges();
+      }, 0);
+    }
+
   }
 
   ngAfterViewInit() {
@@ -70,9 +89,7 @@ export class DataSetFormComponent implements OnInit, AfterViewInit {
     let dataset: VisDatasetItem = this.formData.datasetItem;
     this.label = dataset.label;
     this.dataset = dataset;
-    
     this.paramService.pushDataset(dataset);
-
     this.updateOptionData();
   }
 

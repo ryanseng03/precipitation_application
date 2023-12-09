@@ -136,7 +136,6 @@ export class RequestService {
   }
 
   async get(apiID: string, endpoint: string, responseType: string, params: Object = {}, headerData: StringMap = {}, retry: number = 3, delay: number = 0): Promise<RequestResults> {
-    console.log(params);
     let apiData = await this.getAPIData(apiID);
     //check list of endpoints, if string is not an id in the list, attempt to use as endpoint string directly
     endpoint = apiData.endpoints[endpoint] ?? endpoint;
