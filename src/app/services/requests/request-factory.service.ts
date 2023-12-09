@@ -5,7 +5,7 @@ import { DataProcessorService } from "../dataProcessor/data-processor.service";
 import moment from 'moment';
 import { MapLocation } from 'src/app/models/Stations';
 import { TimeseriesGraphData } from 'src/app/components/rainfall-graph/rainfall-graph.component';
-import { TimeseriesData, UnitOfTime } from '../dataset-form-manager.service';
+import { TimeseriesData } from '../dataset-form-manager.service';
 
 @Injectable({
   providedIn: 'root'
