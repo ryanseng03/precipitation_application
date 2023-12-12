@@ -13,7 +13,7 @@ import { TimeseriesData } from '../dataset-form-manager.service';
 export class RequestFactoryService {
   //decouple for easy testing of API changes
   static readonly API_KEYS = {
-    hcdp: "hcdp_api",
+    hcdp: "cistore",
     tapis: "hcdp_api"
   };
 
@@ -74,7 +74,7 @@ export class RequestFactoryService {
       }
       return response.files;
     });
-    return response;  
+    return response;
   }
 
   async getVStationTimeseries(start: string, end: string, timeseriesData: TimeseriesData, location: MapLocation, properties: any, printTiming: boolean = true, delay?: number): Promise<RequestResults> {
