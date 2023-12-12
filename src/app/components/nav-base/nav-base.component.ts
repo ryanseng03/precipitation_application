@@ -49,6 +49,10 @@ export class NavBaseComponent implements OnInit {
 
 
   ngOnInit() {
+    if(location.search != "") {
+      this.component = "vis";
+      this.navCollapsed = true;
+    }
   }
 
   changeNavExpand(event: PointerEvent, value: boolean) {
