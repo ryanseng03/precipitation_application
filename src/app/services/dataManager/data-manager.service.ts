@@ -66,7 +66,6 @@ export class DataManagerService {
     let queryPromises = this.queries.timeseries.map((res: RequestResults) => {
       return res.toPromise()
       .then((timeseriesData: TimeseriesGraphData) => {
-        console.log(timeseriesData);
         if(timeseriesData) {
           this.paramService.pushTimeseries(timeseriesData);
         }

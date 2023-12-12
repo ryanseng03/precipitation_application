@@ -204,6 +204,11 @@ export class DatasetFormManagerService {
     let ndviFormData = new FormData([
       periodNode
     ], []);
+    let rhFormData = new FormData([
+      periodNode
+    ], [
+      stationDataFillCategory
+    ]);
 
     //Create Focus Managers
     ////dates
@@ -215,7 +220,9 @@ export class DatasetFormManagerService {
     let date2018 = moment("2018-12");
     let date2012 = moment("2012-12");
     let dateNDVIStart = moment("2000-02-18");
-    let dateNDVIEnd = moment("2021-12-19");
+    let dateNDVIEnd = moment("2023-07-12");
+    let dateRHStart = moment("2000-02-18");
+    let dateRHEnd = moment("2021-12-19");
     ////periods
     let yearPeriod = new PeriodData("year", 1, "year");
     let monthPeriod = new PeriodData("month", 1, "month");
@@ -229,6 +236,7 @@ export class DatasetFormManagerService {
     let dsDynamicalFocusManager = new TimeSelectorData(dsPeriodDynamicalNode, periodPresent);
     let dsStatisticalFocusManager = new TimeSelectorData(dsPeriodStatisticalNode, periodPresent);
     let ndviFocusManager = new NDVITimeseriesData(dateNDVIStart, dateNDVIEnd, day16Period, yearPeriod, this.dateHandler, dateNDVIEnd);
+    let rhFocusManager = new TimeseriesData(dateRHStart, dateRHEnd, dayPeriod, monthPeriod, this.dateHandler, dateRHEnd);
 
     //cleanup the timeseries refs in model
     //Create Datasets
@@ -238,11 +246,11 @@ export class DatasetFormManagerService {
       period: "month",
       fill: "partial"
     });
-    let rainfallDayPartial = new VisDatasetItem(true, false, "Millimeters", "mm", "Rainfall", "Daily Rainfall", [0, 20], [true, false], temperatureRainfallDayFocusManager, [rainfallMonthFocusManager, temperatureRainfallDayFocusManager], false, {
+    let rainfallDayPartial = new VisDatasetItem(true, true, "Millimeters", "mm", "Rainfall", "Daily Rainfall", [0, 20], [true, false], temperatureRainfallDayFocusManager, [rainfallMonthFocusManager, temperatureRainfallDayFocusManager], false, {
       period: "day",
       fill: "partial"
     });
-    let rainfallDayUnfilled = new VisDatasetItem(true, false, "Millimeters", "mm", "Rainfall", "Daily Rainfall", [0, 20], [true, false], temperatureRainfallDayFocusManager, [rainfallMonthFocusManager, temperatureRainfallDayFocusManager], false, {
+    let rainfallDayUnfilled = new VisDatasetItem(true, true, "Millimeters", "mm", "Rainfall", "Daily Rainfall", [0, 20], [true, false], temperatureRainfallDayFocusManager, [rainfallMonthFocusManager, temperatureRainfallDayFocusManager], false, {
       period: "day",
       fill: "unfilled"
     });
@@ -275,6 +283,16 @@ export class DatasetFormManagerService {
     let meanTemperatureDay = new VisDatasetItem(false, true, "Celcius", "°C", "Mean Temperature", "Daily Mean Temperature", [-10, 35], [false, false], temperatureRainfallDayFocusManager, [temperatureMonthFocusManager, temperatureRainfallDayFocusManager], true, {
       period: "day"
     });
+
+    //RH
+    let rhDayPartial = new VisDatasetItem(true, true, "Percent", "%", "Relative Humidity", "Daily Relative Humidity", [0, 100], [true, true], rhFocusManager, [rhFocusManager], false, {
+      period: "day",
+      fill: "partial"
+    });
+    // let rhDayRaw = new VisDatasetItem(true, true, "Percent", "%", "Relative Humidity", "Daily Relative Humidity", [0, 100], [true, true], rhFocusManager, [rhFocusManager], false, {
+    //   period: "day",
+    //   fill: "unfilled"
+    // });
 
     //////DS 
     let dsm = [["statistical", "Statistically Downscaled"], ["dynamical", "Dynamically Downscaled"]];
@@ -434,6 +452,7 @@ export class DatasetFormManagerService {
     let dsRainfallDatasetDisplayData = new DisplayData("Downscaled future projections for rainfall data.", "Rainfall Projections", "ds_rainfall");
     let dsTemperatureDatasetDisplayData = new DisplayData("Downscaled future projections for temperature data.", "Temperature Projections", "ds_temp");
     let ndviDatasetDisplayData = new DisplayData("Normalized Difference Vegetation Index", "NDVI", "ndvi");
+    let rhDatasetDisplayData = new DisplayData("Relative humidity data", "Relative Humidity", "rh");
 
     let rainfallVisDataset = new Dataset<VisDatasetItem>(rainfallDatasetDisplayData, {
       datatype: "rainfall",
@@ -481,6 +500,12 @@ export class DatasetFormManagerService {
     }, ndviFormData, [
       ndvi
     ]);
+    let rhVisDataset = new Dataset<VisDatasetItem>(rhDatasetDisplayData, {
+      datatype: "relative_humidity"
+    }, rhFormData, [
+      rhDayPartial,
+      //rhDayRaw
+    ]);
 
 
 
@@ -505,6 +530,8 @@ export class DatasetFormManagerService {
     let metadataDisplayData = new DisplayData("Gridded map product metadata and error metrics.", "Metadata and Error Metrics", "metadata");
     let stationPartialDisplayData = new DisplayData("Processed station data including each station's metadata and values over a period of time", "Station Data", "station_data");
     let ndviDisplayData = new DisplayData("A gridded normalized difference vegetation index (NDVI) map representing estimated values over the state of Hawaiʻi.", "NDVI Map", "data_map");
+    let rhMapDisplayData = new DisplayData("A gridded relative humidity map representing estimated relative humidity percentages over the state of Hawaiʻi.", "Relative Humidity Map", "data_map");
+
     //additional property nodes
     
 
@@ -516,6 +543,7 @@ export class DatasetFormManagerService {
     //fileProperties
     let allExtentProperty = new FileProperty(extentNode, ["statewide"]);
     let statewideProperty = new FileProperty(extentNode.filter(["statewide"]), ["statewide"]);
+    let percentUnitsProperty = new FileProperty(rfUnitsNode.filter(["percent"]), ["percent"]);
     let rfAllUnitsProperty = new FileProperty(rfUnitsNode.filter(["mm", "in"]), ["mm"]);
     let rfMmUnitsProperty = new FileProperty(rfUnitsNode.filter(["mm"]), ["mm"]);
     let rfChangeUnitsProperty = new FileProperty(rfUnitsNode, ["mm"]);
@@ -544,12 +572,14 @@ export class DatasetFormManagerService {
     let metadataFile = new FileData(metadataDisplayData, txtFtype, []);
     let stationFile = new FileData(stationPartialDisplayData, csvFtype, []);
     let ndviMapFile = new FileData(ndviDisplayData, geotiffFtype, []);
+    let rhMapFile = new FileData(rhMapDisplayData, geotiffFtype, ["metadata"]);
 
     //use if you want to add labeling to file groups in the future, unused for now
     // let griddedMapDisplayData = new DisplayData("Gridded mapped data files and metadata", "Map Data", "map_data");
     // let stationDisplayData = new DisplayData("Files containing station data", "Station Data", "station_data");
     let rainfallMonthMapFileGroup = new FileGroup(new DisplayData("", "", "a"), [rainfallMapFile, standardErrorMapFile, anomalyFile, anomalyStandardErrorFile, metadataFile], [allExtentProperty, rfMmUnitsProperty]);
     let rainfallMonthStationFileGroup = new FileGroup(new DisplayData("", "", "b"), [stationFile], [statewideProperty, rfMmUnitsProperty, fillPartialProperty]);
+    let rainfallDayMapFileGroup = new FileGroup(new DisplayData("", "", "a"), [rainfallMapFile, standardErrorMapFile, anomalyFile, anomalyStandardErrorFile, metadataFile], [allExtentProperty, rfMmUnitsProperty]);
     let rainfallDayStationFileGroup = new FileGroup(new DisplayData("", "", "c"), [stationFile], [statewideProperty, rfMmUnitsProperty, fillProperty]);
 
     let legacyRainfallFileGroup = new FileGroup(new DisplayData("", "", "d"), [legacyRainfallMapFile], [statewideProperty, rfMmUnitsProperty])
@@ -571,19 +601,24 @@ export class DatasetFormManagerService {
 
     let ndviFileGroup = new FileGroup(new DisplayData("", "", "r"), [ndviMapFile], [statewideProperty, ndviPeriodProperty]);
 
+    let rhDayMapFileGroup = new FileGroup(new DisplayData("", "", "s"), [rhMapFile, metadataFile], [allExtentProperty, percentUnitsProperty]);
+    let rhDayStationFileGroup = new FileGroup(new DisplayData("", "", "t"), [stationFile], [statewideProperty, percentUnitsProperty, fillPartialProperty]);
+
+
     //note these can be combined with the vis timeseries stuff, just need to rework vis timeseries data to use this
     let rainfallMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
     let temperatureRainfallDayTimeseriesHandler = new TimeseriesHandler(date1990, lastDay, dayPeriod, this.dateHandler);
     let legacyRainfallTimeseriesHandler = new TimeseriesHandler(date1920, date2012, monthPeriod, this.dateHandler);
     let temperatureMonthTimeseriesHandler = new TimeseriesHandler(date1990, lastMonth, monthPeriod, this.dateHandler);
     let ndviTimeseriesHandler = new TimeseriesHandler(dateNDVIStart, dateNDVIEnd, day16Period, this.dateHandler);
+    let rhDayTimeseriesHandler = new TimeseriesHandler(dateRHStart, dateRHEnd, dayPeriod, this.dateHandler);
 
     //export items
     ////rainfall
     let rainfallMonthExportItem = new ExportDatasetItem([rainfallMonthMapFileGroup, rainfallMonthStationFileGroup], {
       period: "month"
     }, "Monthly Rainfall", rainfallMonthTimeseriesHandler);
-    let rainfallDayExportItem = new ExportDatasetItem([rainfallDayStationFileGroup], {
+    let rainfallDayExportItem = new ExportDatasetItem([rainfallDayMapFileGroup, rainfallDayStationFileGroup], {
       period: "day"
     }, "Daily Rainfall", temperatureRainfallDayTimeseriesHandler);
     ////legacy rainfall
@@ -611,6 +646,10 @@ export class DatasetFormManagerService {
     let meanTemperatureDayExportItem = new ExportDatasetItem([temperatureMapFileGroup], {
       period: "day"
     }, "Daily Mean Temperature", temperatureRainfallDayTimeseriesHandler);
+    //rh
+    let rhDayExportItem = new ExportDatasetItem([rhDayMapFileGroup, rhDayStationFileGroup], {
+      period: "day"
+    }, "Daily Relative Humidity", rhDayTimeseriesHandler);
     ////ds
     //////DS Rainfall
 
@@ -706,6 +745,11 @@ export class DatasetFormManagerService {
     }, ndviFormData, [
       ndviExportItem
     ]);
+    let rhExportDataset = new Dataset<ExportDatasetItem>(rhDatasetDisplayData, {
+      datatype: "relative_humidity"
+    }, periodOnlyFormData, [
+      rhDayExportItem
+    ]);
 
 
 
@@ -718,8 +762,8 @@ export class DatasetFormManagerService {
     let dsGrouperDisplayData = new DisplayData("Future climate projections using downscaling prediction methods.", "Future Climate Projections", "downscaled");
     let datasetFormDisplayData = new DisplayData("Select the type of data you would like to view. Hover over an option for a description of the dataset.", "Dataset", "dataset");
     //vis dataset groups
-    let visDatasets = [rainfallVisDataset, legacyRainfallVisDataset, maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset, dsRainfallVisDataset, dsTemperatureVisDataset, ndviVisDataset];
-    let visDatasetSingles: Dataset<VisDatasetItem>[] = [ndviVisDataset];
+    let visDatasets = [rainfallVisDataset, legacyRainfallVisDataset, maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset, dsRainfallVisDataset, dsTemperatureVisDataset, ndviVisDataset, rhVisDataset];
+    let visDatasetSingles: Dataset<VisDatasetItem>[] = [ndviVisDataset, rhVisDataset];
     let visDatasetGroupers: DatasetSelectorGroup[] = [
       new DatasetSelectorGroup(historicalRainfallGrouperDisplayData, [rainfallVisDataset, legacyRainfallVisDataset]),
       new DatasetSelectorGroup(historicalTemperatureGrouperDisplayData, [maxTemperatureVisDataset, minTemperatureVisDataset, meanTemperatureVisDataset]),
@@ -728,9 +772,9 @@ export class DatasetFormManagerService {
     let visDatasetFormData = new DatasetFormData(datasetFormDisplayData, visDatasetSingles, visDatasetGroupers);
 
     //export dataset groups
-    let exportDatasets = [rainfallExportDataset, legacyRainfallExportDataset, maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset, dsRainfallExportDataset, dsTemperatureExportDataset, ndviExportDataset];
+    let exportDatasets = [rainfallExportDataset, legacyRainfallExportDataset, maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset, dsRainfallExportDataset, dsTemperatureExportDataset, ndviExportDataset, rhExportDataset];
     //to reenable ndvi uncomment
-    let exportDatasetSingles: Dataset<ExportDatasetItem>[] = [/*ndviExportDataset*/];
+    let exportDatasetSingles: Dataset<ExportDatasetItem>[] = [ndviExportDataset, rhExportDataset];
     let exportDatasetGroupers: DatasetSelectorGroup[] = [
       new DatasetSelectorGroup(historicalRainfallGrouperDisplayData, [rainfallExportDataset, legacyRainfallExportDataset]),
       new DatasetSelectorGroup(historicalTemperatureGrouperDisplayData, [maxTemperatureExportDataset, minTemperatureExportDataset, meanTemperatureExportDataset]),
@@ -1923,9 +1967,14 @@ export class FormManager<T extends DatasetItem> {
   }
 
   public setValue(field: string, tag: string): ActiveFormData<T> {
-    this._state[field] = tag;
-    this.updateState();
-    return this.getFormData();
+    if(field == "datatype") {
+      return this.setDatatype(tag);
+    }
+    else {
+      this._state[field] = tag;
+      this.updateState();
+      return this.getFormData();
+    }
   }
 
   public setValues(values: StringMap): ActiveFormData<T> {
@@ -1935,7 +1984,11 @@ export class FormManager<T extends DatasetItem> {
   }
 
   public setDatatype(tag: string): ActiveFormData<T> {
-    return this.setValue("datatype", tag);
+    if(this._datasets[tag]) {
+      this._state["datatype"] = tag;
+      this.updateState();
+    }
+    return this.getFormData();
   }
 
   public getFormData(): ActiveFormData<T> {
