@@ -29,10 +29,12 @@ export class StationFilterComponent implements OnInit {
             fieldValueData = [];
             valueData[formatItem.field] = fieldValueData;
           }
+          // Check to if an item already exists, then proceeds to push to array if not.
+          if(!fieldValueData.some(existingItem => existingItem.value === formatItem.value)) {
           fieldValueData.push({
             display: formatItem.formattedValue,
             value: formatItem.value
-          });
+          });}
         }
       }
     }
