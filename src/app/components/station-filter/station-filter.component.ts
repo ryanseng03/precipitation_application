@@ -30,7 +30,7 @@ export class StationFilterComponent implements OnInit {
             valueData[formatItem.field] = fieldValueData;
           }
           // Check to if an item already exists, then proceeds to push to array if not.
-          if(!fieldValueData.some(existingItem => existingItem.value === formatItem.value)) {
+          if(!fieldValueData.some(existingItem => existingItem.value.toLowerCase() === formatItem.value.toLowerCase())) { // Convert to lowercase
           fieldValueData.push({
             display: formatItem.formattedValue,
             value: formatItem.value
