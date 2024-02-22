@@ -22,7 +22,7 @@ export class StationFilterComponent implements OnInit {
     for(let item of metadata) {
       let formatData = item.format.formatData;
       for(let formatItem of formatData) {
-        if(typeof formatItem.value == "string") {
+        if(typeof formatItem.value == "string" && formatItem.value.trim() !== "") { // Check if value is not empty
           fieldData[formatItem.field] = formatItem;
           let fieldValueData = valueData[formatItem.field];
           if(fieldValueData === undefined) {
