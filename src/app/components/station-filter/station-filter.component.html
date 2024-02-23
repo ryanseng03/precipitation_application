@@ -14,8 +14,21 @@
                 </mat-select>
             </mat-form-field>
         </div>
-        
-        <div class="filter-component" *ngIf="filterItem.fieldControl.value">
+        <!-- Add a slider depending if a numerical field is selected. -->
+        <div *ngIf="
+        filterItem.fieldControl.value === 'lat' || 
+        filterItem.fieldControl.value === 'lng' ||
+        filterItem.fieldControl.value === 'elevation_m'">
+
+        <!-- Add slider here -->
+
+        </div>
+        <!-- Hide this field for numerical fields (lat, lng, elevation_m) -->
+        <div class="filter-component" *ngIf="
+        filterItem.fieldControl.value !== null ||
+        filterItem.fieldControl.value !== 'lat' || 
+        filterItem.fieldControl.value !== 'lng' ||
+        filterItem.fieldControl.value !== 'elevation_m'">
             <div class="filter-component multi-select-shift">
                 <mat-select-autocomplete
                     [placeholder]="'Values'"
