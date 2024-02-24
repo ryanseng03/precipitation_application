@@ -74,6 +74,8 @@ import { FocusControlComponent } from './components/controls/focus-control/focus
 import { StationFilterComponent } from './components/station-filter/station-filter.component';
 import { SelectorComponent } from './components/controls/selector/selector.component';
 
+import { Ng5SliderModule } from 'ng5-slider';
+
 PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
@@ -142,7 +144,8 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatProgressSpinnerModule,
     PlotlyModule,
     MatDialogModule,
-    DragDropModule
+    DragDropModule,
+    Ng5SliderModule
   ],
   entryComponents: [
     ExportUnimplementedComponent,

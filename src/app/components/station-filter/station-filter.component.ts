@@ -2,6 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormatData, Station, StationMetadata } from 'src/app/models/Stations';
+import { Options } from 'ng5-slider';
 
 @Component({
   selector: 'app-station-filter',
@@ -11,6 +12,12 @@ import { FormatData, Station, StationMetadata } from 'src/app/models/Stations';
 export class StationFilterComponent implements OnInit {
   private _stations: Station[];
   private _filteredStations: Station[];
+  minValue: number = 20;
+  maxValue: number = 80;
+  options: Options = {
+    floor: 0,
+    ceil: 100
+  };
   @Input() set stations(stations: Station[]) {
     this._stations = stations;
     this.filterStations(stations, this.getFilters());

@@ -21,10 +21,9 @@
         filterItem.fieldControl.value === 'elevation_m'">
 
         <!-- Add slider here -->
-        <mat-slider min="0" max="10" step="0.5" value="1.5" discrete>
-            <input value="1" matSliderStartThumb>
-            <input value="9" matSliderEndThumb>
-        </mat-slider>
+        <ng5-slider [(value)]="minValue" [(highValue)]="maxValue" [options]="options"></ng5-slider>
+        <p>Min Value: {{minValue}}</p>
+        <p>Max Value: {{maxValue}}</p>
 
         </div>
         <!-- Hide this field for numerical fields (lat, lng, elevation_m) -->
