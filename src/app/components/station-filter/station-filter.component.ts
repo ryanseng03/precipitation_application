@@ -12,12 +12,15 @@ import { Options } from 'ng5-slider';
 export class StationFilterComponent implements OnInit {
   private _stations: Station[];
   private _filteredStations: Station[];
+
+  // Slider Properties
   minValue: number = 20;
   maxValue: number = 80;
   options: Options = {
     floor: 0,
     ceil: 100
   };
+  
   @Input() set stations(stations: Station[]) {
     this._stations = stations;
     this.filterStations(stations, this.getFilters());
