@@ -26,8 +26,8 @@
             [(highValue)]="rangeFilter.maxValue" 
             [options]="options">
         </ng5-slider>
-        <p>Min Value: {{rangeFilter.minValue}}</p>
-        <p>Max Value: {{rangeFilter.maxValue}}</p>
+        <p>Min Value: {{rangeFilter.minValue}} <input type="number" [(ngModel)]="minValue"></p>
+        <p>Max Value: {{rangeFilter.maxValue}} <input type="number" [(ngModel)]="maxValue"></p>
 
         </div>
 
