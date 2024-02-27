@@ -21,11 +21,16 @@
         filterItem.fieldControl.value === 'elevation_m'">
 
         <!-- Add slider here -->
-        <ng5-slider [(value)]="minValue" [(highValue)]="maxValue" [options]="options"></ng5-slider>
-        <p>Min Value: {{minValue}}</p>
-        <p>Max Value: {{maxValue}}</p>
+        <ng5-slider 
+            [(value)]="rangeFilter.minValue" 
+            [(highValue)]="rangeFilter.maxValue" 
+            [options]="options">
+        </ng5-slider>
+        <p>Min Value: {{rangeFilter.minValue}}</p>
+        <p>Max Value: {{rangeFilter.maxValue}}</p>
 
         </div>
+
         <!-- Hide this field for numerical fields (lat, lng, elevation_m) -->
         <div class="filter-component" *ngIf="
         filterItem.fieldControl.value !== null ||

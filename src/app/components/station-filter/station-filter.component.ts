@@ -14,8 +14,11 @@ export class StationFilterComponent implements OnInit {
   private _filteredStations: Station[];
 
   // Slider Properties
-  minValue: number = 20;
-  maxValue: number = 80;
+  rangeFilter = {
+    minValue: 20,
+    maxValue: 80,
+  };
+
   options: Options = {
     floor: 0,
     ceil: 100
@@ -63,6 +66,12 @@ export class StationFilterComponent implements OnInit {
   }
 
   ngOnInit() {
+    // if (this._stations && this._stations.length) {
+    //   this.rangeFilter.minValue = Math.min(...this._stations.map(station => station.value));
+    //   this.rangeFilter.maxValue = Math.max(...this._stations.map(station => station.value));
+    //   this.options.floor = this.rangeFilter.minValue;
+    //   this.options.ceil = this.rangeFilter.maxValue;
+    // }
   }
 
   private filterStations(stations: Station[], filters: StationFilter[]) {
@@ -74,6 +83,11 @@ export class StationFilterComponent implements OnInit {
           break;
         }
       }
+    
+      // Assuming station has a property 'value' that we want to filter
+    if(station.value < this.rangeFilter.minValue || station.value > this.rangeFilter.maxValue) {
+      include = false;
+    }
       return include;
     });
     this.filtered.next(this._filteredStations);
@@ -103,6 +117,7 @@ export class StationFilterComponent implements OnInit {
       if(filterData.filter !== null) {
         filterData.filter.field = field;
       }
+
     });
     filterData.valueSub = filterData.valueControl.valueChanges.subscribe((values: string[]) => {
       if(filterData.filter === null && values.length > 0) {
