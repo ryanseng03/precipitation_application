@@ -66,13 +66,13 @@ export class StationFilterComponent implements OnInit {
   }
 
   ngOnInit() {
-    // if (this._stations && this._stations.length) {
-    //   this.rangeFilter.minValue = Math.min(...this._stations.map(station => station.value));
-    //   this.rangeFilter.maxValue = Math.max(...this._stations.map(station => station.value));
-    //   this.options.floor = this.rangeFilter.minValue;
-    //   this.options.ceil = this.rangeFilter.maxValue;
-    // }
-  }
+    if (this._stations && this._stations.length) {
+      this.rangeFilter.minValue = Math.min(...this._stations.map(station => station.value));
+      this.rangeFilter.maxValue = Math.max(...this._stations.map(station => station.value));
+      this.options.floor = this.rangeFilter.minValue;
+      this.options.ceil = this.rangeFilter.maxValue;
+    }
+}
 
   private filterStations(stations: Station[], filters: StationFilter[]) {
     this._filteredStations = stations.filter((station: Station) => {

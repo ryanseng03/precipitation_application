@@ -26,16 +26,15 @@
             [(highValue)]="rangeFilter.maxValue" 
             [options]="options">
         </ng5-slider>
-        <p>Min Value: {{rangeFilter.minValue}} <input type="number" [(ngModel)]="minValue"></p>
-        <p>Max Value: {{rangeFilter.maxValue}} <input type="number" [(ngModel)]="maxValue"></p>
-
+        <p>Min Value: <input type="number" [(ngModel)]="rangeFilter.minValue"></p>
+        <p>Max Value: <input type="number" [(ngModel)]="rangeFilter.maxValue"></p>
         </div>
 
         <!-- Hide this field for numerical fields (lat, lng, elevation_m) -->
         <div class="filter-component" *ngIf="
-        filterItem.fieldControl.value !== null ||
-        filterItem.fieldControl.value !== 'lat' || 
-        filterItem.fieldControl.value !== 'lng' ||
+        filterItem.fieldControl.value !== null &&
+        filterItem.fieldControl.value !== 'lat' && 
+        filterItem.fieldControl.value !== 'lng' &&
         filterItem.fieldControl.value !== 'elevation_m'">
             <div class="filter-component multi-select-shift">
                 <mat-select-autocomplete
